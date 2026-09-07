@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import 'katex/dist/katex.min.css';
 export const metadata: Metadata = {
-  title: '徒手拆机甲 · 林间小院',
+  title: '徒手拆机甲 · 河谷漫游',
   description: '在晴日下午的小院里，翻阅代码、项目与生活记录。',
   icons: { icon: '/favicon.svg' },
   robots: { index: false, follow: false },

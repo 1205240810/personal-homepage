@@ -1,6 +1,14 @@
 import Phaser from 'phaser';
 import { CourtyardScenery } from './scenery';
-import { makePlayerTextures } from './player';
+import { makePlayerTextures, posePlayer } from './player';
+import { RiverRenderer } from './river-renderer';
+import {
+  INITIAL_EXPLORATION,
+  restoreExploration,
+  collisionFor,
+  turnValve,
+  waterLevel,
+} from './exploration';
 import { SCENES, getScene } from './registry';
 import { distance } from './geometry';
 import { traversable, clearSegment, findRoute } from './navigation';
@@ -29,6 +37,7 @@ export function createWorld(
 ): GameHandle {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let state: WorldSnapshot = {
+    exploration: { ...INITIAL_EXPLORATION },
     sceneId: 'hub',
     layoutVersion: getScene('hub').layoutVersion,
     position: { ...getScene('hub').spawnPoints.default },
@@ -44,13 +53,16 @@ export function createWorld(
       const validNodes = new Set(
         SCENES.flatMap((scene) => scene.nodes.map((n) => n.id)),
       );
+      const progress = restoreExploration(saved.exploration);
+      const geometry = collisionFor(definition, progress);
       state = {
+        exploration: progress,
         sceneId: saved.sceneId,
         layoutVersion: definition.layoutVersion,
         position:
           saved.layoutVersion === definition.layoutVersion &&
           saved.position &&
-          traversable(saved.position, definition.walkable, definition.obstacles)
+          traversable(saved.position, geometry.areas, geometry.obstacles)
             ? { ...saved.position }
             : { ...definition.spawnPoints.default },
         armorOpen: saved.armorOpen === true,
@@ -75,6 +87,14 @@ export function createWorld(
       };
     }
   } catch {}
+  if (
+    !state.exploration.bridge &&
+    ['life', 'graduate'].includes(state.sceneId)
+  ) {
+    state.sceneId = 'hub';
+    state.layoutVersion = getScene('hub').layoutVersion;
+    state.position = { ...getScene('hub').spawnPoints.default };
+  }
   let paused = false,
     direction: Point = { x: 0, y: 0 },
     active: ArchiveScene | undefined,
@@ -93,6 +113,8 @@ export function createWorld(
   class ArchiveScene extends Phaser.Scene {
     avatar!: Phaser.GameObjects.Sprite;
     scenery?: CourtyardScenery;
+    river?: RiverRenderer;
+    arrivalGrace = 0;
     routeLine?: Phaser.GameObjects.Graphics;
     shadow!: Phaser.GameObjects.Ellipse;
     halo!: Phaser.GameObjects.Ellipse;
@@ -108,6 +130,7 @@ export function createWorld(
     velocity: Point = { x: 0, y: 0 };
     travel = 0;
     sinceFootstep = 0;
+    wasMoving = false;
     destination?: Phaser.GameObjects.Ellipse;
     fireflies: Phaser.GameObjects.Arc[] = [];
     nodes: InteractionNode[] = [];
@@ -119,7 +142,11 @@ export function createWorld(
     }
     preload() {
       this.failed = false;
+      if (!this.textures.exists('explorer'))
+        this.load.image('explorer', '/art/explorer-walk.png');
       const def = getScene(state.sceneId);
+      if (def.outdoor && !this.textures.exists('mechanisms'))
+        this.load.image('mechanisms', '/art/river-mechanisms.png');
       const key = `world:${def.art}`;
       if (!this.textures.exists(key)) {
         if (def.frame === undefined) this.load.image(key, def.art);
@@ -159,13 +186,30 @@ export function createWorld(
       this.velocity = { x: 0, y: 0 };
       this.travel = 0;
       this.sinceFootstep = 0;
+      this.wasMoving = false;
       this.fireflies = [];
       const def = getScene(state.sceneId);
-      const image = this.add.image(0, 0, `world:${def.art}`, def.frame);
-      image.setOrigin(0).setDisplaySize(1536, 1024).setDepth(0);
+      const geometry = collisionFor(def, state.exploration);
+      const onObject = (id: string) => {
+        if (paused || transitioning) return;
+        const n = this.nodes.find((node) => node.id === id);
+        if (!n) return;
+        if (this.canInteract(n)) perform(n);
+        else this.moveTo(n, n);
+      };
+      this.river = def.outdoor
+        ? new RiverRenderer(this, def, state.exploration, reduced, onObject)
+        : undefined;
+      if (!def.outdoor)
+        this.add
+          .image(0, 0, `world:${def.art}`, def.frame)
+          .setOrigin(0)
+          .setDisplaySize(def.width, def.height)
+          .setDepth(0);
+      this.arrivalGrace = this.time.now + 1600;
       // The registry is the canonical collision model; its Tiled export is validated at build time.
-      this.areas = def.walkable;
-      this.obstacles = def.obstacles ?? [];
+      this.areas = geometry.areas;
+      this.obstacles = geometry.obstacles;
       this.nodes = def.nodes.map((n) => ({ ...n }));
       this.waypoints = [];
       this.scenery = def.layers
@@ -207,7 +251,7 @@ export function createWorld(
         });
         this.markers.push(marker);
       }
-      if (def.id === 'graduate') this.makeArmor();
+
       makePlayerTextures(this);
       this.halo = this.add
         .ellipse(state.position.x, state.position.y - 7, 46, 36, 0x8c9c66, 0.08)
@@ -216,21 +260,18 @@ export function createWorld(
         .ellipse(state.position.x, state.position.y, 28, 10, 0x42543d, 0.24)
         .setDepth(5);
       this.avatar = this.add
-        .sprite(state.position.x, state.position.y, 'walker-0-0')
+        .sprite(state.position.x, state.position.y, 'explorer', 'walk-0-0')
         .setOrigin(0.5, 1)
         .setAlpha(1)
-        .setScale(2)
+        .setScale(0.29)
         .setDepth(state.position.y);
+      posePlayer(this.avatar, 0, 0);
       this.keys = this.input.keyboard!.addKeys(
-        'W,A,S,D,UP,DOWN,LEFT,RIGHT,E,F,SPACE,SHIFT',
+        'W,A,S,D,UP,DOWN,LEFT,RIGHT,E,SPACE,SHIFT',
       ) as Record<string, Phaser.Input.Keyboard.Key>;
       this.input.keyboard!.on('keydown-E', (event: KeyboardEvent) => {
         if (event.repeat) return;
         if (!paused && !transitioning && near) perform(near);
-      });
-      this.input.keyboard!.on('keydown-F', (event: KeyboardEvent) => {
-        if (event.repeat || paused || transitioning) return;
-        this.scenery?.kick(state.position, this.facingVector());
       });
       this.input.keyboard!.on('keydown-SPACE', () => {
         if (transitioning) transitionFinish?.();
@@ -270,7 +311,7 @@ export function createWorld(
       });
       callbacks.onScene(def.id);
       callbacks.onReady();
-      if (pendingWalk && state.sceneId === 'hub') {
+      if (pendingWalk) {
         const n = this.nodes.find((n) => n.id === pendingWalk);
         pendingWalk = undefined;
         if (n) this.moveTo(n, n);
@@ -329,6 +370,7 @@ export function createWorld(
     }
     canInteract(node: InteractionNode) {
       return (
+        (!node.requires || state.exploration[node.requires]) &&
         distance(state.position, node) < (node.radius ?? 65) &&
         clearSegment(state.position, node, this.areas, this.obstacles)
       );
@@ -343,7 +385,11 @@ export function createWorld(
         this.obstacles,
       );
       if (!route) {
-        callbacks.onNotice('这里没有连通的小路，试试门前的落脚点。');
+        callbacks.onNotice(
+          state.exploration.bridge
+            ? '水岸或建筑挡住了去路，沿岸绕一绕。'
+            : '浮桥还没与石岸齐平，看看河边的水闸。',
+        );
         return;
       }
       this.waypoints = route;
@@ -383,16 +429,24 @@ export function createWorld(
       });
     }
     configureCamera() {
-      const camera = this.cameras.main;
+      const camera = this.cameras.main,
+        def = getScene(state.sceneId);
       const w = this.scale.width,
         h = this.scale.height;
-      const zoom = Math.max(w / 1536, h / 1024);
+      const zoom = def.outdoor
+        ? Math.max(w / 1280, h / 800, 0.78)
+        : Math.max(w / def.width, h / def.height);
       camera.removeBounds().setZoom(zoom).setRoundPixels(true);
-      camera.setBounds(0, 0, 1536, 1024);
-      if (w < 700 || w / h > 2.05)
-        camera.centerOn(state.position.x, state.position.y - 140);
-      else camera.centerOn(768, 515);
-      camera.setBackgroundColor('#e3ead6');
+      camera.setBounds(0, 0, def.width, def.height);
+      camera.centerOn(state.position.x, state.position.y - 85);
+      camera.setBackgroundColor('#639c9b');
+    }
+    refreshProgress() {
+      this.applyPause();
+      const geometry = collisionFor(getScene(state.sceneId), state.exploration);
+      this.areas = geometry.areas;
+      this.obstacles = geometry.obstacles;
+      this.river?.setProgress(state.exploration);
     }
     makeArmor() {
       const g = this.add.graphics();
@@ -475,6 +529,7 @@ export function createWorld(
     }
     update(_time: number, delta: number) {
       if (this.failed || !this.avatar?.active) return;
+      this.river?.update(_time, delta);
       if (paused || transitioning) {
         this.target = undefined;
         this.targetNode = undefined;
@@ -524,7 +579,7 @@ export function createWorld(
         }
       }
       const length = Math.hypot(dx, dy),
-        speed = this.keys.SHIFT.isDown ? 325 : 220;
+        speed = this.keys.SHIFT.isDown ? 260 : 175;
       const easing = 1 - Math.exp(-(length ? 22 : 42) * dt);
       this.velocity.x +=
         ((length ? (dx / length) * speed : 0) - this.velocity.x) * easing;
@@ -589,27 +644,21 @@ export function createWorld(
           this.footstep();
         }
       }
-      const frame = moved > 0.05 ? Math.floor(this.travel / 12) % 8 : 0;
+      const frame = moved > 0.05 ? Math.floor(this.travel / 18) % 8 : 0;
       const breath =
         !reduced && moved < 0.05 ? Math.sin(_time / 850) * 0.55 : 0;
       const inShade = this.scenery?.update(state.position, delta, _time);
-      const ball = this.nodes.find((n) => n.id === 'courtyard-ball');
-      if (ball && this.scenery) {
-        ball.x = this.scenery.ballPosition.x;
-        ball.y = this.scenery.ballPosition.y;
-        this.markers[this.nodes.indexOf(ball)]?.setPosition(ball.x, ball.y);
-      }
       this.avatar
         .setDepth(state.position.y)
         .setTint(inShade ? 0xd5dfd0 : 0xffffff);
-      this.avatar
-        .setPosition(state.position.x, state.position.y - breath)
-        .setTexture(`walker-${this.facing}-${frame}`);
+      this.avatar.setPosition(state.position.x, state.position.y - breath);
+      posePlayer(this.avatar, this.facing, frame);
       this.shadow
         .setPosition(state.position.x, state.position.y)
         .setScale(1, 1 - (frame % 4 === 2 ? 0.1 : 0));
       this.halo.setPosition(state.position.x, state.position.y - 16);
       if (
+        getScene(state.sceneId).outdoor ||
         this.scale.width < 700 ||
         this.scale.width / this.scale.height > 2.05
       ) {
@@ -648,10 +697,20 @@ export function createWorld(
         near = candidate;
         callbacks.onNear(near);
       }
-      if (moved && _time - lastPersist > 500) {
+      if (
+        candidate?.automatic &&
+        moved > 0.05 &&
+        this.time.now > this.arrivalGrace &&
+        distance(state.position, candidate) < 34
+      ) {
+        perform(candidate);
+        return;
+      }
+      if ((moved && _time - lastPersist > 500) || (!moved && this.wasMoving)) {
         lastPersist = _time;
         save();
       }
+      this.wasMoving = moved > 0.05;
     }
     discover(id: DiscoveryId) {
       if (id === 'sleepy-eye') {
@@ -717,14 +776,76 @@ export function createWorld(
         );
       }
     }
-    if (node.action.type === 'kick-ball') {
-      active.scenery?.kick(state.position, active.facingVector());
+    if (node.action.type === 'inspect') {
+      callbacks.onNotice(node.action.text);
+      return;
+    }
+    if (node.action.type === 'adjust-sluice') {
+      if (state.exploration.bridge) {
+        callbacks.onNotice('浮桥已经扣稳，水闸留在了合适的位置。');
+        return;
+      }
+      const previous = state.exploration;
+      state.exploration = turnValve(previous, node.action.valve);
+      active.refreshProgress();
+      save();
+      if (state.exploration.bridge) {
+        callbacks.onNotice('水位对上了金线。浮桥升起，河对岸的路接通了。');
+        if (!reduced) {
+          transitioning = true;
+          const scene = active;
+          scene.cameras.main.pan(1370, 850, 650, 'Sine.easeInOut');
+          const finish = () => {
+            if (!transitioning) return;
+            transitioning = false;
+            transitionFinish = undefined;
+          };
+          transitionFinish = () => {
+            scene.cameras.main.panEffect.reset();
+            scene.configureCamera();
+            finish();
+          };
+          scene.time.delayedCall(1750, () => {
+            if (!transitioning) return;
+            scene.cameras.main.pan(
+              state.position.x,
+              state.position.y - 100,
+              550,
+              'Sine.easeInOut',
+            );
+            scene.time.delayedCall(560, finish);
+          });
+        }
+      } else
+        callbacks.onNotice(
+          `水位移到了第 ${waterLevel(state.exploration) + 1} 格。金线在第四格，另一只阀门控制泄水。`,
+        );
+      return;
+    }
+    if (node.action.type === 'use-lift') {
+      if (!state.exploration.lift) {
+        callbacks.onNotice(
+          '升降台还没有动力。过桥去工坊，接通工作台上的回路。',
+        );
+        return;
+      }
+      callbacks.onNotice('索道运转起来了。两岸之间多了一条返回捷径。');
+      const next = state.sceneId === 'hub' ? 'life' : 'hub',
+        spawn = state.sceneId === 'hub' ? 'lift' : 'lift-return';
+      if (active.river && !reduced) {
+        transitioning = true;
+        transitionFinish = active.river.ride(active.avatar, () => {
+          transitioning = false;
+          transitionFinish = undefined;
+          enter(next, spawn);
+        });
+      } else enter(next, spawn);
       return;
     }
     if (node.action.type === 'discover') {
       const id = node.action.discovery;
       if (!state.discoveries.includes(id)) state.discoveries.push(id);
-      active?.discover(id);
+      active.river?.discover(id);
       save();
       callbacks.onAction(node.action);
       return;
@@ -854,20 +975,27 @@ export function createWorld(
     completeGame(id: MiniGameId, moves: number) {
       const best = state.games[id];
       state.games[id] = best ? Math.min(best, moves) : moves;
-      if (id === 'circuit' && !state.armorOpen) {
-        state.armorOpen = true;
-        if (state.sceneId === 'graduate') {
-          active?.panel?.setY(421).setAlpha(0.28);
-          active?.drawCircuit(5);
-        }
+      if (id === 'circuit' && state.exploration.bridge) {
+        state.exploration.lift = true;
+        active?.refreshProgress();
+        callbacks.onNotice(
+          '回路接通。外面的水车开始转动，升降台可以返回河湾了。',
+        );
       }
       save();
     },
     walkTo(nodeId: string) {
       if (paused || transitioning) return;
-      if (state.sceneId !== 'hub') {
-        pendingWalk = nodeId;
-        enter('hub');
+      const destination = SCENES.find((s) =>
+        s.nodes.some((n) => n.id === nodeId),
+      );
+      if (!destination) return;
+      if (destination.id !== state.sceneId) {
+        callbacks.onNotice(
+          destination.id === 'life'
+            ? '水车工坊在河对岸。沿浮桥与河岸小路前往，也可直接查看项目。'
+            : '先从门前回到河湾，再沿小路前往。',
+        );
         return;
       }
       const n = active?.nodes.find((n) => n.id === nodeId);

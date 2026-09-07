@@ -28,13 +28,13 @@ test('行走不能漏过狭缝或擦过家具顶点，路径必须绕行', () =>
       [60, 60],
     ],
   ];
-  assert.equal(traversable({ x: 35, y: 50 }, floor, furniture), false);
+  assert.equal(traversable({ x: 31, y: 50 }, floor, furniture), false);
   assert.equal(
-    clearSegment({ x: 35, y: 30 }, { x: 35, y: 70 }, floor, furniture),
+    clearSegment({ x: 31, y: 30 }, { x: 31, y: 70 }, floor, furniture),
     false,
   );
   assert.equal(
-    clearSegment({ x: 34, y: 30 }, { x: 34, y: 70 }, floor, furniture),
+    clearSegment({ x: 30, y: 30 }, { x: 30, y: 70 }, floor, furniture),
     true,
   );
   const walls = [
@@ -82,4 +82,58 @@ test('电路初始未解，旋转能解，断开的出口不算完成', () => {
     false,
   );
   assert.deepEqual([...shuffledSignals()].sort(), [0, 0, 1, 1, 2, 2, 3, 3]);
+});
+
+import {
+  INITIAL_EXPLORATION,
+  turnValve,
+  restoreExploration,
+  collisionFor,
+} from '../lib/world/exploration.ts';
+import { getScene } from '../lib/world/registry.ts';
+test('两个水阀共同改变桥面通路；已开启状态稳定，非法进度不会恢复捷径', () => {
+  const hub = getScene('hub'),
+    west = { x: 1170, y: 850 },
+    east = { x: 1550, y: 850 };
+  const before = collisionFor(hub, INITIAL_EXPLORATION);
+  assert.equal(clearSegment(west, east, before.areas, before.obstacles), false);
+  for (const valve of ['intake', 'outlet'] as const) {
+    let s = { ...INITIAL_EXPLORATION };
+    for (let i = 0; i < 3; i++) s = turnValve(s, valve);
+    assert.equal(s.bridge, false, '只操作一侧不能完成机关');
+  }
+  let s = turnValve(INITIAL_EXPLORATION, 'outlet');
+  s = turnValve(s, 'intake');
+  assert.equal(s.bridge, true);
+  const after = collisionFor(hub, s);
+  assert.equal(clearSegment(west, east, after.areas, after.obstacles), true);
+  assert.deepEqual(turnValve(s, 'outlet'), s);
+  assert.equal(
+    restoreExploration({ lift: true, bridge: false, intake: 99 }).lift,
+    false,
+  );
+  assert.equal(restoreExploration({ lift: true, bridge: true }).lift, true);
+});
+test('场景家具与地图边界不可穿过，草地保持可达', () => {
+  for (const [id, p] of [
+    ['hub', { x: 215, y: 780 }],
+    ['life', { x: 1750, y: 635 }],
+    ['life', { x: 750, y: 935 }],
+  ] as const) {
+    const def = getScene(id);
+    assert.equal(traversable(p, def.walkable, def.obstacles), false);
+  }
+  const def = getScene('hub');
+  assert.equal(
+    traversable({ x: 2440, y: 1100 }, def.walkable, def.obstacles),
+    false,
+  );
+  assert(
+    findRoute(
+      def.spawnPoints.default,
+      { x: 870, y: 1000 },
+      def.walkable,
+      def.obstacles,
+    ),
+  );
 });

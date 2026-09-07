@@ -10,8 +10,8 @@ import {
   shuffledSignals,
 } from '@/lib/world/puzzles';
 export const GAME_TITLES: Record<MiniGameId, string> = {
-  circuit: '修好一块小电路',
-  memory: '树影下的记忆牌',
+  circuit: '水车的动力回路',
+  memory: '旅行卡片',
 };
 export function MiniGameView({
   game,
@@ -98,7 +98,7 @@ function CircuitGame({ onComplete }: { onComplete: (moves: number) => void }) {
         {solved ? (
           <>
             <Check size={18} />
-            电路接通了，小模型的指示灯也亮了起来。
+            回路接通了。回到河边，水车和升降台已经恢复运转。
           </>
         ) : (
           <span>

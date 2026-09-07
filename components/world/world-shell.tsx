@@ -27,6 +27,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { explorationObjective } from '@/lib/world/exploration';
 import { SCENES, CHAPTERS, getScene } from '@/lib/world/registry';
 import type {
   GameHandle,
@@ -263,10 +264,16 @@ export default function WorldShell({
     game.current?.pause(false);
     const returnSpawn: Record<string, string> = {
       undergraduate: 'blog',
-      graduate: 'projects',
-      life: 'lounge',
+      life: 'bridge-return',
     };
-    game.current?.enter(id, id === 'hub' ? returnSpawn[sceneId] : undefined);
+    game.current?.enter(
+      sceneId === 'graduate' && id === 'hub' ? 'life' : id,
+      sceneId === 'graduate' && id === 'hub'
+        ? 'workshop'
+        : id === 'hub'
+          ? returnSpawn[sceneId]
+          : undefined,
+    );
   };
   const interact = () => game.current?.interact();
   const close = () => {
@@ -274,7 +281,7 @@ export default function WorldShell({
     setArticleError('');
   };
   const panelTitles: Record<string, string> = {
-    profile: '住处档案',
+    profile: '个人档案',
     education: '教育与经历',
     honors: '荣誉记录',
     experience: '集训经历',
@@ -283,14 +290,14 @@ export default function WorldShell({
   return (
     <main
       className={`world-shell ${blueprint ? 'is-blueprint' : ''} ${welcome ? 'has-start-screen' : ''}`}
-      aria-label="林间小院，可探索的个人世界"
+      aria-label="河谷漫游，可探索的个人世界"
     >
       <div className="world-art" aria-hidden="true" />
       <div
         ref={mount}
         className={`game-mount ${ready ? 'is-ready' : ''}`}
         role="application"
-        aria-label="用方向键或 WASD 移动，E 与附近物件互动，M 打开小院地图。也可点击目录直接阅读。"
+        aria-label="用方向键或 WASD 移动，E 与附近物件互动，M 打开河谷地图。也可点击目录直接阅读。"
         tabIndex={0}
       />
       <div className="world-vignette" />
@@ -308,7 +315,7 @@ export default function WorldShell({
         >
           <WalkerPortrait />
           <span>
-            徒手拆机甲<small>THE COURTYARD</small>
+            徒手拆机甲<small>RIVER JOURNAL</small>
           </span>
         </a>
         <nav aria-label="主导航">
@@ -359,6 +366,7 @@ export default function WorldShell({
       {welcome && (
         <StartScreen
           ready={ready}
+          resuming={!!snapshot?.visited.length}
           error={error}
           leaving={leaving}
           onEnter={() => start()}
@@ -368,10 +376,10 @@ export default function WorldShell({
       {!blueprint && (
         <>
           <h1 className="sr-only">{scene.title}</h1>
-          {sceneId !== 'hub' && (
+          {!scene.outdoor && (
             <button className="room-return" onClick={() => enter('hub')}>
               <ArrowLeft size={15} />
-              回到小院
+              走出房间
             </button>
           )}
           {ready && near && !panel && (
@@ -394,7 +402,7 @@ export default function WorldShell({
           )}
           {!ready && !error && (
             <div className="world-loading" role="status">
-              <LoaderCircle size={14} /> 正在推开院门
+              <LoaderCircle size={14} /> 正在走进河谷
             </div>
           )}
           {error && (
@@ -457,6 +465,21 @@ export default function WorldShell({
           }}
         />
       )}
+      {!welcome && !panel && !blueprint && ready && (
+        <aside className="journey-status" aria-label="探索进度">
+          <span className="journey-location">{scene.en}</span>
+          <p>
+            {sceneId === 'graduate' && !snapshot?.exploration.lift
+              ? '检查工作台上的动力回路'
+              : explorationObjective(snapshot?.exploration)}
+          </p>
+          <div className="journey-stops">
+            <i data-done />
+            <i data-done={snapshot?.exploration.bridge || undefined} />
+            <i data-done={snapshot?.exploration.lift || undefined} />
+          </div>
+        </aside>
+      )}
       <footer className="quiet-world-tools">
         <Popover open={help} onOpenChange={setHelp}>
           <PopoverTrigger
@@ -467,28 +490,30 @@ export default function WorldShell({
             <CircleHelp size={18} />
           </PopoverTrigger>
           <PopoverContent className="world-help" align="start">
-            <p>点击房子，沿路走到门前。</p>
+            <p>点地面移动，靠近物件后按 E。</p>
             <p>
               <kbd>WASD</kbd> / 方向键移动
               <br />
               <kbd>E</kbd> 与附近物件互动
               <br />
-              <kbd>F</kbd> 踢小球
+              <kbd>Shift</kbd> 快走
               <br />
-              <kbd>M</kbd> 小院地图
+              <kbd>M</kbd> 河谷地图
             </p>
             <p>也可以从上方直接阅读内容。</p>
           </PopoverContent>
         </Popover>
         <button
           className="world-tool-button"
-          aria-label="小院地图"
+          aria-label="河谷地图"
           onClick={() => setBlueprint((v) => !v)}
         >
           <Layers3 size={18} />
         </button>
         {intro && !panel && (
-          <span className="first-visit-hint">点一间房子，沿着小路走走。</span>
+          <span className="first-visit-hint">
+            点击地面 / WASD 行走 · E 互动 · M 地图
+          </span>
         )}
       </footer>
       <Sheet

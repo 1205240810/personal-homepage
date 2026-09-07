@@ -29,13 +29,13 @@ export function traversable(
   point: Point,
   areas: number[][][],
   obstacles: number[][][] = [],
-  radius = 5,
+  radius = 9,
 ) {
   if (
     point.x < radius ||
     point.y < radius ||
-    point.x > 1536 - radius ||
-    point.y > 1024 - radius
+    !Number.isFinite(point.x) ||
+    !Number.isFinite(point.y)
   )
     return false;
   return [
@@ -62,10 +62,10 @@ export function clearSegment(
   if (Math.hypot(dx, dy) < 1e-8) return true;
   for (const [ox, oy] of [
     [0, 0],
-    [5, 0],
-    [-5, 0],
-    [0, 5],
-    [0, -5],
+    [9, 0],
+    [-9, 0],
+    [0, 9],
+    [0, -9],
   ]) {
     const x = a.x + ox,
       y = a.y + oy,
@@ -109,8 +109,8 @@ export function findRoute(
     return null;
   if (clearSegment(start, goal, areas, obstacles)) return [goal];
   const size = 16,
-    cols = 97,
-    rows = 65;
+    cols = Math.ceil(Math.max(...areas.flat().map((p) => p[0])) / size) + 1,
+    rows = Math.ceil(Math.max(...areas.flat().map((p) => p[1])) / size) + 1;
   const point = (id: number) => ({
     x: (id % cols) * size,
     y: Math.floor(id / cols) * size,

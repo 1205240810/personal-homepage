@@ -1,5 +1,6 @@
 import { readFile, access } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { collisionFor, INITIAL_EXPLORATION } from '../lib/world/exploration.ts';
 import { SCENES } from '../lib/world/registry.ts';
 import {
   traversable,
@@ -72,6 +73,8 @@ for (const scene of SCENES) {
     await readFile(`public/maps/${scene.id}.json`, 'utf8'),
   );
   assert.equal(tiled.orientation, 'orthogonal');
+  assert.equal(tiled.width, Math.ceil(scene.width / 32));
+  assert.equal(tiled.height, Math.ceil(scene.height / 32));
   const floor = tiled.layers
     .find((l: { name: string }) => l.name === 'walkable')
     .objects.map(
@@ -117,6 +120,18 @@ for (const scene of SCENES) {
     scene.nodes.length,
     `节点数量不一致: ${scene.id}`,
   );
+  if (scene.id === 'hub') {
+    const closed = collisionFor(scene, INITIAL_EXPLORATION);
+    for (const n of scene.nodes) {
+      const route = findRoute(
+        scene.spawnPoints.default,
+        n,
+        closed.areas,
+        closed.obstacles,
+      );
+      assert.equal(!!route, !n.requires, `初始通路或机关锁错误: ${n.id}`);
+    }
+  }
   for (const n of scene.nodes) {
     assert(!nodeIds.has(n.id), `重复互动 ID: ${n.id}`);
     nodeIds.add(n.id);

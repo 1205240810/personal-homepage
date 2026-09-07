@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import type { Point, SceneDefinition } from './types';
-import { traversable, clearSegment } from './navigation';
 export type SceneryLayer = {
   id: string;
   art: string;
@@ -37,14 +36,6 @@ export class CourtyardScenery {
       open: number;
     }
   >();
-  private ball?: Phaser.GameObjects.Container;
-  private ballShadow?: Phaser.GameObjects.Ellipse;
-  private ballVelocity = { x: 0, y: 0 };
-  private goal?: Phaser.GameObjects.Graphics;
-  private scored = false;
-  private rotation = 0;
-  private kickCount = 0;
-  ballPosition = { x: 760, y: 655 };
   constructor(
     private scene: Phaser.Scene,
     private def: SceneDefinition,
@@ -174,9 +165,7 @@ export class CourtyardScenery {
       this.doors.set(def.nodeId, { g, light, def, open: 0 });
       this.drawDoor(def.nodeId, 0);
     }
-    if (def.id === 'hub') {
-      this.createPlayground();
-    } else this.createRoomAtmosphere();
+    if (!def.outdoor) this.createRoomAtmosphere();
   }
   private drawDoor(id: string, open: number) {
     const door = this.doors.get(id);
@@ -253,11 +242,19 @@ export class CourtyardScenery {
       ],
     };
     for (const [x, y, w, h] of shadows[this.def.id] ?? [])
-      this.scene.add.ellipse(x, y, w, h, 0x45523a, 0.11).setDepth(2);
+      this.scene.add
+        .ellipse(x * 0.42, y * 0.42, w * 0.42, h * 0.42, 0x45523a, 0.11)
+        .setDepth(2);
     if (this.reduced) return;
     for (let i = 0; i < 7; i++) {
       const mote = this.scene.add
-        .circle(340 + i * 123, 410 + ((i * 57) % 275), 1.2, 0xfff4d4, 0.18)
+        .circle(
+          (340 + i * 123) * 0.42,
+          (410 + ((i * 57) % 275)) * 0.42,
+          1.2,
+          0xfff4d4,
+          0.18,
+        )
         .setDepth(1300);
       this.scene.tweens.add({
         targets: mote,
@@ -301,60 +298,6 @@ export class CourtyardScenery {
       finish();
     };
   }
-  private createPlayground() {
-    this.goal = this.scene.add.graphics().setDepth(4);
-    this.goal.fillStyle(0x97774e);
-    this.goal.fillRoundedRect(803, 519, 10, 27, 2);
-    this.goal.fillRoundedRect(875, 519, 10, 27, 2);
-    this.goal.lineStyle(2, 0xb4996c, 0.8);
-    this.goal.lineBetween(811, 525, 877, 525);
-    this.goal.lineStyle(1, 0xa89671, 0.45);
-    for (let i = 0; i < 6; i++)
-      this.goal.lineBetween(813 + i * 12, 525, 813 + i * 12, 540);
-    const body = this.scene.add.graphics();
-    body.fillStyle(0xf0e7cd);
-    body.fillCircle(0, -9, 12);
-    body.lineStyle(2, 0x6e7f63);
-    body.strokeCircle(0, -9, 11);
-    body.lineBetween(-8, -17, 8, -2);
-    body.lineBetween(8, -17, -8, -2);
-    body.fillStyle(0xc2cfab, 0.6);
-    body.fillCircle(-3, -13, 4);
-    this.ball = this.scene.add
-      .container(this.ballPosition.x, this.ballPosition.y, [body])
-      .setSize(40, 40)
-      .setInteractive({ useHandCursor: true });
-    this.ball.on('pointerup', () => this.onObject('courtyard-ball'));
-    this.ballShadow = this.scene.add
-      .ellipse(this.ballPosition.x, this.ballPosition.y, 25, 8, 0x455339, 0.2)
-      .setDepth(4);
-  }
-  kick(player: Point, facing: Point) {
-    if (
-      !this.ball ||
-      Phaser.Math.Distance.BetweenPoints(player, this.ballPosition) > 65 ||
-      !clearSegment(
-        player,
-        this.ballPosition,
-        this.def.walkable,
-        this.def.obstacles,
-      )
-    )
-      return false;
-    let dx = this.ballPosition.x - player.x,
-      dy = this.ballPosition.y - player.y,
-      length = Math.hypot(dx, dy);
-    if (length < 5) {
-      dx = facing.x;
-      dy = facing.y;
-      length = Math.hypot(dx, dy) || 1;
-    }
-    this.ballVelocity = { x: (dx / length) * 335, y: (dy / length) * 335 };
-    this.kickCount++;
-    if (this.kickCount === 1)
-      this.onNotice('让小球滚过广场边的两个木桩。靠近后按 F，也可以点击它。');
-    return true;
-  }
   update(player: Point, delta: number, time: number) {
     let inShade = false;
     for (const object of this.objects) {
@@ -370,66 +313,6 @@ export class CourtyardScenery {
       if (behind) inShade = true;
       if (!this.reduced)
         sprite.setAngle(Math.sin(time / 1900 + layer.x) * 0.32);
-    }
-    if (this.ball && this.ballShadow) {
-      const dt = Math.min(delta, 40) / 1000,
-        p = this.ballPosition,
-        v = this.ballVelocity;
-      const nx = p.x + v.x * dt,
-        ny = p.y + v.y * dt;
-      if (
-        traversable(
-          { x: nx, y: p.y },
-          this.def.walkable,
-          this.def.obstacles,
-          12,
-        )
-      )
-        p.x = nx;
-      else v.x *= -0.62;
-      if (
-        traversable(
-          { x: p.x, y: ny },
-          this.def.walkable,
-          this.def.obstacles,
-          12,
-        )
-      )
-        p.y = ny;
-      else v.y *= -0.62;
-      const drag = Math.exp(-1.55 * dt);
-      v.x *= drag;
-      v.y *= drag;
-      const speed = Math.hypot(v.x, v.y);
-      if (speed < 4) {
-        v.x = 0;
-        v.y = 0;
-      }
-      this.rotation += (speed * dt) / 16;
-      this.ball
-        .setPosition(p.x, p.y)
-        .setDepth(p.y)
-        .setAngle(speed > 4 ? Math.sin(this.rotation) * 4 : 0);
-      this.ballShadow.setPosition(p.x, p.y);
-      if (!this.scored && p.x > 809 && p.x < 879 && p.y < 550 && p.y > 512) {
-        this.scored = true;
-        this.onNotice('进了！这份午后的快乐，留在小院里。');
-        const glow = this.scene.add
-          .ellipse(844, 540, 90, 26, 0xc5da8a, 0.55)
-          .setDepth(5);
-        this.scene.tweens.add({
-          targets: glow,
-          alpha: 0,
-          scale: 1.7,
-          duration: this.reduced ? 50 : 1200,
-          onComplete: () => glow.destroy(),
-        });
-        this.scene.time.delayedCall(2400, () => {
-          this.ballPosition = { x: 760, y: 655 };
-          this.ballVelocity = { x: 0, y: 0 };
-          this.scored = false;
-        });
-      }
     }
     return inShade;
   }

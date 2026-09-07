@@ -11,7 +11,9 @@ export type WorldAction =
   | { type: 'open-game'; game: MiniGameId }
   | { type: 'discover'; discovery: DiscoveryId }
   | { type: 'activate-armor' }
-  | { type: 'kick-ball' };
+  | { type: 'adjust-sluice'; valve: 'intake' | 'outlet' }
+  | { type: 'inspect'; text: string }
+  | { type: 'use-lift' };
 export type InteractionNode = Point & {
   id: string;
   label: string;
@@ -21,6 +23,8 @@ export type InteractionNode = Point & {
   sign?: string;
   category?: 'blog' | 'profile' | 'projects' | 'play' | 'exit';
   hidden?: boolean;
+  requires?: 'bridge' | 'lift';
+  automatic?: boolean;
 };
 export type SceneDefinition = {
   id: string;
@@ -29,6 +33,10 @@ export type SceneDefinition = {
   chapter?: Chapter;
   description: string;
   art: string;
+  width: number;
+  height: number;
+  outdoor?: boolean;
+  terrain?: TerrainDefinition;
   frame?: number;
   layers?: SceneryLayer[];
   doors?: DoorDefinition[];
@@ -39,7 +47,25 @@ export type SceneDefinition = {
   nodes: InteractionNode[];
   overview: Point;
 };
+export type TerrainDefinition = {
+  islands: number[][][];
+  paths: { points: number[][]; width: number }[];
+  bridges: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    gated?: boolean;
+  }[];
+};
+export type ExplorationState = {
+  intake: number;
+  outlet: number;
+  bridge: boolean;
+  lift: boolean;
+};
 export type WorldSnapshot = {
+  exploration: ExplorationState;
   layoutVersion?: number;
   sceneId: string;
   position: Point;

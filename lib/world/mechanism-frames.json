@@ -1,0 +1,278 @@
+{
+  "image": "river-mechanisms-atlas.png",
+  "width": 1254,
+  "height": 1254,
+  "format": "RGBA",
+  "grid": "2 columns x 2 rows, but use measured frames since props overflow nominal cells",
+  "measurement": "Alpha components threshold >64; sourceRects add 3px padding. All four components intact and separate. Anchors are visually estimated points in exact source coordinates.",
+  "frames": [
+    {
+      "id": "floating-bridge",
+      "cell": [
+        0,
+        0
+      ],
+      "sourceRect": {
+        "x": 48,
+        "y": 144,
+        "width": 627,
+        "height": 308
+      },
+      "alphaBounds": {
+        "x": 51,
+        "y": 147,
+        "width": 621,
+        "height": 302
+      },
+      "anchorsSourcePixels": {
+        "ground": [
+          360,
+          447
+        ],
+        "deckCenter": [
+          355,
+          308
+        ],
+        "boardLeft": [
+          90,
+          308
+        ],
+        "boardRight": [
+          615,
+          308
+        ]
+      },
+      "anchorsWithinRect": {
+        "ground": {
+          "x": 312,
+          "y": 303
+        },
+        "deckCenter": {
+          "x": 307,
+          "y": 164
+        },
+        "boardLeft": {
+          "x": 42,
+          "y": 164
+        },
+        "boardRight": {
+          "x": 567,
+          "y": 164
+        }
+      },
+      "anchorsNormalized": {
+        "ground": {
+          "x": 0.49761,
+          "y": 0.98377
+        },
+        "deckCenter": {
+          "x": 0.48963,
+          "y": 0.53247
+        },
+        "boardLeft": {
+          "x": 0.06699,
+          "y": 0.53247
+        },
+        "boardRight": {
+          "x": 0.90431,
+          "y": 0.53247
+        }
+      }
+    },
+    {
+      "id": "sluice-valve",
+      "cell": [
+        1,
+        0
+      ],
+      "sourceRect": {
+        "x": 818,
+        "y": 35,
+        "width": 285,
+        "height": 529
+      },
+      "alphaBounds": {
+        "x": 821,
+        "y": 38,
+        "width": 279,
+        "height": 523
+      },
+      "anchorsSourcePixels": {
+        "ground": [
+          960,
+          559
+        ],
+        "wheelHub": [
+          962,
+          188
+        ],
+        "interaction": [
+          959,
+          485
+        ]
+      },
+      "anchorsWithinRect": {
+        "ground": {
+          "x": 142,
+          "y": 524
+        },
+        "wheelHub": {
+          "x": 144,
+          "y": 153
+        },
+        "interaction": {
+          "x": 141,
+          "y": 450
+        }
+      },
+      "anchorsNormalized": {
+        "ground": {
+          "x": 0.49825,
+          "y": 0.99055
+        },
+        "wheelHub": {
+          "x": 0.50526,
+          "y": 0.28922
+        },
+        "interaction": {
+          "x": 0.49474,
+          "y": 0.85066
+        }
+      }
+    },
+    {
+      "id": "waterwheel",
+      "cell": [
+        0,
+        1
+      ],
+      "sourceRect": {
+        "x": 65,
+        "y": 574,
+        "width": 547,
+        "height": 619
+      },
+      "alphaBounds": {
+        "x": 68,
+        "y": 577,
+        "width": 541,
+        "height": 613
+      },
+      "anchorsSourcePixels": {
+        "ground": [
+          316,
+          1186
+        ],
+        "wheelHub": [
+          303,
+          900
+        ],
+        "interaction": [
+          313,
+          1100
+        ]
+      },
+      "anchorsWithinRect": {
+        "ground": {
+          "x": 251,
+          "y": 612
+        },
+        "wheelHub": {
+          "x": 238,
+          "y": 326
+        },
+        "interaction": {
+          "x": 248,
+          "y": 526
+        }
+      },
+      "anchorsNormalized": {
+        "ground": {
+          "x": 0.45887,
+          "y": 0.98869
+        },
+        "wheelHub": {
+          "x": 0.4351,
+          "y": 0.52666
+        },
+        "interaction": {
+          "x": 0.45338,
+          "y": 0.84976
+        }
+      }
+    },
+    {
+      "id": "wooden-lift",
+      "cell": [
+        1,
+        1
+      ],
+      "sourceRect": {
+        "x": 680,
+        "y": 585,
+        "width": 523,
+        "height": 592
+      },
+      "alphaBounds": {
+        "x": 683,
+        "y": 588,
+        "width": 517,
+        "height": 586
+      },
+      "anchorsSourcePixels": {
+        "ground": [
+          943,
+          1170
+        ],
+        "deckCenter": [
+          947,
+          1020
+        ],
+        "entry": [
+          947,
+          1090
+        ],
+        "topBeam": [
+          941,
+          628
+        ]
+      },
+      "anchorsWithinRect": {
+        "ground": {
+          "x": 263,
+          "y": 585
+        },
+        "deckCenter": {
+          "x": 267,
+          "y": 435
+        },
+        "entry": {
+          "x": 267,
+          "y": 505
+        },
+        "topBeam": {
+          "x": 261,
+          "y": 43
+        }
+      },
+      "anchorsNormalized": {
+        "ground": {
+          "x": 0.50287,
+          "y": 0.98818
+        },
+        "deckCenter": {
+          "x": 0.51052,
+          "y": 0.7348
+        },
+        "entry": {
+          "x": 0.51052,
+          "y": 0.85304
+        },
+        "topBeam": {
+          "x": 0.49904,
+          "y": 0.07264
+        }
+      }
+    }
+  ]
+}

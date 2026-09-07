@@ -30,9 +30,9 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 ## 接入新内容与场景
 
 - `ContentSource.list/get` 位于 `lib/content/source.ts`，阅读组件只接收其结果。后续可替换为构建时 API 采集；地图不请求第三方服务。
-- `SceneDefinition` 位于 `lib/world/types.ts`，注册在 `lib/world/registry.ts`。新增唯一 ID、背景、独立图层、出生点、可走多边形、家具脚部碰撞、互动节点和入口，再运行 `npm run maps` 输出 Tiled 文件。
+- `SceneDefinition` 位于 `lib/world/types.ts`，注册在 `lib/world/registry.ts`。新增唯一 ID、世界宽高、地表定义、独立图层、出生点、可走多边形、家具脚部碰撞、互动节点和入口，再运行 `npm run maps` 输出 Tiled 文件。
 - 本版注册表是地图坐标唯一源，Tiled 文件为可检查的导出结果。若先在 Tiled 调整空间，应将修改同步回注册表，再重新导出；检查会拒绝两者不一致。
-- `WorldAction` 的 open-content / open-collection / open-projects / open-game / enter-scene / kick-ball / discover 由 React 展示层和世界桥接分发。相册和新 Demo 类型需要新增明确的数据及展示组件，再加入 action 分支；不用改角色控制。
+- `WorldAction` 的 open-content / open-collection / open-projects / open-game / enter-scene / adjust-sluice / use-lift / inspect / discover 由 React 展示层和世界桥接分发。相册和新 Demo 类型需要新增明确的数据及展示组件，再加入 action 分支；不用改角色控制。
 - 为新资产扩展 `SceneDefinition.art/layers/doors`，引擎按定义加载。没有内容的入口不注册。所有场景 ID 与内容 ID 分离。
 - `npm run check` 检查重复 ID、失效入口、无效出生点、失效图层/门、不能沿有效路径到达的物件、缺失文章、公开草稿泄漏，以及新 Markdown 自动收录。
 
@@ -46,7 +46,7 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 ## 状态、动效与排障
 
-探索状态仅保存在本机 `mecha-archive-world-v1`，包含位置、已查看物件、小游戏最佳成绩、彩蛋与小模型装甲开关。它不限制阅读权限。布局变更时提高 `layoutVersion`，旧位置会回到对应出生点，保留内容进度。系统“减少动态效果”启用后跳过镜头、门与装甲运动，关闭树木摆动。浏览器存储不可用时仍可探索。
+探索状态仅保存在本机 `mecha-archive-world-v1`，包含位置、已查看物件、小游戏最佳成绩、彩蛋与水阀、浮桥、索道进度。它不限制阅读权限。布局变更时提高 `layoutVersion`，旧位置会回到对应出生点，保留内容进度。系统“减少动态效果”启用后跳过镜头、门、浮桥与索道运动，关闭树木摆动。浏览器存储不可用时仍可探索。
 
 若地图资源加载失败，直接用右上角文章入口、`/archive` 或文章 URL 阅读。图片和正文资源独立于 Phaser；阅读不等待游戏启动。
 
@@ -67,3 +67,13 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 新增门将 `nodeId` 对应到真实互动节点，在 `doors` 填原画门洞尺寸。小游戏反馈由明确的 WorldAction 分支处理，不引入通用插件系统。新增场景和互动仍运行 `npm run maps` 与 `npm run check`。
 
 开始菜单在当前标签页首次打开时显示，左上头像可以再次打开。音乐音量保存在 `mecha-music-volume`；音乐每次打开页面都由访客主动播放，不把自动播放权限当作可用前提。更换音乐需要同步音源、展示时长与 THIRD_PARTY_NOTICES 中的授权。
+
+## 河谷扩建边界
+
+地图宽高定义在 SceneDefinition，路径网格从场景地面范围推导，摄影机可视范围独立于地图尺寸。室外 TerrainDefinition 的岸线用于绘图与碰撞，paths 只画路面，不限制草地。
+
+探索状态由 exploration.ts 校验和计算。改变机关时必须调用同一 collisionFor 规则、清空已有路线、更新机关图像并保存；不要直接修改共享注册表。bridge 为单向开启，lift 在 bridge 开启且电路完成后生效。旧版第二地图存档缺少浮桥进度时回到河湾，避免落在无法回程的岸边。
+
+角色原始图集 explorer-walk.png 与 explorer-frames.json 配对使用。生成图集的格子并不等宽，精确帧矩形和脚锚点来自 alpha 区域测量。不得按整齐网格盲切。river-materials.png 和 river-mechanisms.png 同样保留源像素，地表及机关前景通过游戏运行时合成。
+
+室内统一比例为 .42（registry.ts），家具图层、碰撞、站位、出生点须一起缩放。新增场景仍只注册定义，不修改角色移动核心。每次修改地图后运行 npm run maps，再检查初始、浮桥开启及索道启动三个状态。

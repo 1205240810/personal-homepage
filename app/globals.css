@@ -2877,3 +2877,203 @@ kbd {
     transition: none;
   }
 }
+
+/* River journal: restrained navigation over a continuous, moving game world. */
+.walker-portrait {
+  display: block;
+  flex-shrink: 0;
+  width: 32px;
+  height: 38px;
+  border-radius: 4px;
+  background: #e6ebd5 url('/art/explorer-walk.png') -10px -2px / 362px 272px
+    no-repeat;
+  image-rendering: pixelated;
+}
+.journey-status {
+  position: absolute;
+  right: 28px;
+  bottom: 26px;
+  z-index: 12;
+  pointer-events: none;
+  padding: 13px 17px 12px;
+  background: #f8f8e9e8;
+  backdrop-filter: blur(12px);
+  border: 1px solid #fff9;
+  border-radius: 5px;
+  box-shadow: 0 4px 24px #344e3612;
+  color: #475b48;
+  max-width: 300px;
+}
+.journey-location {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: #7b856e;
+}
+.journey-status p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 3px 0 9px;
+}
+.journey-stops {
+  display: flex;
+  gap: 5px;
+}
+.journey-stops i {
+  width: 24px;
+  height: 3px;
+  background: #8a967638;
+}
+.journey-stops i[data-done] {
+  background: #a78d4f;
+}
+.world-vignette {
+  background: linear-gradient(
+    180deg,
+    #183a2212,
+    transparent 16%,
+    transparent 88%,
+    #163f2710
+  );
+}
+.start-overline,
+.start-footnote,
+.start-colophon {
+  font-size: 12px;
+}
+.start-description {
+  font-size: 16px;
+}
+.start-read {
+  font-size: 14px;
+}
+.start-screen .start-copy {
+  max-width: 600px;
+}
+.river-atlas {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: #edf0dfef;
+  backdrop-filter: blur(18px);
+  padding: 100px max(30px, 6vw) 40px;
+  overflow-y: auto;
+  color: #3c5142;
+}
+.river-atlas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 1120px;
+  margin: 0 auto 20px;
+}
+.river-atlas-header h2 {
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.river-atlas-header p {
+  font-size: 14px;
+  color: #73806b;
+  margin-top: 5px;
+}
+.river-route-map {
+  width: 100%;
+  max-height: 350px;
+  display: block;
+  max-width: 1120px;
+  margin: 0 auto;
+  color: #718878;
+}
+.river-route-map text {
+  font-family: inherit;
+  font-size: 15px;
+  fill: #526450;
+}
+.river-atlas-links {
+  max-width: 1120px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid #82967544;
+  gap: 28px;
+}
+.river-atlas-links section {
+  padding: 24px 0 0;
+}
+.river-atlas-links small {
+  font-size: 12px;
+  color: #929781;
+  letter-spacing: 0.1em;
+}
+.river-atlas-links h3 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 7px 0;
+}
+.river-atlas-links p {
+  font-size: 13px;
+  color: #7d8974;
+  line-height: 1.8;
+  min-height: 44px;
+}
+.river-atlas-links button {
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+  margin-right: 18px;
+  color: #4b654c;
+  border-bottom: 1px solid #8ca07b55;
+}
+.river-atlas-note {
+  font-size: 13px;
+  color: #7c8771;
+  text-align: center;
+  margin-top: 20px;
+}
+@media (max-width: 700px) {
+  .journey-status {
+    top: 84px;
+    right: 14px;
+    bottom: auto;
+    padding: 8px 11px;
+    max-width: 225px;
+  }
+  .journey-location {
+    font-size: 10px;
+  }
+  .journey-status p {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .journey-stops {
+    display: none;
+  }
+  .river-atlas {
+    padding: 80px 22px 100px;
+  }
+  .river-route-map {
+    height: 190px;
+  }
+  .river-atlas-links {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  .river-atlas-links section {
+    padding-top: 16px;
+  }
+  .river-atlas-links h3 {
+    font-size: 16px;
+  }
+  .river-atlas-header h2 {
+    font-size: 23px;
+  }
+  .start-copy h1 {
+    font-size: 44px;
+  }
+  .first-visit-hint {
+    display: none;
+  }
+}
