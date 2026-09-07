@@ -1,0 +1,34 @@
+[
+  {
+    "id": "gdcpc-2022-silver",
+    "date": "2022-06",
+    "title": "GDCPC 广东大学生程序设计竞赛银奖",
+    "chapter": "undergraduate",
+    "source": "用户提供简历及已确认实施方案",
+    "relatedContentIds": []
+  },
+  {
+    "id": "robocom-2022-caip",
+    "date": "2022-08",
+    "title": "RoboCom 机器人开发者大赛 CAIP 全国总决赛本科组二等奖",
+    "chapter": "undergraduate",
+    "source": "用户提供简历及已确认实施方案",
+    "relatedContentIds": []
+  },
+  {
+    "id": "icpc-2022-hefei-bronze",
+    "date": "2022-11",
+    "title": "ICPC 亚洲区域赛合肥赛区铜奖",
+    "chapter": "undergraduate",
+    "source": "用户提供简历及已确认实施方案",
+    "relatedContentIds": ["cnblogs-16913984"]
+  },
+  {
+    "id": "ccsp-2022-south-silver",
+    "date": "2022-12",
+    "title": "CCSP 大学生计算机系统与程序设计竞赛华南赛区银奖",
+    "chapter": "undergraduate",
+    "source": "用户提供简历及已确认实施方案",
+    "relatedContentIds": []
+  }
+]

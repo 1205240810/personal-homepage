@@ -1,0 +1,132 @@
+{
+  "version": "1.10",
+  "tiledversion": "1.11.2",
+  "type": "map",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 48,
+  "height": 32,
+  "tilewidth": 32,
+  "tileheight": 32,
+  "infinite": false,
+  "nextlayerid": 3,
+  "nextobjectid": 200,
+  "tilesets": [],
+  "layers": [
+    {
+      "id": 1,
+      "name": "walkable",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 1,
+          "name": "floor-0",
+          "type": "floor",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 360,
+              "y": 350
+            },
+            {
+              "x": 1120,
+              "y": 350
+            },
+            {
+              "x": 1120,
+              "y": 806
+            },
+            {
+              "x": 930,
+              "y": 806
+            },
+            {
+              "x": 930,
+              "y": 940
+            },
+            {
+              "x": 670,
+              "y": 940
+            },
+            {
+              "x": 670,
+              "y": 806
+            },
+            {
+              "x": 360,
+              "y": 806
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "interactions",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 100,
+          "name": "life-bookshelf",
+          "type": "open-collection",
+          "x": 1090,
+          "y": 640,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 101,
+          "name": "games-table",
+          "type": "open-collection",
+          "x": 430,
+          "y": 510,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 102,
+          "name": "bench-notes",
+          "type": "open-collection",
+          "x": 440,
+          "y": 740,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 103,
+          "name": "life-lift",
+          "type": "enter-scene",
+          "x": 770,
+          "y": 892,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}

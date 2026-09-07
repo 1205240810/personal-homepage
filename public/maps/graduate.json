@@ -1,0 +1,148 @@
+{
+  "version": "1.10",
+  "tiledversion": "1.11.2",
+  "type": "map",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 48,
+  "height": 32,
+  "tilewidth": 32,
+  "tileheight": 32,
+  "infinite": false,
+  "nextlayerid": 3,
+  "nextobjectid": 200,
+  "tilesets": [],
+  "layers": [
+    {
+      "id": 1,
+      "name": "walkable",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 1,
+          "name": "floor-0",
+          "type": "floor",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 350,
+              "y": 390
+            },
+            {
+              "x": 640,
+              "y": 390
+            },
+            {
+              "x": 640,
+              "y": 442
+            },
+            {
+              "x": 925,
+              "y": 442
+            },
+            {
+              "x": 925,
+              "y": 390
+            },
+            {
+              "x": 1160,
+              "y": 390
+            },
+            {
+              "x": 1160,
+              "y": 815
+            },
+            {
+              "x": 927,
+              "y": 815
+            },
+            {
+              "x": 927,
+              "y": 900
+            },
+            {
+              "x": 665,
+              "y": 900
+            },
+            {
+              "x": 665,
+              "y": 815
+            },
+            {
+              "x": 350,
+              "y": 815
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "interactions",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 100,
+          "name": "study-desk",
+          "type": "open-collection",
+          "x": 380,
+          "y": 510,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 101,
+          "name": "engineering-bench",
+          "type": "open-collection",
+          "x": 1100,
+          "y": 650,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 102,
+          "name": "stage-screen",
+          "type": "open-content",
+          "x": 793,
+          "y": 470,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 103,
+          "name": "grad-lift",
+          "type": "enter-scene",
+          "x": 770,
+          "y": 861,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}

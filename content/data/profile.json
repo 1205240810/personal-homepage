@@ -1,0 +1,52 @@
+{
+  "id": "profile",
+  "displayName": "徒手拆机甲",
+  "name": "徒手拆机甲",
+  "blogURL": "https://www.cnblogs.com/tscjj",
+  "visibility": "interactive-profile-only",
+  "education": [
+    {
+      "id": "education-undergraduate",
+      "school": "深圳技术大学",
+      "degree": "本科",
+      "major": "物联网工程",
+      "start": "2019",
+      "end": "2023"
+    },
+    {
+      "id": "education-graduate",
+      "school": "西北工业大学",
+      "degree": "硕士",
+      "major": null,
+      "start": "2025",
+      "end": null,
+      "ongoing": true
+    }
+  ],
+  "experience": [
+    {
+      "id": "acm-assistant-coach",
+      "organization": "ACM 校集训队",
+      "role": "助理教练",
+      "start": "2020-09",
+      "end": "2022-12"
+    },
+    {
+      "id": "acm-club-lead",
+      "organization": "ACM 爱好者协会算法竞赛部",
+      "role": "部长",
+      "start": "2021-01",
+      "end": "2022-11"
+    }
+  ],
+  "historicalAchievements": [
+    {
+      "id": "codeforces-cm",
+      "platform": "Codeforces",
+      "title": "Candidate Master",
+      "rating": 1951,
+      "historical": true,
+      "note": "简历记录的历史成绩"
+    }
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "version": "1.10",
+  "tiledversion": "1.11.2",
+  "type": "map",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 48,
+  "height": 32,
+  "tilewidth": 32,
+  "tileheight": 32,
+  "infinite": false,
+  "nextlayerid": 3,
+  "nextobjectid": 200,
+  "tilesets": [],
+  "layers": [
+    {
+      "id": 1,
+      "name": "walkable",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 1,
+          "name": "floor-0",
+          "type": "floor",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 355,
+              "y": 360
+            },
+            {
+              "x": 1160,
+              "y": 360
+            },
+            {
+              "x": 1160,
+              "y": 775
+            },
+            {
+              "x": 990,
+              "y": 775
+            },
+            {
+              "x": 990,
+              "y": 890
+            },
+            {
+              "x": 665,
+              "y": 890
+            },
+            {
+              "x": 665,
+              "y": 810
+            },
+            {
+              "x": 355,
+              "y": 810
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "interactions",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 100,
+          "name": "algorithm-terminal",
+          "type": "open-collection",
+          "x": 1110,
+          "y": 477,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 101,
+          "name": "training-board",
+          "type": "open-content",
+          "x": 773,
+          "y": 393,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 102,
+          "name": "honors-cabinet",
+          "type": "open-content",
+          "x": 380,
+          "y": 510,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 103,
+          "name": "icpc-notebook",
+          "type": "open-content",
+          "x": 450,
+          "y": 744,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 104,
+          "name": "ug-lift",
+          "type": "enter-scene",
+          "x": 770,
+          "y": 861,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}
