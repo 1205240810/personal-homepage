@@ -30,11 +30,11 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 ## 接入新内容与场景
 
 - `ContentSource.list/get` 位于 `lib/content/source.ts`，阅读组件只接收其结果。后续可替换为构建时 API 采集；地图不请求第三方服务。
-- `SceneDefinition` 位于 `lib/world/types.ts`，注册在 `lib/world/registry.ts`。新增唯一 ID、背景、出生点、可走多边形、互动节点和入口，再运行 `npm run maps` 输出 Tiled 文件。
+- `SceneDefinition` 位于 `lib/world/types.ts`，注册在 `lib/world/registry.ts`。新增唯一 ID、背景、独立图层、出生点、可走多边形、家具脚部碰撞、互动节点和入口，再运行 `npm run maps` 输出 Tiled 文件。
 - 本版注册表是地图坐标唯一源，Tiled 文件为可检查的导出结果。若先在 Tiled 调整空间，应将修改同步回注册表，再重新导出；检查会拒绝两者不一致。
-- `WorldAction` 的 open-content / open-collection / enter-scene 由 React 展示层和世界桥接分发。相册、项目、Demo 需要新增明确的内容类型和展示组件，再加入 action 分支；不用改角色控制。
-- 为新资产扩展 `SceneDefinition.art`，引擎按定义加载。没有内容的入口不注册。所有场景 ID 与内容 ID 分离。
-- `npm run check` 检查重复 ID、失效入口、无效出生点、不能接近的物件、缺失文章、公开草稿泄漏，以及新 Markdown 自动收录。
+- `WorldAction` 的 open-content / open-collection / open-projects / open-game / enter-scene / kick-ball / discover 由 React 展示层和世界桥接分发。相册和新 Demo 类型需要新增明确的数据及展示组件，再加入 action 分支；不用改角色控制。
+- 为新资产扩展 `SceneDefinition.art/layers/doors`，引擎按定义加载。没有内容的入口不注册。所有场景 ID 与内容 ID 分离。
+- `npm run check` 检查重复 ID、失效入口、无效出生点、失效图层/门、不能沿有效路径到达的物件、缺失文章、公开草稿泄漏，以及新 Markdown 自动收录。
 
 ## 官方备份迁移
 
@@ -46,9 +46,9 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 ## 状态、动效与排障
 
-探索状态仅保存在本机 `mecha-archive-world-v1`，包含位置、已查看物件和装甲开关。它不限制阅读权限。系统“减少动态效果”启用后跳过镜头和装甲运动。浏览器存储不可用时仍可探索。
+探索状态仅保存在本机 `mecha-archive-world-v1`，包含位置、已查看物件、小游戏最佳成绩、彩蛋与小模型装甲开关。它不限制阅读权限。布局变更时提高 `layoutVersion`，旧位置会回到对应出生点，保留内容进度。系统“减少动态效果”启用后跳过镜头、门与装甲运动，关闭树木摆动。浏览器存储不可用时仍可探索。
 
-若地图资源加载失败，直接用右上角目录、`/archive` 或文章 URL 阅读。图片和正文资源独立于 Phaser；阅读不等待游戏启动。
+若地图资源加载失败，直接用右上角文章入口、`/archive` 或文章 URL 阅读。图片和正文资源独立于 Phaser；阅读不等待游戏启动。
 
 已提供保守的官方 SQLite 检查器：
 
@@ -57,3 +57,13 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 ```
 
 它保留原始文件和 SHA-256，核对官方 blog_Content 表，只提取访问权限为公开的文章到被忽略的 review.json。**不会自动修改站点文章**。已迁入的 ID 带出既有标签与地址；新记录一律待核对。官方 SQLite 阅读器中没有可靠的已发表状态或标签映射，不能把访问权限 0 当成已发表。依据：[官方客户端固定版本](https://github.com/cnblogs/vscode-cnb/blob/3838c373338ad5a1376cb6223000e6e2b61d4890/src/service/blog-export/blog-export-post.store.ts)。JSON/XML 待取得实际备份再添加适配，避免猜测字段丢内容。
+
+## 项目、图层与音乐
+
+公开项目维护在 `content/data/projects.json`，记录仓库、描述、实际可用的演示链接和核对日期。不自动提交 GitHub 账号变更。
+
+`lib/world/courtyard-layers.ts` 与 `interior-layers.ts` 定义独立原画层。`anchor` 是原素材脚锚点，`sourceWidth` 与 `width` 决定比例，`outline` 只决定原生渲染蒙版与点击区域，`depth` 与角色脚底 y 比较。**outline 不可直接拿来当碰撞框**：人物应能站到桌子的背后，碰撞只限制接地面积。静态轮廓在场景载入时由 Phaser 合成为可复用纹理，离开场景时释放，不在每帧重复跑遮罩。源图文件保持原样。室内基底已清空桌椅；不要改回带家具的原图，否则会出现重复。
+
+新增门将 `nodeId` 对应到真实互动节点，在 `doors` 填原画门洞尺寸。小游戏反馈由明确的 WorldAction 分支处理，不引入通用插件系统。新增场景和互动仍运行 `npm run maps` 与 `npm run check`。
+
+开始菜单在当前标签页首次打开时显示，左上头像可以再次打开。音乐音量保存在 `mecha-music-volume`；音乐每次打开页面都由访客主动播放，不把自动播放权限当作可用前提。更换音乐需要同步音源、展示时长与 THIRD_PARTY_NOTICES 中的授权。

@@ -14,7 +14,7 @@
     "predev": "CONTENT_PREVIEW=1 node scripts/compile-content.mjs",
     "prebuild": "node scripts/compile-content.mjs && node --experimental-strip-types scripts/validate-world.ts",
     "build:preview": "CONTENT_PREVIEW=1 npm run build",
-    "check": "tsc --noEmit && node --experimental-strip-types scripts/validate-world.ts && node scripts/check-content.mjs",
+    "check": "tsc --noEmit && node --experimental-strip-types scripts/validate-world.ts && node scripts/check-content.mjs && node --experimental-strip-types scripts/check-world.ts",
     "maps": "node --experimental-strip-types scripts/generate-maps.ts"
   },
   "dependencies": {

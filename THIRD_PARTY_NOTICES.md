@@ -9,3 +9,11 @@
 Phaser、React、TypeScript、KaTeX、Marked、sanitize-html、lucide-react 以及 Sites 模板依赖依各自分发包中的许可证使用。安装包保留 LICENSE；项目锁文件记录准确版本。Sites CLI 生成的 shadcn 组件保留在 components/ui 中。本项目原创场景资产不取自以上参考项目。
 
 博客原文著作权归原作者，来源链接显示于各篇正文末尾。
+
+## 背景音乐
+
+**Morning — Kevin MacLeod (incompetech.com)**，ISRC USUAN2300003，使用 [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)。
+
+- [作者原曲与授权页](https://incompetech.com/music/royalty-free/index.html?Search=Search&isrc=USUAN2300003)
+- 音源来自作者提供的 MP3，原曲未剪辑，循环由播放器控制。
+- 网站音乐菜单中同时保留作者、曲名、来源与许可证链接。

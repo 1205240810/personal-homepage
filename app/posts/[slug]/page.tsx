@@ -23,7 +23,7 @@ export default async function Post({
   return (
     <main className="reading-page">
       <header className="reading-header">
-        <a href="/">← 返回机甲世界</a>
+        <a href="/">← 返回小院</a>
         <a href="/archive">全部记录</a>
       </header>
       <ArticleView article={d.article} />

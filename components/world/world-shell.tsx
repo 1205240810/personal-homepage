@@ -7,12 +7,19 @@ import {
   ArrowUp,
   ArrowUpRight,
   BookOpen,
-  Compass,
   Layers3,
+  CircleHelp,
+  FolderGit2,
+  UserRound,
   LoaderCircle,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
 import {
   Sheet,
   SheetContent,
@@ -29,6 +36,12 @@ import type {
 } from '@/lib/world/types';
 import type { Article, ArticleSummary } from '@/lib/content/source';
 import { ArticleView, ProfileView } from './archive-reader';
+import { MusicControl } from './music-control';
+import { ProjectsView } from './projects-view';
+import { MiniGameView, GAME_TITLES } from './mini-games';
+import { WorldAtlas } from './world-atlas';
+import { StartScreen, WalkerPortrait } from './start-screen';
+import type { MiniGameId } from '@/lib/world/types';
 
 type Panel =
   | 'directory'
@@ -38,6 +51,8 @@ type Panel =
   | 'honors'
   | 'experience'
   | 'graduate-log'
+  | 'projects'
+  | 'game'
   | null;
 export default function WorldShell({
   posts,
@@ -59,7 +74,13 @@ export default function WorldShell({
     [article, setArticle] = useState<Article | null>(null),
     [articleError, setArticleError] = useState(''),
     [snapshot, setSnapshot] = useState<WorldSnapshot | null>(null),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState(''),
+    [miniGame, setMiniGame] = useState<MiniGameId>('circuit'),
+    [help, setHelp] = useState(false),
+    [intro, setIntro] = useState(true),
+    [welcome, setWelcome] = useState(true),
+    [leaving, setLeaving] = useState(false);
+  const welcomeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const actionRef = useRef<(action: WorldAction) => void>(() => {}),
     abortRef = useRef<AbortController | null>(null);
   const openArticle = useCallback((id: string) => {
@@ -82,6 +103,27 @@ export default function WorldShell({
       });
   }, []);
   actionRef.current = (action) => {
+    if (action.type === 'open-projects') {
+      setPanel('projects');
+      return;
+    }
+    if (action.type === 'open-game') {
+      setMiniGame(action.game);
+      setPanel('game');
+      return;
+    }
+    if (action.type === 'discover') {
+      setNotice(
+        action.discovery === 'sleepy-eye'
+          ? '小模型眨了眨眼：今天也辛苦了。'
+          : '找到一位毛茸茸的值班员。它似乎比你更熟悉这里。',
+      );
+      return;
+    }
+    if (action.type === 'activate-armor') {
+      setNotice('小模型的装甲打开了，桌上的指示灯亮了起来。');
+      return;
+    }
     if (action.type === 'open-collection') {
       setChapter(action.chapter || 'all');
       setTag('all');
@@ -129,6 +171,7 @@ export default function WorldShell({
             }
           },
           onError: setError,
+          onNotice: setNotice,
         });
       })
       .catch(() => setError('探索画面暂时无法启动，你仍然可以从目录阅读。'));
@@ -140,9 +183,41 @@ export default function WorldShell({
     };
   }, []);
   useEffect(() => {
-    game.current?.pause(!!panel || blueprint);
+    game.current?.pause(!!panel || blueprint || help || welcome);
     if (!panel) abortRef.current?.abort();
-  }, [panel, blueprint, ready]);
+  }, [panel, blueprint, help, ready, welcome]);
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('courtyard-entered')) setWelcome(false);
+    } catch {}
+    return () => {
+      if (welcomeTimer.current) clearTimeout(welcomeTimer.current);
+    };
+  }, []);
+  function start(read = false) {
+    try {
+      sessionStorage.setItem('courtyard-entered', '1');
+    } catch {}
+    if (read) {
+      setWelcome(false);
+      setChapter('all');
+      setTag('all');
+      setPanel('directory');
+      return;
+    }
+    setLeaving(true);
+    const reduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+    welcomeTimer.current = setTimeout(
+      () => {
+        setWelcome(false);
+        setLeaving(false);
+        setIntro(true);
+      },
+      reduced ? 0 : 850,
+    );
+  }
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
@@ -150,7 +225,7 @@ export default function WorldShell({
         e.target instanceof HTMLTextAreaElement
       )
         return;
-      if (e.code === 'KeyM' && !panel) {
+      if (e.code === 'KeyM' && !panel && !welcome) {
         e.preventDefault();
         setBlueprint((x) => !x);
       }
@@ -158,7 +233,7 @@ export default function WorldShell({
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  }, [panel]);
+  }, [panel, welcome]);
   useEffect(() => {
     if (!notice) return;
     const id = setTimeout(() => setNotice(''), 4500);
@@ -177,51 +252,63 @@ export default function WorldShell({
         .flatMap((p) => p.tags),
     ),
   ];
+  useEffect(() => {
+    if (welcome) return;
+    const timer = setTimeout(() => setIntro(false), 7500);
+    return () => clearTimeout(timer);
+  }, [welcome]);
   const enter = (id: string) => {
     setBlueprint(false);
     setPanel(null);
     game.current?.pause(false);
-    game.current?.enter(id);
+    const returnSpawn: Record<string, string> = {
+      undergraduate: 'blog',
+      graduate: 'projects',
+      life: 'lounge',
+    };
+    game.current?.enter(id, id === 'hub' ? returnSpawn[sceneId] : undefined);
   };
-  const interact = () => {
-    if (near?.action.type === 'activate-armor')
-      setNotice(
-        snapshot?.armorOpen
-          ? '装甲已经打开，线路仍然亮着。'
-          : '装甲正在移开，旧档案重新亮起。',
-      );
-    game.current?.interact();
-  };
+  const interact = () => game.current?.interact();
   const close = () => {
     setPanel(null);
     setArticleError('');
   };
   const panelTitles: Record<string, string> = {
-    profile: '维修工牌',
-    education: '驾驶舱日志',
-    honors: '荣誉器材柜',
-    experience: '集训白板',
-    'graduate-log': '阶段记录屏',
+    profile: '住处档案',
+    education: '教育与经历',
+    honors: '荣誉记录',
+    experience: '集训经历',
+    'graduate-log': '阶段记录',
   };
   return (
     <main
-      className={`world-shell ${blueprint ? 'is-blueprint' : ''}`}
-      aria-label="沉睡机甲档案馆，可探索的个人世界"
+      className={`world-shell ${blueprint ? 'is-blueprint' : ''} ${welcome ? 'has-start-screen' : ''}`}
+      aria-label="林间小院，可探索的个人世界"
     >
       <div className="world-art" aria-hidden="true" />
       <div
         ref={mount}
         className={`game-mount ${ready ? 'is-ready' : ''}`}
         role="application"
-        aria-label="用方向键或 WASD 移动，E 与附近物件互动，M 打开拆解图。也可点击目录直接阅读。"
+        aria-label="用方向键或 WASD 移动，E 与附近物件互动，M 打开小院地图。也可点击目录直接阅读。"
         tabIndex={0}
       />
       <div className="world-vignette" />
       <header className="world-header">
-        <a className="wordmark" href="/" aria-label="徒手拆机甲首页">
-          <span className="brand-mark">拆</span>
+        <a
+          className="wordmark"
+          href="/"
+          aria-label="徒手拆机甲开始菜单"
+          onClick={(event) => {
+            event.preventDefault();
+            setPanel(null);
+            setBlueprint(false);
+            setWelcome(true);
+          }}
+        >
+          <WalkerPortrait />
           <span>
-            徒手拆机甲<small>THE SLEEPING ARCHIVE</small>
+            徒手拆机甲<small>THE COURTYARD</small>
           </span>
         </a>
         <nav aria-label="主导航">
@@ -238,37 +325,55 @@ export default function WorldShell({
             }}
           >
             <BookOpen size={15} />
-            目录
+            文章
           </Button>
           <Button
             variant="ghost"
             className="nav-button"
-            onClick={() => setBlueprint((v) => !v)}
-            aria-pressed={blueprint}
+            render={<a href="/projects" />}
+            nativeButton={false}
+            onClick={(event) => {
+              event.preventDefault();
+              setPanel('projects');
+            }}
           >
-            <Layers3 size={15} />
-            {blueprint ? '返回世界' : '拆解图'}
-            <kbd>M</kbd>
+            <FolderGit2 size={15} />
+            项目
           </Button>
+          <Button
+            variant="ghost"
+            className="nav-button"
+            render={<a href="/about" />}
+            nativeButton={false}
+            onClick={(event) => {
+              event.preventDefault();
+              setPanel('profile');
+            }}
+          >
+            <UserRound size={15} />
+            关于
+          </Button>
+          <MusicControl reading={!!panel} />
         </nav>
       </header>
+      {welcome && (
+        <StartScreen
+          ready={ready}
+          error={error}
+          leaving={leaving}
+          onEnter={() => start()}
+          onRead={() => start(true)}
+        />
+      )}
       {!blueprint && (
         <>
-          <div className="world-caption">
-            <span className="eyebrow">{scene.description}</span>
-            <h1>
-              {scene.title}
-              <span>{scene.en}</span>
-            </h1>
-            {sceneId === 'hub' ? (
-              <p>沿着亮起的线路，去往代码、旧事与生活。</p>
-            ) : (
-              <button className="return-link" onClick={() => enter('hub')}>
-                <ArrowLeft size={13} />
-                返回维修甲板
-              </button>
-            )}
-          </div>
+          <h1 className="sr-only">{scene.title}</h1>
+          {sceneId !== 'hub' && (
+            <button className="room-return" onClick={() => enter('hub')}>
+              <ArrowLeft size={15} />
+              回到小院
+            </button>
+          )}
           {ready && near && !panel && (
             <button className="interaction-prompt" onClick={interact}>
               <kbd>E</kbd>
@@ -282,12 +387,14 @@ export default function WorldShell({
           {notice && (
             <div className="world-notice" role="status">
               {notice}
-              <button onClick={() => game.current?.skip()}>跳过动画</button>
+              {notice.includes('装甲') && (
+                <button onClick={() => game.current?.skip()}>跳过动画</button>
+              )}
             </div>
           )}
           {!ready && !error && (
             <div className="world-loading" role="status">
-              <LoaderCircle size={14} /> 正在接通档案馆
+              <LoaderCircle size={14} /> 正在推开院门
             </div>
           )}
           {error && (
@@ -338,93 +445,51 @@ export default function WorldShell({
         </>
       )}
       {blueprint && (
-        <section className="blueprint-layer" aria-label="机甲拆解图">
-          <div className="blueprint-grid" />
-          <div className="atlas-heading">
-            <span className="eyebrow">THE ANATOMY OF A LIFE</span>
-            <h2>
-              把故事，
-              <br />
-              一层层拆开。
-            </h2>
-            <p>
-              选择一个舱室，继续探索。
-              <br />
-              也可以直接翻开其中的记录。
-            </p>
-            <Button
-              variant="ghost"
-              className="atlas-return"
-              onClick={() => setBlueprint(false)}
-            >
-              <ArrowLeft size={14} />
-              返回所在位置
-            </Button>
-          </div>
-          <div className="atlas-image" />
-          <svg
-            className="atlas-lines"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <path d="M 74 43 L 57 43 L 57 62 M 65 26 L 85 26 L 85 43 M 77 73 L 87 73 L 87 59" />
-          </svg>
-          <div className="atlas-chapters">
-            {CHAPTERS.map((c, i) => {
-              const s = getScene(c.scene),
-                items = posts.filter((p) => p.chapter === c.id);
-              return (
-                <div key={c.id} className={`atlas-chapter chapter-${c.id}`}>
-                  <span className="atlas-number">0{i + 1}</span>
-                  <div>
-                    <small>
-                      {c.title} / {c.subtitle}
-                    </small>
-                    <h3>{s.title}</h3>
-                    <p>
-                      {items.length
-                        ? `${items.length} 篇记录 · ${items[0].date}`
-                        : '新的记录正在整理'}
-                    </p>
-                    <div className="atlas-actions">
-                      <Button size="sm" onClick={() => enter(c.scene)}>
-                        <Compass size={13} />
-                        进入场景
-                      </Button>
-                      <button
-                        onClick={() => {
-                          setChapter(c.id);
-                          setTag('all');
-                          setPanel('directory');
-                        }}
-                      >
-                        阅读目录
-                        <ArrowUpRight size={12} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <WorldAtlas
+          posts={posts}
+          snapshot={snapshot}
+          onClose={() => setBlueprint(false)}
+          onAction={(action) => actionRef.current(action)}
+          onWalk={(node) => {
+            setBlueprint(false);
+            game.current?.pause(false);
+            game.current?.walkTo(node);
+          }}
+        />
       )}
-      <footer className="world-footer">
-        <span className="world-coordinate">
-          {ready
-            ? `${scene.en} / 已探索 ${snapshot?.visited.length || 0} 处`
-            : 'THE SLEEPING ARCHIVE'}
-        </span>
-        <span className="control-hint">
-          <kbd>W A S D</kbd> 移动 <i />
-          <kbd>E</kbd> 互动 <i />
-          <kbd>M</kbd> 总览
-        </span>
-        <span className="live-label">
-          <b />
-          {snapshot?.armorOpen ? '旧档案已经苏醒' : '探索一段故事'}
-        </span>
+      <footer className="quiet-world-tools">
+        <Popover open={help} onOpenChange={setHelp}>
+          <PopoverTrigger
+            render={
+              <button aria-label="操作说明" className="world-tool-button" />
+            }
+          >
+            <CircleHelp size={18} />
+          </PopoverTrigger>
+          <PopoverContent className="world-help" align="start">
+            <p>点击房子，沿路走到门前。</p>
+            <p>
+              <kbd>WASD</kbd> / 方向键移动
+              <br />
+              <kbd>E</kbd> 与附近物件互动
+              <br />
+              <kbd>F</kbd> 踢小球
+              <br />
+              <kbd>M</kbd> 小院地图
+            </p>
+            <p>也可以从上方直接阅读内容。</p>
+          </PopoverContent>
+        </Popover>
+        <button
+          className="world-tool-button"
+          aria-label="小院地图"
+          onClick={() => setBlueprint((v) => !v)}
+        >
+          <Layers3 size={18} />
+        </button>
+        {intro && !panel && (
+          <span className="first-visit-hint">点一间房子，沿着小路走走。</span>
+        )}
       </footer>
       <Sheet
         open={panel !== null}
@@ -433,7 +498,7 @@ export default function WorldShell({
         }}
       >
         <SheetContent
-          className={`directory-sheet ${panel === 'article' ? 'reader-sheet' : ''}`}
+          className={`directory-sheet ${panel === 'article' ? 'reader-sheet' : panel === 'game' ? 'game-sheet' : ''}`}
           showCloseButton={false}
         >
           <div className="panel-heading">
@@ -442,7 +507,11 @@ export default function WorldShell({
                 ? 'THE ARCHIVE'
                 : panel === 'article'
                   ? 'A PAGE FROM THE ARCHIVE'
-                  : 'FOUND IN THE COCKPIT'}
+                  : panel === 'projects'
+                    ? 'THE WORK STUDIO'
+                    : panel === 'game'
+                      ? 'AFTER HOURS'
+                      : 'AT HOME'}
             </span>
             <Button
               variant="ghost"
@@ -455,14 +524,8 @@ export default function WorldShell({
           </div>
           {panel === 'directory' ? (
             <>
-              <SheetTitle className="panel-title">
-                旧日的代码，
-                <br />
-                沿途的故事。
-              </SheetTitle>
-              <SheetDescription>
-                每一篇记录，都在这个世界里有一个位置。
-              </SheetDescription>
+              <SheetTitle className="panel-title">文章</SheetTitle>
+              <SheetDescription>算法、工程与代码之外的生活。</SheetDescription>
               <Tabs
                 value={chapter}
                 onValueChange={(v) => {
@@ -529,7 +592,7 @@ export default function WorldShell({
                   <ArrowUpRight size={13} />
                 </a>
                 <button onClick={() => setPanel('profile')}>
-                  关于这台机甲的主人
+                  关于小院的主人
                   <ArrowUpRight size={13} />
                 </button>
               </div>
@@ -539,6 +602,31 @@ export default function WorldShell({
                   篇待核对草稿 · 仅用于私有预览
                 </p>
               )}
+            </>
+          ) : panel === 'projects' ? (
+            <>
+              <SheetTitle className="panel-title">GitHub 项目</SheetTitle>
+              <SheetDescription>
+                项目说明、源码与可以直接打开的演示。
+              </SheetDescription>
+              <ProjectsView />
+            </>
+          ) : panel === 'game' ? (
+            <>
+              <SheetTitle className="panel-title">
+                {GAME_TITLES[miniGame]}
+              </SheetTitle>
+              <SheetDescription className="sr-only">
+                小游戏进行时人物暂停，关闭后回到原来的位置。
+              </SheetDescription>
+              <MiniGameView
+                key={miniGame}
+                game={miniGame}
+                best={snapshot?.games[miniGame]}
+                onComplete={(moves) =>
+                  game.current?.completeGame(miniGame, moves)
+                }
+              />
             </>
           ) : panel === 'article' ? (
             <>

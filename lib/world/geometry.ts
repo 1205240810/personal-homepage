@@ -12,9 +12,14 @@ export function insidePolygon(point: Point, polygon: number[][]): boolean {
   }
   return inside;
 }
-export const canWalk = (p: Point, areas: number[][][]) =>
+export const canWalk = (
+  p: Point,
+  areas: number[][][],
+  obstacles: number[][][] = [],
+) =>
   Number.isFinite(p.x) &&
   Number.isFinite(p.y) &&
-  areas.some((a) => insidePolygon(p, a));
+  areas.some((a) => insidePolygon(p, a)) &&
+  !obstacles.some((a) => insidePolygon(p, a));
 export const distance = (a: Point, b: Point) =>
   Math.hypot(a.x - b.x, a.y - b.y);

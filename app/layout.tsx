@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import 'katex/dist/katex.min.css';
 export const metadata: Metadata = {
-  title: '徒手拆机甲 · 沉睡机甲档案馆',
-  description: '在一台沉睡的机甲里，探索代码、旧事与生活。',
+  title: '徒手拆机甲 · 林间小院',
+  description: '在晴日下午的小院里，翻阅代码、项目与生活记录。',
   icons: { icon: '/favicon.svg' },
   robots: { index: false, follow: false },
 };
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" className="dark">
+    <html lang="zh-CN">
       <body>{children}</body>
     </html>
   );

@@ -1,16 +1,26 @@
+import type { SceneryLayer, DoorDefinition } from './scenery';
 export type Chapter = 'undergraduate' | 'graduate' | 'life';
 export type Point = { x: number; y: number };
+export type MiniGameId = 'circuit' | 'memory';
+export type DiscoveryId = 'sleepy-eye' | 'maintenance-cat';
 export type WorldAction =
   | { type: 'open-content'; contentId: string }
   | { type: 'open-collection'; chapter?: Chapter }
   | { type: 'enter-scene'; sceneId: string; spawnId?: string }
-  | { type: 'activate-armor' };
+  | { type: 'open-projects' }
+  | { type: 'open-game'; game: MiniGameId }
+  | { type: 'discover'; discovery: DiscoveryId }
+  | { type: 'activate-armor' }
+  | { type: 'kick-ball' };
 export type InteractionNode = Point & {
   id: string;
   label: string;
   hint: string;
   action: WorldAction;
   radius?: number;
+  sign?: string;
+  category?: 'blog' | 'profile' | 'projects' | 'play' | 'exit';
+  hidden?: boolean;
 };
 export type SceneDefinition = {
   id: string;
@@ -20,16 +30,23 @@ export type SceneDefinition = {
   description: string;
   art: string;
   frame?: number;
+  layers?: SceneryLayer[];
+  doors?: DoorDefinition[];
   spawnPoints: Record<string, Point>;
   walkable: number[][][];
+  obstacles?: number[][][];
+  layoutVersion?: number;
   nodes: InteractionNode[];
   overview: Point;
 };
 export type WorldSnapshot = {
+  layoutVersion?: number;
   sceneId: string;
   position: Point;
   armorOpen: boolean;
   visited: string[];
+  discoveries: DiscoveryId[];
+  games: Partial<Record<MiniGameId, number>>;
 };
 export type GameHandle = {
   destroy(): void;
@@ -39,4 +56,6 @@ export type GameHandle = {
   setDirection(direction: Point): void;
   snapshot(): WorldSnapshot;
   skip(): void;
+  completeGame(game: MiniGameId, moves: number): void;
+  walkTo(nodeId: string): void;
 };

@@ -182,10 +182,10 @@ export function ProfileView({
           </div>
         </section>
       )}
-      {section === 'honors' && (
+      {['profile', 'honors'].includes(section) && (
         <section>
           <span className="eyebrow">UNDERGRADUATE HONORS</span>
-          <h2>留在训练舱里的荣誉</h2>
+          <h2>本科阶段的荣誉</h2>
           {awards.map((a) => (
             <div className="award-item" key={a.id}>
               <time>{a.date}</time>
