@@ -29,9 +29,9 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 ## 接入新内容与场景
 
-- 默认 `/` 的 Workbench 与 `/explore` 的 WorldShell 共用 `ContentSource.list/get`。首页精选只取正式文章，栏目自动收录新增内容。
-- `lib/world/registry.ts` 是空间唯一数据源。SceneDefinition 的 `width/height` 对应背景，`groundY` 是角色脚底线，`playerScale` 控制人物与家具的比例；节点、出生点应落在同一脚底线。房间的 `returnTo` 指向枢纽的独立返回点。
-- 当前是横版单层维修通道，不是自由俯视移动。新增舱室只需注册背景、脚底线、人物比例、返回点和互动节点，不改角色控制。室内 `frame` 为三行图集中的索引；普通独立背景不设 frame。
+- `/` 引导页下的 `/workbench` 与 `/explore` 共用 `ContentSource.list/get`。工作台精选只取正式文章，栏目自动收录新增内容。
+- `lib/world/registry.ts` 是空间唯一数据源。SceneDefinition 的 `width/height` 对应背景，`walkable` 指定可通行多边形，`obstacles` 指定家具脚底，`foreground` 为按深度遮挡的原画轮廓；`playerScale` 控制人物比例。节点与出生点必须可通行。`returnTo` 指向枢纽独立返回点。
+- 当前为斜俯视 2.5D；新增舱室只需注册背景、地面、家具、人物比例、返回点和互动节点，不改角色控制。室内 `frame` 为三行图集中的索引；普通独立背景不设 frame。
 - 运行 `npm run maps` 同步 Tiled 导出，再运行 `npm run check`。不能只编辑导出地图而不同步注册表。
 - 内容动作使用 open-content / open-collection / open-projects；可选游戏使用 open-game，场景连接使用 enter-scene。inspect / discover 只承接小反馈，任何内容均不依赖游戏完成。
 - `npm run check` 验证重复 ID、入口、出生点、节点可达性、文章引用、草稿隔离与 Markdown 自动收录。
@@ -64,8 +64,10 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 
 公开项目维护在 `content/data/projects.json`，保留源链接、描述核对日期和实际演示地址。
 
-当前背景为 `public/art/mecha-section.png` 和三行 `mecha-cabins.png`；图集由引擎按原图行高取帧，源像素保持原样。生成提示词见 `docs/design/mecha-sideview-assets.md`。旧 courtyard / river 图层与素材保留作历史参考，不在当前场景加载。
+当前背景为 `public/art/mecha-isometric.png` 和三行 `mecha-interiors.png`，头像为 `mecha-avatar.png`。原始提示词见 `docs/design/mecha-isometric-assets.md`。图像文件保留原始像素；家具前景在运行时按多边形裁取并按脚底深度叠放。旧 courtyard / river / sideview 资源仅作历史参考，不在当前场景加载。
 
-角色使用 `explorer-walk.png` 与 `explorer-frames.json` 中测量好的帧矩形、脚锚点，横版只使用左右两组帧，不按等宽网格盲切。角色在维修道前景移动，通道不延伸到背景的桌椅和机体。
+角色由 `jointed-player.ts` 的 Canvas 关节函数绘制，`player.ts` 一次生成四方向、每方向 16 帧行走与独立 idle 纹理。脚锚点为 (64,166)，画布 128×176。完整步幅为 128×playerScale 世界单位，与 engine 移动距离同步；改步幅必须同步两处，不能用帧率掩盖滑步。
+
+两个项目示例在 `project-workbench.tsx`。OSPF 规划函数在 `lib/project-preview.ts`；相册样本在 `content/data/album-preview.json`，照片在 `public/art/album`。保留原始规则标签和分值，不把规则标签宣传成准确语义识别。地址规划真实本地计算，应用、下发及 Ping 明确为模拟回执。
 
 音乐音量保存在 `mecha-music-volume`，每次打开页面均由访客主动播放。更换曲目时同步来源和 THIRD_PARTY_NOTICES 授权记录。

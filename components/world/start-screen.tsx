@@ -68,5 +68,13 @@ export function StartScreen({
 }
 
 export function WalkerPortrait() {
-  return <span className="walker-portrait" aria-hidden="true" />;
+  return (
+    <img
+      className="mecha-portrait"
+      src="/art/mecha-avatar.png"
+      alt="小机甲"
+      width="46"
+      height="46"
+    />
+  );
 }

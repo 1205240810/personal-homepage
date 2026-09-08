@@ -4,7 +4,7 @@
   "type": "map",
   "orientation": "orthogonal",
   "renderorder": "right-down",
-  "width": 50,
+  "width": 28,
   "height": 19,
   "tilewidth": 32,
   "tileheight": 19,
@@ -22,7 +22,62 @@
       "x": 0,
       "y": 0,
       "draworder": "topdown",
-      "objects": []
+      "objects": [
+        {
+          "id": 300,
+          "name": "obstacle-0",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 407,
+              "y": 220
+            },
+            {
+              "x": 477,
+              "y": 220
+            },
+            {
+              "x": 477,
+              "y": 257
+            },
+            {
+              "x": 407,
+              "y": 257
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 301,
+          "name": "obstacle-1",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 632,
+              "y": 251
+            },
+            {
+              "x": 697,
+              "y": 251
+            },
+            {
+              "x": 697,
+              "y": 319
+            },
+            {
+              "x": 632,
+              "y": 319
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
     },
     {
       "id": 1,
@@ -42,20 +97,60 @@
           "y": 0,
           "polygon": [
             {
-              "x": 38,
-              "y": 517
+              "x": 280,
+              "y": 228
             },
             {
-              "x": 1562,
-              "y": 517
+              "x": 612,
+              "y": 228
             },
             {
-              "x": 1562,
-              "y": 553
+              "x": 662,
+              "y": 298
             },
             {
-              "x": 38,
-              "y": 553
+              "x": 700,
+              "y": 362
+            },
+            {
+              "x": 689,
+              "y": 429
+            },
+            {
+              "x": 613,
+              "y": 481
+            },
+            {
+              "x": 523,
+              "y": 494
+            },
+            {
+              "x": 487,
+              "y": 550
+            },
+            {
+              "x": 400,
+              "y": 550
+            },
+            {
+              "x": 366,
+              "y": 494
+            },
+            {
+              "x": 271,
+              "y": 481
+            },
+            {
+              "x": 189,
+              "y": 431
+            },
+            {
+              "x": 193,
+              "y": 340
+            },
+            {
+              "x": 229,
+              "y": 293
             }
           ],
           "visible": true,
@@ -77,8 +172,8 @@
           "id": 100,
           "name": "life-exit",
           "type": "enter-scene",
-          "x": 155,
-          "y": 535,
+          "x": 445,
+          "y": 526,
           "width": 0,
           "height": 0,
           "point": true,
@@ -89,8 +184,8 @@
           "id": 101,
           "name": "profile-badge",
           "type": "open-content",
-          "x": 1400,
-          "y": 535,
+          "x": 615,
+          "y": 321,
           "width": 0,
           "height": 0,
           "point": true,
@@ -101,8 +196,8 @@
           "id": 102,
           "name": "cockpit-log",
           "type": "open-collection",
-          "x": 790,
-          "y": 535,
+          "x": 295,
+          "y": 291,
           "width": 0,
           "height": 0,
           "point": true,
@@ -113,8 +208,8 @@
           "id": 103,
           "name": "sleeping-signal",
           "type": "discover",
-          "x": 920,
-          "y": 535,
+          "x": 460,
+          "y": 293,
           "width": 0,
           "height": 0,
           "point": true,

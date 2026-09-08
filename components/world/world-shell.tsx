@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
+  ArrowUp,
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
   BookOpen,
@@ -257,12 +259,12 @@ export default function WorldShell({
         ref={mount}
         className={`game-mount ${ready ? 'is-ready' : ''}`}
         role="application"
-        aria-label="用左右方向键或 A / D 移动，E 与附近物件互动，M 打开机甲拆解图。也可点击目录直接阅读。"
+        aria-label="用方向键或 WASD 移动，E 与附近物件互动，M 打开机甲拆解图。也可点击目录直接阅读。"
         tabIndex={0}
       />
       <div className="world-vignette" />
       <header className="world-header">
-        <a className="wordmark" href="/" aria-label="返回精密工作台首页">
+        <a className="wordmark" href="/" aria-label="回到引导页">
           <WalkerPortrait />
           <span>
             徒手拆机甲<small>THE MECHA ARCHIVE</small>
@@ -310,7 +312,7 @@ export default function WorldShell({
             <UserRound size={15} />
             关于
           </Button>
-          <a className="direct-home-link" href="/">
+          <a className="direct-home-link" href="/workbench">
             返回工作台 ↗
           </a>
           <MusicControl reading={!!panel} />
@@ -322,7 +324,7 @@ export default function WorldShell({
           {scene.returnTo && (
             <button className="room-return" onClick={() => enter('hub')}>
               <ArrowLeft size={15} />
-              回到维修通道
+              回到维修栈道
             </button>
           )}
           {ready && near && !panel && (
@@ -359,7 +361,9 @@ export default function WorldShell({
           <div className="mobile-controls" aria-label="触控方向控制">
             <div className="dpad">
               {[
+                { icon: ArrowUp, x: 0, y: -1, c: 'up', label: '向上移动' },
                 { icon: ArrowLeft, x: -1, y: 0, c: 'left', label: '向左移动' },
+                { icon: ArrowDown, x: 0, y: 1, c: 'down', label: '向下移动' },
 
                 { icon: ArrowRight, x: 1, y: 0, c: 'right', label: '向右移动' },
               ].map((d) => (
@@ -420,7 +424,7 @@ export default function WorldShell({
           <PopoverContent className="world-help" align="start">
             <p>点击维修通道移动，靠近门或物件后按 E。</p>
             <p>
-              <kbd>A / D</kbd> / 左右方向键移动
+              <kbd>WASD</kbd> / 方向键移动
               <br />
               <kbd>E</kbd> 与附近物件互动
               <br />
@@ -440,7 +444,7 @@ export default function WorldShell({
         </button>
         {intro && !panel && (
           <span className="first-visit-hint">
-            点击通道 / A D 行走 · E 互动 · M 拆解图
+            点击栈道 / WASD 行走 · E 互动 · M 拆解图
           </span>
         )}
       </footer>

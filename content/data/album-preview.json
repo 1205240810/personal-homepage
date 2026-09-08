@@ -1,0 +1,68 @@
+[
+  {
+    "id": 8,
+    "url": "/art/album/photo-008-img-20250131-181157-1.jpg",
+    "type": "现代化大都市",
+    "time": "黑夜",
+    "season": "冬",
+    "features": {
+      "color_score": 0.45,
+      "texture_complexity": 0.42
+    }
+  },
+  {
+    "id": 30,
+    "url": "/art/album/photo-030-img-20250429-121747.jpg",
+    "type": "森林绿植",
+    "time": "白天",
+    "season": "春",
+    "features": {
+      "color_score": 0.35,
+      "texture_complexity": 0.49
+    }
+  },
+  {
+    "id": 31,
+    "url": "/art/album/photo-031-img-20250429-150023.jpg",
+    "type": "森林绿植",
+    "time": "白天",
+    "season": "春",
+    "features": {
+      "color_score": 0.43,
+      "texture_complexity": 0.51
+    }
+  },
+  {
+    "id": 34,
+    "url": "/art/album/photo-034-img-20250429-163118.jpg",
+    "type": "乡村田园",
+    "time": "白天",
+    "season": "春",
+    "features": {
+      "color_score": 0.32,
+      "texture_complexity": 0.37
+    }
+  },
+  {
+    "id": 46,
+    "url": "/art/album/photo-046-img-20251001-203549.jpg",
+    "type": "现代化大都市",
+    "time": "黑夜",
+    "season": "秋",
+    "features": {
+      "color_score": 0.44,
+      "texture_complexity": 0.22
+    }
+  },
+  {
+    "id": 68,
+    "url": "/art/album/photo-068-img-20260504-090436-1.jpg",
+    "type": "海景",
+    "time": "白天",
+    "season": "春",
+    "features": {
+      "color_score": 0.42,
+      "texture_complexity": 0.12
+    }
+  }
+]

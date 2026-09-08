@@ -1,0 +1,147 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/ospf-v2-demo/main/README.md",
+    "local": "/private/tmp/mecha-project-research/ospf-v2-demo/README.md"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/ospf-v2-demo/main/index.html",
+    "local": "/private/tmp/mecha-project-research/ospf-v2-demo/index.html"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/ospf-v2-demo/main/progress.html",
+    "local": "/private/tmp/mecha-project-research/ospf-v2-demo/progress.html"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/ospf-v2-demo/main/assets/index-BhWm3bTa.js",
+    "local": "/private/tmp/mecha-project-research/ospf-v2-demo/assets/index-BhWm3bTa.js"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/README.md",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/README.md"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/docs/DATA_AND_IMAGE_SPEC.md",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/docs/DATA_AND_IMAGE_SPEC.md"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/docs/DEMO_GUIDE.md",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/docs/DEMO_GUIDE.md"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/docs/API_CONTRACT.md",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/docs/API_CONTRACT.md"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/data.json",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/data.json"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/App.jsx",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/App.jsx"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/constants/filters.js",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/constants/filters.js"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/lib/data.js",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/lib/data.js"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/lib/insights.js",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/lib/insights.js"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/lib/sampleData.js",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/lib/sampleData.js"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/components/FilterBar.jsx",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/components/FilterBar.jsx"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/components/ImageGrid.jsx",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/components/ImageGrid.jsx"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/components/PhotoModal.jsx",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/components/PhotoModal.jsx"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/components/InsightBoard.jsx",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/components/InsightBoard.jsx"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/src/components/ProcessingTrail.jsx",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/src/components/ProcessingTrail.jsx"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/scripts/generate_real_dataset.py",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/scripts/generate_real_dataset.py"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-001-img-20250116-173812.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-001-img-20250116-173812.jpg",
+    "sha256": "b4b8c0d2d278c8e169e4df9d5eaa31dd823417beecb882522db3559ae734797e"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-002-img-20250131-174016.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-002-img-20250131-174016.jpg",
+    "sha256": "8699fa150d18b22885c6d4922801cb8c193f1153e812673207d4baad8ae7f29d"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-008-img-20250131-181157-1.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-008-img-20250131-181157-1.jpg",
+    "sha256": "2456ce3bcd149b578e37365cee888feefa41e43ab21a0f293beccd4635406e35"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-030-img-20250429-121747.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-030-img-20250429-121747.jpg",
+    "sha256": "93b0ec47f8c5727bcb66641c242337990350d419375a6a4332a9aac6565dd37d"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-034-img-20250429-163118.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-034-img-20250429-163118.jpg",
+    "sha256": "61fb00ae1be2ee78651eb5e18725d88730c7b3a20268ef4f7fb10475d615c61e"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-046-img-20251001-203549.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-046-img-20251001-203549.jpg",
+    "sha256": "0db5cfb482ee5e647a5d73d89a93cc9c23c06b6c22598ed3491eef9b862f6b03"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-054-img-20260430-131941-1.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-054-img-20260430-131941-1.jpg",
+    "sha256": "6b49e073708618a98e33fdbd84ef8a5abf335c7ca01dd97b122c2166dda45898"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-059-img-20260501-125530-1.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-059-img-20260501-125530-1.jpg",
+    "sha256": "5a2004eca0c935495324a5bdda8c74f18188231861b7bd840f83e8dbaa03c959"
+  },
+  {
+    "url": "https://1205240810.github.io/ospf-v2-demo/",
+    "local": "/private/tmp/mecha-project-research/ospf-live.html",
+    "sha256": "3eaba33502577bc517e6a14a57a9164e15e2e042759cd51824fc9f4f5c0d51f4"
+  },
+  {
+    "url": "https://intelligent-album-demo.vercel.app/",
+    "local": "/private/tmp/mecha-project-research/album-live.html",
+    "sha256": "f08872381fa9b4c137c6a84b549539725c104542e3d56d5d71cdf120f41972ab"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-005-img-20250131-173646.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-005-img-20250131-173646.jpg",
+    "sha256": "720ffa9d0dfd3d16133300be8117db876a54350ffd13883ca2e01628f993ffe4"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-031-img-20250429-150023.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-031-img-20250429-150023.jpg",
+    "sha256": "d27171d919e492602face55c1f0d87ac333a3377be5b7c6a7408c5ce44e8df55"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/1205240810/intelligent-album-demo/main/frontend/public/images/real/photo-068-img-20260504-090436-1.jpg",
+    "local": "/private/tmp/mecha-project-research/intelligent-album-demo/frontend/public/images/real/photo-068-img-20260504-090436-1.jpg",
+    "sha256": "aee891c1283a74c53f603fa43e4e5f463cc46990e8208f24201264a0c597f140"
+  }
+]

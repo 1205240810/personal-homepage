@@ -4,7 +4,7 @@
   "type": "map",
   "orientation": "orthogonal",
   "renderorder": "right-down",
-  "width": 50,
+  "width": 28,
   "height": 19,
   "tilewidth": 32,
   "tileheight": 19,
@@ -22,7 +22,89 @@
       "x": 0,
       "y": 0,
       "draworder": "topdown",
-      "objects": []
+      "objects": [
+        {
+          "id": 300,
+          "name": "obstacle-0",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 390,
+              "y": 215
+            },
+            {
+              "x": 500,
+              "y": 215
+            },
+            {
+              "x": 500,
+              "y": 247
+            },
+            {
+              "x": 390,
+              "y": 247
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 301,
+          "name": "obstacle-1",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 625,
+              "y": 267
+            },
+            {
+              "x": 695,
+              "y": 267
+            },
+            {
+              "x": 695,
+              "y": 329
+            },
+            {
+              "x": 625,
+              "y": 329
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 302,
+          "name": "obstacle-2",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 188,
+              "y": 273
+            },
+            {
+              "x": 260,
+              "y": 273
+            },
+            {
+              "x": 260,
+              "y": 331
+            },
+            {
+              "x": 188,
+              "y": 331
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
     },
     {
       "id": 1,
@@ -42,20 +124,60 @@
           "y": 0,
           "polygon": [
             {
-              "x": 38,
-              "y": 490
+              "x": 280,
+              "y": 228
             },
             {
-              "x": 1562,
-              "y": 490
+              "x": 612,
+              "y": 228
             },
             {
-              "x": 1562,
-              "y": 526
+              "x": 662,
+              "y": 298
             },
             {
-              "x": 38,
-              "y": 526
+              "x": 700,
+              "y": 362
+            },
+            {
+              "x": 689,
+              "y": 429
+            },
+            {
+              "x": 613,
+              "y": 481
+            },
+            {
+              "x": 523,
+              "y": 494
+            },
+            {
+              "x": 487,
+              "y": 550
+            },
+            {
+              "x": 400,
+              "y": 550
+            },
+            {
+              "x": 366,
+              "y": 494
+            },
+            {
+              "x": 271,
+              "y": 481
+            },
+            {
+              "x": 189,
+              "y": 431
+            },
+            {
+              "x": 193,
+              "y": 340
+            },
+            {
+              "x": 229,
+              "y": 293
             }
           ],
           "visible": true,
@@ -77,8 +199,8 @@
           "id": 100,
           "name": "graduate-exit",
           "type": "enter-scene",
-          "x": 155,
-          "y": 508,
+          "x": 445,
+          "y": 526,
           "width": 0,
           "height": 0,
           "point": true,
@@ -89,8 +211,8 @@
           "id": 101,
           "name": "project-console",
           "type": "open-projects",
-          "x": 700,
-          "y": 508,
+          "x": 607,
+          "y": 347,
           "width": 0,
           "height": 0,
           "point": true,
@@ -101,8 +223,8 @@
           "id": 102,
           "name": "circuit-console",
           "type": "open-game",
-          "x": 1080,
-          "y": 508,
+          "x": 283,
+          "y": 347,
           "width": 0,
           "height": 0,
           "point": true,
@@ -113,8 +235,8 @@
           "id": 103,
           "name": "workshop-notes",
           "type": "open-collection",
-          "x": 1370,
-          "y": 508,
+          "x": 448,
+          "y": 278,
           "width": 0,
           "height": 0,
           "point": true,

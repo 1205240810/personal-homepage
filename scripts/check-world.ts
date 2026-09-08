@@ -124,12 +124,33 @@ test('机甲通道连续，三个舱室都可原路返回，探索不锁定内�
     );
   }
   assert.equal(
-    traversable(
-      { x: hub.width / 2, y: hub.groundY! - 70 },
-      hub.walkable,
-      hub.obstacles,
-    ),
+    traversable({ x: 790, y: 410 }, hub.walkable, hub.obstacles),
     false,
     '人物不能走进背景机身',
   );
+});
+
+import { addressPlan } from '../lib/project-preview.ts';
+test('OSPF 示例对应公开项目的四节点规划，参数变化后重新生成全部地址', () => {
+  const base = addressPlan(1, 20)!;
+  assert.deepEqual(
+    base.map((n) => [n.id, n.ip]),
+    [
+      ['PC1', '10.10.1.20/24'],
+      ['FRR1', '10.10.1.1/24'],
+      ['FRR2', '10.10.2.1/24'],
+      ['PC2', '10.10.2.20/24'],
+    ],
+  );
+  assert(base[1].config.includes('ip address 10.255.1.1/30'));
+  assert(base[2].config.includes('network 10.10.2.0/24 area 0'));
+  assert(addressPlan(7, 42)![3].config.includes('default via 10.10.8.1'));
+  for (const [lan, host] of [
+    [0, 20],
+    [251, 20],
+    [1, 1],
+    [1, 255],
+    [1, 2.5],
+  ])
+    assert.equal(addressPlan(lan, host), null);
 });

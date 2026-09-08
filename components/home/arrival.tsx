@@ -1,0 +1,79 @@
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowUpRight, ArrowRight } from 'lucide-react';
+import { MusicControl } from '@/components/world/music-control';
+import './arrival.css';
+export default function Arrival() {
+  const [leaving, setLeaving] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+  function enter(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
+      return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    e.preventDefault();
+    if (leaving) return;
+    setLeaving(true);
+    timer.current = setTimeout(() => location.assign(href), 280);
+  }
+  return (
+    <main className={`arrival ${leaving ? 'is-leaving' : ''}`}>
+      <img
+        className="arrival-art"
+        src="/art/mecha-isometric.png"
+        alt="暮色中，一台完整的巨型机甲静静躺在维修平台上。"
+        fetchPriority="high"
+      />
+      <div className="arrival-shade" aria-hidden="true" />
+      <header className="arrival-header">
+        <span className="arrival-brand">
+          徒手拆机甲<span>个人档案馆</span>
+        </span>
+        <MusicControl reading={false} />
+      </header>
+      <div className="arrival-copy">
+        <p className="arrival-index">A PERSONAL ARCHIVE</p>
+        <h1>
+          徒手
+          <br />
+          拆机甲<span className="arrival-period">.</span>
+        </h1>
+        <p className="arrival-description">
+          阅读文章与作品，
+          <br />
+          或者，走进机甲慢慢探索。
+        </p>
+        <nav className="arrival-choices" aria-label="选择进入方式">
+          <a
+            href="/workbench"
+            onClick={(e) => enter(e, '/workbench')}
+            className="arrival-workbench"
+          >
+            <span>
+              打开工作台<small>直接阅读 · 试用作品</small>
+            </span>
+            <ArrowUpRight size={23} strokeWidth={1.4} />
+          </a>
+          <a
+            href="/explore"
+            onClick={(e) => enter(e, '/explore')}
+            className="arrival-explore"
+          >
+            <span>
+              进入机甲<small>自由行走 · 探索档案</small>
+            </span>
+            <ArrowRight size={23} strokeWidth={1.4} />
+          </a>
+        </nav>
+      </div>
+      <footer className="arrival-footer">
+        <span>徒手拆机甲 · 算法、工程与日常</span>
+      </footer>
+    </main>
+  );
+}

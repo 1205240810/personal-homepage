@@ -1,0 +1,65 @@
+# Mecha restoration generation prompts
+
+Mode: built-in image_gen. Exactly four requests in one parallel batch, one request per required asset; no variants or retries.
+
+## mecha-map-restored
+
+References: /private/tmp/mecha-reference/mecha-original.png
+
+Use case: stylized-concept
+Asset type: a high-resolution interactive game overworld background, landscape 3:2, maximum clear native image size.
+Input image 1 is the visual reference for the giant humanoid mecha silhouette, the oblique camera, the exquisite illustrated micro-detail, material weathering and atmospheric environment. Rebuild this world as a NEW composition with much better connected walkable circulation while preserving its recognisable sophisticated visual language.
+Primary request: An entire ancient humanoid giant robot lies supine diagonally, head at upper right, both feet at lower left. Show its complete head, neck, two shoulders, torso, pelvis, two arms with articulated hands, two distinct thighs, knees, shins and feet; convincing coherent human-shaped anatomy. The whole robot occupies about 55 percent of the canvas, with generous environmental and architectural space surrounding it. High 2.5D orthographic oblique top-down / isometric view, the viewer can clearly see upward-facing chest, all four limbs and the walkable tops of platforms. It must never read as a side elevation.
+Scene and circulation: A real continuous WIDE outer maintenance deck loops around the complete robot, especially clearly exposed around the lower edge and right side. It is ONE simple ring main route, with ample widths and visible continuous floor, gently turning around the robot. Exactly THREE distinct warm-lit docking entrances connect to that SAME outer loop by extremely short clear ramps or little bridges: cockpit entrance in the head area at upper right; archives entrance at the right side of the chest in the middle-right; workshop entrance beside the robot's right hand in the lower-right. Each entrance is visually distinct and physically reachable from the ring via its own short branch. The floor and ramps must visibly join, with no isolated islands, no impossible gap, no crisscross maze. Railings only on the outer edges; entry joins are open. The giant is restored enough to have working hatches while retaining aged armor. The head, chest and workshop entrances use small amber lamp accents and small practical doors, without signage.
+Composition guide: head near 73% x / 23% y; chest near 61% x / 40% y; workshop by near hand around 70% x / 61% y; feet around 26% x / 74% y and 40% x / 82% y. Preserve the complete humanoid outline and keep the right and lower ring route generous. These percentages are compositional guides, no visible marks.
+Style and materials: exquisitely hand-painted miniature mecha rendered as high-resolution detailed pixel-painterly game illustration, fine crisp substructures, tiny seams, rivets, weathered grey-white old ceramic armor, oxidised teal mechanical joints, warm amber lamps, indigo twilight marsh landscape. Original reference's rich precision and restrained texture, not a photograph, not clay, not a smooth cartoon, not coarse enlarged pixels. Twilight atmosphere with sufficient soft cool illumination on exposed upward-facing surfaces to read all fine details, warm lit apertures. Terrain, service structures, vegetation and water extend to every edge of the rectangular image; NOT a floating diorama on a flat background. No people, no text, no labels, no UI, no symbols or graphic overlays.
+
+## mecha-interiors-restored
+
+References: /private/tmp/mecha-reference/interiors-original.png, /private/tmp/mecha-reference/mecha-original.png
+
+Use case: stylized-concept
+Asset type: high-resolution game interior atlas, a single tall image ideally 1536 by 3072 pixels. EXACTLY three independent equal-height 3:2 landscape rooms vertically stacked, top/middle/bottom, occupying exactly one third of total height each with perfectly straight horizontal boundaries and no gaps or borders.
+Input image 1 is a STYLE reference for its fine 2.5D oblique top-down room cutaway rendering, old ceramic architecture and furniture detail; replace its room contents and floor planning. Input image 2 establishes the shared pale aged ceramic / oxidised teal / amber / indigo world.
+Primary request: Three believable human-scale rooms inside an ancient giant mecha, rendered from a high 2.5D orthographic oblique top-down camera, with complete floors and readable rear and side furniture. These are detailed interactive game environments. Human furniture sizes must be consistent across all rooms: a standing human would be 16% of one room panel height, door opening height is around 22%, ordinary desktop height around 10%. No people are present. Do not enlarge chairs or desks to a giant scale. Furniture sits against rear and side walls, forming a deep, continuous walkable circulation ring around a modest central working area. Occupied and empty floor areas feel balanced, never a vast barren square. Each room has a clearly visible entrance/exit at BOTTOM CENTER, opening into the main continuous floor with visible short steps; no furniture blocking it. The wall shells and surrounding structural context extend to panel edges; no floating islands or black background around the rooms.
+TOP ROOM — cockpit and captain's archive: rear-center a realistic single pilot chair at a navigation/map console with modest amber instruments; left wall a cabinet displaying honours and historical objects; right wall an archive writing desk and compact files. Rich weathered ceramic enclosing architecture, functional small details, warm amber lamps, cool ambient ceiling light.
+MIDDLE ROOM — chest archive library: rear wall bookshelves and document drawers; a modest central reading terminal with clear walking space on every side; left wall whiteboard with subtle abstract nonlinguistic diagrams; right wall writing desk. No readable text on boards or pages. Furniture has believable legs, stools and drawers at the same scale as top room.
+BOTTOM ROOM — maintenance workshop: rear-center a contained teal-glowing mecha core in a maintenance cradle, right wall an engineering workbench with small tools and instrument panels, left wall spare circuit boards and organised components. Clear central floor and continuous path along furniture fronts around the room, returning to bottom-center exit. The core is a machine, not an overlarge chair.
+Style: exquisite high-resolution hand-crafted pixel-painterly 2.5D miniature game environments, sophisticated fine seams, bolts and ceramic panel textures, oxidised teal metals, grey-white ceramic architecture, warm amber task lamps and indigo shadow. Adequate lighting for clear exposed surfaces and fine details. Match the original detailed reference, no coarse enlarged pixels, no flat side perspective, no photographic rendering, no overly smooth cartoon style. Exactly three equally high panels. No characters, no UI, no text, no panel labels, no large gutters or outline dividers.
+
+## mecha-avatar
+
+References: /private/tmp/mecha-reference/mecha-original.png
+
+Use case: stylized-concept
+Asset type: square brand avatar, maximum clear square native size, built to remain immediately recognisable when displayed at 64 by 64 pixels.
+Input image 1 is a style and material reference ONLY: match its exquisite finely detailed 2.5D pixel-painterly ceramic mecha illustration. Create a new original small friendly maintenance robot, not the giant robot's portrait.
+Subject: A small precision maintenance mecha shown as a full head-and-chest bust, facing nearly forward in a subtle three-quarter view. Strong memorable compact helmet silhouette with one large warm amber circular optical lens, an asymmetrical small antenna, aged grey-white ceramic armored cheeks and forehead, oxidised teal inner frame, tidy layered chest paneling and tiny mechanical joints. Friendly, restrained and competent personality achieved with proportions and a gently angled head, not a human face. A single clear focal amber lens is legible at avatar size. Entire head, antenna and chest remain inside the square with generous safe margins.
+Style: finely drawn high-resolution pixel-painterly 2.5D game illustration, crisp controlled miniature detail, subtle weathering and sophisticated material texture, pale ceramic highlights, oxidised teal shadow structure, restrained amber glow. The background is uniform deep midnight navy blue, with no scenery and no circular frame. Subtle soft directional illumination, clear silhouette and strong thumbnail readability.
+Constraints: original robot design, not a human, not an anime boy, no game franchise or recognisable IP, no text, no UI, no watermark. Avoid overcomplicated thin projections, overly cute chibi proportions or aggressive weapon design.
+
+## explorer-walk-restored
+
+References: /Users/tscjj/Desktop/个人博客/public/art/explorer-walk.png
+
+Use case: stylized-concept
+Asset type: production 2D game human WALK CYCLE SPRITE SHEET with a genuine transparent alpha background. Exactly 2048 x 1024 pixels if supported. EXACT 4 rows by 8 columns; all 32 grid cells equal 256 x 256 pixels. No drawn grid. Character fully contained within every cell, ample transparent margin above head and below shoes, same scale and consistent ground baseline within all cells.
+Input image 1 is a reference for the adventurer's colors, fabric, brown hair and detailed pixel-painterly rendering ONLY. Improve the anatomy and actually animate both legs across the full gait. Do NOT copy the repeated ineffective poses. Do NOT crop any heads or feet.
+Subject: One original adult maintenance apprentice, approximately 5.5 heads tall with properly elongated legs, not a two-head chibi child. Short dark brown tousled hair, blue-grey cropped work jacket, ivory lining and shirt, dark trousers, brown work shoes, a small brown waist pouch. Same person, face, hair, clothing, proportions and equipment in every single frame. Both knees and both shoes separately legible; use restrained depth shading to distinguish far leg.
+Directions: ROW 1 faces DOWN toward the viewer; ROW 2 faces LEFT in clean profile; ROW 3 faces RIGHT in clean profile; ROW 4 faces UP away from viewer. Never mix facing directions inside a row.
+CRITICAL ANIMATION: Each row is one genuinely smooth complete 8-phase walking cycle progressing left to right. The legs MUST alternate support and forward swing. Make 8 clearly different coherent poses, NOT a row of near-duplicate legs with only arms moving. 
+Column 1: left foot planted well FORWARD in heel contact, right leg extended BACK with toe push-off, opposite arm swing.
+Column 2: left planted foot under body supports weight; right leg bends and passes close to the supporting knee, upright narrower silhouette.
+Column 3: right knee and right shoe lift and swing clearly FORWARD; left leg pushes BACK, torso rises slightly.
+Column 4: right foot reaches forward approaching ground; legs visibly exchange front/back roles, left heel lifts.
+Column 5: right foot planted well FORWARD in heel contact, left leg extended BACK on toe; opposite to column 1.
+Column 6: right foot under body supports weight; LEFT leg bends and passes close to supporting knee, upright narrower silhouette, opposite to column 2.
+Column 7: left knee and shoe lift and swing clearly FORWARD; right leg pushes BACK, opposite to column 3.
+Column 8: left foot reaches forward approaching heel contact, smoothly flowing into column 1.
+Side-view row silhouettes must show unmistakably alternating wide stride / narrow vertical passing / lifted knee / exchanging legs / opposite wide stride / opposite passing / opposite lifted knee / return. Both hips, knees, and ankles participate in human walking mechanics. Arms swing opposite the legs, tiny vertical bob, no sliding pose. At least three distinct ankle separations and lifted-shoe heights across each row. The near and far leg cannot remain the same front leg throughout all eight frames. Keep all columns centred in the exact same-size cells even when the stride widens.
+Style: precise detailed pixel-painterly game sprite consistent with reference, mature proportions, crisp clean silhouette and sufficient detail to read both boots. GENUINE alpha transparency outside characters and between body parts; absolutely no painted checkerboard, solid backdrop, ground, floor, foot shadows, colored fringe, labels, numbers, text, borders, or separating lines. All 32 full-body characters are complete and isolated with transparency.
+
+
+## Integrated assets
+
+Built-in imagegen; original files copied into public/art: mecha-isometric.png (1536×1024), mecha-interiors.png (887×1774, three rooms), mecha-avatar.png (1254×1254). The walk-atlas candidate failed alpha and alternating-step QA, so it is not shipped. The production character is original articulated Canvas artwork in lib/world/jointed-player.ts. Scene foregrounds and the service-bridge pavement are assembled at runtime from the unmodified source art. Raw image files are preserved.

@@ -32,13 +32,13 @@ export function WorldAtlas({
       </header>
       <div className="mecha-atlas-image">
         <img
-          src="/art/mecha-section.png"
-          alt="完整侧视机甲：左侧驾驶舱、中部胸腔档案库、右侧检修工坊，通过同一条维修通道连接。"
+          src="/art/mecha-isometric.png"
+          alt="完整机甲的斜俯视图：头部驾驶舱、胸腔档案库和右手检修工坊，由环形栈道连接。"
         />
         {DISTRICTS.map((d, i) => (
           <button
             key={d.id}
-            style={{ left: `${d.position.x}%` }}
+            style={{ left: `${d.position.x}%`, top: `${d.position.y}%` }}
             onClick={() =>
               onAction({ type: 'enter-scene', sceneId: d.sceneId })
             }

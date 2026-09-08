@@ -3097,7 +3097,7 @@ kbd {
   min-height: 360px;
 }
 .world-art {
-  background: #202e35 url('/art/mecha-section.png') center/cover;
+  background: #202e35 url('/art/mecha-isometric.png') center/cover;
   filter: none;
 }
 .world-vignette {
@@ -3187,15 +3187,41 @@ kbd {
   color: #475148;
 }
 .world-shell .mobile-controls .dpad {
-  display: flex;
-  gap: 8px;
-  width: auto;
-  height: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(2, 44px);
+  gap: 5px;
+  width: 142px;
+  height: 93px;
+}
+.world-shell .dpad .up {
+  grid-column: 2;
+  grid-row: 1;
+}
+.world-shell .dpad .left {
+  grid-column: 1;
+  grid-row: 2;
+}
+.world-shell .dpad .down {
+  grid-column: 2;
+  grid-row: 2;
+}
+.world-shell .dpad .right {
+  grid-column: 3;
+  grid-row: 2;
+}
+.mecha-portrait {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 9px;
+  border: 1px solid #c4b79066;
+  box-shadow: inset 0 0 0 1px #080f16;
 }
 .world-shell .mobile-controls .dpad button {
   position: static;
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
 }
 .world-shell .mobile-controls {
   width: auto;
@@ -3236,7 +3262,10 @@ kbd {
 .mecha-atlas-image {
   position: relative;
   max-width: 1100px;
-  height: clamp(210px, 36vh, 360px);
+  height: auto;
+  aspect-ratio: 3 / 2;
+  max-height: none;
+  width: min(100%, 690px);
   margin: auto;
   overflow: hidden;
   border: 1px solid #c4c7b9;
@@ -3251,8 +3280,8 @@ kbd {
 }
 .mecha-atlas-image button {
   position: absolute;
-  transform: translateX(-50%);
-  bottom: 16px;
+  transform: translate(-50%, -50%);
+  bottom: auto;
   display: grid;
   place-items: center;
   width: 48px;

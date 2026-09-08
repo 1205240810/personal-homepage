@@ -4,7 +4,7 @@ export default function About() {
   return (
     <main className="reading-page">
       <header className="reading-header">
-        <a href="/">← 返回首页</a>
+        <a href="/workbench">← 返回工作台</a>
         <a href="/archive">全部记录</a>
       </header>
       <ProfileView />

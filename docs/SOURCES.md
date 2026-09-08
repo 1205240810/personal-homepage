@@ -20,7 +20,7 @@
 
 ## 世界美术
 
-2026-09-07 按用户确认的“晴日下午、林间小院、奶油白建筑、暖木与绿植”方向用 imagegen 制作，保留“徒手拆机甲”作为站名与工作室小模型彩蛋。当前画面不再以大型机甲限制空间布局。没有使用参考开源项目的场景图、瓦片或人物。
+历史版本：2026-09-07 按用户确认的“晴日下午、林间小院、奶油白建筑、暖木与绿植”方向用 imagegen 制作。该设计已由后续机甲方案替代。没有使用参考开源项目的场景图、瓦片或人物。
 
 - 主院：独立地面 `courtyard-ground.png`，书屋/工作室/住处三个建筑精灵，树、灌木与阅读长椅的真实 RGBA 精灵。建筑使用原生轮廓蒙版，源图保留原始像素。
 - 室内：`book-house-base.png`、`work-studio-base.png`、`garden-base.png` 为严格参照对应原图编辑的空地面层；桌椅和前景墙从原始房间纹理通过运行时多边形蒙版独立呈现。
@@ -37,4 +37,12 @@
 
 ## 2026-09-08 双轨更新
 
-当前首页采用已确认的 B「精密工作台」。可选探索恢复完整侧视机甲，主图和三房室内图集由 imagegen 原创生成；实际文件与提示词见 docs/design/mecha-sideview-assets.md。保留原始素材，运行时按画面绑定通行线和节点。之前的小院、河谷记录是历史设计，不代表当前路线。
+上一轮首页采用 B「精密工作台」，探索采用完整侧视机甲；历史提示词见 docs/design/mecha-sideview-assets.md。该视角已按用户最新要求调整。
+
+## 2026-09-08 质感与功能修订
+
+入口增加引导页，B 工作台移到 /workbench。现行机甲恢复斜俯视 2.5D，主图、室内图集和小机甲头像由内置 imagegen 生成。未把无透明通道、错误循环的角色候选图加入发布资源。实际角色使用原创 Canvas 关节动画。资产与原始提示词见 `docs/design/mecha-isometric-assets.md`。
+
+OSPF 示例依据 [项目 README](https://github.com/1205240810/ospf-v2-demo/blob/main/README.md) 及公开前端规划器核验，固定拓扑 PC1 → FRR1 → FRR2 → PC2。真实项目公开版的 Ping 是地址计划成员检查和固定回执，本站明确标注模拟，不声称运行真实路由协议或容器网络。
+
+相册取自 [公开数据](https://github.com/1205240810/intelligent-album-demo/blob/main/frontend/public/data.json) 的 ID 8、30、31、34、46、68，图片来自同仓库 `frontend/public/images/real`。[数据规范](https://github.com/1205240810/intelligent-album-demo/blob/main/docs/DATA_AND_IMAGE_SPEC.md) 允许展示与部署，六张原图核验无 EXIF。标签与色彩、纹理分值原样保留，统计在本地计算；不存在新推理调用。来源和文件散列见 `docs/project-preview-sources.json`。

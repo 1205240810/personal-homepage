@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { makePlayerTextures, posePlayer } from './player';
-import { SCENES, getScene } from './registry';
+import { SCENES, getScene, ARCHIVE_GANTRY } from './registry';
+import { traversable, clearSegment, findRoute } from './navigation';
+import { distance } from './geometry';
 import type {
   GameHandle,
   InteractionNode,
@@ -27,7 +29,7 @@ export function createWorld(
     paused = false,
     destroyed = false,
     transitioning = false;
-  let inputX = 0,
+  let input = { x: 0, y: 0 },
     active: ArchiveScene | undefined,
     near: InteractionNode | null = null;
   let transitionTimer: ReturnType<typeof setTimeout> | undefined,
@@ -36,7 +38,7 @@ export function createWorld(
   let state: WorldSnapshot = {
     exploration: { intake: 0, outlet: 0, bridge: false, lift: false },
     sceneId: 'hub',
-    layoutVersion: 20,
+    layoutVersion: 21,
     position: { ...getScene('hub').spawnPoints.default },
     armorOpen: false,
     visited: [],
@@ -54,10 +56,9 @@ export function createWorld(
         layoutVersion: def.layoutVersion,
         position:
           old.layoutVersion === def.layoutVersion &&
-          Number.isFinite(old.position?.x) &&
-          old.position.x >= 55 &&
-          old.position.x <= def.width - 55
-            ? { x: old.position.x, y: def.groundY! }
+          old.position &&
+          traversable(old.position, def.walkable, def.obstacles)
+            ? { ...old.position }
             : { ...def.spawnPoints.default },
         visited: Array.isArray(old.visited)
           ? old.visited.filter((id: string) => nodes.has(id))
@@ -96,9 +97,9 @@ export function createWorld(
     shadow!: Phaser.GameObjects.Ellipse;
     keys!: Record<string, Phaser.Input.Keyboard.Key>;
     lamps: Phaser.GameObjects.Rectangle[] = [];
-    target?: number;
+    route: Point[] = [];
     targetNode?: InteractionNode;
-    velocity = 0;
+    velocity = { x: 0, y: 0 };
     travelled = 0;
     facing = 2;
     lastSave = 0;
@@ -109,8 +110,6 @@ export function createWorld(
     }
     preload() {
       this.failed = false;
-      if (!this.textures.exists('explorer'))
-        this.load.image('explorer', '/art/explorer-walk.png');
       const def = getScene(state.sceneId),
         key = `world:${def.art}`;
       if (!this.textures.exists(key)) this.load.image(key, def.art);
@@ -130,9 +129,9 @@ export function createWorld(
       active = this;
       const def = getScene(state.sceneId),
         key = `world:${def.art}`;
-      this.target = undefined;
+      this.route = [];
       this.targetNode = undefined;
-      this.velocity = 0;
+      this.velocity = { x: 0, y: 0 };
       this.travelled = 0;
       this.wasMoving = false;
       this.lamps = [];
@@ -157,13 +156,16 @@ export function createWorld(
           def.frame === undefined ? undefined : `cabin-${def.frame}`,
         )
         .setOrigin(0)
-        .setDisplaySize(def.width, def.height);
+        .setDisplaySize(def.width, def.height)
+        .setDepth(0);
+      texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      this.createSpatialLayers(key, def.frame);
       makePlayerTextures(this);
       this.shadow = this.add
-        .ellipse(state.position.x, state.position.y + 1, 34, 9, 0x111d25, 0.4)
+        .ellipse(state.position.x, state.position.y + 1, 27, 8, 0x070e12, 0.55)
         .setDepth(5);
       this.avatar = this.add
-        .sprite(state.position.x, state.position.y, 'explorer', 'walk-2-0')
+        .sprite(state.position.x, state.position.y, 'explorer', 'idle-2')
         .setOrigin(0.5, 1)
         .setScale(def.playerScale ?? 0.48)
         .setDepth(10);
@@ -186,14 +188,14 @@ export function createWorld(
         hotspot.on('pointerup', () => {
           if (!paused && !transitioning) {
             if (this.canInteract(n)) perform(n);
-            else this.walk(n.x, n);
+            else this.walk(n, n);
           }
         });
         hotspot.on('pointerover', () => lamp.setAlpha(1));
         hotspot.on('pointerout', () => lamp.setAlpha(n.hidden ? 0.2 : 0.72));
       });
       this.keys = this.input.keyboard!.addKeys(
-        'A,D,LEFT,RIGHT,E,SPACE,SHIFT',
+        'W,A,S,D,UP,DOWN,LEFT,RIGHT,E,SPACE,SHIFT',
       ) as Record<string, Phaser.Input.Keyboard.Key>;
       this.input.keyboard!.on('keydown-E', (e: KeyboardEvent) => {
         if (!e.repeat && near) perform(near);
@@ -206,9 +208,7 @@ export function createWorld(
         (p: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]) => {
           if (paused || transitioning || objects.length) return;
           const point = this.cameras.main.getWorldPoint(p.x, p.y);
-          // A click chooses a position along the actual service deck, never through the hull.
-          if (point.y > def.groundY! - 145 && point.y < def.groundY! + 90)
-            this.walk(point.x);
+          this.walk(point);
         },
       );
       this.configureCamera();
@@ -231,142 +231,306 @@ export function createWorld(
       if (paused) this.scene.pause();
     }
     resetInput() {
-      this.target = undefined;
+      this.route = [];
       this.targetNode = undefined;
-      this.velocity = 0;
-      inputX = 0;
+      this.velocity = { x: 0, y: 0 };
+      input = { x: 0, y: 0 };
       if (this.input.keyboard) {
         this.input.keyboard.resetKeys();
         this.input.keyboard.clearCaptures();
         this.input.keyboard.enabled = !paused;
-        if (!paused) this.input.keyboard.addCapture('LEFT,RIGHT,SPACE');
+        if (!paused) this.input.keyboard.addCapture('UP,DOWN,LEFT,RIGHT,SPACE');
+      }
+    }
+    createSpatialLayers(key: string, frame?: number) {
+      const def = getScene(state.sceneId);
+      // Occlusion uses the same unmodified artwork; its furniture is redrawn over a passerby.
+      (def.foreground ?? []).forEach((layer, index) => {
+        const x = Math.floor(Math.min(...layer.outline.map((p) => p[0]))),
+          y = Math.floor(Math.min(...layer.outline.map((p) => p[1])));
+        const w = Math.ceil(Math.max(...layer.outline.map((p) => p[0]))) - x,
+          h = Math.ceil(Math.max(...layer.outline.map((p) => p[1]))) - y;
+        const textureKey = `foreground:${def.id}:${index}`,
+          cut = this.textures.createCanvas(textureKey, w, h)!;
+        const ctx = cut.context,
+          source = this.textures.get(key).getSourceImage() as HTMLImageElement;
+        ctx.save();
+        ctx.beginPath();
+        layer.outline.forEach(([px, py], i) =>
+          i ? ctx.lineTo(px - x, py - y) : ctx.moveTo(px - x, py - y),
+        );
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(
+          source,
+          x,
+          y + (frame ?? 0) * Math.floor(source.height / 3),
+          w,
+          h,
+          0,
+          0,
+          w,
+          h,
+        );
+        ctx.restore();
+        cut.refresh();
+        this.add.image(x, y, textureKey).setOrigin(0).setDepth(layer.depth);
+        this.events.once('shutdown', () => this.textures.remove(textureKey));
+      });
+      if (def.id !== 'hub') return;
+      // A raised service gantry bridges the right arm, so the chest door has a visible physical route.
+      const g = this.add.graphics().setDepth(2),
+        points = ARCHIVE_GANTRY.map(([x, y]) => new Phaser.Math.Vector2(x, y));
+      g.lineStyle(53, 0x070f14, 0.65).strokePoints(
+        points.map((p) => new Phaser.Math.Vector2(p.x, p.y + 7)),
+        false,
+      );
+      g.lineStyle(48, 0x182528).strokePoints(points, false);
+      g.lineStyle(44, 0x806f4b).strokePoints(points, false);
+      g.lineStyle(40, 0x394345).strokePoints(points, false);
+      const deck = this.textures.createCanvas('gantry-deck', 400, 135)!,
+        ctx = deck.context;
+      const paving = document.createElement('canvas');
+      paving.width = 32;
+      paving.height = 16;
+      paving
+        .getContext('2d')!
+        .drawImage(
+          this.textures.get(key).getSourceImage() as HTMLImageElement,
+          610,
+          910,
+          32,
+          16,
+          0,
+          0,
+          32,
+          16,
+        );
+      ctx.save();
+      ctx.translate(-970, -323);
+      ctx.beginPath();
+      points.forEach((p, i) =>
+        i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y),
+      );
+      ctx.lineWidth = 39;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = ctx.createPattern(paving, 'repeat')!;
+      ctx.stroke();
+      ctx.restore();
+      deck.refresh();
+      this.add.image(970, 323, 'gantry-deck').setOrigin(0).setDepth(2.1);
+      this.events.once('shutdown', () => this.textures.remove('gantry-deck'));
+      for (let j = 1; j < points.length; j++) {
+        const a = points[j - 1],
+          b = points[j],
+          length = Phaser.Math.Distance.Between(a.x, a.y, b.x, b.y),
+          nx = -(b.y - a.y) / length,
+          ny = (b.x - a.x) / length;
+        for (let t = 0; t < length; t += 10) {
+          const x = a.x + ((b.x - a.x) * t) / length,
+            y = a.y + ((b.y - a.y) * t) / length;
+          g.lineStyle(1, 0x152325, 0.8).lineBetween(
+            x + nx * 19,
+            y + ny * 19,
+            x - nx * 19,
+            y - ny * 19,
+          );
+          g.lineStyle(1, 0x8a8468, 0.25).lineBetween(
+            x + nx * 19,
+            y + ny * 19 + 1,
+            x - nx * 19,
+            y - ny * 19 + 1,
+          );
+        }
+        for (const side of [-1, 1]) {
+          g.lineStyle(1.5, 0xb6a275, 0.85).lineBetween(
+            a.x + nx * 23 * side,
+            a.y + ny * 23 * side - 9,
+            b.x + nx * 23 * side,
+            b.y + ny * 23 * side - 9,
+          );
+          for (let t = 10; t < length; t += 37) {
+            const x = a.x + ((b.x - a.x) * t) / length + nx * 23 * side,
+              y = a.y + ((b.y - a.y) * t) / length + ny * 23 * side;
+            g.lineStyle(2, 0x776947).lineBetween(x, y, x, y - 10);
+            g.fillStyle(0xe7b66b, 0.85).fillCircle(x, y - 10, 1.5);
+          }
+        }
       }
     }
     canInteract(n: InteractionNode) {
-      return Math.abs(state.position.x - n.x) < (n.radius ?? 65);
+      const def = getScene(state.sceneId);
+      return (
+        distance(state.position, n) < (n.radius ?? 45) &&
+        clearSegment(state.position, n, def.walkable, def.obstacles)
+      );
     }
-    walk(x: number, node?: InteractionNode) {
+    walk(point: Point, node?: InteractionNode) {
       this.resetInput();
       if (paused || transitioning) return;
-      this.target = Math.max(
-        56,
-        Math.min(getScene(state.sceneId).width - 56, x),
-      );
+      const def = getScene(state.sceneId),
+        route = findRoute(state.position, point, def.walkable, def.obstacles);
+      if (!route) return;
+      this.route = route;
       this.targetNode = node;
     }
     configureCamera() {
       const def = getScene(state.sceneId),
         camera = this.cameras.main;
-      // Cover every viewport. A narrow screen sees a closer, horizontally tracked slice.
+      // Cover the viewport, with two-axis tracking on narrow displays. Avoid pixelated magnification.
+      const inset = def.outdoor ? 0 : 30;
       const zoom = Math.max(
-        this.scale.width / def.width,
-        this.scale.height / def.height,
+        this.scale.width / (def.width - inset * 2),
+        this.scale.height / (def.height - inset * 2),
       );
       camera
         .setZoom(zoom)
-        .setBounds(0, 0, def.width, def.height)
-        .setRoundPixels(true)
-        .setBackgroundColor('#202e35');
-      camera.centerOn(state.position.x, this.cameraFocusY());
+        .setBounds(inset, inset, def.width - inset * 2, def.height - inset * 2)
+        .setRoundPixels(false)
+        .setBackgroundColor('#0c1820');
+      const target = this.cameraTarget();
+      camera.centerOn(target.x, target.y);
     }
-    cameraFocusY() {
-      const def = getScene(state.sceneId);
-      const half = this.scale.height / this.cameras.main.zoom / 2;
-      return Phaser.Math.Clamp(
-        Math.max(def.height / 2, def.groundY! + 50 - half),
-        half,
-        def.height - half,
-      );
+    cameraTarget() {
+      const def = getScene(state.sceneId),
+        camera = this.cameras.main,
+        halfW = this.scale.width / camera.zoom / 2,
+        halfH = this.scale.height / camera.zoom / 2,
+        inset = def.outdoor ? 0 : 30;
+      return {
+        x: Phaser.Math.Clamp(
+          state.position.x,
+          halfW + inset,
+          def.width - halfW - inset,
+        ),
+        y: Phaser.Math.Clamp(
+          state.position.y - 42,
+          halfH + inset,
+          def.height - halfH - inset,
+        ),
+      };
     }
     update(time: number, delta: number) {
       if (this.failed || !this.avatar?.active || paused || transitioning)
         return;
       const def = getScene(state.sceneId),
-        dt = Math.min(delta, 40) / 1000;
+        dt = Math.min(delta, 40) / 1000,
+        previous = { ...state.position };
       let dx =
-        inputX +
+        input.x +
         (this.keys.D.isDown || this.keys.RIGHT.isDown ? 1 : 0) -
         (this.keys.A.isDown || this.keys.LEFT.isDown ? 1 : 0);
-      if (dx) {
-        this.target = undefined;
+      let dy =
+        input.y +
+        (this.keys.S.isDown || this.keys.DOWN.isDown ? 1 : 0) -
+        (this.keys.W.isDown || this.keys.UP.isDown ? 1 : 0);
+      if (dx || dy) {
+        this.route = [];
         this.targetNode = undefined;
       }
-      if (!dx && this.target !== undefined) {
-        const gap = this.target - state.position.x;
-        if (Math.abs(gap) < 3) {
-          state.position.x = this.target;
-          this.target = undefined;
-          this.velocity = 0;
-          const n = this.targetNode;
-          this.targetNode = undefined;
-          if (n) {
-            perform(n);
-            return;
-          }
-        } else dx = Math.sign(gap);
+      if (this.targetNode && this.canInteract(this.targetNode)) {
+        const n = this.targetNode;
+        this.resetInput();
+        perform(n);
+        return;
       }
-      const speed = this.keys.SHIFT.isDown ? 270 : 180;
-      this.velocity +=
-        (Math.sign(dx) * speed - this.velocity) *
-        (1 - Math.exp(-dt * (dx ? 14 : 22)));
-      if (!dx && Math.abs(this.velocity) < 1) this.velocity = 0;
-      const previous = state.position.x;
-      let step = this.velocity * dt;
-      if (
-        this.target !== undefined &&
-        Math.abs(step) > Math.abs(this.target - previous)
-      )
-        step = this.target - previous;
-      state.position.x = Math.max(
-        56,
-        Math.min(def.width - 56, previous + step),
-      );
-      const moved = Math.abs(state.position.x - previous);
-      if (moved > 0.03) {
-        this.facing = state.position.x > previous ? 2 : 1;
+      let target = this.route[0];
+      if (!dx && !dy && target) {
+        let gap = distance(state.position, target);
+        if (gap < 2) {
+          state.position = { ...target };
+          this.route.shift();
+          target = this.route[0];
+          if (!target) this.velocity = { x: 0, y: 0 };
+          gap = target ? distance(state.position, target) : 0;
+        }
+        if (target && gap) {
+          dx = (target.x - state.position.x) / gap;
+          dy = (target.y - state.position.y) / gap;
+        }
+      }
+      const magnitude = Math.hypot(dx, dy);
+      if (magnitude > 1) {
+        dx /= magnitude;
+        dy /= magnitude;
+      }
+      const speed =
+          (this.keys.SHIFT.isDown ? 250 : 170) * (def.playerScale ?? 0.43),
+        accel = 1 - Math.exp(-dt * (magnitude ? 15 : 24));
+      this.velocity.x += (dx * speed - this.velocity.x) * accel;
+      this.velocity.y += (dy * speed - this.velocity.y) * accel;
+      if (!magnitude && Math.hypot(this.velocity.x, this.velocity.y) < 1)
+        this.velocity = { x: 0, y: 0 };
+      let sx = this.velocity.x * dt,
+        sy = this.velocity.y * dt;
+      if (target && Math.hypot(sx, sy) > distance(state.position, target)) {
+        sx = target.x - state.position.x;
+        sy = target.y - state.position.y;
+      }
+      const next = { x: state.position.x + sx, y: state.position.y + sy };
+      if (clearSegment(previous, next, def.walkable, def.obstacles))
+        state.position = next;
+      else {
+        const horizontal = { x: previous.x + sx, y: previous.y },
+          vertical = { x: previous.x, y: previous.y + sy };
+        if (clearSegment(previous, horizontal, def.walkable, def.obstacles))
+          state.position = horizontal;
+        else if (clearSegment(previous, vertical, def.walkable, def.obstacles))
+          state.position = vertical;
+        else this.velocity = { x: 0, y: 0 };
+      }
+      const moved = distance(previous, state.position),
+        walking = moved > 0.015;
+      if (walking) {
+        const vx = state.position.x - previous.x,
+          vy = state.position.y - previous.y;
+        this.facing =
+          Math.abs(vx) > Math.abs(vy) * 1.15
+            ? vx > 0
+              ? 2
+              : 1
+            : vy > 0
+              ? 0
+              : 3;
         this.travelled += moved;
       }
-      const frame = moved > 0.03 ? Math.floor(this.travelled / 15) % 8 : 0;
-      this.avatar.setPosition(
-        state.position.x,
-        state.position.y -
-          (!reduced && moved < 0.03 ? Math.sin(time / 1000) * 0.4 : 0),
+      // Distance drives the complete stride, so fast walking and blocked feet do not slide.
+      const phase =
+        (this.travelled / (128 * (def.playerScale ?? 0.43))) * Math.PI * 2;
+      posePlayer(
+        this.avatar,
+        this.facing,
+        walking ? Math.floor(((phase / (Math.PI * 2)) % 1) * 16) : -1,
       );
-      posePlayer(this.avatar, this.facing, frame);
-      this.shadow.setX(state.position.x);
-      const camera = this.cameras.main;
-      const viewWidth = this.scale.width / camera.zoom;
-      const targetX = Math.max(
-        viewWidth / 2,
-        Math.min(
-          def.width - viewWidth / 2,
-          state.position.x + this.facingVector() * 50,
-        ),
-      );
+      this.avatar
+        .setPosition(state.position.x, state.position.y)
+        .setDepth(state.position.y);
+      this.shadow
+        .setPosition(state.position.x, state.position.y + 1)
+        .setDepth(state.position.y - 1);
+      const camera = this.cameras.main,
+        targetCamera = this.cameraTarget(),
+        ease = reduced ? 1 : 1 - Math.exp(-dt * 5);
       camera.centerOn(
-        Phaser.Math.Linear(
-          camera.midPoint.x,
-          targetX,
-          reduced ? 1 : 1 - Math.exp(-dt * 5),
-        ),
-        this.cameraFocusY(),
+        Phaser.Math.Linear(camera.midPoint.x, targetCamera.x, ease),
+        Phaser.Math.Linear(camera.midPoint.y, targetCamera.y, ease),
       );
       let candidate: InteractionNode | null = null,
         min = Infinity;
       def.nodes.forEach((n, i) => {
-        const gap = Math.abs(n.x - state.position.x);
-        if (gap < (n.radius ?? 65) && gap < min) {
+        const gap = distance(n, state.position);
+        if (gap < min && this.canInteract(n)) {
           candidate = n;
           min = gap;
         }
-        this.lamps[i].setAlpha(gap < 90 ? 0.95 : n.hidden ? 0.16 : 0.55);
+        this.lamps[i].setAlpha(gap < 85 ? 0.95 : n.hidden ? 0.16 : 0.55);
       });
       if ((candidate as InteractionNode | null)?.id !== near?.id) {
         near = candidate;
         callbacks.onNear(near);
       }
       if (
-        (moved > 0.03 && time - this.lastSave > 1000) ||
+        (walking && time - this.lastSave > 1000) ||
         (!moved && this.wasMoving)
       ) {
         this.lastSave = time;
@@ -374,10 +538,8 @@ export function createWorld(
       }
       this.wasMoving = moved > 0;
     }
-    facingVector() {
-      return this.facing === 2 ? 1 : -1;
-    }
   }
+
   function perform(n: InteractionNode) {
     if (paused || transitioning || !active?.canInteract(n)) return;
     active.resetInput();
@@ -438,9 +600,9 @@ export function createWorld(
     width: parent.clientWidth,
     height: parent.clientHeight,
     backgroundColor: '#202e35',
-    pixelArt: true,
-    antialias: false,
-    roundPixels: true,
+    pixelArt: false,
+    antialias: true,
+    roundPixels: false,
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [ArchiveScene],
     audio: { noAudio: true },
@@ -450,7 +612,7 @@ export function createWorld(
   });
   const blur = () => {
     active?.resetInput();
-    inputX = 0;
+    input = { x: 0, y: 0 };
     save();
   };
   const visibility = () => {
@@ -488,7 +650,7 @@ export function createWorld(
       if (near) perform(near);
     },
     setDirection(v: Point) {
-      if (!paused && !transitioning) inputX = v.x;
+      if (!paused && !transitioning) input = { x: v.x, y: v.y };
     },
     snapshot,
     skip() {
@@ -503,7 +665,7 @@ export function createWorld(
     walkTo(id) {
       if (paused || transitioning) return;
       const n = getScene(state.sceneId).nodes.find((n) => n.id === id);
-      if (n) active?.walk(n.x, n);
+      if (n) active?.walk(n, n);
       else callbacks.onNotice('先回到维修通道，就能找到这道舱门。');
     },
   };
