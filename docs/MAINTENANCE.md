@@ -29,12 +29,12 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 ## 接入新内容与场景
 
-- `ContentSource.list/get` 位于 `lib/content/source.ts`，阅读组件只接收其结果。后续可替换为构建时 API 采集；地图不请求第三方服务。
-- `SceneDefinition` 位于 `lib/world/types.ts`，注册在 `lib/world/registry.ts`。新增唯一 ID、世界宽高、地表定义、独立图层、出生点、可走多边形、家具脚部碰撞、互动节点和入口，再运行 `npm run maps` 输出 Tiled 文件。
-- 本版注册表是地图坐标唯一源，Tiled 文件为可检查的导出结果。若先在 Tiled 调整空间，应将修改同步回注册表，再重新导出；检查会拒绝两者不一致。
-- `WorldAction` 的 open-content / open-collection / open-projects / open-game / enter-scene / adjust-sluice / use-lift / inspect / discover 由 React 展示层和世界桥接分发。相册和新 Demo 类型需要新增明确的数据及展示组件，再加入 action 分支；不用改角色控制。
-- 为新资产扩展 `SceneDefinition.art/layers/doors`，引擎按定义加载。没有内容的入口不注册。所有场景 ID 与内容 ID 分离。
-- `npm run check` 检查重复 ID、失效入口、无效出生点、失效图层/门、不能沿有效路径到达的物件、缺失文章、公开草稿泄漏，以及新 Markdown 自动收录。
+- 默认 `/` 的 Workbench 与 `/explore` 的 WorldShell 共用 `ContentSource.list/get`。首页精选只取正式文章，栏目自动收录新增内容。
+- `lib/world/registry.ts` 是空间唯一数据源。SceneDefinition 的 `width/height` 对应背景，`groundY` 是角色脚底线，`playerScale` 控制人物与家具的比例；节点、出生点应落在同一脚底线。房间的 `returnTo` 指向枢纽的独立返回点。
+- 当前是横版单层维修通道，不是自由俯视移动。新增舱室只需注册背景、脚底线、人物比例、返回点和互动节点，不改角色控制。室内 `frame` 为三行图集中的索引；普通独立背景不设 frame。
+- 运行 `npm run maps` 同步 Tiled 导出，再运行 `npm run check`。不能只编辑导出地图而不同步注册表。
+- 内容动作使用 open-content / open-collection / open-projects；可选游戏使用 open-game，场景连接使用 enter-scene。inspect / discover 只承接小反馈，任何内容均不依赖游戏完成。
+- `npm run check` 验证重复 ID、入口、出生点、节点可达性、文章引用、草稿隔离与 Markdown 自动收录。
 
 ## 官方备份迁移
 
@@ -46,9 +46,11 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 ## 状态、动效与排障
 
-探索状态仅保存在本机 `mecha-archive-world-v1`，包含位置、已查看物件、小游戏最佳成绩、彩蛋与水阀、浮桥、索道进度。它不限制阅读权限。布局变更时提高 `layoutVersion`，旧位置会回到对应出生点，保留内容进度。系统“减少动态效果”启用后跳过镜头、门、浮桥与索道运动，关闭树木摆动。浏览器存储不可用时仍可探索。
+探索状态位于本机 `mecha-archive-world-v1`，包含场景、布局版本、位置、已看物件和游戏成绩。布局变更时提高 `layoutVersion`，旧位置回到对应出生点，已失效物件 ID 被过滤。旧 exploration 字段仅为存档兼容保留，不参与河流、桥或升降台计算。
 
-若地图资源加载失败，直接用右上角文章入口、`/archive` 或文章 URL 阅读。图片和正文资源独立于 Phaser；阅读不等待游戏启动。
+减少动态效果可在运行中改变；关闭镜头缓动、待机呼吸并跳过转场。失焦或打开阅读后清空方向输入，停步保存最终坐标。存储不可用不阻止探索。
+
+地图载入失败仍可从上方直接阅读，或访问 `/archive`、`/projects`、`/about` 与 `/posts/:slug`。
 
 已提供保守的官方 SQLite 检查器：
 
@@ -58,22 +60,12 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 
 它保留原始文件和 SHA-256，核对官方 blog_Content 表，只提取访问权限为公开的文章到被忽略的 review.json。**不会自动修改站点文章**。已迁入的 ID 带出既有标签与地址；新记录一律待核对。官方 SQLite 阅读器中没有可靠的已发表状态或标签映射，不能把访问权限 0 当成已发表。依据：[官方客户端固定版本](https://github.com/cnblogs/vscode-cnb/blob/3838c373338ad5a1376cb6223000e6e2b61d4890/src/service/blog-export/blog-export-post.store.ts)。JSON/XML 待取得实际备份再添加适配，避免猜测字段丢内容。
 
-## 项目、图层与音乐
+## 项目、美术与音乐
 
-公开项目维护在 `content/data/projects.json`，记录仓库、描述、实际可用的演示链接和核对日期。不自动提交 GitHub 账号变更。
+公开项目维护在 `content/data/projects.json`，保留源链接、描述核对日期和实际演示地址。
 
-`lib/world/courtyard-layers.ts` 与 `interior-layers.ts` 定义独立原画层。`anchor` 是原素材脚锚点，`sourceWidth` 与 `width` 决定比例，`outline` 只决定原生渲染蒙版与点击区域，`depth` 与角色脚底 y 比较。**outline 不可直接拿来当碰撞框**：人物应能站到桌子的背后，碰撞只限制接地面积。静态轮廓在场景载入时由 Phaser 合成为可复用纹理，离开场景时释放，不在每帧重复跑遮罩。源图文件保持原样。室内基底已清空桌椅；不要改回带家具的原图，否则会出现重复。
+当前背景为 `public/art/mecha-section.png` 和三行 `mecha-cabins.png`；图集由引擎按原图行高取帧，源像素保持原样。生成提示词见 `docs/design/mecha-sideview-assets.md`。旧 courtyard / river 图层与素材保留作历史参考，不在当前场景加载。
 
-新增门将 `nodeId` 对应到真实互动节点，在 `doors` 填原画门洞尺寸。小游戏反馈由明确的 WorldAction 分支处理，不引入通用插件系统。新增场景和互动仍运行 `npm run maps` 与 `npm run check`。
+角色使用 `explorer-walk.png` 与 `explorer-frames.json` 中测量好的帧矩形、脚锚点，横版只使用左右两组帧，不按等宽网格盲切。角色在维修道前景移动，通道不延伸到背景的桌椅和机体。
 
-开始菜单在当前标签页首次打开时显示，左上头像可以再次打开。音乐音量保存在 `mecha-music-volume`；音乐每次打开页面都由访客主动播放，不把自动播放权限当作可用前提。更换音乐需要同步音源、展示时长与 THIRD_PARTY_NOTICES 中的授权。
-
-## 河谷扩建边界
-
-地图宽高定义在 SceneDefinition，路径网格从场景地面范围推导，摄影机可视范围独立于地图尺寸。室外 TerrainDefinition 的岸线用于绘图与碰撞，paths 只画路面，不限制草地。
-
-探索状态由 exploration.ts 校验和计算。改变机关时必须调用同一 collisionFor 规则、清空已有路线、更新机关图像并保存；不要直接修改共享注册表。bridge 为单向开启，lift 在 bridge 开启且电路完成后生效。旧版第二地图存档缺少浮桥进度时回到河湾，避免落在无法回程的岸边。
-
-角色原始图集 explorer-walk.png 与 explorer-frames.json 配对使用。生成图集的格子并不等宽，精确帧矩形和脚锚点来自 alpha 区域测量。不得按整齐网格盲切。river-materials.png 和 river-mechanisms.png 同样保留源像素，地表及机关前景通过游戏运行时合成。
-
-室内统一比例为 .42（registry.ts），家具图层、碰撞、站位、出生点须一起缩放。新增场景仍只注册定义，不修改角色移动核心。每次修改地图后运行 npm run maps，再检查初始、浮桥开启及索道启动三个状态。
+音乐音量保存在 `mecha-music-volume`，每次打开页面均由访客主动播放。更换曲目时同步来源和 THIRD_PARTY_NOTICES 授权记录。

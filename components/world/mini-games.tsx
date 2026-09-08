@@ -10,7 +10,7 @@ import {
   shuffledSignals,
 } from '@/lib/world/puzzles';
 export const GAME_TITLES: Record<MiniGameId, string> = {
-  circuit: '水车的动力回路',
+  circuit: '工坊的备用回路',
   memory: '旅行卡片',
 };
 export function MiniGameView({
@@ -98,7 +98,7 @@ function CircuitGame({ onComplete }: { onComplete: (moves: number) => void }) {
         {solved ? (
           <>
             <Check size={18} />
-            回路接通了。回到河边，水车和升降台已经恢复运转。
+            回路接通了。工坊的备用电源已经恢复。
           </>
         ) : (
           <span>

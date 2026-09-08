@@ -6,7 +6,7 @@ export default async function Archive() {
   return (
     <main className="reading-page archive-page">
       <header className="reading-header">
-        <a href="/">← 返回小院</a>
+        <a href="/">← 返回首页</a>
         <a href="/about">关于</a>
       </header>
       <span className="eyebrow">THE ARCHIVE</span>

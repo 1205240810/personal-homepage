@@ -35,6 +35,9 @@ export type SceneDefinition = {
   art: string;
   width: number;
   height: number;
+  groundY?: number;
+  playerScale?: number;
+  returnTo?: { sceneId: string; spawnId: string };
   outdoor?: boolean;
   terrain?: TerrainDefinition;
   frame?: number;

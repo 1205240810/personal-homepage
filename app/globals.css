@@ -3077,3 +3077,322 @@ kbd {
     display: none;
   }
 }
+
+/* Dual entry: the direct workbench and the optional mecha archive share content. */
+:root {
+  --background: #f6f5f1;
+  --foreground: #282a28;
+  --popover: #fcfbf8;
+  --popover-foreground: #282a28;
+  --primary: #a3502f;
+  --secondary: #eeeee7;
+  --muted: #efefe9;
+  --muted-foreground: #737670;
+  --accent: #eaeae2;
+  --border: #d6d7d0;
+  --ring: #bd673e;
+}
+.world-shell {
+  background: #202e35;
+  min-height: 360px;
+}
+.world-art {
+  background: #202e35 url('/art/mecha-section.png') center/cover;
+  filter: none;
+}
+.world-vignette {
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    #151d2366,
+    transparent 19%,
+    transparent 86%,
+    #151d2344
+  );
+}
+.world-header {
+  padding: 20px 26px;
+}
+.world-header .wordmark {
+  padding: 9px 12px;
+  border: 1px solid #ffffff45;
+  border-radius: 6px;
+  color: #f3e8cf;
+  background: #202d34dd;
+  text-shadow: none;
+}
+.world-header .wordmark small {
+  color: #c1b9a5;
+  font-size: 11px;
+}
+.world-header nav {
+  background: #f6f3e8f2;
+  border-color: #e3dfd0;
+}
+.world-header .nav-button {
+  height: 44px !important;
+  font-size: 14px !important;
+  color: #454b46;
+}
+.direct-home-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 13px;
+  font-size: 14px;
+  color: #a35332;
+  white-space: nowrap;
+  border-left: 1px solid #d4d2c6;
+}
+.interaction-prompt {
+  bottom: 95px;
+  border-color: #ecd7b0;
+  background: #f7f2e7f5;
+  color: #394541;
+}
+.interaction-prompt strong {
+  font-size: 15px;
+}
+.interaction-prompt small {
+  display: block;
+  font-size: 12px;
+  color: #71776b;
+}
+.journey-status {
+  background: #263038dc;
+  border-color: #ffffff25;
+  color: #efe9d7;
+  box-shadow: none;
+}
+.journey-location {
+  color: #c5b999;
+  font-size: 11px;
+}
+.journey-status p {
+  margin: 3px 0 0;
+  font-size: 14px;
+}
+.room-return {
+  min-height: 44px;
+  top: 96px;
+  color: #e8e3d6;
+  background: #263038df;
+  border: 1px solid #ffffff30;
+  font-size: 14px;
+}
+.quiet-world-tools .world-tool-button {
+  width: 44px;
+  height: 44px;
+  background: #f6f3e8f0;
+  color: #475148;
+}
+.world-shell .mobile-controls .dpad {
+  display: flex;
+  gap: 8px;
+  width: auto;
+  height: auto;
+}
+.world-shell .mobile-controls .dpad button {
+  position: static;
+  width: 50px;
+  height: 50px;
+}
+.world-shell .mobile-controls {
+  width: auto;
+  gap: 16px;
+}
+.first-visit-hint {
+  color: #4d5147;
+  background: #f6f3e8e8;
+  font-size: 13px;
+}
+.mecha-atlas {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: #f0f0e9f5;
+  backdrop-filter: blur(12px);
+  padding: 40px max(24px, 7vw);
+  overflow: auto;
+  color: #303b36;
+}
+.mecha-atlas-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  max-width: 1100px;
+  margin: auto auto 20px;
+}
+.mecha-atlas-header h2 {
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 500;
+  margin: 10px 0;
+}
+.mecha-atlas-header p {
+  color: #7c8177;
+  font-size: 14px;
+}
+.mecha-atlas-image {
+  position: relative;
+  max-width: 1100px;
+  height: clamp(210px, 36vh, 360px);
+  margin: auto;
+  overflow: hidden;
+  border: 1px solid #c4c7b9;
+  border-radius: 4px;
+}
+.mecha-atlas-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 47%;
+  filter: saturate(0.65);
+}
+.mecha-atlas-image button {
+  position: absolute;
+  transform: translateX(-50%);
+  bottom: 16px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f4ecdc;
+  color: #614c36;
+  border: 1px solid #fff8;
+  font-family: monospace;
+  font-size: 16px;
+  box-shadow: 0 3px 20px #0003;
+}
+.mecha-atlas-image button[data-current='true'] {
+  background: #e7ac67;
+}
+.mecha-atlas-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+  max-width: 1100px;
+  margin: 24px auto;
+}
+.mecha-atlas-links section {
+  border-top: 1px solid #c2c5b9;
+  padding-top: 18px;
+}
+.mecha-atlas-links small {
+  font-size: 12px;
+  color: #939887;
+}
+.mecha-atlas-links h3 {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 7px 0;
+}
+.mecha-atlas-links p {
+  min-height: 40px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #767e70;
+}
+.mecha-atlas-links button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 14px;
+  margin-right: 20px;
+  color: #9c5635;
+}
+.mecha-atlas-note {
+  max-width: 1100px;
+  margin: auto;
+  color: #828778;
+  font-size: 13px;
+}
+.mecha-atlas button:focus-visible,
+.direct-home-link:focus-visible {
+  outline: 2px solid #b86738;
+  outline-offset: 4px;
+}
+@media (max-width: 700px) {
+  .world-header {
+    padding: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .world-header .wordmark {
+    padding: 6px 9px;
+    font-size: 14px;
+  }
+  .world-header .wordmark > span:last-child {
+    display: block;
+  }
+  .world-header .wordmark small {
+    display: none;
+  }
+  .world-header nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .world-header .nav-button {
+    padding: 6px 9px !important;
+    font-size: 13px !important;
+  }
+  .direct-home-link {
+    font-size: 13px;
+    padding: 6px 9px;
+  }
+  .room-return {
+    top: 123px;
+    left: 12px;
+    font-size: 13px;
+  }
+  .journey-status {
+    right: 12px;
+    top: auto;
+    bottom: 24px;
+    max-width: 195px;
+  }
+  .journey-status .journey-location {
+    display: none;
+  }
+  .journey-status p {
+    font-size: 13px;
+  }
+  .interaction-prompt {
+    bottom: 185px;
+  }
+  .world-shell .mobile-controls {
+    bottom: 89px;
+    right: 16px;
+  }
+  .mecha-atlas {
+    padding: 24px 20px 40px;
+  }
+  .mecha-atlas-header {
+    align-items: flex-start;
+  }
+  .mecha-atlas-header .eyebrow {
+    font-size: 10px;
+  }
+  .mecha-atlas-header > button {
+    flex-shrink: 0;
+    padding: 5px;
+    font-size: 12px;
+  }
+  .mecha-atlas-links {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .mecha-atlas-links p {
+    min-height: 0;
+  }
+  .mecha-atlas-image {
+    height: 210px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-mount {
+    transition: none;
+  }
+}

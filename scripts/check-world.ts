@@ -84,56 +84,52 @@ test('电路初始未解，旋转能解，断开的出口不算完成', () => {
   assert.deepEqual([...shuffledSignals()].sort(), [0, 0, 1, 1, 2, 2, 3, 3]);
 });
 
-import {
-  INITIAL_EXPLORATION,
-  turnValve,
-  restoreExploration,
-  collisionFor,
-} from '../lib/world/exploration.ts';
-import { getScene } from '../lib/world/registry.ts';
-test('两个水阀共同改变桥面通路；已开启状态稳定，非法进度不会恢复捷径', () => {
-  const hub = getScene('hub'),
-    west = { x: 1170, y: 850 },
-    east = { x: 1550, y: 850 };
-  const before = collisionFor(hub, INITIAL_EXPLORATION);
-  assert.equal(clearSegment(west, east, before.areas, before.obstacles), false);
-  for (const valve of ['intake', 'outlet'] as const) {
-    let s = { ...INITIAL_EXPLORATION };
-    for (let i = 0; i < 3; i++) s = turnValve(s, valve);
-    assert.equal(s.bridge, false, '只操作一侧不能完成机关');
+import { SCENES, getScene } from '../lib/world/registry.ts';
+test('机甲通道连续，三个舱室都可原路返回，探索不锁定内容', () => {
+  const hub = getScene('hub');
+  for (const scene of SCENES) {
+    for (const node of scene.nodes) {
+      assert.equal(
+        node.requires,
+        undefined,
+        '可阅读内容和舱门不能被小游戏进度锁定',
+      );
+      assert(
+        findRoute(
+          scene.spawnPoints.default,
+          node,
+          scene.walkable,
+          scene.obstacles,
+        ),
+      );
+    }
+    if (scene.id === 'hub') continue;
+    const back = scene.returnTo!;
+    assert.equal(back.sceneId, 'hub');
+    const point = hub.spawnPoints[back.spawnId];
+    assert(point);
+    assert(traversable(point, hub.walkable, hub.obstacles));
+    assert(
+      scene.nodes.some(
+        (n) =>
+          n.action.type === 'enter-scene' &&
+          n.action.sceneId === 'hub' &&
+          n.action.spawnId === back.spawnId,
+      ),
+    );
+    assert(
+      hub.nodes.some(
+        (n) => n.action.type === 'enter-scene' && n.action.sceneId === scene.id,
+      ),
+    );
   }
-  let s = turnValve(INITIAL_EXPLORATION, 'outlet');
-  s = turnValve(s, 'intake');
-  assert.equal(s.bridge, true);
-  const after = collisionFor(hub, s);
-  assert.equal(clearSegment(west, east, after.areas, after.obstacles), true);
-  assert.deepEqual(turnValve(s, 'outlet'), s);
   assert.equal(
-    restoreExploration({ lift: true, bridge: false, intake: 99 }).lift,
-    false,
-  );
-  assert.equal(restoreExploration({ lift: true, bridge: true }).lift, true);
-});
-test('场景家具与地图边界不可穿过，草地保持可达', () => {
-  for (const [id, p] of [
-    ['hub', { x: 215, y: 780 }],
-    ['life', { x: 1750, y: 635 }],
-    ['life', { x: 750, y: 935 }],
-  ] as const) {
-    const def = getScene(id);
-    assert.equal(traversable(p, def.walkable, def.obstacles), false);
-  }
-  const def = getScene('hub');
-  assert.equal(
-    traversable({ x: 2440, y: 1100 }, def.walkable, def.obstacles),
-    false,
-  );
-  assert(
-    findRoute(
-      def.spawnPoints.default,
-      { x: 870, y: 1000 },
-      def.walkable,
-      def.obstacles,
+    traversable(
+      { x: hub.width / 2, y: hub.groundY! - 70 },
+      hub.walkable,
+      hub.obstacles,
     ),
+    false,
+    '人物不能走进背景机身',
   );
 });

@@ -1,7 +1,5 @@
-import WorldShell from '@/components/world/world-shell';
-import { contentSource, isPrivatePreview } from '@/lib/content/source';
+import Workbench from '@/components/home/workbench';
+import { contentSource } from '@/lib/content/source';
 export default async function Home() {
-  return (
-    <WorldShell posts={await contentSource.list()} preview={isPrivatePreview} />
-  );
+  return <Workbench posts={await contentSource.list()} />;
 }

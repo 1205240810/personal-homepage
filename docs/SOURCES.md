@@ -34,3 +34,7 @@
 公开 GitHub 数据来自用户确认的 [1205240810](https://github.com/1205240810)，项目展示只使用公开仓库资料，核对日期与外链记录在 `content/data/projects.json`。
 
 背景音乐为 Kevin MacLeod 的 Morning，源音频时长153.31265秒；来源、署名与 CC BY 4.0 许可证见 THIRD_PARTY_NOTICES.md。
+
+## 2026-09-08 双轨更新
+
+当前首页采用已确认的 B「精密工作台」。可选探索恢复完整侧视机甲，主图和三房室内图集由 imagegen 原创生成；实际文件与提示词见 docs/design/mecha-sideview-assets.md。保留原始素材，运行时按画面绑定通行线和节点。之前的小院、河谷记录是历史设计，不代表当前路线。
