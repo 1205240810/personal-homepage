@@ -46,3 +46,9 @@
 OSPF 示例依据 [项目 README](https://github.com/1205240810/ospf-v2-demo/blob/main/README.md) 及公开前端规划器核验，固定拓扑 PC1 → FRR1 → FRR2 → PC2。真实项目公开版的 Ping 是地址计划成员检查和固定回执，本站明确标注模拟，不声称运行真实路由协议或容器网络。
 
 相册取自 [公开数据](https://github.com/1205240810/intelligent-album-demo/blob/main/frontend/public/data.json) 的 ID 8、30、31、34、46、68，图片来自同仓库 `frontend/public/images/real`。[数据规范](https://github.com/1205240810/intelligent-album-demo/blob/main/docs/DATA_AND_IMAGE_SPEC.md) 允许展示与部署，六张原图核验无 EXIF。标签与色彩、纹理分值原样保留，统计在本地计算；不存在新推理调用。来源和文件散列见 `docs/project-preview-sources.json`。
+
+## 2026-09-08 完整迁移和高清内舱
+
+公开月份归档17个月、随笔列表8页与公开统计三方均为74篇。已保留全部正文303代码块、6表、104个反斜杠公式与美元公式候选；19张正文原图下载保存，6处无法读取的图明确标记。逐篇来源与散列见 cnblogs-public-import.json，独立完整性验收见 cnblogs-public-audit.json。
+
+用户明确授权从本人已登录后台迁入隐藏文，官方SQLite备份79篇：74篇已公开，额外5篇全部只放加密私藏包。备份本身不公开、不提交。三间新内舱及独立私藏室由imagegen分别单次生成，原生1536×1024，无重新采样。提示词与资产元数据见 design/interior-hd-assets.json。

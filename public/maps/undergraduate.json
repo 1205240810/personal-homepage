@@ -31,20 +31,36 @@
           "y": 0,
           "polygon": [
             {
-              "x": 372,
-              "y": 295
+              "x": 355,
+              "y": 296
             },
             {
-              "x": 521,
-              "y": 295
+              "x": 501,
+              "y": 296
             },
             {
-              "x": 521,
-              "y": 410
+              "x": 513,
+              "y": 342
             },
             {
-              "x": 372,
-              "y": 410
+              "x": 513,
+              "y": 379
+            },
+            {
+              "x": 504,
+              "y": 388
+            },
+            {
+              "x": 356,
+              "y": 388
+            },
+            {
+              "x": 344,
+              "y": 378
+            },
+            {
+              "x": 344,
+              "y": 342
             }
           ],
           "visible": true,
@@ -58,20 +74,20 @@
           "y": 0,
           "polygon": [
             {
-              "x": 626,
-              "y": 240
+              "x": 660,
+              "y": 253
             },
             {
-              "x": 702,
-              "y": 240
+              "x": 704,
+              "y": 253
             },
             {
-              "x": 702,
-              "y": 310
+              "x": 704,
+              "y": 301
             },
             {
-              "x": 626,
-              "y": 310
+              "x": 660,
+              "y": 301
             }
           ],
           "visible": true,
@@ -97,7 +113,7 @@
           "y": 0,
           "polygon": [
             {
-              "x": 280,
+              "x": 276,
               "y": 228
             },
             {
@@ -149,8 +165,8 @@
               "y": 340
             },
             {
-              "x": 229,
-              "y": 293
+              "x": 220,
+              "y": 289
             }
           ],
           "visible": true,
@@ -172,8 +188,8 @@
           "id": 100,
           "name": "undergraduate-exit",
           "type": "enter-scene",
-          "x": 445,
-          "y": 526,
+          "x": 428,
+          "y": 533,
           "width": 0,
           "height": 0,
           "point": true,
@@ -184,8 +200,8 @@
           "id": 101,
           "name": "all-articles",
           "type": "open-collection",
-          "x": 445,
-          "y": 443,
+          "x": 428,
+          "y": 416,
           "width": 0,
           "height": 0,
           "point": true,
@@ -198,6 +214,30 @@
           "type": "open-content",
           "x": 590,
           "y": 319,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 103,
+          "name": "private-door",
+          "type": "open-vault",
+          "x": 280,
+          "y": 315,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 104,
+          "name": "folded-page",
+          "type": "discover",
+          "x": 645,
+          "y": 324,
           "width": 0,
           "height": 0,
           "point": true,

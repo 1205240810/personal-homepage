@@ -3,6 +3,7 @@ import { makePlayerTextures, posePlayer } from './player';
 import { SCENES, getScene, ARCHIVE_GANTRY } from './registry';
 import { traversable, clearSegment, findRoute } from './navigation';
 import { distance } from './geometry';
+import { getDiscovery } from './discoveries';
 import type {
   GameHandle,
   InteractionNode,
@@ -38,7 +39,7 @@ export function createWorld(
   let state: WorldSnapshot = {
     exploration: { intake: 0, outlet: 0, bridge: false, lift: false },
     sceneId: 'hub',
-    layoutVersion: 21,
+    layoutVersion: getScene('hub').layoutVersion,
     position: { ...getScene('hub').spawnPoints.default },
     armorOpen: false,
     visited: [],
@@ -64,8 +65,8 @@ export function createWorld(
           ? old.visited.filter((id: string) => nodes.has(id))
           : [],
         discoveries: Array.isArray(old.discoveries)
-          ? old.discoveries.filter((id: string) =>
-              ['sleepy-eye', 'maintenance-cat'].includes(id),
+          ? old.discoveries.filter(
+              (id: string) => !!getDiscovery(id) || id === 'maintenance-cat',
             )
           : [],
         games: Object.fromEntries(
@@ -80,6 +81,12 @@ export function createWorld(
       };
     }
   } catch {}
+  if (state.sceneId === 'vault') {
+    state.sceneId = 'undergraduate';
+    state.position = {
+      ...getScene('undergraduate').spawnPoints['private-door'],
+    };
+  }
   const snapshot = () => ({
     ...state,
     position: { ...state.position },
@@ -182,8 +189,18 @@ export function createWorld(
           )
           .setDepth(6);
         this.lamps.push(lamp);
+        if (
+          n.action.type === 'discover' &&
+          state.discoveries.includes(n.action.discovery)
+        )
+          this.discoveryFeedback(n, false);
         const hotspot = this.add
-          .zone(n.x, n.y - 55, n.hidden ? 60 : 100, 120)
+          .zone(
+            n.effectPoint?.x ?? n.x,
+            n.effectPoint?.y ?? n.y - 55,
+            n.hidden ? 60 : 100,
+            n.hidden ? 65 : 120,
+          )
           .setInteractive({ useHandCursor: true });
         hotspot.on('pointerup', () => {
           if (!paused && !transitioning) {
@@ -230,6 +247,34 @@ export function createWorld(
       if (!reduced) this.cameras.main.fadeIn(420, 20, 27, 32);
       if (paused) this.scene.pause();
     }
+    discoveryFeedback(node: InteractionNode, animate: boolean) {
+      if (node.action.type !== 'discover') return;
+      const discovery = getDiscovery(node.action.discovery);
+      if (!discovery) return;
+      const point = node.effectPoint ?? { x: node.x, y: node.y - 45 };
+      const name = `discovery:${node.id}`;
+      if (!this.children.getByName(name))
+        this.add
+          .circle(point.x, point.y, 2.5, discovery.color, 0.8)
+          .setName(name)
+          .setDepth(800);
+      if (!animate || reduced) return;
+      for (let i = 0; i < 2; i++) {
+        const ring = this.add
+          .circle(point.x, point.y, 5)
+          .setStrokeStyle(1, discovery.color, 0.8)
+          .setDepth(800);
+        this.tweens.add({
+          targets: ring,
+          scale: 5,
+          alpha: 0,
+          duration: 1200,
+          delay: i * 280,
+          ease: 'Sine.easeOut',
+          onComplete: () => ring.destroy(),
+        });
+      }
+    }
     resetInput() {
       this.route = [];
       this.targetNode = undefined;
@@ -250,11 +295,22 @@ export function createWorld(
           y = Math.floor(Math.min(...layer.outline.map((p) => p[1])));
         const w = Math.ceil(Math.max(...layer.outline.map((p) => p[0]))) - x,
           h = Math.ceil(Math.max(...layer.outline.map((p) => p[1]))) - y;
+        const source = this.textures
+          .get(key)
+          .getSourceImage() as HTMLImageElement;
+        const frameHeight =
+          frame === undefined ? source.height : Math.floor(source.height / 3);
+        const sx = source.width / def.width,
+          sy = frameHeight / def.height;
         const textureKey = `foreground:${def.id}:${index}`,
-          cut = this.textures.createCanvas(textureKey, w, h)!;
-        const ctx = cut.context,
-          source = this.textures.get(key).getSourceImage() as HTMLImageElement;
+          cut = this.textures.createCanvas(
+            textureKey,
+            Math.ceil(w * sx),
+            Math.ceil(h * sy),
+          )!;
+        const ctx = cut.context;
         ctx.save();
+        ctx.scale(sx, sy);
         ctx.beginPath();
         layer.outline.forEach(([px, py], i) =>
           i ? ctx.lineTo(px - x, py - y) : ctx.moveTo(px - x, py - y),
@@ -263,10 +319,10 @@ export function createWorld(
         ctx.clip();
         ctx.drawImage(
           source,
-          x,
-          y + (frame ?? 0) * Math.floor(source.height / 3),
-          w,
-          h,
+          x * sx,
+          y * sy + (frame ?? 0) * frameHeight,
+          w * sx,
+          h * sy,
           0,
           0,
           w,
@@ -274,7 +330,11 @@ export function createWorld(
         );
         ctx.restore();
         cut.refresh();
-        this.add.image(x, y, textureKey).setOrigin(0).setDepth(layer.depth);
+        this.add
+          .image(x, y, textureKey)
+          .setOrigin(0)
+          .setDisplaySize(w, h)
+          .setDepth(layer.depth);
         this.events.once('shutdown', () => this.textures.remove(textureKey));
       });
       if (def.id !== 'hub') return;
@@ -558,11 +618,13 @@ export function createWorld(
       return;
     }
     if (n.action.type === 'discover') {
-      if (!state.discoveries.includes(n.action.discovery))
-        state.discoveries.push(n.action.discovery);
+      const first = !state.discoveries.includes(n.action.discovery);
+      if (first) state.discoveries.push(n.action.discovery);
       save();
-      if (!reduced) active.cameras.main.flash(320, 117, 169, 153, false);
-      callbacks.onNotice('通讯器传来一声轻响：「收到。今天也辛苦了。」');
+      active.discoveryFeedback(n, first);
+      const discovery = getDiscovery(n.action.discovery);
+      if (discovery)
+        callbacks.onNotice(first ? discovery.text : discovery.again);
       return;
     }
     callbacks.onAction(n.action);

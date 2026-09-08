@@ -4,6 +4,7 @@ import { DISTRICTS, getScene } from '@/lib/world/registry';
 import type { ArticleSummary } from '@/lib/content/source';
 import type { WorldAction, WorldSnapshot } from '@/lib/world/types';
 import projects from '@/content/data/projects.json';
+import { DISCOVERIES } from '@/lib/world/discoveries';
 export function WorldAtlas({
   posts,
   snapshot,
@@ -33,7 +34,7 @@ export function WorldAtlas({
       <div className="mecha-atlas-image">
         <img
           src="/art/mecha-isometric.png"
-          alt="完整机甲的斜俯视图：头部驾驶舱、胸腔档案库和右手检修工坊，由环形栈道连接。"
+          alt="完整机甲的斜俯视图：头部航迹室、旧纸库和右手试作间，由环形栈道连接。"
         />
         {DISTRICTS.map((d, i) => (
           <button
@@ -79,6 +80,22 @@ export function WorldAtlas({
       <p className="mecha-atlas-note">
         探索进度保存在本机。文章、作品和个人档案随时可以打开。
       </p>
+      {DISCOVERIES.some((d) => snapshot?.discoveries.includes(d.id)) && (
+        <details className="discovery-notebook">
+          <summary>旅途拾遗 · 留在口袋里的小事</summary>
+          {DISCOVERIES.filter((d) => snapshot?.discoveries.includes(d.id)).map(
+            (d) => (
+              <div key={d.id}>
+                <h3>{d.title}</h3>
+                <p>{d.text}</p>
+                {d.id === 'paper-crane' && (
+                  <a href="/posts/cnblogs-13693028">翻到最早的那一页 ↗</a>
+                )}
+              </div>
+            ),
+          )}
+        </details>
+      )}
     </section>
   );
 }

@@ -41,10 +41,12 @@ import { MusicControl } from './music-control';
 import { ProjectsView } from './projects-view';
 import { MiniGameView, GAME_TITLES } from './mini-games';
 import { WorldAtlas } from './world-atlas';
+import { PrivateVault } from './private-vault';
 import { WalkerPortrait } from './start-screen';
 import type { MiniGameId } from '@/lib/world/types';
 
 type Panel =
+  | 'vault'
   | 'directory'
   | 'article'
   | 'profile'
@@ -102,6 +104,10 @@ export default function WorldShell({
   }, []);
   actionRef.current = (action) => {
     setBlueprint(false);
+    if (action.type === 'open-vault') {
+      setPanel('vault');
+      return;
+    }
     if (action.type === 'open-projects') {
       setPanel('projects');
       return;
@@ -165,6 +171,7 @@ export default function WorldShell({
             if (
               !initialNavigationDone &&
               requestedScene &&
+              requestedScene !== 'vault' &&
               SCENES.some((s) => s.id === requestedScene)
             ) {
               initialNavigationDone = true;
@@ -324,7 +331,7 @@ export default function WorldShell({
           {scene.returnTo && (
             <button className="room-return" onClick={() => enter('hub')}>
               <ArrowLeft size={15} />
-              回到维修栈道
+              回到环行栈道
             </button>
           )}
           {ready && near && !panel && (
@@ -455,7 +462,7 @@ export default function WorldShell({
         }}
       >
         <SheetContent
-          className={`directory-sheet ${panel === 'article' ? 'reader-sheet' : panel === 'game' ? 'game-sheet' : ''}`}
+          className={`directory-sheet ${panel === 'article' || panel === 'vault' ? 'reader-sheet' : panel === 'game' ? 'game-sheet' : ''}`}
           showCloseButton={false}
         >
           <div className="panel-heading">
@@ -559,6 +566,31 @@ export default function WorldShell({
                   篇待核对草稿 · 仅用于私有预览
                 </p>
               )}
+            </>
+          ) : panel === 'vault' ? (
+            <>
+              <SheetTitle className="sr-only">私藏室</SheetTitle>
+              <SheetDescription className="sr-only">
+                需要本人账号与独立密码的私人档案。
+              </SheetDescription>
+              <PrivateVault
+                onEnter={
+                  sceneId === 'vault'
+                    ? undefined
+                    : () => {
+                        setPanel(null);
+                        game.current?.pause(false);
+                        game.current?.enter('vault');
+                      }
+                }
+                onLock={() => {
+                  setPanel(null);
+                  if (sceneId === 'vault') {
+                    game.current?.pause(false);
+                    game.current?.enter('undergraduate', 'private-door');
+                  }
+                }}
+              />
             </>
           ) : panel === 'projects' ? (
             <>

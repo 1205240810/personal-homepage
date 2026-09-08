@@ -1,0 +1,2989 @@
+{
+  "state": "complete",
+  "auditedAt": "2026-09-08T08:50:29.025577+00:00",
+  "candidatePath": "/private/tmp/cnblogs-full-import/candidate-cnblogs.json",
+  "importedPath": "/Users/tscjj/Desktop/个人博客/content/articles/cnblogs.json",
+  "generatedPath": "/Users/tscjj/Desktop/个人博客/lib/content/generated.json",
+  "generatedPreview": true,
+  "baseline": {
+    "posts": 74,
+    "pre": 303,
+    "tables": 6,
+    "mathExpressions": 104,
+    "mathDelimiters": {
+      "display": 13,
+      "inline": 91
+    },
+    "dollarMathExpressions": 15,
+    "codeFoldImageCount": 2,
+    "legacyCodePosts": [
+      "cnblogs-14136622",
+      "cnblogs-14100659",
+      "cnblogs-13769936",
+      "cnblogs-13769924",
+      "cnblogs-13769910",
+      "cnblogs-13769896",
+      "cnblogs-13769885",
+      "cnblogs-13769877",
+      "cnblogs-13745096",
+      "cnblogs-13742736",
+      "cnblogs-13742733",
+      "cnblogs-13740067",
+      "cnblogs-13739991",
+      "cnblogs-13735183",
+      "cnblogs-13735095",
+      "cnblogs-13735040",
+      "cnblogs-13722854",
+      "cnblogs-13703164",
+      "cnblogs-13703060",
+      "cnblogs-13703037",
+      "cnblogs-13702660",
+      "cnblogs-13702448",
+      "cnblogs-13702387",
+      "cnblogs-13694244",
+      "cnblogs-13694108"
+    ]
+  },
+  "importedCount": 74,
+  "generatedCount": 78,
+  "auditedPostCount": 74,
+  "generatedCounts": {
+    "pre": 303,
+    "table": 6,
+    "math": 104,
+    "dollarMath": 15
+  },
+  "passCount": 74,
+  "issues": [],
+  "rows": [
+    {
+      "id": "cnblogs-16913984",
+      "slug": "icpc-2022-hefei",
+      "title": "ICPC2022-合肥赛区 SZTU_AtDawn队总结",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-16796530",
+      "slug": "cnblogs-16796530",
+      "title": "自适应辛普森（Simpson）积分",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 7,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 7,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-16796529",
+      "slug": "cnblogs-16796529",
+      "title": "一些常见的数列问题",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 5,
+        "dollarMath": 2
+      },
+      "generatedCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 5,
+        "dollarMath": 2
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-16796521",
+      "slug": "cnblogs-16796521",
+      "title": "康托展开",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-16796518",
+      "slug": "cnblogs-16796518",
+      "title": "摩尔投票相关应用",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-16597435",
+      "slug": "game-theory",
+      "title": "Game Theory",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 5,
+        "table": 6,
+        "math": 92,
+        "dollarMath": 13
+      },
+      "generatedCounts": {
+        "pre": 5,
+        "table": 6,
+        "math": 92,
+        "dollarMath": 13
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-16057585",
+      "slug": "cnblogs-16057585",
+      "title": "Codeforce Round #640 Div4",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-16042362",
+      "slug": "cnblogs-16042362",
+      "title": "Codeforce Round #762 Div3 补题报告",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-15873499",
+      "slug": "cnblogs-15873499",
+      "title": "第十二届蓝桥杯B组真题题解",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 5,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 5,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-15565371",
+      "slug": "cnblogs-15565371",
+      "title": "codeforce round 753 div3 题解报告",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 8,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 8,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-15374872",
+      "slug": "cnblogs-15374872",
+      "title": "Codeforces Round #744 (Div. 3) 解题报告",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 10,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 10,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-15358399",
+      "slug": "cnblogs-15358399",
+      "title": "Codeforces Round #731 (Div. 3)解题报告",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-15064143",
+      "slug": "cnblogs-15064143",
+      "title": "codeforce Round 734 div3 题解报告",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-15018347",
+      "slug": "cnblogs-15018347",
+      "title": "最小生成树刷题汇总",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 18,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 18,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14930370",
+      "slug": "cnblogs-14930370",
+      "title": "SZTUOJ 1025.怪物入侵",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14930367",
+      "slug": "cnblogs-14930367",
+      "title": "SZTUOJ 1024.在二叉树寻求邂逅是否搞错了什么",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14930361",
+      "slug": "cnblogs-14930361",
+      "title": "SZTUOJ 1023.万圣节大作战",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14917268",
+      "slug": "cnblogs-14917268",
+      "title": "SZTUOJ 1022.辉辉翻扑克牌",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14917260",
+      "slug": "cnblogs-14917260",
+      "title": "SZTUOJ 1021.食堂调查",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14917243",
+      "slug": "cnblogs-14917243",
+      "title": "SZTUOJ 1020.钱钱的steam游戏",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14901926",
+      "slug": "cnblogs-14901926",
+      "title": "SZTUOJ 1019.总之就是不太可爱",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14901925",
+      "slug": "cnblogs-14901925",
+      "title": "SZTUOJ 1018.素数",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14901924",
+      "slug": "cnblogs-14901924",
+      "title": "SZTUOJ 1017.火柴人",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14887865",
+      "slug": "cnblogs-14887865",
+      "title": "SZTUOJ 1016.zjb学长想要玩！",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14887862",
+      "slug": "cnblogs-14887862",
+      "title": "SZTUOJ 1015.闰年",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14887859",
+      "slug": "cnblogs-14887859",
+      "title": "SZTUOJ 1014.RMQ with Shifts",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14887854",
+      "slug": "cnblogs-14887854",
+      "title": "SZTUOJ 1010.最优对称路径",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14887853",
+      "slug": "cnblogs-14887853",
+      "title": "SZTUOJ 1009.打怪升级",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14887852",
+      "slug": "cnblogs-14887852",
+      "title": "SZTUOJ 1008.盒子游戏",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14879572",
+      "slug": "cnblogs-14879572",
+      "title": "SZTUOJ1007 .多连块分解",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14877239",
+      "slug": "cnblogs-14877239",
+      "title": "SZTUOJ 1006.多连块拼图",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14877238",
+      "slug": "cnblogs-14877238",
+      "title": "SZTUOJ 1005.报数游戏",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14869540",
+      "slug": "cnblogs-14869540",
+      "title": "SZTUOJ 1004.一二三",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14865307",
+      "slug": "cnblogs-14865307",
+      "title": "SZTUOJ 1003.A+B(III)",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14861205",
+      "slug": "cnblogs-14861205",
+      "title": "SZTUOJ 1002. A+B(II)",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 5,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 5,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14861202",
+      "slug": "cnblogs-14861202",
+      "title": "SZTUOJ 1001. A+B (I)",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 5,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 5,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14813488",
+      "slug": "cnblogs-14813488",
+      "title": "四种基础数据结构的变种应用",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 12,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 12,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14809669",
+      "slug": "cnblogs-14809669",
+      "title": "hash算法理解和应用",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 7,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14778593",
+      "slug": "knapsack-dp",
+      "title": "背包问题总结",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 19,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 19,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14761590",
+      "slug": "cnblogs-14761590",
+      "title": "2021-天梯赛（cccc）比赛题解",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 15,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 15,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14665308",
+      "slug": "cnblogs-14665308",
+      "title": "母函数的理解和应用",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 6,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 6,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14630466",
+      "slug": "cnblogs-14630466",
+      "title": "矩阵快速幂的原理和构造技巧",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14620094",
+      "slug": "cnblogs-14620094",
+      "title": "2021-ICPC昆明赛区-SZTU_Random队总结",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14471307",
+      "slug": "cnblogs-14471307",
+      "title": "链表的几种写法（数据结构与算法课程1）",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14375808",
+      "slug": "cnblogs-14375808",
+      "title": "SZTU-ACM 2021 春期训练赛第一点五场 [组队赛]（第四届河南大学生程序设计竞赛）总结和题解",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 8,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 8,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14366731",
+      "slug": "cnblogs-14366731",
+      "title": "SZTU-ACM 2021 春期训练赛第一场 [组队赛]总结和题解",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 12,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 12,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-14136622",
+      "slug": "cnblogs-14136622",
+      "title": "深圳技术大学第二届软件和信息技术大赛-题解报告",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 11,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 11,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 1,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 2,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 3,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 4,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 5,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 6,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 7,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 8,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 9,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 10,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-14100659",
+      "slug": "cnblogs-14100659",
+      "title": "最短路算法的总结",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 5,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 5,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "para",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 1,
+          "classes": [
+            "",
+            "para",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 2,
+          "classes": [
+            "",
+            "para",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 3,
+          "classes": [
+            "",
+            "para",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 4,
+          "classes": [
+            "",
+            "para",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13876218",
+      "slug": "cnblogs-13876218",
+      "title": "2020HNCPC 模拟赛后总结",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-13769936",
+      "slug": "cnblogs-13769936",
+      "title": "uva 140 带宽",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 1,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13769924",
+      "slug": "cnblogs-13769924",
+      "title": "uva 129 困难的串",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13769910",
+      "slug": "cnblogs-13769910",
+      "title": "uva 246 10-20-30游戏",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13769896",
+      "slug": "cnblogs-13769896",
+      "title": "uva 127 纸牌游戏",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13769885",
+      "slug": "cnblogs-13769885",
+      "title": "uva12166 修改天平",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13769877",
+      "slug": "cnblogs-13769877",
+      "title": "uva1600 巡逻机器人",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13745096",
+      "slug": "cnblogs-13745096",
+      "title": "Codeforces Round #673 (Div. 2)补题报告",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "output-specification",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 1,
+          "classes": [
+            "",
+            "output-specification",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 2,
+          "classes": [
+            "",
+            "output-specification",
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13742736",
+      "slug": "cnblogs-13742736",
+      "title": "poj2689 素数距离",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13742733",
+      "slug": "cnblogs-13742733",
+      "title": "素数的简单性质和筛法",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 1,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 2,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13740067",
+      "slug": "cnblogs-13740067",
+      "title": "uva1599 理想路径",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13739991",
+      "slug": "cnblogs-13739991",
+      "title": "uva 10129 单词",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13735183",
+      "slug": "cnblogs-13735183",
+      "title": "uva10562 看图写树",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 3,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 2,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13735095",
+      "slug": "cnblogs-13735095",
+      "title": "uva 10305给任务排序",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13735040",
+      "slug": "cnblogs-13735040",
+      "title": "uva816 Abbott的复仇",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13722854",
+      "slug": "cnblogs-13722854",
+      "title": "uva1103 古代象形符号",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 1,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13703164",
+      "slug": "cnblogs-13703164",
+      "title": "扩展欧几里得方程的应用---求解不定方程（青蛙的约会）",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 2,
+          "classes": [
+            "",
+            "am-g",
+            "am-u-md-6 copy-region",
+            "cnblogs_code",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 3,
+          "classes": [
+            "",
+            "am-g",
+            "am-u-md-6 copy-region",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13703060",
+      "slug": "cnblogs-13703060",
+      "title": "扩展欧几里得算法的证明",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13703037",
+      "slug": "cnblogs-13703037",
+      "title": "codeforce #671  补题报告",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 10,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 10,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 5,
+          "classes": [
+            "",
+            "note",
+            "sample-tests",
+            "sample-test",
+            "output",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 8,
+          "classes": [
+            "",
+            "note",
+            "sample-tests",
+            "sample-test",
+            "output",
+            "note",
+            "cnblogs_code"
+          ]
+        },
+        {
+          "index": 9,
+          "classes": [
+            "",
+            "note",
+            "sample-tests",
+            "sample-test",
+            "output",
+            "note",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13702660",
+      "slug": "cnblogs-13702660",
+      "title": "uva839天平",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13702448",
+      "slug": "cnblogs-13702448",
+      "title": "uva548 树",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 3,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13702387",
+      "slug": "cnblogs-13702387",
+      "title": "uva 122 树的层次遍历",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 4,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 3,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13694244",
+      "slug": "cnblogs-13694244",
+      "title": "Uva 12657 移动盒子（双向链表）",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code",
+            "cnblogs_code_hide"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13694158",
+      "slug": "cnblogs-13694158",
+      "title": "uva11988  破损的键盘",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 2,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    },
+    {
+      "id": "cnblogs-13694108",
+      "slug": "cnblogs-13694108",
+      "title": "uva514 Rails",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 1,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": [
+        {
+          "index": 0,
+          "classes": [
+            "",
+            "cnblogs_code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cnblogs-13693028",
+      "slug": "cnblogs-13693028",
+      "title": "告别过去，新的开始。",
+      "checks": {
+        "preCountMatch": true,
+        "preTextExactMatch": true,
+        "tableCountMatch": true,
+        "tableStructureAndTextMatch": true,
+        "mathExpressionsExactMatch": true,
+        "dollarMathExpressionsExactMatch": true,
+        "sourceTitlePreserved": true,
+        "sourceDatePreserved": true,
+        "sourceTagsPreserved": true,
+        "slugPreserved": true,
+        "noInlineHiddenCode": true
+      },
+      "sourceCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "generatedCounts": {
+        "pre": 0,
+        "table": 0,
+        "math": 0,
+        "dollarMath": 0
+      },
+      "codeTextDifferences": [],
+      "hiddenCode": [],
+      "remainingCodeFoldImages": [],
+      "generatedPreAncestorClasses": []
+    }
+  ],
+  "scope": "Read-only source/generation content integrity audit. Browser visual rendering and CSS behavior require root UI verification.",
+  "inputSha256": {
+    "candidate": "acaa0c9ece1da78b21dbb9568a9e37bab843ac2c6b09f31527c164f86bcfebdc",
+    "imported": "cc51990d02c0274eae7669b6fb157f1a72fee029cc5955bb91e0088ee5c82058",
+    "generated": "ef39619fb185f0de68f8c51c48f20f34464d77ee22429d172e468edf4016547e"
+  },
+  "legacyCodeReview": {
+    "sourceLegacyCodePosts": 25,
+    "sourceCodeFoldImages": 2,
+    "generatedCodeFoldImages": 0,
+    "generatedInlineHiddenCodeBlocks": 0,
+    "generatedPreTextExactIncludingLegacyLineNumbers": true,
+    "cnblogsCodeHideClassRemainsOnPost13694244": true,
+    "hideRulesFoundInAppComponentsPublic": false,
+    "note": "The class name cnblogs_code_hide remains, but no matching CSS or script hide rule is present in app/components/public; code text including original line numbers is unchanged."
+  }
+}

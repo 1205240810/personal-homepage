@@ -31,7 +31,7 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 - `/` 引导页下的 `/workbench` 与 `/explore` 共用 `ContentSource.list/get`。工作台精选只取正式文章，栏目自动收录新增内容。
 - `lib/world/registry.ts` 是空间唯一数据源。SceneDefinition 的 `width/height` 对应背景，`walkable` 指定可通行多边形，`obstacles` 指定家具脚底，`foreground` 为按深度遮挡的原画轮廓；`playerScale` 控制人物比例。节点与出生点必须可通行。`returnTo` 指向枢纽独立返回点。
-- 当前为斜俯视 2.5D；新增舱室只需注册背景、地面、家具、人物比例、返回点和互动节点，不改角色控制。室内 `frame` 为三行图集中的索引；普通独立背景不设 frame。
+- 当前为斜俯视 2.5D；新增舱室只需注册背景、地面、家具、人物比例、返回点和互动节点，不改角色控制。当前四个内舱均为独立1536×1024原图，逻辑坐标887×591；前景遮挡从原生分辨率取样，普通独立背景不设 frame。
 - 运行 `npm run maps` 同步 Tiled 导出，再运行 `npm run check`。不能只编辑导出地图而不同步注册表。
 - 内容动作使用 open-content / open-collection / open-projects；可选游戏使用 open-game，场景连接使用 enter-scene。inspect / discover 只承接小反馈，任何内容均不依赖游戏完成。
 - `npm run check` 验证重复 ID、入口、出生点、节点可达性、文章引用、草稿隔离与 Markdown 自动收录。
@@ -42,7 +42,7 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 取得实际备份后先检查结构和文章数量，再转换为 `content/articles/cnblogs.json` 的字段：id、slug、title、chapter、date、publishedAt、status、tags、summary、format、sourceURL、html。保留官方文章 ID，现有三篇用 ID 去重，保留已经公开的 slug。
 
-必须逐项核对：文章总数、标题/日期/标签、图片下载结果、公式、代码块、表格、内部链接。备份中草稿仍标 draft；不能按文章是否存在推断已发表。输出迁移报告后才更新正式包。当前未收到备份，未声称全量迁移完成。
+必须逐项核对：文章总数、标题/日期/标签、图片下载结果、公式、代码块、表格、内部链接。备份中草稿仍标 draft；不能按文章是否存在推断已发表。输出迁移报告后才更新正式包。2026-09-08 已完成74篇公开文章抓取迁移，并取得79篇官方SQLite备份。额外5篇保持私藏，不进入本管线。完整原文/代码/公式/表格核对见 docs/cnblogs-public-audit.json。
 
 ## 状态、动效与排障
 
@@ -71,3 +71,5 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 两个项目示例在 `project-workbench.tsx`。OSPF 规划函数在 `lib/project-preview.ts`；相册样本在 `content/data/album-preview.json`，照片在 `public/art/album`。保留原始规则标签和分值，不把规则标签宣传成准确语义识别。地址规划真实本地计算，应用、下发及 Ping 明确为模拟回执。
 
 音乐音量保存在 `mecha-music-volume`，每次打开页面均由访客主动播放。更换曲目时同步来源和 THIRD_PARTY_NOTICES 授权记录。
+
+公开抓取导入器：`node scripts/import-cnblogs-public.mjs 已审核目录`。它只接受本次核实的74篇公开清单，校验原文/图片SHA-256，将原始抓取另存ignored备份并输出迁移清单。不能对私人导出使用。6张源图无法取回，阅读页已放缺失说明；1篇源正文仅字母S，保持原状。3个旧链接404、25个403未能验证，原链接保留。私藏室规则见 PRIVATE-VAULT.md。

@@ -76,6 +76,21 @@ export async function compileContent({
     .map((p) => {
       const headings = [];
       let headingIndex = 0;
+      const headingIds = new Set();
+      const articleHref = (href) => {
+        if (!href || href.startsWith('#') || !p.sourceURL) return href;
+        try {
+          const target = new URL(href, p.sourceURL),
+            hash = target.hash;
+          target.hash = '';
+          const local =
+            links.get(target.href) ||
+            links.get(target.href.replace(/^http:/, 'https:'));
+          return local ? local + hash : target.href + hash;
+        } catch {
+          return href;
+        }
+      };
       const html = sanitizeHtml(p.html, {
         allowedTags: sanitizeHtml.defaults.allowedTags.concat([
           'img',
@@ -102,7 +117,9 @@ export async function compileContent({
             tagName: 'a',
             attribs: {
               ...attrs,
-              href: links.get(attrs.href) || attrs.href,
+              ...(attrs.href === undefined
+                ? {}
+                : { href: articleHref(attrs.href) }),
               rel: 'noopener noreferrer',
             },
           }),
@@ -111,13 +128,15 @@ export async function compileContent({
         /<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/g,
         (_, level, attrs, title) => {
           const match = attrs.match(/\bid="([^"]*)"/);
-          const id = match?.[1] || `section-${headingIndex++}`;
+          let id = match?.[1] || `section-${headingIndex++}`;
+          while (headingIds.has(id)) id = `section-${headingIndex++}`;
+          headingIds.add(id);
           headings.push({
             id,
             title: title.replace(/<[^>]+>/g, ''),
             level: Number(level),
           });
-          return `<h${level}${match ? attrs : `${attrs} id="${id}"`}>${title}</h${level}>`;
+          return `<h${level}${match ? attrs.replace(/\bid="[^"]*"/, `id="${id}"`) : `${attrs} id="${id}"`}>${title}</h${level}>`;
         },
       );
       return {

@@ -85,7 +85,7 @@ test('电路初始未解，旋转能解，断开的出口不算完成', () => {
 });
 
 import { SCENES, getScene } from '../lib/world/registry.ts';
-test('机甲通道连续，三个舱室都可原路返回，探索不锁定内容', () => {
+test('机甲通道连续，舱室都可原路返回，公开内容不被游戏进度锁定', () => {
   const hub = getScene('hub');
   for (const scene of SCENES) {
     for (const node of scene.nodes) {
@@ -105,21 +105,23 @@ test('机甲通道连续，三个舱室都可原路返回，探索不锁定内�
     }
     if (scene.id === 'hub') continue;
     const back = scene.returnTo!;
-    assert.equal(back.sceneId, 'hub');
-    const point = hub.spawnPoints[back.spawnId];
+    const parent = getScene(back.sceneId);
+    const point = parent.spawnPoints[back.spawnId];
     assert(point);
-    assert(traversable(point, hub.walkable, hub.obstacles));
+    assert(traversable(point, parent.walkable, parent.obstacles));
     assert(
       scene.nodes.some(
         (n) =>
           n.action.type === 'enter-scene' &&
-          n.action.sceneId === 'hub' &&
+          n.action.sceneId === parent.id &&
           n.action.spawnId === back.spawnId,
       ),
     );
     assert(
-      hub.nodes.some(
-        (n) => n.action.type === 'enter-scene' && n.action.sceneId === scene.id,
+      parent.nodes.some(
+        (n) =>
+          (n.action.type === 'enter-scene' && n.action.sceneId === scene.id) ||
+          (scene.id === 'vault' && n.action.type === 'open-vault'),
       ),
     );
   }

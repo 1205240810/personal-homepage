@@ -106,7 +106,7 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
             </span>
             <span>
               <strong>去机甲里走走</strong>
-              <small>驾驶舱、档案库，还有一间工坊。</small>
+              <small>航迹室、旧纸库，还有一间试作间。</small>
             </span>
             <ArrowUpRight className="b-arrow" size={17} />
           </a>

@@ -3425,3 +3425,229 @@ kbd {
     transition: none;
   }
 }
+
+.discovery-notebook {
+  border-top: 1px solid #8d9e9933;
+  padding: 20px 0;
+  margin-top: 20px;
+  color: #a7b5b3;
+}
+.discovery-notebook summary {
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+.discovery-notebook h3 {
+  color: #e1d8c5;
+  font-size: 15px;
+  margin-top: 24px;
+}
+.discovery-notebook p {
+  max-width: 54ch;
+  font-size: 13px;
+  line-height: 1.9;
+  margin: 7px 0;
+}
+.discovery-notebook a {
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.prose-archive .missing-source-image {
+  border-left: 2px solid #a7a088;
+  background: #ece9e266;
+  padding: 15px 18px;
+  margin: 24px 0;
+  font-size: 13px;
+  color: #777566;
+}
+.prose-archive .cnblogs_code_hide {
+  display: block;
+}
+.prose-archive .cnblogs_code_collapse {
+  display: none;
+}
+.prose-archive .cnblogs_code pre {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+}
+.prose-archive .cnblogs_code pre span {
+  font-family: inherit;
+}
+
+.vault-page {
+  min-height: 100svh;
+  background: #eeeae0;
+  color: #313d3a;
+  padding: 30px clamp(22px, 6vw, 100px) 80px;
+}
+.vault-page > .reading-header {
+  max-width: 1000px;
+  margin: 0 auto 55px;
+}
+.vault-page .private-vault {
+  max-width: 760px;
+  margin: auto;
+}
+.vault-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 15px 0 24px;
+  border-bottom: 1px solid #68766a30;
+}
+.vault-heading .eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+.vault-heading button,
+.vault-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #63736a;
+  font-size: 12px;
+  cursor: pointer;
+}
+.vault-door {
+  padding: 50px 0 30px;
+  max-width: 420px;
+  margin: auto;
+  text-align: center;
+}
+.vault-keyhole {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 1px solid #82755b70;
+  color: #b89661;
+  background: #253630;
+  margin: 0 auto 30px;
+  box-shadow:
+    0 0 0 7px #26352d07,
+    inset 0 0 0 5px #a4957320;
+}
+.vault-door h2 {
+  font-family: 'Songti SC', 'STSong', serif;
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  margin-bottom: 18px;
+}
+.vault-door p {
+  font-size: 14px;
+  line-height: 2;
+  color: #7e8176;
+}
+.vault-door form {
+  text-align: left;
+  margin: 35px 0 20px;
+}
+.vault-door label {
+  display: block;
+  font-size: 11px;
+  color: #72796d;
+  margin-bottom: 9px;
+  letter-spacing: 0.08em;
+}
+.vault-door input {
+  width: 100%;
+  background: #ffffff70;
+  border: 1px solid #81907d55;
+  border-radius: 3px;
+  padding: 14px;
+  color: #354437;
+  font-size: 15px;
+  outline: none;
+}
+.vault-door input:focus-visible {
+  border-color: #56705b;
+  box-shadow: 0 0 0 3px #56705b16;
+}
+.vault-door form button,
+.vault-enter {
+  width: 100%;
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 13px;
+  background: #344c41;
+  border: 1px solid #283e32;
+  color: #f6f1df;
+  padding: 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.vault-door button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.vault-door small,
+.vault-door > a {
+  display: block;
+  color: #899080;
+  font-size: 11px;
+  margin-top: 20px;
+}
+.vault-error {
+  color: #975a3f;
+  line-height: 1.8;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 20px;
+}
+.vault-records > h2 {
+  font-family: 'Songti SC', serif;
+  font-size: 34px;
+  font-weight: 400;
+  margin: 35px 0 12px;
+}
+.vault-records > p {
+  font-size: 13px;
+  color: #7d8779;
+  margin-bottom: 30px;
+}
+.vault-records > button {
+  width: 100%;
+  position: relative;
+  display: block;
+  text-align: left;
+  border-top: 1px solid #6f826634;
+  padding: 24px 30px 24px 0;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.vault-records > button:hover {
+  color: #977445;
+}
+.vault-records time,
+.vault-article > time {
+  font-size: 11px;
+  color: #858d7d;
+  letter-spacing: 0.06em;
+}
+.vault-records h3 {
+  font-size: 17px;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+.vault-records > button > svg {
+  position: absolute;
+  right: 0;
+  top: 40px;
+}
+.vault-article .vault-back {
+  margin: 24px 0 38px;
+}
+.vault-article > time {
+  display: block;
+}
+.vault-article > h1 {
+  font-family: 'Songti SC', serif;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.55;
+  margin: 18px 0 40px;
+}

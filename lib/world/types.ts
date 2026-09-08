@@ -2,12 +2,14 @@ import type { SceneryLayer, DoorDefinition } from './scenery';
 export type Chapter = 'undergraduate' | 'graduate' | 'life';
 export type Point = { x: number; y: number };
 export type MiniGameId = 'circuit' | 'memory';
-export type DiscoveryId = 'sleepy-eye' | 'maintenance-cat';
+export type { DiscoveryId } from './discoveries';
+import type { DiscoveryId } from './discoveries';
 export type WorldAction =
   | { type: 'open-content'; contentId: string }
   | { type: 'open-collection'; chapter?: Chapter }
   | { type: 'enter-scene'; sceneId: string; spawnId?: string }
   | { type: 'open-projects' }
+  | { type: 'open-vault' }
   | { type: 'open-game'; game: MiniGameId }
   | { type: 'discover'; discovery: DiscoveryId }
   | { type: 'activate-armor' }
@@ -23,6 +25,7 @@ export type InteractionNode = Point & {
   sign?: string;
   category?: 'blog' | 'profile' | 'projects' | 'play' | 'exit';
   hidden?: boolean;
+  effectPoint?: Point;
   requires?: 'bridge' | 'lift';
   automatic?: boolean;
 };

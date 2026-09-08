@@ -1,0 +1,346 @@
+{
+  "version": "1.10",
+  "tiledversion": "1.11.2",
+  "type": "map",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 28,
+  "height": 19,
+  "tilewidth": 32,
+  "tileheight": 19,
+  "infinite": false,
+  "nextlayerid": 4,
+  "nextobjectid": 500,
+  "tilesets": [],
+  "layers": [
+    {
+      "id": 3,
+      "name": "obstacles",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 300,
+          "name": "obstacle-0",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 77,
+              "y": 245
+            },
+            {
+              "x": 240,
+              "y": 230
+            },
+            {
+              "x": 241,
+              "y": 289
+            },
+            {
+              "x": 207,
+              "y": 336
+            },
+            {
+              "x": 154,
+              "y": 345
+            },
+            {
+              "x": 75,
+              "y": 327
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 301,
+          "name": "obstacle-1",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 270,
+              "y": 167
+            },
+            {
+              "x": 608,
+              "y": 167
+            },
+            {
+              "x": 608,
+              "y": 207
+            },
+            {
+              "x": 269,
+              "y": 207
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 302,
+          "name": "obstacle-2",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 642,
+              "y": 202
+            },
+            {
+              "x": 721,
+              "y": 230
+            },
+            {
+              "x": 774,
+              "y": 286
+            },
+            {
+              "x": 755,
+              "y": 309
+            },
+            {
+              "x": 658,
+              "y": 256
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 303,
+          "name": "obstacle-3",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 47,
+              "y": 328
+            },
+            {
+              "x": 136,
+              "y": 328
+            },
+            {
+              "x": 151,
+              "y": 447
+            },
+            {
+              "x": 84,
+              "y": 447
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 304,
+          "name": "obstacle-4",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 751,
+              "y": 298
+            },
+            {
+              "x": 830,
+              "y": 298
+            },
+            {
+              "x": 832,
+              "y": 433
+            },
+            {
+              "x": 763,
+              "y": 440
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "walkable",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 1,
+          "name": "floor-0",
+          "type": "floor",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 249,
+              "y": 206
+            },
+            {
+              "x": 631,
+              "y": 206
+            },
+            {
+              "x": 638,
+              "y": 268
+            },
+            {
+              "x": 741,
+              "y": 314
+            },
+            {
+              "x": 743,
+              "y": 432
+            },
+            {
+              "x": 655,
+              "y": 460
+            },
+            {
+              "x": 577,
+              "y": 478
+            },
+            {
+              "x": 537,
+              "y": 491
+            },
+            {
+              "x": 372,
+              "y": 491
+            },
+            {
+              "x": 298,
+              "y": 481
+            },
+            {
+              "x": 226,
+              "y": 461
+            },
+            {
+              "x": 149,
+              "y": 433
+            },
+            {
+              "x": 151,
+              "y": 347
+            },
+            {
+              "x": 203,
+              "y": 335
+            },
+            {
+              "x": 240,
+              "y": 286
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 2,
+          "name": "floor-1",
+          "type": "floor",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 375,
+              "y": 471
+            },
+            {
+              "x": 509,
+              "y": 471
+            },
+            {
+              "x": 509,
+              "y": 565
+            },
+            {
+              "x": 375,
+              "y": 565
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "interactions",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 100,
+          "name": "vault-exit",
+          "type": "enter-scene",
+          "x": 442,
+          "y": 533,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 101,
+          "name": "vault-notebook",
+          "type": "open-vault",
+          "x": 255,
+          "y": 313,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 102,
+          "name": "vault-archive",
+          "type": "open-vault",
+          "x": 444,
+          "y": 233,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 103,
+          "name": "vault-inscription",
+          "type": "inspect",
+          "x": 620,
+          "y": 305,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}

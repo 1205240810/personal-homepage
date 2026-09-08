@@ -31,20 +31,20 @@
           "y": 0,
           "polygon": [
             {
-              "x": 390,
-              "y": 215
+              "x": 363,
+              "y": 194
             },
             {
-              "x": 500,
-              "y": 215
+              "x": 520,
+              "y": 194
             },
             {
-              "x": 500,
-              "y": 247
+              "x": 520,
+              "y": 229
             },
             {
-              "x": 390,
-              "y": 247
+              "x": 363,
+              "y": 229
             }
           ],
           "visible": true,
@@ -58,19 +58,19 @@
           "y": 0,
           "polygon": [
             {
-              "x": 625,
+              "x": 639,
               "y": 267
             },
             {
-              "x": 695,
+              "x": 698,
               "y": 267
             },
             {
-              "x": 695,
+              "x": 698,
               "y": 329
             },
             {
-              "x": 625,
+              "x": 639,
               "y": 329
             }
           ],
@@ -124,7 +124,7 @@
           "y": 0,
           "polygon": [
             {
-              "x": 280,
+              "x": 276,
               "y": 228
             },
             {
@@ -176,8 +176,8 @@
               "y": 340
             },
             {
-              "x": 229,
-              "y": 293
+              "x": 220,
+              "y": 289
             }
           ],
           "visible": true,
@@ -199,7 +199,7 @@
           "id": 100,
           "name": "graduate-exit",
           "type": "enter-scene",
-          "x": 445,
+          "x": 435,
           "y": 526,
           "width": 0,
           "height": 0,
@@ -211,8 +211,8 @@
           "id": 101,
           "name": "project-console",
           "type": "open-projects",
-          "x": 607,
-          "y": 347,
+          "x": 665,
+          "y": 373,
           "width": 0,
           "height": 0,
           "point": true,
@@ -237,6 +237,18 @@
           "type": "open-collection",
           "x": 448,
           "y": 278,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 104,
+          "name": "tiny-repairer",
+          "type": "discover",
+          "x": 608,
+          "y": 295,
           "width": 0,
           "height": 0,
           "point": true,

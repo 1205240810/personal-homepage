@@ -85,4 +85,4 @@ for (const s of SCENES) {
   };
   await writeFile(`public/maps/${s.id}.json`, JSON.stringify(json, null, 2));
 }
-console.log('4 Tiled maps generated');
+console.log(`${SCENES.length} Tiled maps generated`);
