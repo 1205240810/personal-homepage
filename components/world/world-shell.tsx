@@ -67,6 +67,7 @@ export default function WorldShell({
   const mount = useRef<HTMLDivElement>(null),
     game = useRef<GameHandle | null>(null);
   const [ready, setReady] = useState(false),
+    [loadingScene, setLoadingScene] = useState<string | null>(null),
     [error, setError] = useState(''),
     [sceneId, setSceneId] = useState('hub'),
     [near, setNear] = useState<InteractionNode | null>(null),
@@ -168,6 +169,7 @@ export default function WorldShell({
           onState: setSnapshot,
           onReady: () => {
             setReady(true);
+            setLoadingScene(null);
             if (
               !initialNavigationDone &&
               requestedScene &&
@@ -180,7 +182,11 @@ export default function WorldShell({
               });
             }
           },
-          onError: setError,
+          onLoading: setLoadingScene,
+          onError: (message) => {
+            setError(message);
+            if (message) setLoadingScene(null);
+          },
           onNotice: setNotice,
         });
       })
@@ -329,12 +335,19 @@ export default function WorldShell({
         <>
           <h1 className="sr-only">{scene.title}</h1>
           {scene.returnTo && (
-            <button className="room-return" onClick={() => enter('hub')}>
+            <button
+              className="room-return"
+              disabled={!!loadingScene}
+              onClick={() => enter(scene.returnTo!.sceneId)}
+            >
               <ArrowLeft size={15} />
-              回到环行栈道
+              回到
+              {scene.returnTo.sceneId === 'hub'
+                ? '环行栈道'
+                : getScene(scene.returnTo.sceneId).title}
             </button>
           )}
-          {ready && near && !panel && (
+          {ready && !loadingScene && near && !panel && (
             <button className="interaction-prompt" onClick={interact}>
               <kbd>E</kbd>
               <span>
@@ -352,9 +365,12 @@ export default function WorldShell({
               )}
             </div>
           )}
-          {!ready && !error && (
+          {(!ready || loadingScene) && !error && (
             <div className="world-loading" role="status">
-              <LoaderCircle size={14} /> 正在进入机甲
+              <LoaderCircle size={14} />{' '}
+              {loadingScene
+                ? `正在进入${getScene(loadingScene).title}`
+                : '正在进入机甲'}
             </div>
           )}
           {error && (
@@ -413,7 +429,7 @@ export default function WorldShell({
           onAction={(action) => actionRef.current(action)}
         />
       )}
-      {!panel && !blueprint && ready && (
+      {!panel && !blueprint && ready && !loadingScene && (
         <aside className="journey-status" aria-label="当前位置">
           <span className="journey-location">{scene.en}</span>
           <p>{scene.title}</p>

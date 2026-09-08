@@ -1,10 +1,13 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ArrowRight } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, SunMedium } from 'lucide-react';
 import { MusicControl } from '@/components/world/music-control';
+import { ArrivalAtmosphere } from './arrival-atmosphere';
 import './arrival.css';
 export default function Arrival() {
   const [leaving, setLeaving] = useState(false);
+  const [lightsOn, setLightsOn] = useState(false);
+  const surface = useRef<HTMLElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -22,19 +25,39 @@ export default function Arrival() {
     timer.current = setTimeout(() => location.assign(href), 280);
   }
   return (
-    <main className={`arrival ${leaving ? 'is-leaving' : ''}`}>
-      <img
-        className="arrival-art"
-        src="/art/arrival-maintenance-hall.png"
-        alt="高窗的日光落入维护馆，一台灰白色巨型机甲静静伫立，脚下是延伸至远处的金属地面。"
-        fetchPriority="high"
-      />
+    <main
+      ref={surface}
+      className={`arrival ${leaving ? 'is-leaving' : ''} ${lightsOn ? 'lights-on' : ''}`}
+    >
+      <div className="arrival-scene">
+        <img
+          className="arrival-art"
+          src="/art/arrival-maintenance-hall.png"
+          alt="高窗的日光落入维护馆，一台灰白色巨型机甲静静伫立，脚下是延伸至远处的金属地面。"
+          fetchPriority="high"
+        />
+        <div className="arrival-window-light" aria-hidden="true" />
+        <div className="arrival-inspection-beam" aria-hidden="true" />
+        <ArrivalAtmosphere surfaceRef={surface} lightsOn={lightsOn} />
+      </div>
       <div className="arrival-shade" aria-hidden="true" />
       <header className="arrival-header">
         <span className="arrival-brand">
           徒手拆机甲<span>个人档案馆</span>
         </span>
-        <MusicControl reading={false} />
+        <div className="arrival-controls">
+          <button
+            className="arrival-light-switch"
+            aria-label={lightsOn ? '关闭检修灯' : '打开检修灯'}
+            aria-pressed={lightsOn}
+            onClick={() => setLightsOn((v) => !v)}
+            title={lightsOn ? '关闭检修灯' : '打开检修灯'}
+          >
+            <SunMedium size={17} strokeWidth={1.4} />
+            <span>检修灯</span>
+          </button>
+          <MusicControl reading={false} />
+        </div>
       </header>
       <div className="arrival-copy">
         <p className="arrival-index">A PERSONAL ARCHIVE</p>

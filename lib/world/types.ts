@@ -41,6 +41,13 @@ export type SceneDefinition = {
   groundY?: number;
   foreground?: { outline: number[][]; depth: number }[];
   playerScale?: number;
+  lighting?: {
+    x: number;
+    y: number;
+    radius: number;
+    color: number;
+    strength: number;
+  }[];
   returnTo?: { sceneId: string; spawnId: string };
   outdoor?: boolean;
   terrain?: TerrainDefinition;

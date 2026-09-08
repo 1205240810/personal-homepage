@@ -21,6 +21,7 @@ export function createWorld(
     onNear(node: InteractionNode | null): void;
     onState(state: WorldSnapshot): void;
     onReady(): void;
+    onLoading(sceneId: string): void;
     onError(message: string): void;
     onNotice(message: string): void;
   },
@@ -103,7 +104,10 @@ export function createWorld(
     avatar!: Phaser.GameObjects.Sprite;
     shadow!: Phaser.GameObjects.Ellipse;
     keys!: Record<string, Phaser.Input.Keyboard.Key>;
-    lamps: Phaser.GameObjects.Rectangle[] = [];
+    lamps: Phaser.GameObjects.Image[] = [];
+    roomLights: { image: Phaser.GameObjects.Image; strength: number }[] = [];
+    hoveredNodeId: string | null = null;
+    destination?: Phaser.GameObjects.Ellipse;
     route: Point[] = [];
     targetNode?: InteractionNode;
     velocity = { x: 0, y: 0 };
@@ -123,6 +127,8 @@ export function createWorld(
       this.load.tilemapTiledJSON(`map-${def.id}`, `/maps/${def.id}.json`);
       const failure = () => {
         this.failed = true;
+        transitioning = false;
+        finishTransition = undefined;
         callbacks.onError('机甲画面暂时无法载入，你仍可打开文章和作品。');
       };
       this.load.on('loaderror', failure);
@@ -142,6 +148,8 @@ export function createWorld(
       this.travelled = 0;
       this.wasMoving = false;
       this.lamps = [];
+      this.roomLights = [];
+      this.hoveredNodeId = null;
       const texture = this.textures.get(key),
         source = texture.getSourceImage();
       if (def.frame !== undefined && !texture.has(`cabin-${def.frame}`)) {
@@ -166,28 +174,43 @@ export function createWorld(
         .setDisplaySize(def.width, def.height)
         .setDepth(0);
       texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      this.createLightTexture();
+      for (const light of def.lighting ?? []) {
+        const image = this.add
+          .image(light.x, light.y, 'archive-light')
+          .setDisplaySize(light.radius * 2, light.radius * 2)
+          .setTint(light.color)
+          .setAlpha(light.strength)
+          .setDepth(1)
+          .setBlendMode(Phaser.BlendModes.ADD);
+        this.roomLights.push({ image, strength: light.strength });
+      }
       this.createSpatialLayers(key, def.frame);
       makePlayerTextures(this);
       this.shadow = this.add
         .ellipse(state.position.x, state.position.y + 1, 27, 8, 0x070e12, 0.55)
-        .setDepth(5);
+        .setScale((def.playerScale ?? 0.43) / 0.43)
+        .setDepth(state.position.y - 1);
       this.avatar = this.add
         .sprite(state.position.x, state.position.y, 'explorer', 'idle-2')
         .setOrigin(0.5, 1)
         .setScale(def.playerScale ?? 0.48)
-        .setDepth(10);
-      posePlayer(this.avatar, 2, 0);
+        .setDepth(state.position.y);
+      posePlayer(this.avatar, this.facing, -1);
+      this.destination = this.add
+        .ellipse(0, 0, 24, 10)
+        .setStrokeStyle(1, 0xedc78e, 0.75)
+        .setDepth(2)
+        .setVisible(false);
       def.nodes.forEach((n) => {
+        const point = n.effectPoint ?? { x: n.x, y: n.y - 4 };
         const lamp = this.add
-          .rectangle(
-            n.x,
-            n.y - 4,
-            18,
-            3,
-            state.visited.includes(n.id) ? 0x8acbc1 : 0xf2bb79,
-            n.hidden ? 0.2 : 0.72,
-          )
-          .setDepth(6);
+          .image(point.x, point.y, 'archive-light')
+          .setDisplaySize(n.effectPoint ? 58 : 34, n.effectPoint ? 42 : 12)
+          .setTint(state.visited.includes(n.id) ? 0x8acbc1 : 0xf2bb79)
+          .setAlpha(n.hidden ? 0 : 0.18)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setDepth(n.effectPoint ? 799 : 2);
         this.lamps.push(lamp);
         if (
           n.action.type === 'discover' &&
@@ -198,8 +221,8 @@ export function createWorld(
           .zone(
             n.effectPoint?.x ?? n.x,
             n.effectPoint?.y ?? n.y - 55,
-            n.hidden ? 60 : 100,
-            n.hidden ? 65 : 120,
+            n.effectPoint ? 54 : n.hidden ? 60 : 100,
+            n.effectPoint ? 42 : n.hidden ? 65 : 120,
           )
           .setInteractive({ useHandCursor: true });
         hotspot.on('pointerup', () => {
@@ -208,8 +231,12 @@ export function createWorld(
             else this.walk(n, n);
           }
         });
-        hotspot.on('pointerover', () => lamp.setAlpha(1));
-        hotspot.on('pointerout', () => lamp.setAlpha(n.hidden ? 0.2 : 0.72));
+        hotspot.on('pointerover', () => {
+          this.hoveredNodeId = n.id;
+        });
+        hotspot.on('pointerout', () => {
+          if (this.hoveredNodeId === n.id) this.hoveredNodeId = null;
+        });
       });
       this.keys = this.input.keyboard!.addKeys(
         'W,A,S,D,UP,DOWN,LEFT,RIGHT,E,SPACE,SHIFT',
@@ -242,10 +269,38 @@ export function createWorld(
       callbacks.onNear(null);
       near = null;
       callbacks.onError('');
-      callbacks.onReady();
       save();
-      if (!reduced) this.cameras.main.fadeIn(420, 20, 27, 32);
-      if (paused) this.scene.pause();
+      transitioning = true;
+      let arrived = false;
+      const arrive = () => {
+        if (arrived || destroyed) return;
+        arrived = true;
+        transitioning = false;
+        finishTransition = undefined;
+        this.resetInput();
+        callbacks.onReady();
+        if (paused) this.scene.pause();
+      };
+      if (!reduced) {
+        this.cameras.main.once('camerafadeincomplete', arrive);
+        finishTransition = () => {
+          this.cameras.main.resetFX();
+          arrive();
+        };
+        this.cameras.main.fadeIn(420, 20, 27, 32);
+      } else arrive();
+    }
+    createLightTexture() {
+      if (this.textures.exists('archive-light')) return;
+      const texture = this.textures.createCanvas('archive-light', 128, 128)!;
+      const ctx = texture.context,
+        gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      gradient.addColorStop(0, 'rgba(255,255,255,0.75)');
+      gradient.addColorStop(0.2, 'rgba(255,255,255,0.35)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 128, 128);
+      texture.refresh();
     }
     discoveryFeedback(node: InteractionNode, animate: boolean) {
       if (node.action.type !== 'discover') return;
@@ -280,6 +335,8 @@ export function createWorld(
       this.targetNode = undefined;
       this.velocity = { x: 0, y: 0 };
       input = { x: 0, y: 0 };
+      this.destination?.setVisible(false);
+      if (this.avatar?.active) posePlayer(this.avatar, this.facing, -1);
       if (this.input.keyboard) {
         this.input.keyboard.resetKeys();
         this.input.keyboard.clearCaptures();
@@ -433,6 +490,7 @@ export function createWorld(
       if (!route) return;
       this.route = route;
       this.targetNode = node;
+      this.destination?.setPosition(point.x, point.y).setVisible(true);
     }
     configureCamera() {
       const def = getScene(state.sceneId),
@@ -487,6 +545,7 @@ export function createWorld(
       if (dx || dy) {
         this.route = [];
         this.targetNode = undefined;
+        this.destination?.setVisible(false);
       }
       if (this.targetNode && this.canInteract(this.targetNode)) {
         const n = this.targetNode;
@@ -501,7 +560,10 @@ export function createWorld(
           state.position = { ...target };
           this.route.shift();
           target = this.route[0];
-          if (!target) this.velocity = { x: 0, y: 0 };
+          if (!target) {
+            this.velocity = { x: 0, y: 0 };
+            this.destination?.setVisible(false);
+          }
           gap = target ? distance(state.position, target) : 0;
         }
         if (target && gap) {
@@ -583,8 +645,30 @@ export function createWorld(
           candidate = n;
           min = gap;
         }
-        this.lamps[i].setAlpha(gap < 85 ? 0.95 : n.hidden ? 0.16 : 0.55);
+        const focused =
+          this.hoveredNodeId === n.id || this.targetNode?.id === n.id;
+        const alpha = focused
+          ? 0.8
+          : gap < (n.radius ?? 45)
+            ? 0.55
+            : n.hidden
+              ? 0
+              : 0.16;
+        this.lamps[i].setAlpha(
+          Phaser.Math.Linear(
+            this.lamps[i].alpha,
+            alpha,
+            reduced ? 1 : 1 - Math.exp(-dt * 9),
+          ),
+        );
       });
+      this.roomLights.forEach(({ image, strength }, i) =>
+        image.setAlpha(
+          strength *
+            (reduced ? 1 : 1 + Math.sin(time / 1900 + i * 2) * 0.08) *
+            (def.id === 'graduate' && state.games.circuit ? 1.35 : 1),
+        ),
+      );
       if ((candidate as InteractionNode | null)?.id !== near?.id) {
         near = candidate;
         callbacks.onNear(near);
@@ -603,11 +687,18 @@ export function createWorld(
   function perform(n: InteractionNode) {
     if (paused || transitioning || !active?.canInteract(n)) return;
     active.resetInput();
+    if (n.effectPoint) {
+      const dx = n.effectPoint.x - state.position.x,
+        dy = n.effectPoint.y - state.position.y;
+      active.facing =
+        Math.abs(dx) > Math.abs(dy) * 1.15 ? (dx > 0 ? 2 : 1) : dy > 0 ? 0 : 3;
+      posePlayer(active.avatar, active.facing, -1);
+    }
     if (!state.visited.includes(n.id)) state.visited.push(n.id);
     const index = getScene(state.sceneId).nodes.findIndex(
       (node) => node.id === n.id,
     );
-    active.lamps[index]?.setFillStyle(0x8acbc1);
+    active.lamps[index]?.setTint(0x8acbc1);
     save();
     if (n.action.type === 'enter-scene') {
       enter(n.action.sceneId, n.action.spawnId);
@@ -635,6 +726,7 @@ export function createWorld(
       spawn = def.spawnPoints[spawnId];
     if (!spawn) return;
     transitioning = true;
+    callbacks.onLoading(id);
     active?.resetInput();
     callbacks.onNear(null);
     near = null;
@@ -642,7 +734,6 @@ export function createWorld(
       if (destroyed || !transitioning) return;
       if (transitionTimer) clearTimeout(transitionTimer);
       transitionTimer = undefined;
-      transitioning = false;
       finishTransition = undefined;
       state.sceneId = id;
       state.layoutVersion = def.layoutVersion;
@@ -701,7 +792,7 @@ export function createWorld(
       if (paused === value) return;
       paused = value;
       active?.resetInput();
-      if (active) {
+      if (active && !transitioning) {
         if (value) active.scene.pause();
         else active.scene.resume();
       }

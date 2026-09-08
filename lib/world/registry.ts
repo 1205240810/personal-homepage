@@ -57,7 +57,11 @@ const room = (
   id,
   title,
   en,
-  description: '沿着舱内的通道，翻开这里的记录。',
+  description: [
+    '驾驶员的档案，与沿途留下的生活记录。',
+    '翻一页旧笔记，也看看当时的比赛与思路。',
+    '试一件作品，接一段电路，留一份工程笔记。',
+  ][frame],
   art: [
     '/art/interior-cockpit-hd.png',
     '/art/interior-library-hd.png',
@@ -66,6 +70,25 @@ const room = (
   width: 887,
   height: 591,
   playerScale: 0.43,
+  lighting: [
+    {
+      x: frame === 1 ? 260 : frame === 2 ? 245 : 282,
+      y: 82,
+      radius: 95,
+      color: 0xf5b35e,
+      strength: 0.14,
+    },
+    {
+      x: frame === 1 ? 589 : 604,
+      y: 82,
+      radius: 95,
+      color: 0xf5b35e,
+      strength: 0.14,
+    },
+    ...(frame === 2
+      ? [{ x: 438, y: 130, radius: 120, color: 0x73cdc5, strength: 0.15 }]
+      : []),
+  ],
   layoutVersion: 22,
   returnTo: { sceneId: 'hub', spawnId: returnSpawn },
   overview: { x: 50, y: 50 },
@@ -203,6 +226,7 @@ export const SCENES: SceneDefinition[] = [
     [
       {
         id: 'profile-badge',
+        effectPoint: { x: 712, y: 218 },
         x: 615,
         y: 321,
         label: '驾驶员档案',
@@ -213,6 +237,7 @@ export const SCENES: SceneDefinition[] = [
       },
       {
         id: 'cockpit-log',
+        effectPoint: { x: 193, y: 252 },
         x: 295,
         y: 291,
         label: '航行日志',
@@ -259,6 +284,7 @@ export const SCENES: SceneDefinition[] = [
     [
       {
         id: 'all-articles',
+        effectPoint: { x: 428, y: 308 },
         x: 428,
         y: 416,
         label: '阅览桌',
@@ -269,6 +295,7 @@ export const SCENES: SceneDefinition[] = [
       },
       {
         id: 'competition-log',
+        effectPoint: { x: 685, y: 202 },
         x: 590,
         y: 319,
         label: '比赛记录册',
@@ -344,6 +371,7 @@ export const SCENES: SceneDefinition[] = [
     [
       {
         id: 'project-console',
+        effectPoint: { x: 710, y: 164 },
         x: 665,
         y: 373,
         label: '项目工作台',
@@ -354,6 +382,7 @@ export const SCENES: SceneDefinition[] = [
       },
       {
         id: 'circuit-console',
+        effectPoint: { x: 173, y: 264 },
         x: 283,
         y: 347,
         label: '备用电路',
@@ -364,6 +393,7 @@ export const SCENES: SceneDefinition[] = [
       },
       {
         id: 'workshop-notes',
+        effectPoint: { x: 438, y: 142 },
         x: 448,
         y: 278,
         label: '工程笔记',

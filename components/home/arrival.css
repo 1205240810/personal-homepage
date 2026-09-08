@@ -12,6 +12,14 @@
     opacity 0.28s,
     filter 0.28s;
 }
+.arrival-scene {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  transform: translate3d(var(--look-x, 0px), var(--look-y, 0px), 0) scale(1.035);
+  pointer-events: none;
+  will-change: transform;
+}
 .arrival-art {
   position: absolute;
   inset: 0;
@@ -19,7 +27,98 @@
   height: 100%;
   object-fit: cover;
   object-position: 64% 65%;
-  z-index: -3;
+  transition: filter 1.6s ease;
+}
+.arrival.lights-on .arrival-art {
+  filter: brightness(1.16) saturate(0.88);
+}
+.arrival-atmosphere,
+.arrival-window-light,
+.arrival-inspection-beam {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.arrival-window-light {
+  background: linear-gradient(
+    111deg,
+    transparent 43%,
+    #e8f2ff0a 53%,
+    #e8f2ff04 64%,
+    transparent 74%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.45;
+  transition: opacity 1.6s ease;
+}
+.lights-on .arrival-window-light {
+  opacity: 1;
+}
+.arrival-inspection-beam {
+  background: linear-gradient(
+    175deg,
+    transparent 34%,
+    #ffe0a811 49%,
+    #ffe0a835 50%,
+    #ffe0a80a 52%,
+    transparent 66%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+.lights-on .arrival-inspection-beam {
+  animation: inspection-pass 2.4s ease-in-out both;
+}
+@keyframes inspection-pass {
+  0% {
+    transform: translateY(-60%);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.75;
+  }
+  75% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(60%);
+    opacity: 0;
+  }
+}
+.arrival-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.arrival-light-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #b6c7bb33;
+  border-radius: 4px;
+  background: #14222aa8;
+  color: #d5d9ca;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    color 0.3s,
+    border-color 0.3s,
+    background 0.3s;
+}
+.arrival-light-switch:hover,
+.arrival-light-switch[aria-pressed='true'] {
+  color: #f1c18a;
+  border-color: #d9b78488;
+  background: #25343ac9;
+}
+.arrival-light-switch:focus-visible {
+  outline: 2px solid #f2bb77;
+  outline-offset: 5px;
 }
 .arrival-shade {
   position: absolute;
@@ -304,6 +403,15 @@
   .arrival-brand > span {
     display: none;
   }
+  .arrival-controls {
+    gap: 7px;
+  }
+  .arrival-light-switch {
+    padding: 7px 9px;
+  }
+  .arrival-light-switch span {
+    display: none;
+  }
 }
 @media (max-height: 650px) and (min-width: 761px) {
   .arrival-copy {
@@ -327,6 +435,17 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .arrival-scene {
+    transform: none;
+    will-change: auto;
+  }
+  .arrival-art,
+  .arrival-window-light {
+    transition: none;
+  }
+  .arrival-inspection-beam {
+    display: none;
+  }
   .arrival,
   .arrival-choices a {
     transition: none;

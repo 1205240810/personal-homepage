@@ -23,6 +23,21 @@ for (const scene of SCENES) {
   assert(!ids.has(scene.id), `重复场景 ID: ${scene.id}`);
   ids.add(scene.id);
   await access(`public${scene.art}`);
+  for (const light of scene.lighting ?? []) {
+    assert(
+      [light.x, light.y, light.radius, light.color, light.strength].every(
+        Number.isFinite,
+      ) &&
+        light.x >= 0 &&
+        light.x <= scene.width &&
+        light.y >= 0 &&
+        light.y <= scene.height &&
+        light.radius > 0 &&
+        light.strength >= 0 &&
+        light.strength <= 1,
+      `无效场景灯光: ${scene.id}`,
+    );
+  }
   const layerIds = new Set<string>();
   for (const layer of scene.layers ?? []) {
     assert(!layerIds.has(layer.id), `重复图层 ID: ${scene.id}/${layer.id}`);

@@ -430,7 +430,7 @@ kbd {
 .game-mount canvas {
   display: block;
   touch-action: none;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .game-mount:focus-visible {
   outline: none;
@@ -819,7 +819,39 @@ kbd {
   margin: 20px 0;
 }
 .profile-view > section {
-  margin-top: 48px;
+  margin-top: 40px;
+}
+.profile-education {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+  gap: 16px 30px;
+}
+.profile-education .timeline-item {
+  margin-top: 0;
+  padding-bottom: 4px;
+}
+.profile-role {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 16px;
+  padding: 9px 0;
+}
+.profile-role time {
+  font:
+    12px ui-monospace,
+    monospace;
+  color: #64715e;
+}
+.profile-role p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.profile-role p span {
+  display: block;
+  color: #64715e;
+  font-size: 14px;
 }
 .profile-section-heading {
   font-size: 18px;
@@ -868,7 +900,7 @@ kbd {
   color: #314a39;
 }
 .historical-rating strong {
-  font-size: 35px;
+  font-size: 25px;
   display: block;
   font-weight: 400;
   font-family: monospace;
@@ -884,38 +916,18 @@ kbd {
   color: #64715e;
   margin-top: 8px;
 }
-.award-highlights {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
-  gap: 24px;
-  margin: 28px 0 40px;
-}
-.award-highlight {
-  padding: 22px 0 0;
-  border-top: 2px solid #718269;
-}
-.award-highlight h3 {
+.award-group-title {
   font-size: 14px;
-  line-height: 1.8;
-  font-weight: 400;
-  margin: 0 0 16px;
-  color: #526249;
-}
-.award-highlight > strong {
-  display: block;
-  font-size: clamp(24px, 3vw, 30px);
-  font-weight: 450;
-  line-height: 1.5;
-  letter-spacing: 0.02em;
-}
-.award-period {
-  display: block;
-  margin-top: 8px;
-  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 500;
+  margin: 26px 0 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #4f654326;
   color: #64715e;
 }
-.award-undergraduate .profile-intro {
-  margin-top: 0;
+.award-stage {
+  font-size: 12px;
+  color: #64715e;
 }
 .award-item {
   display: grid;
@@ -924,7 +936,7 @@ kbd {
   align-items: baseline;
   padding: 18px 0;
 }
-.award-item h4 {
+.award-item h5 {
   font-size: 15px;
   font-weight: 400;
   line-height: 1.8;
@@ -944,8 +956,13 @@ kbd {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px 14px;
   }
-  .award-item time {
+  .award-item time,
+  .award-stage {
     grid-column: 1 / -1;
+  }
+  .profile-role {
+    grid-template-columns: 1fr;
+    gap: 3px;
   }
   .historical-rating {
     gap: 24px;
