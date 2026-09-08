@@ -18,7 +18,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 66% 49%;
+  object-position: 64% 65%;
   z-index: -3;
 }
 .arrival-shade {
@@ -28,17 +28,17 @@
   background:
     linear-gradient(
       90deg,
-      #0d1820ec 0%,
-      #10212bc9 26%,
-      #0d1c2238 53%,
+      #101921a8 0%,
+      #10192166 28%,
+      #10192112 54%,
       #0d1c2200 76%
     ),
     linear-gradient(
       0deg,
-      #0b151eca,
+      #0b151e99,
       transparent 32%,
       transparent 85%,
-      #0c1a22bb
+      #0c1a2244
     );
 }
 .arrival-header {
@@ -212,16 +212,16 @@
 }
 @media (max-width: 760px) {
   .arrival-art {
-    object-position: 61% 32%;
-    height: 70%;
+    object-position: 82% 50%;
   }
   .arrival-shade {
     background: linear-gradient(
       0deg,
-      #101a23 28%,
-      #101a23bb 55%,
-      #101a2333 85%,
-      #101a2377
+      #101a23eb 0%,
+      #101a23cc 35%,
+      #101a2388 56%,
+      #101a2311 82%,
+      #101a2366
     );
   }
   .arrival-header {
@@ -238,10 +238,10 @@
   .arrival-copy {
     width: auto;
     margin: 0;
-    padding: clamp(230px, 38dvh, 380px) 24px 115px;
+    padding: clamp(215px, 37dvh, 360px) 24px 100px;
   }
   .arrival h1 {
-    font-size: 56px;
+    font-size: clamp(40px, 10vw, 56px);
     line-height: 1.15;
   }
   .arrival h1 br {
@@ -283,6 +283,25 @@
     bottom: 22px;
   }
   .arrival-footer-index {
+    display: none;
+  }
+}
+@media (max-width: 420px) {
+  .arrival-copy {
+    padding-top: clamp(185px, 30dvh, 280px);
+  }
+  .arrival-choices {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .arrival-choices a {
+    padding: 13px 18px;
+    min-height: 70px;
+  }
+  .arrival-header {
+    padding: 22px 20px;
+  }
+  .arrival-brand > span {
     display: none;
   }
 }

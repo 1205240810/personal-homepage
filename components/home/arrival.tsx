@@ -25,8 +25,8 @@ export default function Arrival() {
     <main className={`arrival ${leaving ? 'is-leaving' : ''}`}>
       <img
         className="arrival-art"
-        src="/art/mecha-isometric.png"
-        alt="暮色中，一台完整的巨型机甲静静躺在维修平台上。"
+        src="/art/arrival-maintenance-hall.png"
+        alt="高窗的日光落入维护馆，一台灰白色巨型机甲静静伫立，脚下是延伸至远处的金属地面。"
         fetchPriority="high"
       />
       <div className="arrival-shade" aria-hidden="true" />

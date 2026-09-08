@@ -1,8 +1,32 @@
 [
   {
+    "id": "huawei-cup-graduate-modeling-third",
+    "date": null,
+    "period": "硕士一年级",
+    "title": "华为杯中国研究生数学建模竞赛全国三等奖",
+    "competition": "华为杯 · 中国研究生数学建模竞赛",
+    "result": "全国三等奖",
+    "chapter": "graduate",
+    "source": "用户于 2026-09-08 确认奖项及研一阶段；届次和具体年份未提供",
+    "relatedContentIds": []
+  },
+  {
+    "id": "jd-programming-algorithm-top100",
+    "date": null,
+    "period": null,
+    "title": "京东编程与算法设计大赛全国百强",
+    "competition": "京东编程与算法设计大赛",
+    "result": "全国百强",
+    "chapter": null,
+    "source": "用户于 2026-09-08 确认奖项；年份与教育阶段未提供",
+    "relatedContentIds": []
+  },
+  {
     "id": "gdcpc-2022-silver",
     "date": "2022-06",
     "title": "GDCPC 广东大学生程序设计竞赛银奖",
+    "competition": "GDCPC · 广东大学生程序设计竞赛",
+    "result": "银奖",
     "chapter": "undergraduate",
     "source": "用户提供简历及已确认实施方案",
     "relatedContentIds": []
@@ -11,6 +35,8 @@
     "id": "robocom-2022-caip",
     "date": "2022-08",
     "title": "RoboCom 机器人开发者大赛 CAIP 全国总决赛本科组二等奖",
+    "competition": "RoboCom CAIP · 全国总决赛本科组",
+    "result": "二等奖",
     "chapter": "undergraduate",
     "source": "用户提供简历及已确认实施方案",
     "relatedContentIds": []
@@ -19,6 +45,8 @@
     "id": "icpc-2022-hefei-bronze",
     "date": "2022-11",
     "title": "ICPC 亚洲区域赛合肥赛区铜奖",
+    "competition": "ICPC · 亚洲区域赛合肥赛区",
+    "result": "铜奖",
     "chapter": "undergraduate",
     "source": "用户提供简历及已确认实施方案",
     "relatedContentIds": ["cnblogs-16913984"]
@@ -27,6 +55,8 @@
     "id": "ccsp-2022-south-silver",
     "date": "2022-12",
     "title": "CCSP 大学生计算机系统与程序设计竞赛华南赛区银奖",
+    "competition": "CCSP · 华南赛区",
+    "result": "银奖",
     "chapter": "undergraduate",
     "source": "用户提供简历及已确认实施方案",
     "relatedContentIds": []
