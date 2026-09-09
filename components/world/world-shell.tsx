@@ -13,7 +13,14 @@ import {
   UserRound,
   LoaderCircle,
   X,
+  Menu,
+  Gamepad2,
 } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -44,6 +51,7 @@ import { WorldAtlas } from './world-atlas';
 import { PrivateVault } from './private-vault';
 import { WalkerPortrait } from './start-screen';
 import type { MiniGameId } from '@/lib/world/types';
+import './mobile-explore.css';
 
 type Panel =
   | 'vault'
@@ -82,6 +90,22 @@ export default function WorldShell({
     [miniGame, setMiniGame] = useState<MiniGameId>('circuit'),
     [help, setHelp] = useState(false),
     [intro, setIntro] = useState(true);
+  const [compact, setCompact] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showPad, setShowPad] = useState(false);
+  const [themesOpen, setThemesOpen] = useState(false);
+  useEffect(() => {
+    const query = matchMedia(
+      '(max-width: 700px), (pointer: coarse) and (max-width: 1100px), (max-height: 500px) and (max-width: 1000px)',
+    );
+    const sync = () => {
+      setCompact(query.matches);
+      game.current?.setDirection({ x: 0, y: 0 });
+    };
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
   const actionRef = useRef<(action: WorldAction) => void>(() => {}),
     abortRef = useRef<AbortController | null>(null);
   const openArticle = useCallback((id: string) => {
@@ -199,9 +223,12 @@ export default function WorldShell({
     };
   }, []);
   useEffect(() => {
-    game.current?.pause(!!panel || blueprint || help);
+    game.current?.pause(!!panel || blueprint || help || (compact && menuOpen));
     if (!panel) abortRef.current?.abort();
-  }, [panel, blueprint, help, ready]);
+  }, [panel, blueprint, help, ready, compact, menuOpen]);
+  useEffect(() => {
+    if (panel || blueprint) setMenuOpen(false);
+  }, [panel, blueprint]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
@@ -264,10 +291,14 @@ export default function WorldShell({
   };
   return (
     <main
-      className={`world-shell ${blueprint ? 'is-blueprint' : ''}`}
+      className={`world-shell ${blueprint ? 'is-blueprint' : ''} ${compact ? 'is-compact' : ''} ${showPad ? 'has-direction-pad' : ''}`}
       aria-label="沉睡机甲档案馆，可选的探索模式"
     >
-      <div className="world-art" aria-hidden="true" />
+      <div
+        className="world-art"
+        style={{ backgroundImage: `url("${scene.art}")` }}
+        aria-hidden="true"
+      />
       <div
         ref={mount}
         className={`game-mount ${ready ? 'is-ready' : ''}`}
@@ -276,61 +307,71 @@ export default function WorldShell({
         tabIndex={0}
       />
       <div className="world-vignette" />
-      <header className="world-header">
+      <Collapsible
+        open={!compact || menuOpen}
+        onOpenChange={setMenuOpen}
+        render={<header className="world-header" />}
+      >
         <a className="wordmark" href="/" aria-label="回到引导页">
           <WalkerPortrait />
           <span>
             徒手拆机甲<small>THE MECHA ARCHIVE</small>
           </span>
         </a>
-        <nav aria-label="主导航">
-          <Button
-            variant="ghost"
-            className="nav-button"
-            render={<a href="/archive" />}
-            nativeButton={false}
-            onClick={(event) => {
-              event.preventDefault();
-              setChapter('all');
-              setTag('all');
-              setPanel('directory');
-            }}
-          >
-            <BookOpen size={15} />
-            文章
-          </Button>
-          <Button
-            variant="ghost"
-            className="nav-button"
-            render={<a href="/projects" />}
-            nativeButton={false}
-            onClick={(event) => {
-              event.preventDefault();
-              setPanel('projects');
-            }}
-          >
-            <FolderGit2 size={15} />
-            项目
-          </Button>
-          <Button
-            variant="ghost"
-            className="nav-button"
-            render={<a href="/about" />}
-            nativeButton={false}
-            onClick={(event) => {
-              event.preventDefault();
-              setPanel('profile');
-            }}
-          >
-            <UserRound size={15} />
-            关于
-          </Button>
-          <a className="direct-home-link" href="/workbench">
-            返回工作台 ↗
-          </a>
-          <MusicControl reading={!!panel} />
-        </nav>
-      </header>
+        <CollapsibleTrigger className="world-menu-toggle">
+          <Menu size={19} />
+          <span>目录</span>
+        </CollapsibleTrigger>
+        <CollapsibleContent keepMounted className="world-navigation">
+          <nav aria-label="主导航">
+            <Button
+              variant="ghost"
+              className="nav-button"
+              render={<a href="/archive" />}
+              nativeButton={false}
+              onClick={(event) => {
+                event.preventDefault();
+                setChapter('all');
+                setTag('all');
+                setPanel('directory');
+              }}
+            >
+              <BookOpen size={15} />
+              文章
+            </Button>
+            <Button
+              variant="ghost"
+              className="nav-button"
+              render={<a href="/projects" />}
+              nativeButton={false}
+              onClick={(event) => {
+                event.preventDefault();
+                setPanel('projects');
+              }}
+            >
+              <FolderGit2 size={15} />
+              项目
+            </Button>
+            <Button
+              variant="ghost"
+              className="nav-button"
+              render={<a href="/about" />}
+              nativeButton={false}
+              onClick={(event) => {
+                event.preventDefault();
+                setPanel('profile');
+              }}
+            >
+              <UserRound size={15} />
+              关于
+            </Button>
+            <a className="direct-home-link" href="/workbench">
+              返回工作台 ↗
+            </a>
+            <MusicControl reading={!!panel} />
+          </nav>
+        </CollapsibleContent>
+      </Collapsible>
       {!blueprint && (
         <>
           <h1 className="sr-only">{scene.title}</h1>
@@ -381,44 +422,60 @@ export default function WorldShell({
               </Button>
             </div>
           )}
-          <div className="mobile-controls" aria-label="触控方向控制">
-            <div className="dpad">
-              {[
-                { icon: ArrowUp, x: 0, y: -1, c: 'up', label: '向上移动' },
-                { icon: ArrowLeft, x: -1, y: 0, c: 'left', label: '向左移动' },
-                { icon: ArrowDown, x: 0, y: 1, c: 'down', label: '向下移动' },
+          {compact && showPad && !panel && !help && !menuOpen && (
+            <div className="mobile-controls" aria-label="触控方向控制">
+              <div className="dpad">
+                {[
+                  { icon: ArrowUp, x: 0, y: -1, c: 'up', label: '向上移动' },
+                  {
+                    icon: ArrowLeft,
+                    x: -1,
+                    y: 0,
+                    c: 'left',
+                    label: '向左移动',
+                  },
+                  { icon: ArrowDown, x: 0, y: 1, c: 'down', label: '向下移动' },
 
-                { icon: ArrowRight, x: 1, y: 0, c: 'right', label: '向右移动' },
-              ].map((d) => (
-                <button
-                  className={d.c}
-                  key={d.c}
-                  aria-label={d.label}
-                  onPointerDown={(e) => {
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                    game.current?.setDirection({ x: d.x, y: d.y });
-                  }}
-                  onPointerUp={() => game.current?.setDirection({ x: 0, y: 0 })}
-                  onPointerCancel={() =>
-                    game.current?.setDirection({ x: 0, y: 0 })
-                  }
-                  onLostPointerCapture={() =>
-                    game.current?.setDirection({ x: 0, y: 0 })
-                  }
-                >
-                  <d.icon size={18} />
-                </button>
-              ))}
+                  {
+                    icon: ArrowRight,
+                    x: 1,
+                    y: 0,
+                    c: 'right',
+                    label: '向右移动',
+                  },
+                ].map((d) => (
+                  <button
+                    className={d.c}
+                    key={d.c}
+                    aria-label={d.label}
+                    onPointerDown={(e) => {
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                      game.current?.setDirection({ x: d.x, y: d.y });
+                    }}
+                    onPointerUp={() =>
+                      game.current?.setDirection({ x: 0, y: 0 })
+                    }
+                    onPointerCancel={() =>
+                      game.current?.setDirection({ x: 0, y: 0 })
+                    }
+                    onLostPointerCapture={() =>
+                      game.current?.setDirection({ x: 0, y: 0 })
+                    }
+                  >
+                    <d.icon size={18} />
+                  </button>
+                ))}
+              </div>
+              <button
+                className="touch-interact"
+                onClick={interact}
+                disabled={!near}
+                aria-label="与附近物件互动"
+              >
+                E
+              </button>
             </div>
-            <button
-              className="touch-interact"
-              onClick={interact}
-              disabled={!near}
-              aria-label="与附近物件互动"
-            >
-              E
-            </button>
-          </div>
+          )}
         </>
       )}
       {blueprint && (
@@ -445,8 +502,8 @@ export default function WorldShell({
             <CircleHelp size={18} />
           </PopoverTrigger>
           <PopoverContent className="world-help" align="start">
-            <p>点击维修通道移动，靠近门或物件后按 E。</p>
-            <p>
+            <p>点击通道移动，点击门或物件自动走近并互动。</p>
+            <p className="keyboard-help">
               <kbd>WASD</kbd> / 方向键移动
               <br />
               <kbd>E</kbd> 与附近物件互动
@@ -454,6 +511,9 @@ export default function WorldShell({
               <kbd>Shift</kbd> 快走
               <br />
               <kbd>M</kbd> 机甲拆解图
+            </p>
+            <p className="touch-help">
+              打开下方方向控制可手动行走。点「拆解图」查看完整机甲并选择目的地。
             </p>
             <p>也可以从上方直接阅读内容。</p>
           </PopoverContent>
@@ -465,9 +525,24 @@ export default function WorldShell({
         >
           <Layers3 size={18} />
         </button>
+        {compact && (
+          <button
+            className="world-tool-button pad-toggle"
+            aria-label={showPad ? '收起方向控制' : '展开方向控制'}
+            aria-pressed={showPad}
+            onClick={() => {
+              game.current?.setDirection({ x: 0, y: 0 });
+              setShowPad((v) => !v);
+            }}
+          >
+            <Gamepad2 size={19} />
+          </button>
+        )}
         {intro && !panel && (
           <span className="first-visit-hint">
-            点击栈道 / WASD 行走 · E 互动 · M 拆解图
+            {compact
+              ? '点通道行走 · 点物件探索 · 拆解图选目的地'
+              : '点击栈道 / WASD 行走 · E 互动 · M 拆解图'}
           </span>
         )}
       </footer>
@@ -523,23 +598,40 @@ export default function WorldShell({
                 </TabsList>
               </Tabs>
               {tags.length > 0 && (
-                <div className="tag-filters">
-                  <button
-                    data-active={tag === 'all'}
-                    onClick={() => setTag('all')}
-                  >
-                    全部主题
-                  </button>
-                  {tags.map((t) => (
-                    <button
-                      data-active={tag === t}
-                      key={t}
-                      onClick={() => setTag(t)}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+                <Collapsible
+                  open={!compact || themesOpen}
+                  onOpenChange={setThemesOpen}
+                >
+                  <CollapsibleTrigger className="directory-theme-trigger">
+                    主题：{tag === 'all' ? '全部主题' : tag}
+                    <span>{themesOpen ? '收起' : '筛选'}</span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent keepMounted>
+                    <div className="tag-filters">
+                      <button
+                        data-active={tag === 'all'}
+                        onClick={() => {
+                          setTag('all');
+                          setThemesOpen(false);
+                        }}
+                      >
+                        全部主题
+                      </button>
+                      {tags.map((t) => (
+                        <button
+                          data-active={tag === t}
+                          key={t}
+                          onClick={() => {
+                            setTag(t);
+                            setThemesOpen(false);
+                          }}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
               <div className="article-list">
                 {filtered.map((p, i) => (

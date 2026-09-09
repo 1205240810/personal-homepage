@@ -26,7 +26,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 64% 65%;
+  object-position: var(--art-desktop, 64% 65%);
   transition: filter 1.6s ease;
 }
 .arrival.lights-on .arrival-art {
@@ -311,7 +311,7 @@
 }
 @media (max-width: 760px) {
   .arrival-art {
-    object-position: 69% 50%;
+    object-position: var(--art-mobile, 69% 50%);
   }
   .arrival-shade {
     background: linear-gradient(

@@ -1,0 +1,222 @@
+.world-menu-toggle {
+  display: none;
+}
+.touch-help {
+  display: none;
+}
+.world-shell.is-compact .world-art {
+  background-size: cover;
+  filter: blur(18px) brightness(0.58);
+  transform: scale(1.08);
+}
+.world-shell.is-compact .world-header {
+  padding: max(10px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right)) 10px
+    max(12px, env(safe-area-inset-left));
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  z-index: 30;
+}
+.world-shell.is-compact .wordmark {
+  padding: 5px 8px;
+  font-size: 14px;
+  gap: 8px;
+}
+.world-shell.is-compact .wordmark small {
+  display: none;
+}
+.world-shell.is-compact .wordmark > span:last-child {
+  display: block;
+}
+.world-shell.is-compact .mecha-portrait {
+  width: 32px;
+  height: 32px;
+}
+.world-shell.is-compact .world-menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 13px;
+  color: #ece9db;
+  background: #25323bea;
+  border: 1px solid #c3c6b744;
+  border-radius: 5px;
+  pointer-events: auto;
+  font-size: 14px;
+}
+.world-shell.is-compact .world-navigation {
+  position: absolute;
+  top: calc(66px + env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  left: max(12px, env(safe-area-inset-left));
+  max-height: calc(100dvh - 100px);
+  overflow-y: auto;
+}
+.world-shell.is-compact .world-navigation nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  padding: 10px;
+  gap: 6px;
+  align-items: center;
+}
+.world-shell.is-compact .world-navigation .nav-button {
+  min-height: 44px;
+  font-size: 14px !important;
+  justify-content: flex-start;
+}
+.world-shell.is-compact .world-navigation .nav-button svg {
+  display: block;
+}
+.world-shell.is-compact .world-navigation .music-controls {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  border-top: 1px solid #c2c7bc;
+  padding-top: 8px;
+}
+.world-shell.is-compact .world-navigation .direct-home-link {
+  border-left: 0;
+  justify-content: center;
+}
+.world-shell.is-compact .quiet-world-tools {
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  gap: 7px;
+}
+.world-shell.is-compact .journey-status {
+  bottom: max(16px, env(safe-area-inset-bottom));
+  right: max(12px, env(safe-area-inset-right));
+  top: auto;
+  max-width: calc(100% - 185px);
+  padding: 10px;
+}
+.world-shell.is-compact .journey-location {
+  display: none;
+}
+.world-shell.is-compact .journey-status p {
+  font-size: 12px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-shell.is-compact .room-return {
+  top: calc(75px + env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  min-height: 44px;
+}
+.world-shell.is-compact .interaction-prompt {
+  bottom: calc(83px + env(safe-area-inset-bottom));
+  min-height: 48px;
+  min-width: 0;
+  max-width: calc(100% - 32px);
+  width: max-content;
+  padding: 10px 14px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.world-shell.is-compact .interaction-prompt kbd,
+.world-shell.is-compact .interaction-prompt small {
+  display: none;
+}
+.world-shell.is-compact.has-direction-pad .interaction-prompt {
+  bottom: calc(200px + env(safe-area-inset-bottom));
+}
+.world-shell.is-compact .mobile-controls {
+  display: flex;
+  position: absolute;
+  z-index: 10;
+  bottom: calc(85px + env(safe-area-inset-bottom));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  align-items: end;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.world-shell.is-compact .dpad button,
+.world-shell.is-compact .touch-interact {
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  touch-action: none;
+  border: 1px solid #b9c4ab88;
+  background: #f4f2e7ef;
+  color: #405246;
+  border-radius: 6px;
+  user-select: none;
+}
+.world-shell.is-compact .touch-interact {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+.world-shell.is-compact .touch-interact:disabled {
+  opacity: 0.4;
+}
+.world-shell.is-compact .dpad button:active,
+.world-shell.is-compact .pad-toggle[aria-pressed='true'] {
+  background: #e8b978;
+  color: #273633;
+}
+.world-shell.is-compact .first-visit-hint {
+  top: auto;
+  bottom: calc(75px + env(safe-area-inset-bottom));
+  font-size: 12px;
+}
+.world-shell.is-compact:has(.interaction-prompt) .first-visit-hint,
+.world-shell.is-compact.has-direction-pad .first-visit-hint {
+  display: none;
+}
+.world-shell.is-compact .world-loading {
+  bottom: 82px;
+}
+.world-help .touch-help {
+  display: block;
+}
+@media (pointer: coarse), (max-width: 700px) {
+  .world-help .keyboard-help {
+    display: none;
+  }
+}
+@media (max-width: 700px) and (orientation: portrait) {
+  .world-shell .game-mount {
+    top: calc(66px + env(safe-area-inset-top));
+    bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+  .world-shell .game-mount::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      #182630 0,
+      transparent 32px,
+      transparent calc(100% - 32px),
+      #182630
+    );
+  }
+}
+@media (max-height: 500px) and (max-width: 1100px) {
+  .world-shell.is-compact.has-direction-pad .interaction-prompt {
+    bottom: 85px;
+  }
+  .world-shell.is-compact .mobile-controls {
+    bottom: 72px;
+  }
+  .world-shell.is-compact .first-visit-hint {
+    display: none;
+  }
+}
+.mecha-atlas-header {
+  position: sticky;
+  top: -24px;
+  z-index: 3;
+  background: #f0f0e9;
+  padding: 12px 0;
+}
+.mecha-atlas-header > button {
+  min-height: 44px;
+}

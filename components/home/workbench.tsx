@@ -44,38 +44,34 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
         </div>
       </div>
       <div className="b-layout">
+        <section className="b-writing" aria-labelledby="b-writing-title">
+          <header className="b-section-head">
+            <h2 id="b-writing-title">
+              <span className="b-section-number b-mono">02</span>文章与笔记
+            </h2>
+            <a className="b-text-link" href="/archive">
+              全部文章 <ArrowUpRight size={14} />
+            </a>
+          </header>
+          {featured.map((post, i) => (
+            <a className="b-article" href={`/posts/${post.slug}`} key={post.id}>
+              <span className="b-article-kicker">
+                {post.date.slice(0, 10)} · {post.tags[0] || '笔记'}
+              </span>
+              <span className="b-article-title">
+                <span>{post.title}</span>
+                <ArrowUpRight className="b-arrow" size={17} />
+              </span>
+              {i === 0 && (
+                <span className="b-article-description">{post.summary}</span>
+              )}
+            </a>
+          ))}
+        </section>
         <div className="b-project">
           <ProjectWorkbench />
         </div>
         <aside className="b-sidebar" aria-label="文章和其他作品">
-          <section className="b-writing" aria-labelledby="b-writing-title">
-            <header className="b-section-head">
-              <h2 id="b-writing-title">
-                <span className="b-section-number b-mono">02</span>文章与笔记
-              </h2>
-              <a className="b-text-link" href="/archive">
-                全部文章 <ArrowUpRight size={14} />
-              </a>
-            </header>
-            {featured.map((post, i) => (
-              <a
-                className="b-article"
-                href={`/posts/${post.slug}`}
-                key={post.id}
-              >
-                <span className="b-article-kicker">
-                  {post.date.slice(0, 10)} · {post.tags[0] || '笔记'}
-                </span>
-                <span className="b-article-title">
-                  <span>{post.title}</span>
-                  <ArrowUpRight className="b-arrow" size={17} />
-                </span>
-                {i === 0 && (
-                  <span className="b-article-description">{post.summary}</span>
-                )}
-              </a>
-            ))}
-          </section>
           <section className="b-album" aria-labelledby="b-album-title">
             <div className="b-album-tag">
               <span>另一件作品</span>

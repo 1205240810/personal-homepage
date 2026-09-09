@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, ArrowRight, SunMedium } from 'lucide-react';
 import { MusicControl } from '@/components/world/music-control';
 import { ArrivalAtmosphere } from './arrival-atmosphere';
+import type { CSSProperties } from 'react';
+import type { ArrivalArt } from '@/lib/arrival-art';
 import './arrival.css';
-export default function Arrival() {
+export default function Arrival({ art }: { art: ArrivalArt }) {
   const [leaving, setLeaving] = useState(false);
   const [lightsOn, setLightsOn] = useState(false);
   const surface = useRef<HTMLElement>(null);
@@ -28,12 +30,18 @@ export default function Arrival() {
     <main
       ref={surface}
       className={`arrival ${leaving ? 'is-leaving' : ''} ${lightsOn ? 'lights-on' : ''}`}
+      style={
+        {
+          '--art-desktop': art.desktop,
+          '--art-mobile': art.mobile,
+        } as CSSProperties
+      }
     >
       <div className="arrival-scene">
         <img
           className="arrival-art"
-          src="/art/arrival-industrial-explorer.png"
-          alt="暖日光穿过维护馆高窗，一台圆形单眼、墨绿装甲与旧铜关节的巨型探索机甲扶着检修架，双脚稳稳落在延伸的金属地面上。"
+          src={art.src}
+          alt={art.alt}
           fetchPriority="high"
         />
         <div className="arrival-window-light" aria-hidden="true" />

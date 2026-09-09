@@ -1,7 +1,19 @@
 'use client';
-import { useState } from 'react';
-import { ArrowUpRight, Network, Images, Check, RotateCcw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  ArrowUpRight,
+  Network,
+  Images,
+  Check,
+  RotateCcw,
+  ChevronDown,
+} from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
 import { addressPlan } from '@/lib/project-preview';
 import photos from '@/content/data/album-preview.json';
 import projects from '@/content/data/projects.json';
@@ -265,6 +277,15 @@ function AlbumPreview() {
 
 export function ProjectWorkbench() {
   const [project, setProject] = useState('network');
+  const [expanded, setExpanded] = useState(false);
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const query = matchMedia('(min-width: 761px)');
+    const sync = () => setDesktop(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
   const selected = projects.find(
     (p) =>
       p.id ===
@@ -299,16 +320,53 @@ export function ProjectWorkbench() {
               相册分析
             </TabsTrigger>
           </TabsList>
-          <div className="b-screen-bezel">
-            <div className="b-screen">
-              <TabsContent value="network" keepMounted>
-                <NetworkPreview />
-              </TabsContent>
-              <TabsContent value="album" keepMounted>
-                <AlbumPreview />
-              </TabsContent>
-            </div>
-          </div>
+          <Collapsible
+            open={desktop || expanded}
+            onOpenChange={setExpanded}
+            className="project-disclosure"
+          >
+            {!desktop && !expanded && (
+              <div className="demo-compact-preview">
+                {project === 'network' ? (
+                  <div
+                    className="demo-compact-network"
+                    aria-label="PC1、FRR1、FRR2、PC2 四节点网络"
+                  >
+                    {['PC1', 'FRR1', 'FRR2', 'PC2'].map((id) => (
+                      <span key={id}>{id}</span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="demo-compact-photos">
+                    {photos.slice(0, 3).map((p) => (
+                      <img key={p.id} src={p.url} alt={p.type} loading="lazy" />
+                    ))}
+                  </div>
+                )}
+                <p>
+                  {project === 'network'
+                    ? '从地址规划到设备配置，试一遍四节点网络实验。'
+                    : '用时间、季节和已有标签，筛选照片里的线索。'}
+                </p>
+              </div>
+            )}
+            <CollapsibleTrigger className="demo-expand-button">
+              {expanded ? '收起试用' : '展开试用'}
+              <ChevronDown size={17} />
+            </CollapsibleTrigger>
+            <CollapsibleContent keepMounted>
+              <div className="b-screen-bezel">
+                <div className="b-screen">
+                  <TabsContent value="network" keepMounted>
+                    <NetworkPreview />
+                  </TabsContent>
+                  <TabsContent value="album" keepMounted>
+                    <AlbumPreview />
+                  </TabsContent>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </Tabs>
         <div className="b-bottom-rail" aria-hidden="true">
           <div className="b-vents">
@@ -320,7 +378,9 @@ export function ProjectWorkbench() {
           <span className="b-screw" />
         </div>
       </article>
-      <div className="b-project-note">
+      <div
+        className={`b-project-note ${!desktop && !expanded ? 'is-compact-note' : ''}`}
+      >
         <p>
           {project === 'network'
             ? '改一组地址，看看四台设备的配置如何生成。'

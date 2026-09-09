@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import 'katex/dist/katex.min.css';
 export const metadata: Metadata = {
@@ -7,6 +7,11 @@ export const metadata: Metadata = {
     '徒手拆机甲的个人工作台。阅读文章，试用作品，也可以进入沉睡机甲档案馆慢慢探索。',
   icons: { icon: '/favicon.svg' },
   robots: { index: false, follow: false },
+};
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 export default function RootLayout({
   children,

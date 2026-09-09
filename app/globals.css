@@ -3740,3 +3740,106 @@ kbd {
   line-height: 1.55;
   margin: 18px 0 40px;
 }
+
+/* Let long sheet contents keep their natural height and scroll together. */
+.directory-sheet > * {
+  flex-shrink: 0;
+}
+.directory-sheet .panel-heading {
+  position: sticky;
+  top: -36px;
+  z-index: 8;
+  margin-top: -12px;
+  padding: 12px 0;
+  background: #fffdf5;
+}
+.directory-sheet .panel-heading button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.reader-sheet .panel-heading {
+  top: -28px;
+}
+.prose-archive pre {
+  font-size: 14px;
+}
+.prose-archive pre code {
+  font-size: inherit;
+}
+@media (max-width: 700px) {
+  .directory-sheet,
+  .reader-sheet {
+    padding: 20px max(20px, env(safe-area-inset-right))
+      max(32px, env(safe-area-inset-bottom))
+      max(20px, env(safe-area-inset-left)) !important;
+    overscroll-behavior-y: contain;
+  }
+  .directory-sheet .panel-heading {
+    top: -20px;
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+  .directory-tabs [data-slot='tabs-trigger'] {
+    min-height: 44px;
+    font-size: 14px;
+    margin-right: 8px;
+  }
+  .directory-tabs {
+    height: 48px !important;
+  }
+  .tag-filters {
+    gap: 6px;
+  }
+  .tag-filters button {
+    min-height: 44px;
+    font-size: 14px;
+    padding: 7px 10px;
+  }
+  .prose-archive pre {
+    font-size: 14px;
+    padding: 14px;
+  }
+  .reading-article .reading-summary {
+    font-size: 16px;
+  }
+}
+@media (max-width: 760px), (pointer: coarse) {
+  .music-controls .music-options,
+  .music-controls .music-toggle,
+  .arrival .arrival-light-switch {
+    width: 44px;
+    min-width: 44px;
+    height: 44px !important;
+    min-height: 44px;
+    padding: 10px !important;
+  }
+  .music-controls .music-toggle span {
+    display: none;
+  }
+}
+.directory-theme-trigger {
+  display: none;
+}
+@media (max-width: 700px),
+  (pointer: coarse) and (max-width: 1100px),
+  (max-height: 500px) and (max-width: 1000px) {
+  .directory-theme-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 1px solid #bac6b1;
+    color: #50634a;
+    font-size: 14px;
+    text-align: left;
+  }
+  .directory-theme-trigger span {
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  .directory-theme-trigger + [data-slot='collapsible-content'] .tag-filters {
+    padding-top: 12px;
+  }
+}

@@ -949,3 +949,58 @@
     max-width: none;
   }
 }
+
+/* One content order, with the desktop work surface beside the writing. */
+#workbench .b-layout {
+  grid-template-areas: 'project writing' 'project sidebar';
+  grid-template-rows: auto 1fr;
+  row-gap: 24px;
+}
+#workbench .b-project {
+  grid-area: project;
+  min-width: 0;
+}
+#workbench .b-writing {
+  grid-area: writing;
+  min-width: 0;
+}
+#workbench .b-sidebar {
+  grid-area: sidebar;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  #workbench .b-layout {
+    grid-template-areas: 'writing' 'project' 'sidebar';
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+  #workbench .b-sidebar {
+    display: block;
+  }
+  #workbench .b-intro {
+    padding: 22px 0;
+  }
+  #workbench .b-intro p {
+    font-size: 14px;
+  }
+  #workbench .b-article {
+    padding: 14px 0;
+  }
+  #workbench .b-article-title,
+  #workbench .b-article:first-of-type .b-article-title {
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  #workbench .b-article-kicker {
+    font-size: 12px;
+  }
+  #workbench .b-header a,
+  #workbench .b-section-head a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  #workbench .b-bottom-rail {
+    display: none;
+  }
+}

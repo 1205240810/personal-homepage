@@ -444,3 +444,121 @@
     max-width: none;
   }
 }
+
+#workbench .project-disclosure {
+  min-width: 0;
+}
+#workbench .demo-expand-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  border: 1px solid #a8b39e;
+  border-radius: 5px;
+  background: #f1f3eb;
+  color: #334233;
+  font-size: 14px;
+}
+#workbench .demo-expand-button[data-panel-open] svg {
+  transform: rotate(180deg);
+}
+#workbench .demo-compact-preview {
+  padding: 12px 2px 0;
+}
+#workbench .demo-compact-preview p {
+  color: #606a5e;
+  font-size: 14px;
+  line-height: 1.75;
+  margin: 12px 0 0;
+}
+#workbench .demo-compact-network {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 8px;
+  background: #293630;
+  border-radius: 4px;
+}
+#workbench .demo-compact-network span {
+  flex: 1;
+  text-align: center;
+  color: #e0e5d8;
+  font:
+    13px ui-monospace,
+    monospace;
+}
+#workbench .demo-compact-network span + span {
+  border-left: 1px solid #96a58a77;
+}
+#workbench .demo-compact-photos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+#workbench .demo-compact-photos img {
+  width: 100%;
+  aspect-ratio: 1.4;
+  object-fit: cover;
+  border-radius: 3px;
+}
+@media (min-width: 761px) {
+  #workbench .demo-expand-button {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  #workbench .demo-planner input,
+  #workbench .demo-filters select {
+    min-height: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+  #workbench .demo-planner input {
+    width: 62px;
+  }
+  #workbench .demo-plan-button,
+  #workbench .demo-primary,
+  #workbench .demo-empty button,
+  #workbench .demo-photo-detail button {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  #workbench .demo-planner label,
+  #workbench .demo-filters label {
+    font-size: 14px;
+  }
+  #workbench .demo-planner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 90px;
+    gap: 12px;
+  }
+  #workbench .demo-plan-button {
+    grid-column: 1 / -1;
+  }
+  #workbench .demo-config pre {
+    font-size: 14px;
+    line-height: 1.7;
+    max-height: 210px;
+  }
+  #workbench .b-screen {
+    padding: 12px;
+  }
+  #workbench .demo-screen-label {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  #workbench .demo-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #workbench .demo-filters label:last-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 760px) {
+  #workbench .b-project-note.is-compact-note p {
+    display: none;
+  }
+}

@@ -62,3 +62,7 @@ OSPF 示例依据 [项目 README](https://github.com/1205240810/ospf-v2-demo/blo
 ## 2026-09-09 开屏机甲替换
 
 用户认为白色机甲缺乏吸引力，开屏改为圆形单眼、墨绿厚钢壳与旧铜关节的工业探索机甲。使用内置 image_gen 单次生成，原生尺寸 1672 × 941，来源与实际提示词见 `design/arrival-industrial-explorer.md`。保持原有双入口、检修灯和光尘互动。
+
+## 2026-09-09 随机开屏集合与手机适配
+
+在墨绿单眼原画基础上，按用户要求新增钴蓝导航型、旧铜检修型、石墨勘探型，合计四张。新增三张均为内置 image_gen 单次生成；实际提示词见 `design/arrival-collection-prompts.md`，原始 PNG 保留在 `design/originals/`。站点采用原始 1672 × 941 分辨率的 WebP，质量参数 84，只做编码转换。手机布局调整不改变文章、档案、奖项或私藏访问策略。

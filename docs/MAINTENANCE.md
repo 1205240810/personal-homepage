@@ -68,7 +68,7 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 
 公开项目维护在 `content/data/projects.json`，保留源链接、描述核对日期和实际演示地址。
 
-当前主地图为 `public/art/mecha-isometric.png`，内舱为四张 `interior-*-hd.png`，头像为 `mecha-avatar.png`。开屏单独使用 `arrival-industrial-explorer.png`；此前灰白机甲 `arrival-maintenance-hall.png` 仅作历史参考。原始提示词见 `docs/design/`。图像文件保留原始像素；家具前景在运行时按多边形裁取并按脚底深度叠放。旧三行内舱、courtyard / river / sideview 资源仅作历史参考，不在当前场景加载。
+当前主地图为 `public/art/mecha-isometric.png`，内舱为四张 `interior-*-hd.png`，头像为 `mecha-avatar.png`。开屏从 `lib/arrival-art.ts` 中的四张 `arrival-*.webp` 原画随机选择，服务端每次访问选定一张后传给页面，避免首屏闪换与加载全部图片。每幅图单独设置桌面/手机取景；保留原始分辨率，以 WebP 编码减轻加载。新增三张原始 PNG 保存在 `docs/design/originals/`，灰白机甲 `arrival-maintenance-hall.png` 仅作历史参考。原始提示词见 `docs/design/`。图像文件保留原始像素；家具前景在运行时按多边形裁取并按脚底深度叠放。旧三行内舱、courtyard / river / sideview 资源仅作历史参考，不在当前场景加载。
 
 角色由 `jointed-player.ts` 的 Canvas 关节函数绘制，`player.ts` 一次生成四方向、每方向 16 帧行走与独立 idle 纹理。脚锚点为 (64,166)，画布 128×176。完整步幅为 128×playerScale 世界单位，与 engine 移动距离同步；改步幅必须同步两处，不能用帧率掩盖滑步。
 
@@ -77,3 +77,9 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 音乐音量保存在 `mecha-music-volume`，每次打开页面均由访客主动播放。更换曲目时同步来源和 THIRD_PARTY_NOTICES 授权记录。
 
 公开抓取导入器：`node scripts/import-cnblogs-public.mjs 已审核目录`。它只接受本次核实的74篇公开清单，校验原文/图片SHA-256，将原始抓取另存ignored备份并输出迁移清单。不能对私人导出使用。6张源图无法取回，阅读页已放缺失说明；1篇源正文仅字母S，保持原状。3个旧链接404、25个403未能验证，原链接保留。私藏室规则见 PRIVATE-VAULT.md。
+
+## 手机适配
+
+工作台的内容 DOM 顺序为文章、项目、其他入口，桌面用 Grid 并排排版；手机先呈现文章，两个项目以选项卡提供摘要和“展开试用”，展开后复用同一套交互。主要触控控件至少 44px，输入字号 16px；正文代码固定 14px，避免 pre/code 重复缩小。
+
+文章抽屉直接子项不参与 Flex 收缩，关闭栏固定；手机主题筛选可展开，选中后收起。探索菜单和手动方向盘可折叠，点击物件自动寻路沿用原实现。触控布局同时考虑竖屏宽度、粗指针与短横屏，横屏保留可展开的方向盘。竖屏画布上下为导航与工具预留空间，地图继续 cover 与跟随人物，不修改地图坐标或碰撞；画布外由当前场景的暗化背景自然延伸。
