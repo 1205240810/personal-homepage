@@ -47,6 +47,53 @@ sudo -u mecha env PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin npm --pref
 sudo -u mecha env PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin npm --prefix "$mecha_build" run build:node
 ```
 
+### 在腾讯控制台执行长任务
+
+控制台“执行命令”的默认超时为 60 秒，安装依赖和构建应交给后台任务。源码准备好后，可用下面的单次任务替代上面三条 npm 命令；不要同时重复构建：
+
+```bash
+mecha_build_unit="personal-homepage-build-$mecha_short"
+sudo systemd-run --no-block --unit="$mecha_build_unit" --uid=mecha --gid=mecha \
+  --working-directory="$mecha_build" \
+  --setenv=PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin \
+  --property=Type=oneshot --property=TimeoutStartSec=0 \
+  --property=StandardOutput=journal --property=StandardError=journal \
+  /bin/bash -c 'npm ci && npm run check && npm run build:node'
+sudo journalctl -u "$mecha_build_unit" -n 100 --no-pager
+```
+
+任务提交成功不等于构建成功，随后按需读取日志，确认检查、构建和退出状态，再复制发布产物。控制台每次执行使用新的 shell；跨次操作需重新设置路径变量，并填写实际任务名查看日志。
+
+### GitHub 下载缓慢时
+
+内地服务器直接克隆较慢时，可以在本地从 GitHub 官方 codeload 下载**同一个固定提交**的源码包，再上传服务器。在本地终端设置已审核的完整 SHA：
+
+```bash
+mecha_revision='填写审核过的完整提交 SHA'
+curl --fail --location --output "personal-homepage-$mecha_revision.tar.gz" \
+  "https://codeload.github.com/1205240810/personal-homepage/tar.gz/$mecha_revision"
+shasum -a 256 "personal-homepage-$mecha_revision.tar.gz"
+```
+
+记录 SHA-256。在 Lighthouse 实例详情的“文件管理”中，将源码包上传到服务器 `/tmp/`；操作入口见 [腾讯云文件管理文档](https://cloud.tencent.com/document/product/1207/127300)。服务器上重新设置同一提交及 build 路径变量，然后复核：
+
+```bash
+mecha_archive="/tmp/personal-homepage-$mecha_revision.tar.gz"
+sha256sum "$mecha_archive"
+```
+
+只有与本地 SHA-256 完全一致才继续解包。校验用于确认传输完整性，源码来源仍以固定提交的官方 HTTPS 下载为准。使用新的空 build 目录；若先前克隆已留下文件，另选新目录，避免混入不完整源码：
+
+```bash
+sudo install -d -o mecha -g mecha "$mecha_build"
+sudo tar -xzf "$mecha_archive" --strip-components=1 --no-same-owner -C "$mecha_build"
+sudo chown -R mecha:mecha "$mecha_build"
+```
+
+这一步替代 `git clone` 和 `git checkout`，随后仍在服务器执行 `npm ci`、`npm run check`、`npm run build:node`，可使用上述后台任务。源码包没有 `.git`，发布记录应同时保留完整提交 SHA 与源码包校验值。
+
+### 整理与验证发布产物
+
 检查与构建均成功后复制完整产物；不能只复制 `server.js`，也不能使用默认 Worker 构建目录：
 
 ```bash
