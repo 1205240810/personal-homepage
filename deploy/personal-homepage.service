@@ -1,0 +1,22 @@
+[Unit]
+Description=Personal homepage Node server
+After=network.target
+
+[Service]
+Type=simple
+User=mecha
+Group=mecha
+WorkingDirectory=/srv/personal-homepage/current
+ExecStart=/opt/node-v24.21.0-linux-x64/bin/node /srv/personal-homepage/current/server.js
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=3000
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

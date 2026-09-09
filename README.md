@@ -6,7 +6,7 @@
 
 - [当前网站](https://tscjj-mecha-archive.c66745946.chatgpt.site/)：现有托管受众为仅所有者，不是对外公开演示。
 - [林间小院学习案例](examples/forest-courtyard/README.md)：独立运行旧版场景，阅读机制讲解并动手修改。
-- [日常维护](docs/MAINTENANCE.md) · [GitHub 维护与版本恢复](docs/GITHUB-MAINTENANCE.md) · [来源记录](docs/SOURCES.md)
+- [日常维护](docs/MAINTENANCE.md) · [GitHub 维护与版本恢复](docs/GITHUB-MAINTENANCE.md) · [自有服务器部署](docs/SELF-HOSTING.md) · [来源记录](docs/SOURCES.md)
 
 ## 当前版本可以做什么
 
@@ -43,7 +43,7 @@ npm run maps           # 场景配置变更后，同步 Tiled 地图
 
 首次克隆即可运行 `check`；其前置脚本会生成被 Git 忽略的文章索引。`build:preview` 只用于私有审阅。`noindex` 不是访问控制，网站访问范围由托管设置决定。
 
-`build:node` 输出 `dist/standalone/`，可通过 `PORT` 环境变量修改运行端口。服务器部署应在前方配置反向代理，并用进程服务管理启动与重启。`npm start` 仍是原 Sites 流程使用的 Wrangler 开发命令，不是 Node 生产服务命令；两种构建目标应分别构建、分别发布。
+`build:node` 输出 `dist/standalone/`，可通过 `PORT` 环境变量修改运行端口。服务器部署应在前方配置反向代理，并用进程服务管理启动与重启；具体目录、配置、验证与回滚步骤见 [自有服务器部署](docs/SELF-HOSTING.md)。`npm start` 仍是原 Sites 流程使用的 Wrangler 开发命令，不是 Node 生产服务命令；两种构建目标应分别构建、分别发布。
 
 ### 单独运行林间小院
 
