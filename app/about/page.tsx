@@ -1,5 +1,5 @@
 import { ProfileView } from '@/components/world/archive-reader';
-export const metadata = { title: '关于徒手拆机甲 · 徒手拆机甲' };
+export const metadata = { title: '关于我 · 徒手拆机甲' };
 export default function About() {
   return (
     <main className="reading-page">

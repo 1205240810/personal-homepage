@@ -119,10 +119,10 @@ export function ProfileView({
         <>
           <span className="eyebrow">关于我</span>
           <h2>
-            徒手拆机甲<span>徒手拆机甲</span>
+            {profile.displayName}<span>算法、工程与日常</span>
           </h2>
           <p className="profile-intro">
-            你好，我是徒手拆机甲，现在在西北工业大学读软件工程硕士。这里放着我的文章、作品，以及一些日常记录。
+            你好，我是「徒手拆机甲」，目前在西北工业大学读软件工程硕士。这里放着我的文章、作品，以及一些日常记录。
           </p>
           <p className="profile-intro">
             这个博客从本科时的算法笔记开始。后来，写下来的东西慢慢多了起来：比赛后的总结、做工程时遇到的问题，还有代码之外的想法。旧文章也都留着，算是一份持续更新的个人记录。
