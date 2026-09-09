@@ -1,0 +1,265 @@
+{
+  "version": "1.10",
+  "tiledversion": "1.11.2",
+  "type": "map",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 48,
+  "height": 32,
+  "tilewidth": 32,
+  "tileheight": 32,
+  "infinite": false,
+  "nextlayerid": 4,
+  "nextobjectid": 500,
+  "tilesets": [],
+  "layers": [
+    {
+      "id": 3,
+      "name": "obstacles",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 300,
+          "name": "obstacle-0",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 102,
+              "y": 652
+            },
+            {
+              "x": 425,
+              "y": 652
+            },
+            {
+              "x": 425,
+              "y": 769
+            },
+            {
+              "x": 102,
+              "y": 769
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 301,
+          "name": "obstacle-1",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 171,
+              "y": 686
+            },
+            {
+              "x": 311,
+              "y": 686
+            },
+            {
+              "x": 311,
+              "y": 814
+            },
+            {
+              "x": 171,
+              "y": 814
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 302,
+          "name": "obstacle-2",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 1353,
+              "y": 650
+            },
+            {
+              "x": 1494,
+              "y": 650
+            },
+            {
+              "x": 1494,
+              "y": 746
+            },
+            {
+              "x": 1353,
+              "y": 746
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "walkable",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 1,
+          "name": "floor-0",
+          "type": "floor",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 293,
+              "y": 405
+            },
+            {
+              "x": 441,
+              "y": 405
+            },
+            {
+              "x": 441,
+              "y": 385
+            },
+            {
+              "x": 1192,
+              "y": 385
+            },
+            {
+              "x": 1278,
+              "y": 448
+            },
+            {
+              "x": 1301,
+              "y": 512
+            },
+            {
+              "x": 1370,
+              "y": 606
+            },
+            {
+              "x": 1440,
+              "y": 805
+            },
+            {
+              "x": 916,
+              "y": 805
+            },
+            {
+              "x": 916,
+              "y": 948
+            },
+            {
+              "x": 624,
+              "y": 948
+            },
+            {
+              "x": 624,
+              "y": 805
+            },
+            {
+              "x": 162,
+              "y": 805
+            },
+            {
+              "x": 135,
+              "y": 678
+            },
+            {
+              "x": 199,
+              "y": 520
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "interactions",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 100,
+          "name": "all-articles",
+          "type": "open-collection",
+          "x": 488,
+          "y": 650,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 101,
+          "name": "algorithm-terminal",
+          "type": "open-collection",
+          "x": 493,
+          "y": 430,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 102,
+          "name": "study-shelf",
+          "type": "open-collection",
+          "x": 905,
+          "y": 428,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 103,
+          "name": "life-shelf",
+          "type": "open-collection",
+          "x": 1228,
+          "y": 549,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 104,
+          "name": "ug-lift",
+          "type": "enter-scene",
+          "x": 768,
+          "y": 900,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "posts": [
+    {
+      "id": "lesson-scene-definition",
+      "slug": "scene-definition",
+      "title": "场景为什么应该由数据描述",
+      "chapter": "undergraduate",
+      "status": "published",
+      "date": "2026-09-09",
+      "tags": ["场景基础", "学习案例"],
+      "summary": "把地图、出生点、可走区域和互动节点放进同一份配置，修改场景时就不必改移动代码。",
+      "readingMinutes": 3,
+      "html": "<h2 id=\"entry\">从注册表开始</h2><p>先打开 lib/world/registry.ts，找到 hub。art 决定背景，layers 决定树与房屋等独立图层，spawnPoints 决定从哪里出现，walkable 决定脚底可以走到哪里。</p><h2 id=\"walkable\">图像和规则是两回事</h2><p>看上去是一块草地，不代表它自动可以通行。游戏每帧使用几何规则判断下一步位置；如果图像道路和 walkable 不一致，就会出现空气墙。练习时先改一条步道，再同步可走多边形。</p><h2 id=\"practice\">动手练习</h2><p>给长椅附近增加一个可达节点，action 使用 open-collection，chapter 使用 life。运行 npm run maps 与 npm run check，再从院子里走过去验证。详细步骤见 LEARNING_GUIDE.md。</p>",
+      "headings": [],
+      "sourceURL": ""
+    },
+    {
+      "id": "lesson-movement-and-reading",
+      "slug": "movement-and-reading",
+      "title": "打开文章时，小人为什么应该停下来",
+      "chapter": "graduate",
+      "status": "published",
+      "date": "2026-09-09",
+      "tags": ["交互边界", "学习案例"],
+      "summary": "沿着一次物件互动，追踪 Phaser 发出动作、React 打开面板，以及关闭阅读后恢复移动。",
+      "readingMinutes": 3,
+      "html": "<h2 id=\"action\">从脚边的物件开始</h2><p>Phaser 检查附近的互动节点。当按下 E 或点击物件时，交给 React 一个 WorldAction。游戏只报告意图，不直接生成文章 DOM。</p><h2 id=\"pause\">用状态管理暂停</h2><p>WorldShell 将 panel 设为 article，再调用 GameHandle.pause。阅读弹层、地图、帮助和开始菜单打开时都应停住角色。关闭面板后恢复同一张地图与原来的位置。</p><h2 id=\"lifecycle\">离开时释放</h2><p>React 的 effect 在卸载时调用 destroy，取消尚未完成的读取，移除监听器。练习：从小院打开本文，按方向键确认角色没有移动，再关闭阅读继续探索。</p>",
+      "headings": [],
+      "sourceURL": ""
+    },
+    {
+      "id": "lesson-depth-and-design",
+      "slug": "depth-and-design",
+      "title": "一张背景图，怎样变成可以探索的空间",
+      "chapter": "life",
+      "status": "published",
+      "date": "2026-09-09",
+      "tags": ["设计复盘", "学习案例"],
+      "summary": "对照地面、独立家具、脚底深度和碰撞轮廓，理解纵深感来自哪些共同作用。",
+      "readingMinutes": 3,
+      "html": "<h2 id=\"layers\">拆开图层</h2><p>地面负责铺满画面；树、房屋、长椅与角色各自有脚点。scenery.ts 把素材的可见范围和锚点转换到世界坐标，再按照脚点排序。角色走到树后，树就应该盖住角色。</p><h2 id=\"collision\">轮廓要有目的</h2><p>碰撞通常只围住家具的占地部分，而不是整个高大的图像矩形。树冠可以遮住角色，树干却必须挡住脚步；两条规则一起，空间才合理。</p><h2 id=\"limit\">保留问题作为练习</h2><p>本案例保留了早期版本的草地边界、房间比例和简单踢球。它适合研究机制，但这些设计并非最终答案。可以尝试把边界改为可见灌木，或把孤立踢球改成有明确目标的一次互动。</p>",
+      "headings": [],
+      "sourceURL": ""
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+.example-page {
+  width: min(100% - 40px, 820px);
+  margin: 24px auto 60px;
+  line-height: 1.85;
+}
+.example-page > nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 32px;
+}
+.example-page nav a {
+  color: #3c6549;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.example-page h1 {
+  font-size: clamp(24px, 4vw, 34px);
+}
+.example-posts {
+  margin-top: 30px;
+}
+.example-posts > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-top: 1px solid var(--border);
+  padding: 20px 0;
+}
+.example-posts h2 {
+  font-size: 20px;
+}
+.example-posts p {
+  color: var(--muted-foreground);
+}

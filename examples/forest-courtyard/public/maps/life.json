@@ -1,0 +1,300 @@
+{
+  "version": "1.10",
+  "tiledversion": "1.11.2",
+  "type": "map",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 48,
+  "height": 32,
+  "tilewidth": 32,
+  "tileheight": 32,
+  "infinite": false,
+  "nextlayerid": 4,
+  "nextobjectid": 500,
+  "tilesets": [],
+  "layers": [
+    {
+      "id": 3,
+      "name": "obstacles",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 300,
+          "name": "obstacle-0",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 277,
+              "y": 375
+            },
+            {
+              "x": 531,
+              "y": 375
+            },
+            {
+              "x": 531,
+              "y": 470
+            },
+            {
+              "x": 277,
+              "y": 470
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 301,
+          "name": "obstacle-1",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 1160,
+              "y": 511
+            },
+            {
+              "x": 1250,
+              "y": 595
+            },
+            {
+              "x": 1255,
+              "y": 663
+            },
+            {
+              "x": 1280,
+              "y": 700
+            },
+            {
+              "x": 1370,
+              "y": 665
+            },
+            {
+              "x": 1380,
+              "y": 545
+            },
+            {
+              "x": 1330,
+              "y": 520
+            },
+            {
+              "x": 1275,
+              "y": 595
+            },
+            {
+              "x": 1200,
+              "y": 485
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 302,
+          "name": "obstacle-2",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 1100,
+              "y": 328
+            },
+            {
+              "x": 1287,
+              "y": 328
+            },
+            {
+              "x": 1287,
+              "y": 376
+            },
+            {
+              "x": 1100,
+              "y": 376
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 303,
+          "name": "obstacle-3",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 1370,
+              "y": 630
+            },
+            {
+              "x": 1536,
+              "y": 630
+            },
+            {
+              "x": 1536,
+              "y": 735
+            },
+            {
+              "x": 1370,
+              "y": 735
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "walkable",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 1,
+          "name": "floor-0",
+          "type": "floor",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 335,
+              "y": 337
+            },
+            {
+              "x": 1074,
+              "y": 337
+            },
+            {
+              "x": 1110,
+              "y": 385
+            },
+            {
+              "x": 1198,
+              "y": 394
+            },
+            {
+              "x": 1250,
+              "y": 470
+            },
+            {
+              "x": 1330,
+              "y": 565
+            },
+            {
+              "x": 1395,
+              "y": 678
+            },
+            {
+              "x": 1075,
+              "y": 714
+            },
+            {
+              "x": 895,
+              "y": 714
+            },
+            {
+              "x": 895,
+              "y": 1024
+            },
+            {
+              "x": 634,
+              "y": 1024
+            },
+            {
+              "x": 634,
+              "y": 714
+            },
+            {
+              "x": 230,
+              "y": 714
+            },
+            {
+              "x": 240,
+              "y": 610
+            },
+            {
+              "x": 282,
+              "y": 489
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "interactions",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 100,
+          "name": "memory-table",
+          "type": "open-game",
+          "x": 584,
+          "y": 443,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 101,
+          "name": "garden-circuit",
+          "type": "open-game",
+          "x": 1065,
+          "y": 375,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 102,
+          "name": "bench-notes",
+          "type": "open-collection",
+          "x": 1110,
+          "y": 583,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 103,
+          "name": "life-lift",
+          "type": "enter-scene",
+          "x": 768,
+          "y": 883,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}

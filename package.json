@@ -14,8 +14,12 @@
     "predev": "CONTENT_PREVIEW=1 node scripts/compile-content.mjs",
     "prebuild": "node scripts/compile-content.mjs && node --experimental-strip-types scripts/validate-world.ts",
     "build:preview": "CONTENT_PREVIEW=1 npm run build",
+    "precheck": "node scripts/compile-content.mjs",
     "check": "tsc --noEmit && node --experimental-strip-types scripts/validate-world.ts && node scripts/check-content.mjs && node --experimental-strip-types scripts/check-world.ts && node --experimental-strip-types scripts/check-workbench.ts",
-    "maps": "node --experimental-strip-types scripts/generate-maps.ts"
+    "maps": "node --experimental-strip-types scripts/generate-maps.ts",
+    "example:forest": "npm --prefix examples/forest-courtyard run dev",
+    "check:forest": "npm --prefix examples/forest-courtyard run check",
+    "build:forest": "npm --prefix examples/forest-courtyard run build"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

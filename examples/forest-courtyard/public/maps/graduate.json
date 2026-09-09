@@ -1,0 +1,323 @@
+{
+  "version": "1.10",
+  "tiledversion": "1.11.2",
+  "type": "map",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 48,
+  "height": 32,
+  "tilewidth": 32,
+  "tileheight": 32,
+  "infinite": false,
+  "nextlayerid": 4,
+  "nextobjectid": 500,
+  "tilesets": [],
+  "layers": [
+    {
+      "id": 3,
+      "name": "obstacles",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 300,
+          "name": "obstacle-0",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 90,
+              "y": 552
+            },
+            {
+              "x": 330,
+              "y": 552
+            },
+            {
+              "x": 330,
+              "y": 670
+            },
+            {
+              "x": 90,
+              "y": 670
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 301,
+          "name": "obstacle-1",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 52,
+              "y": 660
+            },
+            {
+              "x": 193,
+              "y": 660
+            },
+            {
+              "x": 193,
+              "y": 742
+            },
+            {
+              "x": 52,
+              "y": 742
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 302,
+          "name": "obstacle-2",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 1052,
+              "y": 393
+            },
+            {
+              "x": 1205,
+              "y": 440
+            },
+            {
+              "x": 1205,
+              "y": 460
+            },
+            {
+              "x": 1052,
+              "y": 460
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 303,
+          "name": "obstacle-3",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 1300,
+              "y": 510
+            },
+            {
+              "x": 1439,
+              "y": 510
+            },
+            {
+              "x": 1439,
+              "y": 617
+            },
+            {
+              "x": 1300,
+              "y": 617
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        },
+        {
+          "id": 304,
+          "name": "obstacle-4",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 1085,
+              "y": 480
+            },
+            {
+              "x": 1228,
+              "y": 480
+            },
+            {
+              "x": 1228,
+              "y": 571
+            },
+            {
+              "x": 1085,
+              "y": 571
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "walkable",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 1,
+          "name": "floor-0",
+          "type": "floor",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 191,
+              "y": 344
+            },
+            {
+              "x": 471,
+              "y": 344
+            },
+            {
+              "x": 471,
+              "y": 377
+            },
+            {
+              "x": 773,
+              "y": 377
+            },
+            {
+              "x": 773,
+              "y": 354
+            },
+            {
+              "x": 1040,
+              "y": 354
+            },
+            {
+              "x": 1160,
+              "y": 435
+            },
+            {
+              "x": 1320,
+              "y": 530
+            },
+            {
+              "x": 1438,
+              "y": 624
+            },
+            {
+              "x": 1490,
+              "y": 747
+            },
+            {
+              "x": 924,
+              "y": 747
+            },
+            {
+              "x": 924,
+              "y": 947
+            },
+            {
+              "x": 596,
+              "y": 947
+            },
+            {
+              "x": 596,
+              "y": 747
+            },
+            {
+              "x": 52,
+              "y": 747
+            },
+            {
+              "x": 93,
+              "y": 560
+            }
+          ],
+          "visible": true,
+          "rotation": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "interactions",
+      "type": "objectgroup",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "draworder": "topdown",
+      "objects": [
+        {
+          "id": 100,
+          "name": "github-terminal",
+          "type": "open-projects",
+          "x": 1200,
+          "y": 660,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 101,
+          "name": "lab-circuit",
+          "type": "open-game",
+          "x": 952,
+          "y": 390,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 102,
+          "name": "armor-lever",
+          "type": "activate-armor",
+          "x": 389,
+          "y": 527,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 103,
+          "name": "mecha-eye",
+          "type": "discover",
+          "x": 396,
+          "y": 453,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 104,
+          "name": "grad-lift",
+          "type": "enter-scene",
+          "x": 768,
+          "y": 880,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}
