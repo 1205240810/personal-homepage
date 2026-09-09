@@ -54,28 +54,53 @@ test('灯阵边界无环绕，同一开关按两次还原，每关最短解有�
   assert.equal(PULSE_MASKS[0], 19);
   assert.equal(PULSE_MASKS[3], 140);
   const bits = (mask: number) => mask.toString(2).replaceAll('0', '').length;
-  const apply = (board: number, solution: number) => {
-    for (let i = 0; i < 16; i++)
-      if (solution & (1 << i)) board = pressPulse(board, i);
+  const apply = (board: number, solution: number, size = 4) => {
+    for (let i = 0; i < size * size; i++)
+      if (solution & (1 << i)) board = pressPulse(board, i, size);
     return board;
   };
   for (const level of PULSE_LEVELS) {
-    const solution = solvePulse(level.board);
+    const solution = solvePulse(level.board, level.size);
     assert.notEqual(solution, null);
     assert.equal(bits(solution!), level.par);
-    assert.equal(apply(level.board, solution!), 0);
-    for (let cell = 0; cell < 16; cell++) {
+    assert.equal(apply(level.board, solution!, level.size), 0);
+    for (let cell = 0; cell < level.size * level.size; cell++) {
       assert.equal(
-        pressPulse(pressPulse(level.board, cell), cell),
+        pressPulse(pressPulse(level.board, cell, level.size), cell, level.size),
         level.board,
       );
-      const changed = pressPulse(level.board, cell);
-      const hint = solvePulse(changed);
+      const changed = pressPulse(level.board, cell, level.size);
+      const hint = solvePulse(changed, level.size);
       assert.notEqual(hint, null);
-      assert.equal(apply(changed, hint!), 0);
+      assert.equal(apply(changed, hint!, level.size), 0);
     }
   }
   assert.equal(solvePulse(0), 0);
   assert.equal(solvePulse(1), null);
   assert.equal(solvePulse(-1), null);
+});
+
+test('十二关保持渐进难度，五阶边界及输入范围正确', () => {
+  assert.equal(PULSE_LEVELS.length, 12);
+  assert.equal(new Set(PULSE_LEVELS.map((level) => level.id)).size, 12);
+  assert.equal(
+    new Set(PULSE_LEVELS.map((level) => `${level.size}:${level.board}`)).size,
+    12,
+  );
+  assert.deepEqual(
+    PULSE_LEVELS.map((level) => level.par),
+    [1, 2, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9],
+  );
+  assert.deepEqual(
+    PULSE_LEVELS.map((level) => level.size),
+    [4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5],
+  );
+  assert.equal(pressPulse(0, 0, 5), 35);
+  assert.equal(pressPulse(0, 4, 5), 536);
+  assert.equal(solvePulse(0, 5), 0);
+  assert.equal(solvePulse(1, 5), null);
+  assert.equal(solvePulse(2 ** 25, 5), null);
+  assert.equal(solvePulse(2 ** 16), null);
+  assert.equal(solvePulse(0, 6), null);
+  assert.equal(pressPulse(123, 25, 5), 123);
 });

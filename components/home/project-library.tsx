@@ -10,6 +10,8 @@ import {
   Workflow,
   Server,
   ArrowRight,
+  ChevronRight,
+  Code2,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -21,6 +23,7 @@ import {
 import {
   PROJECT_CATEGORIES,
   PROJECT_GUIDES,
+  PROJECT_PRESENTATION,
   WORKBENCH_PROJECTS,
   type ProjectCategory,
   type PreviewKind,
@@ -32,6 +35,7 @@ import {
   deliveryRoute,
 } from '@/lib/workbench-demos';
 import projects from '@/content/data/projects.json';
+import photos from '@/content/data/album-preview.json';
 import { AlbumPreview, NetworkPreview } from './project-workbench';
 import './project-library.css';
 
@@ -275,6 +279,7 @@ export function ProjectWorkbench() {
   const selected = visible.find((p) => p.id === selectedId) || visible[0];
   const source = projects.find((p) => p.id === selected.id)!;
   const Icon = ICONS[selected.kind];
+  const presentation = PROJECT_PRESENTATION[selected.kind];
   return (
     <section
       className="project-library"
@@ -320,13 +325,29 @@ export function ProjectWorkbench() {
           {visible.map((p) => {
             const ItemIcon = ICONS[p.kind];
             return (
-              <TabsTrigger value={p.id} key={p.id}>
-                <ItemIcon size={18} strokeWidth={1.5} />
-                <span>
-                  <strong>{p.title}</strong>
-                  <small>{p.mode}</small>
+              <TabsTrigger value={p.id} key={p.id} data-project-kind={p.kind}>
+                <span className="library-item-mark" aria-hidden="true">
+                  {p.kind === 'album' ? (
+                    <img
+                      src={photos[0].url}
+                      alt=""
+                      width={44}
+                      height={44}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <ItemIcon size={23} strokeWidth={1.5} />
+                  )}
                 </span>
-                <span className="library-active-dot" aria-hidden="true" />
+                <span className="library-item-copy">
+                  <strong>{p.title}</strong>
+                  <small>{PROJECT_PRESENTATION[p.kind].subtitle}</small>
+                </span>
+                <ChevronRight
+                  className="library-item-arrow"
+                  size={16}
+                  aria-hidden="true"
+                />
               </TabsTrigger>
             );
           })}
@@ -337,23 +358,26 @@ export function ProjectWorkbench() {
             key={p.id}
             className="library-project-panel"
           >
-            <article className="b-instrument">
+            <article className="b-instrument" data-project-kind={selected.kind}>
               <header className="b-hardware-head">
                 <div>
                   <span className="b-hardware-tag b-mono">
-                    {selected.category} / {source.language}
+                    {selected.category}
+                    <span />
+                    {presentation.stack}
                   </span>
-                  <h3>
-                    <Icon size={20} strokeWidth={1.5} />
-                    {selected.title}
-                  </h3>
+                  <h3>{selected.title}</h3>
                 </div>
-                <span className="library-live-label">
-                  <i />
-                  {selected.mode}
+                <span className="library-project-emblem" aria-hidden="true">
+                  <Icon size={30} strokeWidth={1.2} />
                 </span>
               </header>
               <p className="library-project-prompt">{selected.prompt}</p>
+              <div className="library-feature-line" aria-label="项目要点">
+                {presentation.features.map((feature) => (
+                  <span key={feature}>{feature}</span>
+                ))}
+              </div>
               <Collapsible
                 open={desktop || expanded}
                 onOpenChange={setExpanded}
@@ -372,17 +396,15 @@ export function ProjectWorkbench() {
                 </CollapsibleContent>
               </Collapsible>
               <div className="library-project-footer">
-                <span className="b-mono">
-                  {String(
-                    WORKBENCH_PROJECTS.findIndex(
-                      (item) => item.id === selected.id,
-                    ) + 1,
-                  ).padStart(2, '0')}{' '}
-                  / 06
-                </span>
+                <span className="library-preview-kind">{selected.mode}</span>
                 <div>
                   {source.demoUrl && (
-                    <a href={source.demoUrl} target="_blank" rel="noreferrer">
+                    <a
+                      className="library-main-link"
+                      href={source.demoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       {selected.kind === 'delivery'
                         ? '打开完整汇报'
                         : '打开完整演示'}{' '}
@@ -390,7 +412,8 @@ export function ProjectWorkbench() {
                     </a>
                   )}
                   <a href={source.url} target="_blank" rel="noreferrer">
-                    GitHub <ArrowUpRight size={15} />
+                    <Code2 size={16} />
+                    源码 <ArrowUpRight size={15} />
                   </a>
                 </div>
               </div>

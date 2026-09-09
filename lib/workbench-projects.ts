@@ -13,6 +13,39 @@ export type PreviewKind =
   | 'bridge'
   | 'workflow';
 
+export const PROJECT_PRESENTATION = {
+  network: {
+    subtitle: '拓扑、配置与连通性',
+    stack: 'FRRouting / IP 规划',
+    features: ['四节点拓扑', '参数化配置', '模拟验收'],
+  },
+  album: {
+    subtitle: '从照片中寻找线索',
+    stack: 'Python / 图像特征',
+    features: ['组合筛选', '特征统计', '照片证据'],
+  },
+  delivery: {
+    subtitle: '路径与调度的取舍',
+    stack: 'Dijkstra / 调度策略',
+    features: ['加权路网', '最短路径', '在线与离线'],
+  },
+  cost: {
+    subtitle: '把投入放进时间里',
+    stack: 'Expo / React Native',
+    features: ['分类账本', '持有成本', '归档与恢复'],
+  },
+  bridge: {
+    subtitle: '从结构走到真实网络',
+    stack: 'QEMU / Open vSwitch',
+    features: ['YAML 拓扑', '自动配置', '设备探测'],
+  },
+  workflow: {
+    subtitle: '让创作的每一步可追溯',
+    stack: 'Python / Playwright',
+    features: ['选题矩阵', '草稿审核', '网页执行'],
+  },
+} as const;
+
 export const WORKBENCH_PROJECTS = [
   {
     id: 'ospf-v2-demo',
