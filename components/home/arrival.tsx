@@ -32,8 +32,8 @@ export default function Arrival() {
       <div className="arrival-scene">
         <img
           className="arrival-art"
-          src="/art/arrival-maintenance-hall.png"
-          alt="高窗的日光落入维护馆，一台灰白色巨型机甲静静伫立，脚下是延伸至远处的金属地面。"
+          src="/art/arrival-industrial-explorer.png"
+          alt="暖日光穿过维护馆高窗，一台圆形单眼、墨绿装甲与旧铜关节的巨型探索机甲扶着检修架，双脚稳稳落在延伸的金属地面上。"
           fetchPriority="high"
         />
         <div className="arrival-window-light" aria-hidden="true" />
