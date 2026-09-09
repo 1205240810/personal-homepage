@@ -40,6 +40,8 @@ next-env.d.ts
 *.tsbuildinfo
 /lib/content/generated.json
 /content/backups/
+/content/drafts/*.md
+/lib/private-vault/archive.encrypted.json
 
 /output/
 /.playwright-cli/

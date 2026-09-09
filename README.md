@@ -2,7 +2,7 @@
 
 「徒手拆机甲」的个人主页。文章、项目和个人档案可以直接阅读；喜欢探索的访客，也可以走进机甲，沿维修栈道进入不同舱室。游戏是了解内容的另一条路，所有文章和作品都不需要通关才能访问。
 
-本仓库同时保存当前网站与早期「林间小院」的独立学习案例，保留已有开发历史。仓库目前为私有，未授予项目整体的开源许可证。
+本公开仓库同时保存当前网站与早期「林间小院」的独立学习案例。公开历史已移除实名、未确认草稿与私藏档案数据；原始历史另作私有备份。项目整体尚未设置开源许可证。
 
 - [当前网站](https://tscjj-mecha-archive.c66745946.chatgpt.site/)：现有托管受众为仅所有者，不是对外公开演示。
 - [林间小院学习案例](examples/forest-courtyard/README.md)：独立运行旧版场景，阅读机制讲解并动手修改。
@@ -14,14 +14,14 @@
 - **直接使用的工作台**：文章检索、栏目、个人档案和项目都有明确入口。六个项目按网络工程、数据与算法、效率工具分类；提供地址规划、相册筛选、配送路径、日均成本四种交互示例，以及两个源码流程导览。
 - **可选的机甲探索**：2.5D 外景连接航迹室、旧纸库和试作间，含轻量物件反馈、音乐和可选小游戏。阅读面板打开时暂停移动，关闭后继续探索。
 - **渐进灯阵**：12 关分三个阶段，从 4×4 到 5×5；提供提示、撤回、重来和本次游玩的最佳步数记录。刷新后重置成绩。
-- **可维护的文章档案**：74 篇公开旧文已迁入，保留日期、标签和来源链接；另有 4 篇待核对草稿。教育、经历和荣誉由独立数据文件管理。
-- **独立的私藏边界**：私人记录以密文保存，服务端同时验证主人身份与独立密码。未配置完整运行环境时拒绝访问，不影响普通文章。
+- **可维护的文章档案**：74 篇公开旧文已迁入，保留日期、标签和来源链接。教育、经历和荣誉由独立数据文件管理；未确认草稿仅在维护者本地保存。
+- **独立的私藏边界**：仓库保留访问控制代码，不包含私藏档案数据。Sites 版本需要本地密文、主人身份与独立密码配置；Node 部署关闭私藏接口，不影响普通文章。
 
 项目预览会说明自己的范围：OSPF 的地址与配置在本地计算，应用、下发与 Ping 是模拟回执；配送和成本是交互示意；流程导览不会真正启动虚拟机或向外发布内容。
 
 ## 快速开始
 
-推荐 **Node.js 24**，项目最低要求为 22.13。使用 npm 与已提交的锁文件。私有仓库克隆需要先登录有权限的 GitHub 账号。
+推荐 **Node.js 24**，项目最低要求为 22.13。使用 npm 与已提交的锁文件，克隆公开源码无需登录。
 
 ```sh
 git clone https://github.com/1205240810/personal-homepage.git
@@ -30,16 +30,20 @@ npm ci
 npm run dev
 ```
 
-访问终端显示的本地地址，默认是 `http://localhost:3000/`。开发模式自动编译文章目录，并包含明确标记的四篇草稿；工作台精选仍只展示正式文章。普通阅读和探索不需要配置私藏室密码。
+访问终端显示的本地地址，默认是 `http://localhost:3000/`。开发模式自动编译文章目录；维护者本地若有 `content/drafts/*.md`，会额外显示标记为草稿的内容，工作台精选仍只展示正式文章。公开克隆不含这四篇待核对草稿，也不需要私藏室配置即可阅读和探索。
 
 ```sh
 npm run check          # 编译内容、类型检查、世界/文章/项目/灯阵验证
-npm run build          # 正式构建，仅含已发布文章
-npm run build:preview  # 私有审阅构建，包含待核对草稿
+npm run build          # Sites / Cloudflare 正式构建，仅含已发布文章
+npm run build:preview  # 私有审阅构建，可包含本地草稿
+npm run build:node     # 独立 Node 服务端构建，仅含已发布文章
+npm run start:node     # 运行 Node 构建产物，默认监听 127.0.0.1:3000
 npm run maps           # 场景配置变更后，同步 Tiled 地图
 ```
 
 首次克隆即可运行 `check`；其前置脚本会生成被 Git 忽略的文章索引。`build:preview` 只用于私有审阅。`noindex` 不是访问控制，网站访问范围由托管设置决定。
+
+`build:node` 输出 `dist/standalone/`，可通过 `PORT` 环境变量修改运行端口。服务器部署应在前方配置反向代理，并用进程服务管理启动与重启。`npm start` 仍是原 Sites 流程使用的 Wrangler 开发命令，不是 Node 生产服务命令；两种构建目标应分别构建、分别发布。
 
 ### 单独运行林间小院
 
@@ -76,7 +80,7 @@ flowchart LR
   C -->|暂停、恢复、进入场景| E
 ```
 
-主站使用 React、TypeScript、Vinext / Vite、Phaser 与 Tiled JSON，部署产物包含 Cloudflare Worker 服务端。Phaser 只在探索页按需加载；引导页和直接阅读入口不必启动游戏。
+主站使用 React、TypeScript、Vinext / Vite、Phaser 与 Tiled JSON，可构建为 Cloudflare Worker 或独立 Node 服务端。Phaser 只在探索页按需加载；引导页和直接阅读入口不必启动游戏。
 
 ## 仓库结构
 
@@ -86,8 +90,8 @@ components/home/             工作台、项目预览、灯阵小游戏
 components/world/            游戏与 React 阅读面板的连接
 lib/content/                 内容读取接口；generated.json 由脚本生成
 lib/world/                   场景注册、角色、导航、碰撞、遮挡
-lib/private-vault/           私藏室服务端逻辑与加密档案
-content/                     公开文章、待核对草稿、档案与项目数据
+lib/private-vault/           私藏室服务端逻辑；密文数据仅本地保存
+content/                     公开文章、档案与项目数据；本地草稿被忽略
 public/                      场景美术、音乐、正文资源、Tiled 地图
 scripts/                     内容编译、导入、地图生成与检查
 docs/                        维护、来源、设计记录与验收说明
@@ -100,7 +104,7 @@ examples/forest-courtyard/    早期林间小院的独立学习案例
 | 启动 | 根目录 `npm run dev` | 案例目录 `npm run dev` |
 | 内容 | 真实公开文章、档案与项目 | 三篇教学笔记与两个已公开项目外链 |
 | 路由 | 服务端页面与 API | 浏览器 Hash 路由 |
-| 构建 | Vinext + Cloudflare Worker | Vite 静态产物 |
+| 构建 | Vinext + Cloudflare Worker / Node | Vite 静态产物 |
 | 相互关系 | 不加载案例代码和资源 | 不导入主站源码，不连接主站接口 |
 
 案例目录已从主站 TypeScript 检查范围排除，其资源不在主站 `public/` 中。两边各自检查和构建，修改教学案例不会自动改变线上场景。
@@ -109,11 +113,11 @@ examples/forest-courtyard/    早期林间小院的独立学习案例
 
 常见修改先从 [内容与世界维护](docs/MAINTENANCE.md) 查找入口。提交、拉取和恢复旧版本见 [GitHub 维护说明](docs/GITHUB-MAINTENANCE.md)。**推送 GitHub 只保存源码，不会自动重新发布 Sites 网站。** 主站包含服务端接口，不能直接当作 GitHub Pages 静态站发布。
 
-- `archive/forest-courtyard`：早期林间小院，原始提交 `archive/forest-courtyard`。
-- `archive/river-journey`：后续河谷漫游，原始提交 `archive/river-journey`。
+- [`archive/forest-courtyard`](https://github.com/1205240810/personal-homepage/tree/archive/forest-courtyard)：经过隐私清理的早期林间小院快照。
+- [`archive/river-journey`](https://github.com/1205240810/personal-homepage/tree/archive/river-journey)：经过隐私清理的后续河谷漫游快照。
 - `examples/forest-courtyard/`：从林间小院提取、适配后的可维护教学副本，保留原场景逻辑与美术，并非完整旧站的逐字复制。
 
-原始备份、`.env*`、`.dev.vars*`、依赖和构建产物不进入 Git。私藏室的运行条件与当前配置限制见 [私藏室维护](docs/PRIVATE-VAULT.md)，普通文章维护不需要运行重新加密脚本。
+隐私清理改变了历史提交编号，历史定位请使用以上标签。原始备份、`content/drafts/*.md`、`lib/private-vault/archive.encrypted.json`、`.env*`、`.dev.vars*`、依赖和构建产物不进入 Git。私藏室的运行条件与当前配置限制见 [私藏室维护](docs/PRIVATE-VAULT.md)，普通文章维护不需要运行重新加密脚本。
 
 ## 来源与许可
 

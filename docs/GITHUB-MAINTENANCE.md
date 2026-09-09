@@ -1,6 +1,8 @@
 # GitHub 维护与版本恢复
 
-仓库：[1205240810/personal-homepage](https://github.com/1205240810/personal-homepage)，当前为私有。`main` 保存当前网站和独立学习案例；根目录的 `origin` 指向 GitHub。既有开发提交全部保留。
+公开仓库：[1205240810/personal-homepage](https://github.com/1205240810/personal-homepage)。`main` 保存当前网站和独立学习案例；根目录的 `origin` 指向 GitHub。公开历史已清除实名、未确认草稿与私藏档案数据；完整原始历史保留在单独的私有备份中。
+
+清理后的提交编号与原仓库不同。旧工作副本应先在本地备份未提交修改，再重新克隆公开仓库并逐项迁入需要保留的修改；不要把旧分支或旧标签推回公开仓库。
 
 ## 一次日常修改
 
@@ -33,6 +35,8 @@ git push -u origin codex/update-reading-notes
 
 然后在 GitHub 发起 Pull Request，说明修改原因、实际效果和检查结果。简单维护也可由本人直接提交 `main`；这里未配置自动合并或自动部署。
 
+修改 Node 部署相关代码时，另外运行 `npm run build:node` 并检查服务端页面和接口；`npm run start:node` 运行该构建产物。
+
 ## 修改教学案例
 
 案例有独立依赖，首次需在其目录运行 `npm ci`。之后可从仓库根目录检查：
@@ -48,12 +52,12 @@ npm run build:forest
 
 ## 查看和运行历史版本
 
-两处历史标签用于定位原始快照，不随新开发移动：
+两处历史标签用于定位经过隐私清理的历史快照，不随新开发移动。清理改变了提交编号，因此文档通过标签引用版本：
 
-| 标签 | 原始提交 | 版本 |
-| --- | --- | --- |
-| `archive/forest-courtyard` | `archive/forest-courtyard` | 林间小院 |
-| `archive/river-journey` | `archive/river-journey` | 后来的河谷漫游 |
+| 标签 | 版本 |
+| --- | --- |
+| [`archive/forest-courtyard`](https://github.com/1205240810/personal-homepage/tree/archive/forest-courtyard) | 林间小院 |
+| [`archive/river-journey`](https://github.com/1205240810/personal-homepage/tree/archive/river-journey) | 后来的河谷漫游 |
 
 只想看代码，可以在 GitHub 的标签选择器切换，或使用：
 
@@ -68,18 +72,20 @@ git log --oneline --all
 git worktree add --detach ../personal-homepage-forest-original archive/forest-courtyard
 ```
 
-原始快照仍带有当时的站点配置和依赖，并不保证独立运行条件与今天相同。学习和动手修改优先使用已适配的 `examples/forest-courtyard/`；不要把旧快照直接覆盖到当前 `main`，也不要随意重新发布旧快照中的托管配置。
+历史快照仍带有当时的站点配置和依赖，并不保证独立运行条件与今天相同。学习和动手修改优先使用已适配的 `examples/forest-courtyard/`；不要把旧快照直接覆盖到当前 `main`，也不要随意重新发布旧快照中的托管配置。
 
 ## 源码保存与网站发布
 
-GitHub 保存源码和历史，Sites 负责现有网站托管。`git push` 不会改变当前线上版本。本仓库未配置 GitHub Actions 部署；本地检查命令是当前的维护入口。
+GitHub 保存公开源码和清理后的历史，网站另行部署。`git push` 不会改变当前线上版本，也不会改变原 Sites 站点仅所有者可访问的设置。本仓库未配置 GitHub Actions 部署；本地检查命令是当前的维护入口。
 
-主站的 `.openai/hosting.json` 关联现有托管项目。为另一个人复制项目时，应建立自己的托管配置，不能使用原项目身份。主站需要 Worker 服务端运行时，私藏室另需本人身份配置和独立密钥，详见 [私藏室维护](PRIVATE-VAULT.md)。学习案例只输出静态文件，且没有这些配置。
+主站的 `.openai/hosting.json` 关联现有 Sites 托管项目。为另一个人复制项目时，应建立自己的托管配置，不能使用原项目身份。默认 `npm run build` 输出 Worker 版本；`npm run build:node` 输出独立 Node 版本，适合自有服务器。两种目标的构建目录会相互覆盖，发布前必须重新运行对应命令。
+
+Node 版本关闭私藏接口，不依赖原 Sites 身份环境。Sites 私藏室另需本地密文、本人身份配置和独立密钥，详见 [私藏室维护](PRIVATE-VAULT.md)。学习案例只输出静态文件，且没有这些配置。
 
 ## 提交范围
 
-- 可以提交：已审核的公开文章、待核对草稿及其明确状态、源码、美术、来源记录、锁文件、密文档案。
-- 不提交：博客后台原始备份、私人原文、密码和密钥、`.env*`、`.dev.vars*`、依赖、构建产物。
-- 草稿保留在源码供编辑，正式构建自动排除；GitHub 仓库可见性与网站发布范围是两套独立设置。改变仓库可见性前应重新审阅完整历史和素材授权。
+- 可以提交：已审核的公开文章、源码、美术、公开来源记录、锁文件。
+- 不提交：博客后台原始备份、私人原文、私藏密文 `lib/private-vault/archive.encrypted.json`、未确认草稿 `content/drafts/*.md`、密码和密钥、`.env*`、`.dev.vars*`、依赖、构建产物。
+- 草稿与私藏数据仅在维护者本地保存，不属于公开源码。`.gitignore` 不会清除已经提交的文件或历史记录；误提交时应先停止推送并检查历史，不能只删除当前文件后继续公开。
 
 根 `.gitignore` 与案例的独立目录边界已经覆盖以上本地产物。提交前仍需通过 `git status` 和差异确认实际文件，尤其是新增加的数据目录。

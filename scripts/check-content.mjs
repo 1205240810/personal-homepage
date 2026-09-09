@@ -12,7 +12,7 @@ await test('正式构建排除全部草稿，私有预览完整保留', async ()
   const draftIds = preview.posts
     .filter((p) => p.status === 'draft')
     .map((p) => p.id);
-  assert(draftIds.length > 0);
+  assert.equal(preview.posts.length, published.posts.length + draftIds.length);
   for (const id of draftIds) assert(!JSON.stringify(published).includes(id));
   const originals = JSON.parse(
     await fs.readFile('content/articles/cnblogs.json', 'utf8'),
@@ -37,6 +37,7 @@ await test('新 Markdown 自动进入栏目，重复 ID 被拒绝，正文剔除
   try {
     await fs.mkdir(path.join(rootDir, 'content/articles'), { recursive: true });
     await fs.mkdir(path.join(rootDir, 'content/posts'), { recursive: true });
+    await fs.mkdir(path.join(rootDir, 'content/drafts'), { recursive: true });
     await fs.writeFile(
       path.join(rootDir, 'content/articles/cnblogs.json'),
       '[]',
@@ -44,7 +45,15 @@ await test('新 Markdown 自动进入栏目，重复 ID 被拒绝，正文剔除
     const fixture =
       '---\nid: fixture-article\nslug: fixture-article\ntitle: 测试文章\ndate: 2026-09-07\nchapter: life\nstatus: published\ntags: [测试]\nsummary: 测试内容自动收录。\n---\n## 新的章节\n正文。<script>alert(1)</script>\n';
     await fs.writeFile(path.join(rootDir, 'content/posts/new.md'), fixture);
+    await fs.writeFile(
+      path.join(rootDir, 'content/drafts/private.md'),
+      fixture.replaceAll('fixture-article', 'fixture-draft').replace('status: published', 'status: draft'),
+    );
     const result = await compileContent({ rootDir, write: false });
+    const preview = await compileContent({ rootDir, preview: true, write: false });
+    assert.equal(result.posts.length, 1);
+    assert(!JSON.stringify(result).includes('fixture-draft'));
+    assert(preview.posts.some((post) => post.id === 'fixture-draft'));
     assert.equal(result.posts[0].chapter, 'life');
     assert(!result.posts[0].html.includes('<script'));
     assert.equal(result.posts[0].headings.length, 1);

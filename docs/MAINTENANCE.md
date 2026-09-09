@@ -2,7 +2,7 @@
 
 ## 添加一篇文章
 
-在 `content/posts/` 增加 Markdown，或先在 `content/drafts/` 起草。文件名可以改，`id` 与 `slug` 一经发布应保留。每次启动或构建自动整理内容；不需要改书架坐标。
+已审核文章放在 `content/posts/`；未确认内容先在 `content/drafts/` 起草，该目录下的 Markdown 被 Git 忽略，仅保存在本地。文件名可以改，`id` 与 `slug` 一经发布应保留。每次启动或构建自动整理内容；不需要改书架坐标。
 
 ```md
 ---
@@ -21,7 +21,9 @@ summary: 用一句话说明这篇文章讨论什么。
 正文。
 ```
 
-`chapter` 为 undergraduate / graduate / life；`status` 为 draft / published。核对通过后再改为 published，运行 `npm run check` 和 `npm run build`。直接地址为 `/posts/a-stable-public-url`。正文图片放在 `public/content-assets/`，引用 `/content-assets/文件名`。
+`chapter` 为 undergraduate / graduate / life；`status` 为 draft / published。核对通过后，将文件移到 `content/posts/` 并改为 published，运行 `npm run check` 和对应部署目标的构建命令：Sites 使用 `npm run build`，Node 使用 `npm run build:node`。直接地址为 `/posts/a-stable-public-url`。公开正文图片放在 `public/content-assets/`，引用 `/content-assets/文件名`。
+
+开发与 `build:preview` 可以加载本地草稿，正式构建排除草稿。公开仓库不提供那四篇未确认草稿，首次克隆时没有真实草稿也能运行检查；草稿隔离由临时测试文章验证。草稿的未公开图片也应留在本地，不能提前放进 `public/`。
 
 HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、公式保持清理过的 HTML，不强制转换 Markdown。编译时清除脚本及事件属性，已迁入文章之间的精确原文链接映射到本站。未迁入的历史链接保留原地址。
 
@@ -92,6 +94,6 @@ OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函
 
 ## GitHub 与学习案例
 
-源码现维护在私有仓库 [1205240810/personal-homepage](https://github.com/1205240810/personal-homepage)。提交与历史恢复见 [GitHub 维护说明](GITHUB-MAINTENANCE.md)。推送源码不会自动更新线上网站。
+源码现维护在公开仓库 [1205240810/personal-homepage](https://github.com/1205240810/personal-homepage)。公开提交及历史不包含实名、未确认草稿和私藏档案数据；原始历史另作私有备份。提交与历史恢复见 [GitHub 维护说明](GITHUB-MAINTENANCE.md)。推送源码不会自动更新线上网站，也不会改变 Sites 的访问范围。
 
 `examples/forest-courtyard/` 保存独立适配的旧林间小院，入口见其 [README](../examples/forest-courtyard/README.md) 和 [学习指南](../examples/forest-courtyard/LEARNING_GUIDE.md)。它使用单独的 Vite 配置、依赖锁文件、教学文章和地图，不导入当前站点代码。根目录的 `example:forest`、`check:forest`、`build:forest` 只是便利命令；修改案例不会改变当前机甲场景。

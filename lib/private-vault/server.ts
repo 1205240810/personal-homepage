@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import 'server-only';
 import { env } from 'cloudflare:workers';
-import archive from './archive.encrypted.json';
+import { archive } from './archive';
 import {
   bytes,
   equal,
@@ -26,6 +26,7 @@ export const vaultResponse = (
   extra: Record<string, string> = {},
 ) => Response.json(data, { status, headers: { ...headers, ...extra } });
 function settings() {
+  if (!archive) return null;
   const runtime = env as unknown as Record<string, string | undefined>;
   try {
     const secret = JSON.parse(runtime.MECHA_VAULT_SECRET || '') as VaultSecret;
@@ -194,6 +195,7 @@ export async function lockVault(request: Request) {
   });
 }
 export function bootstrapIdentity(request: Request) {
+  if (!archive) return vaultResponse({ error: '不存在' }, 404);
   // Enabled only during root's owner-private deployment handoff; it cannot unlock or return records.
   if (
     (env as unknown as Record<string, string | undefined>).MECHA_VAULT_OWNER_ID
@@ -207,7 +209,8 @@ export function bootstrapIdentity(request: Request) {
 let decoded: Promise<PrivateRecord[]> | undefined;
 async function records() {
   const config = settings();
-  if (!config?.owner) throw new Error('Private archive unavailable');
+  if (!config?.owner || !archive) throw new Error('Private archive unavailable');
+  const encrypted = archive;
   decoded ??= (async () => {
     const key = await crypto.subtle.importKey(
       'raw',
@@ -219,11 +222,11 @@ async function records() {
     const data = await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: unbase64(archive.iv),
+        iv: unbase64(encrypted.iv),
         additionalData: bytes('mecha-private-vault-v1'),
       },
       key,
-      unbase64(archive.ciphertext),
+      unbase64(encrypted.ciphertext),
     );
     return JSON.parse(new TextDecoder().decode(data)) as PrivateRecord[];
   })();

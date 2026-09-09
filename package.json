@@ -14,6 +14,8 @@
     "predev": "CONTENT_PREVIEW=1 node scripts/compile-content.mjs",
     "prebuild": "node scripts/compile-content.mjs && node --experimental-strip-types scripts/validate-world.ts",
     "build:preview": "CONTENT_PREVIEW=1 npm run build",
+    "build:node": "CONTENT_PREVIEW=0 DEPLOY_TARGET=node npm run build",
+    "start:node": "HOST=127.0.0.1 node dist/standalone/server.js",
     "precheck": "node scripts/compile-content.mjs",
     "check": "tsc --noEmit && node --experimental-strip-types scripts/validate-world.ts && node scripts/check-content.mjs && node --experimental-strip-types scripts/check-world.ts && node --experimental-strip-types scripts/check-workbench.ts",
     "maps": "node --experimental-strip-types scripts/generate-maps.ts",

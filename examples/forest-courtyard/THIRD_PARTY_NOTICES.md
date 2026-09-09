@@ -1,6 +1,6 @@
 # 林间小院：来源、参考与许可说明
 
-本例提取自本仓库历史提交 `archive/forest-courtyard`，用于保存和讲解早期林间小院版本。独立化的修改范围见 [README](README.md)。本文件保留历史项目的参考记录与音乐署名，并说明独立案例实际使用的材料。
+本例提取自本仓库早期林间小院版本，对应历史标签 [`archive/forest-courtyard`](https://github.com/1205240810/personal-homepage/tree/archive/forest-courtyard)，用于保存和讲解当时的场景实现。公开历史已做隐私清理，独立化的修改范围见 [README](README.md)。本文件保留历史项目的参考记录与音乐署名，并说明独立案例实际使用的材料。
 
 ## 设计与代码组织参考
 

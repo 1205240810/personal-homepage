@@ -6,7 +6,7 @@
 
 *上图是历史场景原画，供了解美术方向；不是当前浏览器运行截图。运行时的地面、建筑、树木、角色和界面由多个图层组成。*
 
-本例来自提交 [`archive/forest-courtyard`](https://github.com/1205240810/personal-homepage/tree/archive/forest-courtyard)。现行个人主页仍在仓库根目录维护，两者有独立的入口、依赖和构建产物。这里的内容已换成三篇教学笔记与两个公开项目外链，不包含私人文章、个人经历档案或后台配置。
+本例提取自早期林间小院版本，对应历史标签 [`archive/forest-courtyard`](https://github.com/1205240810/personal-homepage/tree/archive/forest-courtyard)。公开历史已做隐私清理，标签用于稳定定位该版本。现行个人主页仍在仓库根目录维护，两者有独立的入口、依赖和构建产物。这里的内容已换成三篇教学笔记与两个公开项目外链，不包含私人文章、个人经历档案或后台配置。
 
 ## 先运行起来
 
@@ -87,7 +87,7 @@ npm run dev
 
 场景和栏目中的 `undergraduate`、`graduate`、`life` 是历史稳定 ID，保留它们是为了便于对照历史代码；本例显示的是教学内容，它们不代表当前个人资料。
 
-更晚的 [`archive/river-journey`](https://github.com/1205240810/personal-homepage/tree/archive/river-journey) 已演变为「河谷漫游」，加入河道、水闸、浮桥与索道，不属于本目录。完整历史保留在 Git 中，便于继续研究两种设计的差异。
+更晚的 [`archive/river-journey`](https://github.com/1205240810/personal-homepage/tree/archive/river-journey) 已演变为「河谷漫游」，加入河道、水闸、浮桥与索道，不属于本目录。公开 Git 历史保留了经过隐私清理的版本，便于继续研究两种设计的差异；未清理的原始历史另作私有备份。
 
 ## 维护边界与已知局限
 
