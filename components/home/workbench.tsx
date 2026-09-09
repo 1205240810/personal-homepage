@@ -1,12 +1,11 @@
 'use client';
-import { ProjectWorkbench } from './project-workbench';
-import { ArrowUpRight, ScanLine, Images } from 'lucide-react';
+import { ProjectWorkbench } from './project-library';
+import { PulseGame } from './pulse-game';
+import { ArrowUpRight, ScanLine } from 'lucide-react';
 import type { ArticleSummary } from '@/lib/content/source';
-import projects from '@/content/data/projects.json';
 import './workbench.css';
 export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
   const featured = posts.filter((p) => p.status !== 'draft').slice(0, 3);
-  const album = projects.find((p) => p.id === 'intelligent-album-demo')!;
   return (
     <main id="workbench">
       <header className="b-header">
@@ -71,31 +70,8 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
         <div className="b-project">
           <ProjectWorkbench />
         </div>
-        <aside className="b-sidebar" aria-label="文章和其他作品">
-          <section className="b-album" aria-labelledby="b-album-title">
-            <div className="b-album-tag">
-              <span>另一件作品</span>
-              <span className="b-mono">03 / PROJECT</span>
-            </div>
-            <a
-              className="b-album-button"
-              href={album.demoUrl!}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span>
-                <span className="b-album-name" id="b-album-title">
-                  {album.title} ↗
-                </span>
-                <p>
-                  从时间、位置和像素特征，
-                  <br />
-                  读懂照片里的线索。
-                </p>
-              </span>
-              <Images size={35} strokeWidth={1} color="#7d8970" />
-            </a>
-          </section>
+        <aside className="b-sidebar" aria-label="休息与探索">
+          <PulseGame />
           <a href="/explore" className="b-mode-link">
             <span className="b-mode-symbol">
               <ScanLine size={22} strokeWidth={1.2} />
