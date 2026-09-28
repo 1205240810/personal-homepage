@@ -2,6 +2,7 @@
 import { ProjectWorkbench } from './project-library';
 import { PulseGame } from './pulse-game';
 import { ArrowUpRight, ScanLine } from 'lucide-react';
+import { IcpFilingLink } from '@/components/icp-filing-link';
 import type { ArticleSummary } from '@/lib/content/source';
 import './workbench.css';
 export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
@@ -86,7 +87,10 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
       </div>
       <footer className="b-footer">
         <span className="b-mono">MADE OF QUESTIONS, CODE & EVERYDAY LIFE.</span>
-        <a href="/about">关于这张工作台，也关于我 ↗</a>
+        <div className="b-footer-links">
+          <a href="/about">关于这张工作台，也关于我 ↗</a>
+          <IcpFilingLink />
+        </div>
       </footer>
     </main>
   );

@@ -1,5 +1,6 @@
 import { contentSource, isPrivatePreview } from '@/lib/content/source';
 import { CHAPTERS } from '@/lib/world/registry';
+import { IcpFilingLink } from '@/components/icp-filing-link';
 export const metadata = { title: '全部记录 · 徒手拆机甲' };
 export default async function Archive() {
   const posts = await contentSource.list();
@@ -41,6 +42,9 @@ export default async function Archive() {
           )}
         </section>
       ))}
+      <footer className="reading-footer">
+        <IcpFilingLink />
+      </footer>
     </main>
   );
 }

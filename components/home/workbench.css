@@ -590,11 +590,21 @@
   padding-top: 14px;
   border-top: 1px solid var(--b-rule);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   color: #8a8f80;
   font-size: 11px;
+}
+#workbench .b-footer-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 20px;
+}
+#workbench .b-footer .icp-filing-link {
+  font-size: 12px;
 }
 #workbench .b-footer button {
   min-height: 44px;

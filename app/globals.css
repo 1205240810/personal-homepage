@@ -985,6 +985,30 @@ kbd {
 .reading-header a:hover {
   color: #4f7049;
 }
+.icp-filing-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.icp-filing-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.icp-filing-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+.reading-footer {
+  margin-top: 40px;
+  padding-top: 18px;
+  border-top: 1px solid #4f654333;
+  color: #64715e;
+}
 .reading-article {
   padding: 16px 0 40px;
 }

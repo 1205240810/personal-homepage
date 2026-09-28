@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, ArrowRight, SunMedium } from 'lucide-react';
 import { MusicControl } from '@/components/world/music-control';
+import { IcpFilingLink } from '@/components/icp-filing-link';
 import { ArrivalAtmosphere } from './arrival-atmosphere';
 import type { CSSProperties } from 'react';
 import type { ArrivalArt } from '@/lib/arrival-art';
@@ -104,6 +105,7 @@ export default function Arrival({ art }: { art: ArrivalArt }) {
       </div>
       <footer className="arrival-footer">
         <span>徒手拆机甲 · 算法、工程与日常</span>
+        <IcpFilingLink />
       </footer>
     </main>
   );

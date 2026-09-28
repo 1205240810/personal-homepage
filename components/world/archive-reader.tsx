@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { ArrowUpRight } from 'lucide-react';
+import { IcpFilingLink } from '@/components/icp-filing-link';
 import type { Article } from '@/lib/content/source';
 import profile from '@/content/data/profile.json';
 import awards from '@/content/data/awards.json';
@@ -102,6 +103,7 @@ export function ArticleView({
           </a>
         )}
         <span>徒手拆机甲 · 留下一份记录</span>
+        <IcpFilingLink />
       </footer>
     </article>
   );
@@ -242,6 +244,11 @@ export function ProfileView({
             </div>
           ))}
         </section>
+      )}
+      {section === 'profile' && (
+        <footer className="reading-footer">
+          <IcpFilingLink />
+        </footer>
       )}
     </div>
   );
