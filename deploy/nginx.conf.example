@@ -1,6 +1,6 @@
 server {
     listen 80;
-    # Replace with the public IP used for testing, or your registered domain.
+    # Replace with your filed domain before enabling public website access.
     server_name example.com;
     server_tokens off;
 

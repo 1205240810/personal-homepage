@@ -122,7 +122,7 @@ curl -i http://127.0.0.1:3001/api/vault/identity
 
 ## 首次启动与反向代理
 
-将 [Nginx 配置样例](../deploy/nginx.conf.example) 中的 `example.com` 改成测试用公网 IP 或已备案域名。先检查已有站点配置，保留其他业务；若仅有系统默认欢迎页，可以禁用其 `sites-enabled/default` 链接。安装本项目配置：
+以下公网启动步骤用于已完成备案的内地网站；备案前仅在本机或受限内网验证。将 [Nginx HTTP 配置样例](../deploy/nginx.conf.example) 中的 `example.com` 改成已备案域名。先检查已有站点配置，保留其他业务；若仅有系统默认欢迎页，可以禁用其 `sites-enabled/default` 链接。安装本项目配置：
 
 ```bash
 sudo install -m 644 "$mecha_build/deploy/personal-homepage.service" /etc/systemd/system/personal-homepage.service
@@ -149,7 +149,7 @@ Nginx 将请求交给 `127.0.0.1:3000`，保留真实 Host 和来源协议，覆
 
 ## 验证、更新与回滚
 
-从另一台设备访问 `http://服务器公网IP/`，验证工作台、文章直链、刷新、图片、音乐与探索页。再检查 `/api/vault/session` 为 503、`/api/vault/identity` 为 404；无此服务时不应显示可解锁状态。公网能打开 Nginx 默认页只能证明 80 端口可达，不能算网站部署完成。
+备案完成且域名解析生效后，从另一台设备访问网站域名（启用 TLS 后使用 `https://你的域名/`），验证工作台、文章直链、刷新、图片、音乐与探索页。再检查 `/api/vault/session` 为 503、`/api/vault/identity` 为 404；无此服务时不应显示可解锁状态。公网能打开 Nginx 默认页只能证明 80 端口可达，不能算网站部署完成。
 
 查看实际进程、监听端口与近期日志：
 
@@ -182,6 +182,91 @@ sudo systemctl restart personal-homepage.service
 
 ## 域名与 HTTPS
 
-公网 IP 的 HTTP 地址适合先验证功能。中国内地服务器正式使用域名提供网站服务前，需要完成备案；域名解析到服务器后配置证书和 Nginx HTTPS，再开放 443，并将 HTTP 跳转至 HTTPS。备案要求以 [腾讯云官方说明](https://cloud.tencent.com/document/product/243/19630) 为准。
+正式入口为 [tscjj.com](https://tscjj.com/)，`www` 统一跳转到根域。2026-09-28 已确认备案通过，编号为「晋ICP备2026014170号-1」，HTTPS、公网跳转及包含 Nginx 重载的续期演练均已验证。备案链接由 `components/icp-filing-link.tsx` 统一维护；复制本站部署时应换成自己的备案信息。
 
-本仓库的样例仅包含 HTTP 配置，证书和域名需要按实际资源补充。GitHub 公开、服务器公网访问和原 Sites 访问设置是三项独立操作。
+**公网 IP 不免备案。** 内地服务器上的网站通过域名或公网 IP 提供服务，都需要完成备案；首次备案审核期间不应提前开放网站解析。备案前可继续在回环地址测试。见 [腾讯云备案场景](https://cloud.tencent.com/document/product/243/18910) 与 [审核要求](https://cloud.tencent.com/document/product/243/19650)。
+
+### 解析与证书验证
+
+以下用 `example.com` 表示自己的已备案域名。先确认腾讯云备案状态正常、接入服务器一致，再添加 `@` 的 A 记录指向服务器公网 IPv4，`www` 的 CNAME 记录指向根域。不要保留指向旧服务器的冲突记录；未配置 IPv6 时不要添加 AAAA。当前本站对应 `@ A 82.156.194.8`、`www CNAME tscjj.com`。
+
+云防火墙与系统防火墙只需放行网站 TCP 80、443；Node 3000 保持回环监听。保留原 SSH、隧道服务及其端口和规则，域名配置无需修改 `sshd_config`。
+
+本站实际域名配置为 `/etc/nginx/sites-available/tscjj-domain`，`personal-homepage` 是保留的旧 IP 站点。后续域名维护只修改 `tscjj-domain`，不覆盖旧 IP 配置，也不要另建包含相同 `server_name` 的已启用站点。其他部署先核对 `sites-enabled` 的链接目标，选择实际域名配置文件。
+
+首次签发前只启用 HTTP：在上述域名站点中将 `server_name` 设为根域和 `www`，加入以下例外路径，保留原反代。此时不要启用引用不存在证书的 443 配置：
+
+```nginx
+location ^~ /.well-known/acme-challenge/ {
+    root /var/www/letsencrypt;
+    default_type text/plain;
+    try_files $uri =404;
+}
+```
+
+```bash
+sudo install -d -m 755 /var/www/letsencrypt/.well-known/acme-challenge
+sudo nginx -t && sudo systemctl reload nginx
+printf 'acme-check\n' | sudo tee /var/www/letsencrypt/.well-known/acme-challenge/check
+```
+
+从外网访问两个域名的 `http://域名/.well-known/acme-challenge/check`，均应得到 `acme-check`，之后删除此测试文件。安装 Ubuntu 的 Certbot 包并签发，按提示填写维护邮箱和确认服务条款；已安装时不要重复安装不同来源的版本：
+
+```bash
+sudo apt-get update
+sudo apt-get install certbot
+sudo certbot certonly --webroot -w /var/www/letsencrypt \
+  --cert-name example.com -d example.com -d www.example.com
+sudo certbot certificates
+```
+
+这是 [Certbot webroot 验证](https://eff-certbot.readthedocs.io/en/stable/using.html#webroot)，不需要停止 Nginx，也不自动改写站点。确认正式证书同时覆盖两个域名，使用输出中的实际证书路径；证书私钥和 ACME 账户不进入仓库。
+
+### 切换 HTTPS 与回滚
+
+首次从 HTTP 切换前，备份实际域名站点；本站已经完成切换，维护时不要用现有 HTTPS 配置覆盖原 HTTP 回滚备份。以下变量在本站指向 `tscjj-domain`，其他部署应替换为前面核实的实际文件：
+
+```bash
+mecha_nginx_site='/etc/nginx/sites-available/tscjj-domain'
+sudo cp -an "$mecha_nginx_site" "$mecha_nginx_site.before-https"
+```
+
+把 [HTTPS 样例](../deploy/nginx.https.conf.example) 的所有 `example.com` 替换为自己的域名，核对证书路径后覆盖 `$mecha_nginx_site`；沿用它原有的 `sites-enabled` 链接。HTTP 与 HTTPS 两份样例不能同时启用，也不要覆盖旧 IP 站点。**证书文件必须先存在，才能执行 HTTPS 配置检查。**
+
+安装 [代理信任 drop-in](../deploy/personal-homepage-proxy.conf.example)，让 Node 识别 Nginx 提供的 HTTPS 协议。它要求 Node 仅监听 `127.0.0.1`，并由 Nginx 覆盖转发头、清除平台身份头；不可用于直接暴露公网的 Node 服务。
+
+```bash
+sudo install -d /etc/systemd/system/personal-homepage.service.d
+sudo install -m 644 "$mecha_build/deploy/personal-homepage-proxy.conf.example" \
+  /etc/systemd/system/personal-homepage.service.d/https-proxy.conf
+sudo nginx -t
+sudo systemctl daemon-reload
+sudo systemctl restart personal-homepage.service
+sudo systemctl reload nginx
+```
+
+检查主域首页、工作台、文章直链和接口；HTTP 根域、HTTP/HTTPS `www` 应返回 308，并保留原路径及查询参数，例：`http://www.example.com/workbench?from=check` → `https://example.com/workbench?from=check`。ACME 验证路径继续直接由 80 端口服务，供后续续期使用。
+
+若 `nginx -t` 失败，不要 reload，先恢复备份再检查。切换后异常也可将 `$mecha_nginx_site.before-https` 恢复到 `$mecha_nginx_site`，通过 `nginx -t` 后 reload；HTTP 回滚备份不能包含强制 HTTPS 跳转。此时先用全新客户端验证 HTTP，已有浏览器可能缓存 308。仅网站版本异常则按前面的 release 回滚步骤处理，不必改 DNS 或原 SSH 隧道。
+
+### 自动续期
+
+续期后需要先检查 Nginx 配置，再重载证书。**本站已在签发时通过 `--deploy-hook` 注册等价命令，保存在 `/etc/letsencrypt/renewal/tscjj.com.conf` 的 `renew_hook` 中；保持此配置，不再安装全局重载脚本。**
+
+其他尚未配置续期钩子的部署，可安装仓库的 [续期后重载脚本](../deploy/certbot-reload-nginx.sh)。证书级钩子与下面的目录脚本二选一，避免同一次续期重复执行。本站跳过以下安装步骤：
+
+```bash
+sudo install -d -m 755 /etc/letsencrypt/renewal-hooks/deploy
+sudo install -m 755 "$mecha_build/deploy/certbot-reload-nginx.sh" \
+  /etc/letsencrypt/renewal-hooks/deploy/reload-nginx
+```
+
+以下对应 Ubuntu apt 安装的 `certbot.timer`；使用其他安装方式时先核对实际定时任务，避免重复配置。本站证书名使用 `tscjj.com`，其他部署替换为自己的证书名：
+
+```bash
+sudo systemctl enable --now certbot.timer
+sudo systemctl list-timers certbot.timer --all
+sudo certbot renew --cert-name example.com --dry-run --run-deploy-hooks
+```
+
+演练使用测试签发，不替换正式证书；`--run-deploy-hooks` 同时验证重载流程。应确认命令成功结束、查看 `journalctl -u certbot.service` 与 `/var/log/letsencrypt/letsencrypt.log`，再记录验收结果。仅看到 timer 已启用或命令已开始，都不代表续期验证通过。端口 80、DNS 和验证目录需持续可用。参见 [Certbot 续期说明](https://eff-certbot.readthedocs.io/en/stable/using.html#renewing-certificates)。

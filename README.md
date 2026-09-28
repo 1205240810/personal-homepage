@@ -4,7 +4,8 @@
 
 本公开仓库同时保存当前网站与早期「林间小院」的独立学习案例。公开历史已移除实名、未确认草稿与私藏档案数据；原始历史另作私有备份。项目整体尚未设置开源许可证。
 
-- [当前网站](https://tscjj-mecha-archive.c66745946.chatgpt.site/)：现有托管受众为仅所有者，不是对外公开演示。
+- [正式网站](https://tscjj.com/)：腾讯云自托管，域名与 HTTPS 的配置见 [部署说明](docs/SELF-HOSTING.md#域名与-https)。
+- [原 Sites 预览](https://tscjj-mecha-archive.c66745946.chatgpt.site/)：托管受众为仅所有者，与正式网站独立维护。
 - [林间小院学习案例](examples/forest-courtyard/README.md)：独立运行旧版场景，阅读机制讲解并动手修改。
 - [日常维护](docs/MAINTENANCE.md) · [GitHub 维护与版本恢复](docs/GITHUB-MAINTENANCE.md) · [自有服务器部署](docs/SELF-HOSTING.md) · [来源记录](docs/SOURCES.md)
 
@@ -111,7 +112,7 @@ examples/forest-courtyard/    早期林间小院的独立学习案例
 
 ## 维护与历史
 
-常见修改先从 [内容与世界维护](docs/MAINTENANCE.md) 查找入口。提交、拉取和恢复旧版本见 [GitHub 维护说明](docs/GITHUB-MAINTENANCE.md)。**推送 GitHub 只保存源码，不会自动重新发布 Sites 网站。** 主站包含服务端接口，不能直接当作 GitHub Pages 静态站发布。
+常见修改先从 [内容与世界维护](docs/MAINTENANCE.md) 查找入口。提交、拉取和恢复旧版本见 [GitHub 维护说明](docs/GITHUB-MAINTENANCE.md)。**推送 GitHub 只保存源码，不会自动更新腾讯云或 Sites 网站。** 主站包含服务端接口，不能直接当作 GitHub Pages 静态站发布。
 
 - [`archive/forest-courtyard`](https://github.com/1205240810/personal-homepage/tree/archive/forest-courtyard)：经过隐私清理的早期林间小院快照。
 - [`archive/river-journey`](https://github.com/1205240810/personal-homepage/tree/archive/river-journey)：经过隐私清理的后续河谷漫游快照。

@@ -1,0 +1,5 @@
+# Install as /etc/systemd/system/personal-homepage.service.d/https-proxy.conf.
+# Only enable behind Nginx when Node listens on 127.0.0.1 and Nginx overwrites
+# forwarded headers as shown in nginx.https.conf.example.
+[Service]
+Environment=VINEXT_TRUST_PROXY=1
