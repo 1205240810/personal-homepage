@@ -1,7 +1,21 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
+/* oxlint-disable nextjs/no-html-link-for-pages -- Full navigation isolates the game lifecycle. */
+/* oxlint-disable nextjs/no-img-element -- Local game portraits use direct assets with a graceful fallback. */
 import {
   ArrowRight,
+  ArrowLeft,
+  Maximize2,
+  Minimize2,
+  Settings2,
+  MessageCircle,
+  X,
   BookOpen,
   Check,
   ChevronDown,
@@ -27,12 +41,14 @@ import {
   legalActions,
   potSize,
   startHand,
-  SEATS,
+  tableSeats,
+  DEFAULT_TABLE_CONFIG,
+  validateTableConfig,
   STREET_LABELS,
   type HoldemState,
   type PokerAction,
   type Seat,
-  type SeatValues,
+  type TableConfig,
 } from '@/lib/games/holdem-engine';
 import {
   AI_DIFFICULTIES,
@@ -49,6 +65,12 @@ import {
   type ReviewPoint,
 } from '@/lib/games/holdem-strategy';
 import { HoldemLoungeMusic } from '@/lib/games/holdem-music';
+import {
+  announcePoker,
+  pokerVoiceBusy,
+  pokerVoiceAvailability,
+  stopPokerVoice,
+} from '@/lib/games/holdem-voice';
 import './holdem-lab.css';
 
 type StoredHand = {
@@ -58,6 +80,7 @@ type StoredHand = {
   board: number[];
   points: ReviewPoint[];
   difficulty: AiDifficulty;
+  config?: TableConfig;
 };
 type Practice = {
   hands: number;
@@ -69,8 +92,36 @@ const EMPTY_PRACTICE: Practice = { hands: 0, wins: 0, net: 0, recent: [] };
 // Five-seat analysis has a different model; preserve the original v1 records untouched.
 const STORAGE_KEY = 'tscjj:holdem-practice:v2';
 const SETTINGS_KEY = 'tscjj:holdem-settings:v2';
-const SEAT_NAMES: SeatValues<string> = ['你', '循环', '灯塔', '疾风', '帷幕'];
+const SEAT_NAMES = [
+  '你',
+  '循环',
+  '灯塔',
+  '疾风',
+  '帷幕',
+  '余弦',
+  '松石',
+  '北辰',
+  '流光',
+];
 const STYLES: BotStyle[] = [...DEFAULT_SEAT_STYLES];
+type ConfigDraft = Record<keyof TableConfig, string>;
+const configDraft = (config: TableConfig): ConfigDraft => ({
+  tableSize: String(config.tableSize),
+  smallBlind: String(config.smallBlind),
+  bigBlind: String(config.bigBlind),
+  initialStack: String(config.initialStack),
+});
+const numericConfig = (draft: ConfigDraft): TableConfig => ({
+  tableSize: Number(draft.tableSize),
+  smallBlind: Number(draft.smallBlind),
+  bigBlind: Number(draft.bigBlind),
+  initialStack: Number(draft.initialStack),
+});
+const sameTableConfig = (first: TableConfig, second: TableConfig) =>
+  first.tableSize === second.tableSize &&
+  first.smallBlind === second.smallBlind &&
+  first.bigBlind === second.bigBlind &&
+  first.initialStack === second.initialStack;
 type Job =
   | {
       type: 'bot';
@@ -256,6 +307,25 @@ function usePokerWorker() {
 const validCards = (cards: unknown): cards is number[] =>
   Array.isArray(cards) &&
   cards.every((c) => Number.isInteger(c) && c >= 0 && c < 52);
+function validExplanation(value: ReviewPoint['explanations']) {
+  return (
+    value === undefined ||
+    Boolean(
+      value &&
+      [
+        value.conclusion,
+        value.purpose,
+        value.sizing,
+        value.nextQuestion,
+        value.gtoContext,
+      ].every((text) => typeof text === 'string') &&
+      Array.isArray(value.reasons) &&
+      value.reasons.every((text) => typeof text === 'string') &&
+      Array.isArray(value.alternatives) &&
+      value.alternatives.every((text) => typeof text === 'string'),
+    )
+  );
+}
 function readPractice(): Practice {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -286,6 +356,8 @@ function readPractice(): Practice {
             h.board.length <= 5 &&
             typeof h.difficulty === 'string' &&
             Object.hasOwn(AI_DIFFICULTIES, h.difficulty) &&
+            (h.config === undefined ||
+              validateTableConfig(h.config) === null) &&
             Array.isArray(h.points) &&
             h.points.length <= 100 &&
             h.points.every(
@@ -299,6 +371,7 @@ function readPractice(): Practice {
                 typeof p.principle === 'string' &&
                 typeof p.title === 'string' &&
                 typeof p.action === 'string' &&
+                validExplanation(p.explanations) &&
                 typeof p.street === 'string' &&
                 Object.hasOwn(STREET_LABELS, p.street) &&
                 [
@@ -343,15 +416,75 @@ function readPractice(): Practice {
   }
 }
 
+function seatPosition(seat: Seat, count: number) {
+  const angle = Math.PI / 2 + (Math.PI * 2 * seat) / count;
+  return { x: 50 + Math.cos(angle) * 39, y: 50 + Math.sin(angle) * 34 };
+}
+
+function mobileSeatPosition(seat: Seat, count: number) {
+  if (seat === 0) return { x: 50, y: 90 };
+  if (count === 2) return { x: 50, y: 13 };
+  if (count === 4)
+    return seat === 2 ? { x: 50, y: 13 } : { x: seat === 1 ? 22 : 78, y: 31 };
+  const leftCount = Math.floor((count - 1) / 2);
+  const rightCount = count - 1 - leftCount;
+  const rows = Math.max(leftCount, rightCount);
+  const left = seat <= leftCount;
+  const row = left ? rows - seat : seat - leftCount - 1;
+  const base = rows >= 4 ? 8 : rows === 3 ? 11 : 14;
+  const spacing = rows >= 4 ? 14 : rows === 3 ? 17 : 18;
+  return {
+    x: !left && row === 0 && leftCount < rightCount ? 50 : left ? 23 : 77,
+    y: base + row * spacing,
+  };
+}
+
+function ChipStack({
+  amount,
+  bigBlind,
+  wager = false,
+}: {
+  amount: number;
+  bigBlind: number;
+  wager?: boolean;
+}) {
+  if (!amount) return null;
+  const piles = Math.min(
+    wager ? 2 : 3,
+    Math.max(1, Math.ceil(amount / (bigBlind * 50))),
+  );
+  const levels = Math.min(
+    6,
+    Math.max(2, Math.ceil(amount / (bigBlind * 10 * piles))),
+  );
+  return (
+    <span
+      className={`poker-chips ${wager ? 'is-wager' : ''}`}
+      aria-hidden="true"
+    >
+      {Array.from({ length: piles }, (_, pile) => (
+        <i className={`poker-chip-pile chip-color-${pile % 3}`} key={pile}>
+          {Array.from({ length: levels }, (_, level) => (
+            <b key={level} style={{ '--chip-level': level } as CSSProperties} />
+          ))}
+        </i>
+      ))}
+    </span>
+  );
+}
+
 function TableSeat({
   seat,
   state,
   paused,
+  config,
 }: {
   seat: Seat;
   state: HoldemState | null;
   paused: boolean;
+  config: TableConfig;
 }) {
+  const [missingPortrait, setMissingPortrait] = useState(false);
   const hero = seat === 0;
   const folded = Boolean(state?.folded[seat]);
   const active = state?.toAct === seat && !paused;
@@ -362,16 +495,39 @@ function TableSeat({
   const winner = Boolean(state?.result?.winners.includes(seat));
   const allIn = state && !completed && !folded && state.stacks[seat] === 0;
   const latest = state?.actions.findLast((d) => d.seat === seat);
+  const position = seatPosition(seat, config.tableSize);
+  const mobile = mobileSeatPosition(seat, config.tableSize);
+  const stack = state?.stacks[seat] ?? config.initialStack;
   return (
     <div
       className={`poker-seat poker-seat-${seat} ${hero ? 'is-hero' : ''} ${folded ? 'is-folded' : ''} ${active ? 'is-acting' : ''} ${winner ? 'is-winner' : ''}`}
+      style={
+        {
+          '--seat-x': `${position.x}%`,
+          '--seat-y': `${position.y}%`,
+          '--mobile-x': `${mobile.x}%`,
+          '--mobile-y': `${mobile.y}%`,
+        } as CSSProperties
+      }
       aria-label={`${SEAT_NAMES[seat]}席位${active ? '，正在行动' : ''}${folded ? '，已弃牌' : ''}`}
     >
+      <div className="poker-person-window">
+        {!missingPortrait ? (
+          <img
+            src={`/assets/poker/portraits/seat-${seat}.webp`}
+            alt=""
+            onError={() => setMissingPortrait(true)}
+            draggable={false}
+          />
+        ) : (
+          <span className="poker-portrait-fallback">
+            <Cpu size={35} strokeWidth={1.2} />
+          </span>
+        )}
+        <span className="poker-actor-halo" />
+      </div>
       <div className="poker-seat-identity">
-        <span className={`poker-avatar avatar-${seat}`} aria-hidden="true">
-          {hero ? '你' : <Cpu size={16} strokeWidth={1.5} />}
-        </span>
-        <span>
+        <div>
           <strong>
             {SEAT_NAMES[seat]}
             {state?.button === seat && (
@@ -386,11 +542,11 @@ function TableSeat({
               : hero
                 ? '你的席位'
                 : `AI ${seat}`}{' '}
-            · {hero ? '玩家' : BOT_STYLES[STYLES[seat]].label}
+            · {hero ? '玩家' : BOT_STYLES[STYLES[seat] ?? 'balanced'].label}
           </small>
-        </span>
+        </div>
         <b className="poker-seat-stack">
-          {state?.stacks[seat] ?? 1000}
+          {stack.toLocaleString()}
           <small>筹码</small>
         </b>
       </div>
@@ -398,38 +554,45 @@ function TableSeat({
         <div className="poker-hole" aria-label={`${SEAT_NAMES[seat]}的手牌`}>
           {(state?.holes[seat] ?? [undefined, undefined]).map((c, i) => (
             <PlayingCard
-              key={c ?? i}
+              key={`${state?.hand ?? 0}-${c ?? i}`}
               card={c}
               hidden={!showCards || c === undefined}
               small={!hero}
             />
           ))}
         </div>
-        <div className="poker-seat-state">
-          <span>
-            {folded
-              ? '已弃牌'
-              : allIn
-                ? '全下'
-                : winner
-                  ? `收回 ${state?.result?.payouts[seat]}`
-                  : active
-                    ? hero
-                      ? '轮到你'
-                      : '思考中…'
-                    : latest
-                      ? actionLabel(latest)
-                      : state
-                        ? '等待行动'
-                        : '等待发牌'}
-          </span>
-          {state?.streetBets[seat] && !completed ? (
-            <small>本轮 {state.streetBets[seat]}</small>
-          ) : completed && showCards && state?.result?.labels[seat] ? (
-            <small>{state.result.labels[seat]}</small>
-          ) : null}
-        </div>
+        <ChipStack amount={stack} bigBlind={config.bigBlind} />
       </div>
+      <div className="poker-seat-state">
+        <span>
+          {folded
+            ? '已弃牌'
+            : allIn
+              ? '全下'
+              : winner
+                ? `赢得 ${state?.result?.payouts[seat]}`
+                : active
+                  ? hero
+                    ? '轮到你'
+                    : '思考中…'
+                  : latest
+                    ? actionLabel(latest)
+                    : '准备就绪'}
+        </span>
+        {completed && showCards && state?.result?.labels[seat] ? (
+          <small>{state.result.labels[seat]}</small>
+        ) : null}
+      </div>
+      {state?.streetBets[seat] && !completed ? (
+        <div className="poker-seat-wager">
+          <ChipStack
+            amount={state.streetBets[seat]}
+            bigBlind={config.bigBlind}
+            wager
+          />
+          <span>{state.streetBets[seat]}</span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -443,7 +606,7 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
       <summary>
         <span className="poker-review-score">
           <b>{Math.round(point.score)}</b>
-          <small>模型评分</small>
+          <small>{point.scoreSensitive ? '尺度敏感' : '模型评分'}</small>
         </span>
         <span className="poker-review-title">
           <small>
@@ -474,7 +637,45 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
             {point.confidence === 'medium' ? '中' : '低'}
           </small>
         </div>
-        <p>{point.advice}</p>
+        {point.scoreSensitive && (
+          <p className="poker-score-sensitive">
+            这个尺度远超当前可争夺底池，估值对对手继续范围非常敏感。
+            高分仅表示本模型无法可靠区分，建议先参考较稳定的常规尺度。
+          </p>
+        )}
+        {point.explanations ? (
+          <div className="poker-teaching">
+            <h4>{point.explanations.conclusion}</h4>
+            <ol>
+              {point.explanations.reasons.map((reason, i) => (
+                <li key={i}>{reason}</li>
+              ))}
+            </ol>
+            <section>
+              <h5>这一步要达到什么目的</h5>
+              <p>{point.explanations.purpose}</p>
+            </section>
+            <section>
+              <h5>尺度怎么选</h5>
+              <p>{point.explanations.sizing}</p>
+            </section>
+            <section>
+              <h5>为什么没有推荐其他动作</h5>
+              {point.explanations.alternatives.map((alternative, i) => (
+                <p key={i}>{alternative}</p>
+              ))}
+            </section>
+            <p className="poker-next-question">
+              下一次先问：{point.explanations.nextQuestion}
+            </p>
+            <section>
+              <h5>放回完整范围中理解</h5>
+              <p>{point.explanations.gtoContext}</p>
+            </section>
+          </div>
+        ) : (
+          <p>{point.advice}</p>
+        )}
         <div className="poker-review-metrics">
           <span>
             公开范围摊牌份额 <b>{pct(point.equity)}</b>
@@ -528,7 +729,10 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
                     {option.evBB.toFixed(1)}
                     <small>±{option.standardErrorBB.toFixed(1)}</small>
                   </td>
-                  <td>{Math.round(option.score)}</td>
+                  <td>
+                    {Math.round(option.score)}
+                    {option.scoreSensitive && <small>尺度敏感</small>}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -585,8 +789,26 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
   );
 }
 
-export function HoldemLab() {
+export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
   const [state, setState] = useState<HoldemState | null>(null);
+  const [config, setConfig] = useState<TableConfig>({
+    ...DEFAULT_TABLE_CONFIG,
+  });
+  const [handConfig, setHandConfig] = useState<TableConfig>({
+    ...DEFAULT_TABLE_CONFIG,
+  });
+  const [draft, setDraft] = useState<ConfigDraft>(
+    configDraft(DEFAULT_TABLE_CONFIG),
+  );
+  const [drawer, setDrawer] = useState<'settings' | 'review' | null>(null);
+  const [voice, setVoice] = useState(false);
+  const [voiceAvailable, setVoiceAvailable] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('读取系统语音…');
+  const [fullscreen, setFullscreen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const drawerRef = useRef<HTMLDialogElement | null>(null);
+  const drawerPause = useRef(false);
+  const spoken = useRef('');
   const [difficulty, setDifficulty] = useState<AiDifficulty>('standard');
   const [handDifficulty, setHandDifficulty] =
     useState<AiDifficulty>('standard');
@@ -634,12 +856,16 @@ export function HoldemLab() {
     try {
       const settings = JSON.parse(
         localStorage.getItem(SETTINGS_KEY) || '{}',
-      ) as { difficulty?: AiDifficulty; volume?: number };
+      ) as { difficulty?: AiDifficulty; volume?: number; config?: TableConfig };
       if (
         typeof settings.difficulty === 'string' &&
         Object.hasOwn(AI_DIFFICULTIES, settings.difficulty)
       )
         setDifficulty(settings.difficulty);
+      if (settings.config && validateTableConfig(settings.config) === null) {
+        setConfig(settings.config);
+        setDraft(configDraft(settings.config));
+      }
       if (Number.isFinite(settings.volume))
         setMusicVolume(Math.min(0.6, Math.max(0, settings.volume!)));
     } catch {
@@ -650,12 +876,14 @@ export function HoldemLab() {
       if (document.hidden) {
         setPaused(true);
         musicRef.current?.pause();
+        stopPokerVoice();
         void soundRef.current?.suspend();
       }
     };
     document.addEventListener('visibilitychange', hide);
     return () => {
       mounted.current = false;
+      stopPokerVoice();
       document.removeEventListener('visibilitychange', hide);
       musicRef.current?.close();
       musicRef.current = null;
@@ -688,6 +916,10 @@ export function HoldemLab() {
         void musicRef.current.play().catch(() => {
           setMusic(false);
           setNotice('浏览器暂时无法播放音乐。');
+        });
+      else
+        void musicRef.current.unlock().catch(() => {
+          if (mounted.current) setNotice('音乐暂时无法开启，可稍后再试。');
         });
     } catch {
       setNotice('浏览器不支持当前音乐播放。');
@@ -739,12 +971,20 @@ export function HoldemLab() {
     })
       .then(({ action }) => {
         if (cancelled) return;
-        timer = setTimeout(() => {
-          if (!cancelled)
-            setState((current) =>
-              current === state ? act(current, action) : current,
-            );
-        }, 520);
+        const voiceDeadline = Date.now() + 6000;
+        const advance = () => {
+          if (cancelled) return;
+          // Let the previous public action finish speaking before another AI
+          // action replaces it. A deadline also handles missing native onend.
+          if (voice && pokerVoiceBusy() && Date.now() < voiceDeadline) {
+            timer = setTimeout(advance, 120);
+            return;
+          }
+          setState((current) =>
+            current === state ? act(current, action) : current,
+          );
+        };
+        timer = setTimeout(advance, voice ? 1150 : 620);
       })
       .catch(() => {
         if (!cancelled) setNotice('AI 计算暂时不可用，请暂停后继续。');
@@ -753,7 +993,7 @@ export function HoldemLab() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [state, paused, handDifficulty, getStrategy]);
+  }, [state, paused, handDifficulty, getStrategy, voice]);
 
   useEffect(() => {
     if (!state?.result) return;
@@ -788,6 +1028,7 @@ export function HoldemLab() {
             board: state.board,
             points,
             difficulty: handDifficulty,
+            config: handConfig,
           };
           setPractice((p) => ({
             ...p,
@@ -801,7 +1042,7 @@ export function HoldemLab() {
     return () => {
       cancelled = true;
     };
-  }, [state, getStrategy, reviewAttempt, tone, handDifficulty]);
+  }, [state, getStrategy, reviewAttempt, tone, handDifficulty, handConfig]);
 
   useEffect(() => {
     if (!ready) return;
@@ -809,13 +1050,13 @@ export function HoldemLab() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(practice));
       localStorage.setItem(
         SETTINGS_KEY,
-        JSON.stringify({ difficulty, volume: musicVolume }),
+        JSON.stringify({ difficulty, volume: musicVolume, config }),
       );
     } catch {
       // oxlint-disable-next-line react/react-compiler -- Reflect browser storage failure.
       setStorageAvailable(false);
     }
-  }, [practice, difficulty, musicVolume, ready]);
+  }, [practice, difficulty, musicVolume, config, ready]);
 
   const play = useCallback(
     (action: PokerAction) => {
@@ -866,25 +1107,41 @@ export function HoldemLab() {
   }, [humanTurn, legal, play]);
 
   function deal() {
-    const stacks = (
-      state
-        ? state.stacks.map((stack) => (stack < 10 ? 1000 : stack))
-        : [1000, 1000, 1000, 1000, 1000]
-    ) as SeatValues<number>;
-    setState(
-      startHand({
-        hand: state ? state.hand + 1 : 1,
-        button: state ? nextButton(state) : 0,
-        stacks,
-      }),
+    const error = validateTableConfig(config);
+    if (error) {
+      setNotice(error);
+      return;
+    }
+    const resetStacks = !state || !sameTableConfig(handConfig, config);
+    const stacks = tableSeats(config.tableSize).map((seat) =>
+      resetStacks ||
+      !state?.stacks[seat] ||
+      state.stacks[seat] < config.bigBlind
+        ? config.initialStack
+        : state.stacks[seat],
     );
-    setHandDifficulty(difficulty);
-    setPaused(false);
-    setReview(null);
-    setReviewError(false);
-    setArchive(null);
-    setNotice('');
-    tone();
+    try {
+      setState(
+        startHand({
+          ...config,
+          hand: state ? state.hand + 1 : 1,
+          button: state ? nextButton(state) % config.tableSize : 0,
+          stacks,
+        }),
+      );
+      setHandConfig({ ...config });
+      setHandDifficulty(difficulty);
+      setPaused(false);
+      setReview(null);
+      setReviewError(false);
+      setArchive(null);
+      setNotice('');
+      tone();
+    } catch (failure) {
+      setNotice(
+        failure instanceof Error ? failure.message : '牌桌配置暂时不可用',
+      );
+    }
   }
   function setSize(fraction: number) {
     if (!legal || !state) return;
@@ -908,27 +1165,124 @@ export function HoldemLab() {
       )
     : null;
   const delta = state ? state.stacks[0] - state.startingStacks[0] : 0;
+  const currentConfig = state ? handConfig : config;
+  const seats = tableSeats(currentConfig.tableSize);
+  const draftConfig = numericConfig(draft);
+  const configError = validateTableConfig(draftConfig);
+  const pendingConfig =
+    state &&
+    (!sameTableConfig(config, handConfig) || difficulty !== handDifficulty);
+
+  useEffect(() => {
+    const refreshVoice = () => {
+      const availability = pokerVoiceAvailability();
+      setVoiceStatus(
+        !availability.supported
+          ? '此浏览器不支持语音播报。'
+          : !availability.ready
+            ? availability.hasVoices
+              ? '系统没有中文声线，行动语音暂不可用。'
+              : '系统尚未加载中文声线，行动语音暂不可用。'
+            : '中文行动播报已就绪。',
+      );
+      setVoiceAvailable(availability.ready);
+      if (!availability.ready) setVoice(false);
+    };
+    refreshVoice();
+    const synthesis =
+      'speechSynthesis' in window ? window.speechSynthesis : null;
+    synthesis?.addEventListener('voiceschanged', refreshVoice);
+    const timer = setTimeout(refreshVoice, 1500);
+    const fullscreenChanged = () =>
+      setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', fullscreenChanged);
+    return () => {
+      clearTimeout(timer);
+      synthesis?.removeEventListener('voiceschanged', refreshVoice);
+      document.removeEventListener('fullscreenchange', fullscreenChanged);
+      stopPokerVoice();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (paused || !voice) stopPokerVoice();
+  }, [paused, voice]);
+
+  useEffect(() => {
+    if (!state || !latest) return;
+    const key = `${state.hand}:${state.actions.length}:${completed ? 'result' : 'action'}`;
+    if (spoken.current === key) return;
+    spoken.current = key;
+    if (!voice || paused || document.hidden) return;
+    const words =
+      completed && state.result
+        ? `${state.result.winners.map((seat) => SEAT_NAMES[seat]).join('和')}赢得底池。`
+        : `${SEAT_NAMES[latest.seat]}，${actionLabel(latest)}。`;
+    announcePoker(words);
+  }, [state, latest, completed, voice, paused]);
+
+  useEffect(() => {
+    const dialog = drawerRef.current;
+    if (drawer && dialog && !dialog.open) dialog.showModal();
+    if (!drawer && dialog?.open) dialog.close();
+  }, [drawer]);
+
+  function openDrawer(which: 'settings' | 'review') {
+    if (!drawer) drawerPause.current = paused;
+    if (which === 'settings') setDraft(configDraft(config));
+    setPaused(true);
+    setDrawer(which);
+  }
+  function closeDrawer() {
+    setDrawer(null);
+    if (!drawerPause.current && !document.hidden) setPaused(false);
+  }
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (rootRef.current?.requestFullscreen)
+        await rootRef.current.requestFullscreen();
+      else setNotice('当前浏览器未提供全屏按钮，牌桌已适配屏幕宽度。');
+    } catch {
+      setNotice('浏览器暂时无法切换全屏，仍可继续练习。');
+    }
+  }
+  function applyConfig() {
+    if (configError) return;
+    setConfig(draftConfig);
+    setDraft(configDraft(draftConfig));
+    closeDrawer();
+  }
+
   return (
-    <div className="holdem-lab">
-      <div className="poker-topbar">
-        <p>
-          <span className="poker-live-dot" aria-hidden="true" />
-          五人练习桌 <span>虚拟筹码 · 盲注 5 / 10</span>
-        </p>
+    <div className="holdem-lab poker-immersive" ref={rootRef}>
+      <header className="poker-topbar">
+        <a className="poker-back" href={fromExplore ? '/explore' : '/games'}>
+          <ArrowLeft size={16} />
+          <span>{fromExplore ? '返回机甲' : '游戏室'}</span>
+        </a>
+        <div className="poker-table-title">
+          <strong>德州扑克</strong>
+          <span>
+            {currentConfig.tableSize} 人桌 · {currentConfig.smallBlind}/
+            {currentConfig.bigBlind} ·{' '}
+            {AI_DIFFICULTIES[state ? handDifficulty : difficulty].label}
+          </span>
+        </div>
         <div className="poker-utilities">
           {(state || music) && (
             <button
               type="button"
-              onClick={() => setPaused((p) => !p)}
+              onClick={() => setPaused((value) => !value)}
               aria-pressed={paused}
+              aria-label={paused ? '继续练习' : '暂停练习'}
             >
-              {paused ? <Play size={15} /> : <Pause size={15} />}
-              {paused ? '继续' : '暂停'}
+              {paused ? <Play size={16} /> : <Pause size={16} />}
+              <span>{paused ? '继续' : '暂停'}</span>
             </button>
           )}
           <button
             type="button"
-            className={music ? 'is-on' : ''}
             onClick={toggleMusic}
             aria-pressed={music}
             aria-label={music ? '关闭背景音乐' : '打开背景音乐'}
@@ -938,503 +1292,717 @@ export function HoldemLab() {
           </button>
           <button
             type="button"
-            onClick={() => setSound((v) => !v)}
+            onClick={() => setSound((value) => !value)}
             aria-pressed={sound}
             aria-label={sound ? '关闭游戏音效' : '打开游戏音效'}
           >
-            {sound ? <Volume2 size={17} /> : <VolumeX size={17} />}
+            {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const available = pokerVoiceAvailability();
+              if (!available.ready) setNotice(voiceStatus);
+              setVoice((value) => !value);
+            }}
+            aria-pressed={voice}
+            disabled={!voiceAvailable}
+            title={!voiceAvailable ? voiceStatus : undefined}
+            aria-label={voice ? '关闭行动语音' : '打开行动语音'}
+          >
+            <MessageCircle size={16} />
+            <span>语音</span>
+          </button>
+          <button
+            type="button"
+            className="poker-fullscreen-button"
+            onClick={() => void toggleFullscreen()}
+            aria-label={fullscreen ? '退出全屏' : '进入全屏'}
+          >
+            {fullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => openDrawer('settings')}
+            aria-label="牌桌设置"
+          >
+            <Settings2 size={18} />
+            <span>设置</span>
           </button>
         </div>
-      </div>
-      <div className="poker-layout">
+      </header>
+      <main className="poker-main">
         <section
-          className={`poker-table-wrap ${paused ? 'is-paused' : ''}`}
-          aria-label="五人德州扑克练习桌"
+          className={`poker-arena seat-count-${currentConfig.tableSize} ${paused ? 'is-paused' : ''}`}
+          aria-label={`${currentConfig.tableSize} 人德州扑克练习桌`}
         >
+          <div className="poker-room-light" aria-hidden="true" />
           <div className="poker-table">
-            {SEATS.map((seat) => (
-              <TableSeat seat={seat} key={seat} state={state} paused={paused} />
-            ))}
-            <div className="poker-center">
-              <div className="poker-pot">
-                <span>
-                  {state ? STREET_LABELS[state.street] : 'NO LIMIT HOLD’EM'}
-                </span>
-                <strong>
-                  {state ? (state.result?.pot ?? potSize(state)) : '5 人桌'}
-                </strong>
-                <small>{state ? '底池筹码' : '一位玩家，四种性格'}</small>
-              </div>
-              <div className="poker-board" aria-label="公共牌">
-                {Array.from({ length: 5 }, (_, i) =>
-                  state?.board[i] !== undefined ? (
-                    <PlayingCard key={i} card={state.board[i]} />
-                  ) : (
-                    <span
-                      key={i}
-                      className="poker-card-slot"
-                      aria-label={`第 ${i + 1} 张公共牌尚未发出`}
-                    />
-                  ),
-                )}
-              </div>
-              <output className="poker-table-status" aria-live="polite">
-                {!state
-                  ? '先打一手，再回看每个选择。'
-                  : paused
-                    ? '练习已暂停'
-                    : completed
-                      ? `${state.result?.winners.map((s) => SEAT_NAMES[s]).join('、')} ${state.result?.winners.length === 1 ? '赢下底池' : '分享底池'}`
-                      : state.toAct === 0
-                        ? '轮到你行动'
-                        : `${state.toAct === null ? 'AI' : SEAT_NAMES[state.toAct]}正在思考…`}
-              </output>
-              {state && !completed && (
-                <small className="poker-live-count">
-                  {state.folded.filter((f) => !f).length} 位仍在底池 ·{' '}
-                  {AI_DIFFICULTIES[handDifficulty].label}
-                </small>
-              )}
+            <div className="poker-felt-emblem" aria-hidden="true">
+              <Spade size={80} strokeWidth={0.65} />
             </div>
           </div>
-          <div className="poker-action-panel">
-            {!state ? (
-              <div className="poker-start">
-                <div>
-                  <h2>五个席位，更多博弈。</h2>
-                  <p>观察位置与不同对手，逐个选择拆开复盘。</p>
-                </div>
+          {seats.map((seat) => (
+            <TableSeat
+              seat={seat}
+              key={seat}
+              state={state}
+              paused={paused}
+              config={currentConfig}
+            />
+          ))}
+          <div className={`poker-center ${state ? '' : 'is-ready'}`}>
+            <div className="poker-pot">
+              <span>
+                {state ? STREET_LABELS[state.street] : 'NO LIMIT HOLD’EM'}
+              </span>
+              <strong>
+                {state
+                  ? (state.result?.pot ?? potSize(state)).toLocaleString()
+                  : '坐下来，打一手。'}
+              </strong>
+              <small>
+                {state ? '底池筹码' : '位置、范围，以及你的每个选择'}
+              </small>
+            </div>
+            <div className="poker-board" aria-label="公共牌">
+              {Array.from({ length: 5 }, (_, i) =>
+                state?.board[i] !== undefined ? (
+                  <PlayingCard
+                    key={`${state.hand}-${state.board[i]}`}
+                    card={state.board[i]}
+                  />
+                ) : (
+                  <span
+                    key={i}
+                    className="poker-card-slot"
+                    aria-label={`第 ${i + 1} 张公共牌尚未发出`}
+                  />
+                ),
+              )}
+            </div>
+            <output className="poker-table-status" aria-live="polite">
+              {!state
+                ? '只用虚拟筹码，没有倒计时。'
+                : paused
+                  ? '练习已暂停'
+                  : completed
+                    ? `${state.result?.winners.map((seat) => SEAT_NAMES[seat]).join('、')} ${state.result?.winners.length === 1 ? '赢下底池' : '分享底池'}`
+                    : state.toAct === 0
+                      ? '轮到你行动'
+                      : `${state.toAct === null ? '其他席位' : SEAT_NAMES[state.toAct]}正在思考…`}
+            </output>
+            {state && !completed && (
+              <small className="poker-live-count">
+                {state.folded.filter((folded) => !folded).length} 位仍在底池 ·
+                第 {state.hand} 手
+              </small>
+            )}
+            {completed && state?.result && state.result.pots.length > 1 && (
+              <small className="poker-live-count">
+                {state.result.pots.length} 个底池分别结算 · 复盘查看分配
+              </small>
+            )}
+          </div>
+          {latest && latest.paid > 0 && (
+            <span
+              key={`${state?.hand}-${state?.actions.length}`}
+              className="poker-chip-flight"
+              aria-hidden="true"
+              style={
+                {
+                  '--origin-x': `${seatPosition(latest.seat, currentConfig.tableSize).x}%`,
+                  '--origin-y': `${seatPosition(latest.seat, currentConfig.tableSize).y}%`,
+                  '--mobile-origin-x': `${mobileSeatPosition(latest.seat, currentConfig.tableSize).x}%`,
+                  '--mobile-origin-y': `${mobileSeatPosition(latest.seat, currentConfig.tableSize).y}%`,
+                } as CSSProperties
+              }
+            >
+              <i />
+              <i />
+              <i />
+            </span>
+          )}
+          {state && (
+            <div className="poker-action-ribbon" aria-label="最近行动">
+              {state.actions.slice(-3).map((decision, i) => (
+                <span key={`${state.actions.length - 3 + i}`}>
+                  <b>{SEAT_NAMES[decision.seat]}</b> {actionLabel(decision)}
+                </span>
+              ))}
+            </div>
+          )}
+          {pendingConfig && (
+            <span className="poker-next-config">新设置将在下一手生效</span>
+          )}
+        </section>
+        <section className="poker-control-deck" aria-label="下注与对局操作">
+          {!state ? (
+            <div className="poker-start">
+              <div>
+                <h1>先打一手，再拆开思路。</h1>
+                <p>
+                  {currentConfig.tableSize - 1} 位 AI 对手 · 初始{' '}
+                  {config.initialStack / config.bigBlind} BB ·
+                  难度、人数和盲注均可设置
+                </p>
+              </div>
+              <button
+                type="button"
+                className="poker-secondary"
+                onClick={() => openDrawer('settings')}
+              >
+                <Settings2 size={16} />
+                设置牌桌
+              </button>
+              <button
+                type="button"
+                className="poker-primary"
+                onClick={deal}
+                disabled={!ready}
+              >
+                开始练习 <ArrowRight size={17} />
+              </button>
+            </div>
+          ) : completed ? (
+            <div className="poker-finish">
+              <div>
+                <strong>
+                  {delta >= 0 ? '+' : ''}
+                  {delta.toLocaleString()}
+                  <small> 虚拟筹码</small>
+                </strong>
+                <p>
+                  {average === null
+                    ? '正在整理你的决策…'
+                    : `本手平均模型评分 ${average} / 100`}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="poker-secondary"
+                onClick={() => {
+                  setArchive(null);
+                  openDrawer('review');
+                }}
+              >
+                <BookOpen size={16} />
+                查看本手复盘
+              </button>
+              <button
+                type="button"
+                className="poker-primary"
+                onClick={deal}
+                disabled={!review && !reviewError}
+              >
+                {review || reviewError ? '下一手' : '整理复盘…'}{' '}
+                <ArrowRight size={17} />
+              </button>
+            </div>
+          ) : (
+            <div className="poker-playing-controls">
+              <div className="poker-turn-caption">
+                <span>
+                  {paused
+                    ? '点击继续恢复对局'
+                    : state.folded[0]
+                      ? '你已弃牌，观察其他席位。'
+                      : humanTurn
+                        ? legal?.canCheck
+                          ? '免费过牌，或主动下注。'
+                          : `跟注 ${legal?.call} · 静态门槛 ${pct(legal?.potOdds ?? 0)}`
+                        : `等待${state.toAct === null ? '其他席位' : SEAT_NAMES[state.toAct]}行动`}
+                </span>
+                <small>
+                  {positionLabel(state, 0)} · {state.stacks[0]} 筹码
+                </small>
+              </div>
+              <div className="poker-actions">
+                <button
+                  type="button"
+                  onClick={() => play({ type: 'fold' })}
+                  disabled={!humanTurn}
+                >
+                  弃牌 <kbd>F</kbd>
+                </button>
+                <button
+                  type="button"
+                  className="poker-call"
+                  onClick={() =>
+                    play({ type: legal?.canCheck ? 'check' : 'call' })
+                  }
+                  disabled={!humanTurn}
+                >
+                  {legal?.canCheck
+                    ? '过牌'
+                    : `跟注 ${humanTurn ? (legal?.call ?? '') : ''}`}{' '}
+                  <kbd>C</kbd>
+                </button>
                 <button
                   type="button"
                   className="poker-primary"
-                  onClick={deal}
-                  disabled={!ready}
+                  onClick={() => play({ type: 'raise', to: raiseTo })}
+                  disabled={!humanTurn || !legal?.canRaise}
                 >
-                  开始练习 <ArrowRight size={17} />
+                  {Math.max(...state.streetBets) === 0 ? '下注' : '加注到'}{' '}
+                  {humanTurn && legal?.canRaise ? raiseTo : ''}
                 </button>
               </div>
-            ) : completed ? (
-              <div className="poker-finish">
-                <div>
-                  <strong>
-                    {delta >= 0 ? '+' : ''}
-                    {delta} 筹码
-                  </strong>
-                  <p>
-                    {state.stacks.some((s) => s < 10)
-                      ? '筹码不足的席位下一手补充至 100 BB。'
-                      : '按钮位轮换，先回看当时的选择。'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="poker-primary"
-                  onClick={deal}
-                  disabled={!review && !reviewError}
-                >
-                  {review || reviewError ? '下一手' : '整理复盘…'}{' '}
-                  <ArrowRight size={17} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="poker-turn-caption">
-                  <span>
-                    {paused
-                      ? '点击继续恢复对局'
-                      : state.folded[0]
-                        ? '你已弃牌，观察其他席位的行动。'
-                        : humanTurn
-                          ? legal?.canCheck
-                            ? '可以免费过牌，也可以主动下注。'
-                            : `跟注需 ${legal?.call} 筹码${legal?.call === state.stacks[0] ? '（全下）' : ''}`
-                          : `等待${state.toAct === null ? '其他席位' : SEAT_NAMES[state.toAct]}行动`}
-                  </span>
-                  <small>第 {state.hand} 手</small>
-                </div>
-                <div className="poker-actions">
-                  <button
-                    type="button"
-                    onClick={() => play({ type: 'fold' })}
-                    disabled={!humanTurn}
-                  >
-                    弃牌 <kbd>F</kbd>
-                  </button>
-                  <button
-                    type="button"
-                    className="poker-call"
-                    onClick={() =>
-                      play({ type: legal?.canCheck ? 'check' : 'call' })
-                    }
-                    disabled={!humanTurn}
-                  >
-                    {legal?.canCheck
-                      ? '过牌'
-                      : `跟注 ${humanTurn ? (legal?.call ?? '') : ''}`}{' '}
-                    <kbd>C</kbd>
-                  </button>
-                  <button
-                    type="button"
-                    className="poker-primary"
-                    onClick={() => play({ type: 'raise', to: raiseTo })}
-                    disabled={!humanTurn || !legal?.canRaise}
-                  >
-                    {Math.max(...state.streetBets) === 0 ? '下注' : '加注到'}{' '}
-                    {humanTurn && legal?.canRaise ? raiseTo : ''}
-                  </button>
-                </div>
-                {humanTurn && legal?.canRaise && (
-                  <div className="poker-sizing">
-                    <div className="poker-size-presets">
-                      {state.street === 'preflop' &&
-                      Math.max(...state.streetBets) === 10 ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setRaiseTo(
-                              Math.min(legal.maxTo, Math.max(legal.minTo, 25)),
-                            )
-                          }
-                        >
-                          2.5 BB
-                        </button>
-                      ) : (
-                        <>
-                          <button type="button" onClick={() => setSize(0.33)}>
-                            ⅓ 底池
-                          </button>
-                          <button type="button" onClick={() => setSize(0.5)}>
-                            ½ 底池
-                          </button>
-                          <button type="button" onClick={() => setSize(1)}>
-                            底池
-                          </button>
-                        </>
-                      )}
+              {humanTurn && legal?.canRaise && (
+                <div className="poker-sizing">
+                  <div className="poker-size-presets">
+                    {state.street === 'preflop' &&
+                    Math.max(...state.streetBets) === state.bigBlind ? (
                       <button
                         type="button"
-                        onClick={() => setRaiseTo(legal.maxTo)}
+                        onClick={() =>
+                          setRaiseTo(
+                            Math.min(
+                              legal.maxTo,
+                              Math.max(
+                                legal.minTo,
+                                Math.round(state.bigBlind * 2.5),
+                              ),
+                            ),
+                          )
+                        }
                       >
-                        全下
+                        2.5 BB
                       </button>
-                    </div>
-                    <label>
-                      <span>本轮总下注</span>
-                      <input
-                        type="range"
-                        aria-label="调整本轮累计总下注额度"
-                        min={Math.min(legal.minTo, legal.maxTo)}
-                        max={legal.maxTo}
-                        step={1}
-                        value={raiseTo}
-                        onChange={(e) => setRaiseTo(Number(e.target.value))}
-                      />
-                      <output>{raiseTo}</output>
-                    </label>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => setSize(0.33)}>
+                          ⅓ 底池
+                        </button>
+                        <button type="button" onClick={() => setSize(0.5)}>
+                          ½ 底池
+                        </button>
+                        <button type="button" onClick={() => setSize(1)}>
+                          底池
+                        </button>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setRaiseTo(legal.maxTo)}
+                    >
+                      全下
+                    </button>
                   </div>
-                )}
-              </>
-            )}
+                  <label>
+                    <span>本轮总下注</span>
+                    <input
+                      type="range"
+                      aria-label="调整本轮累计总下注额度"
+                      min={Math.min(legal.minTo, legal.maxTo)}
+                      max={legal.maxTo}
+                      step={1}
+                      value={raiseTo}
+                      onChange={(event) =>
+                        setRaiseTo(Number(event.target.value))
+                      }
+                    />
+                    <output>{raiseTo}</output>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+          {notice && (
             <p className="poker-action-error" role="alert">
               {notice}
             </p>
-            {completed &&
-              state?.result &&
-              (state.result.pots.length > 1 ||
-                state.result.returned.some((n) => n > 0)) && (
-                <details className="poker-pot-breakdown">
-                  <summary>
-                    底池分配 <ChevronDown size={14} />
-                  </summary>
-                  {state.result.pots.map((pot, i) => (
-                    <p key={i}>
-                      {i === 0 ? '主池' : `边池 ${i}`} {pot.amount} →{' '}
-                      {pot.winners.map((s) => SEAT_NAMES[s]).join('、')}
-                    </p>
-                  ))}
-                  {SEATS.filter((s) => state.result!.returned[s] > 0).map(
-                    (s) => (
-                      <p key={s}>
-                        {SEAT_NAMES[s]}未被跟注的 {state.result!.returned[s]}{' '}
-                        已退回。
-                      </p>
+          )}
+        </section>
+      </main>
+      <footer className="poker-footer">
+        <span>虚拟筹码 · 本地 AI · 近似策略训练</span>
+        <button type="button" onClick={() => openDrawer('review')}>
+          <BookOpen size={14} />
+          练习记录 <b>{practice.hands}</b>
+        </button>
+      </footer>
+      {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- Native modal backdrop clicks dismiss; Escape is handled by onCancel and the close button is keyboard accessible. */}
+      <dialog
+        className={`poker-drawer ${drawer === 'review' ? 'is-review' : ''}`}
+        ref={drawerRef}
+        onCancel={(event) => {
+          event.preventDefault();
+          closeDrawer();
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) closeDrawer();
+        }}
+        aria-labelledby="poker-drawer-title"
+      >
+        <div className="poker-drawer-inner">
+          <header>
+            <h2 id="poker-drawer-title">
+              {drawer === 'settings'
+                ? '把这张桌子调成你的节奏。'
+                : '每个选择，都有来由。'}
+            </h2>
+            <button type="button" onClick={closeDrawer} aria-label="关闭面板">
+              <X size={20} />
+            </button>
+          </header>
+          {drawer === 'settings' ? (
+            <div className="poker-settings-content">
+              <section>
+                <h3>牌桌配置</h3>
+                <p>
+                  配置在下一手生效。人数、大小盲或初始筹码变更后，整桌按新初始筹码重开；相同配置延续余额，低于大盲的席位自动补至初始筹码。
+                </p>
+                <div className="poker-config-grid">
+                  <label>
+                    人数
+                    <select
+                      value={draft.tableSize}
+                      onChange={(event) =>
+                        setDraft((old) => ({
+                          ...old,
+                          tableSize: event.target.value,
+                        }))
+                      }
+                    >
+                      {Array.from({ length: 8 }, (_, i) => (
+                        <option key={i} value={i + 2}>
+                          {i + 2} 人
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    小盲
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={draft.smallBlind}
+                      onChange={(event) =>
+                        setDraft((old) => ({
+                          ...old,
+                          smallBlind: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    大盲
+                    <input
+                      type="number"
+                      min="2"
+                      step="1"
+                      value={draft.bigBlind}
+                      onChange={(event) =>
+                        setDraft((old) => ({
+                          ...old,
+                          bigBlind: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    每席初始筹码
+                    <input
+                      type="number"
+                      min="2"
+                      step="1"
+                      value={draft.initialStack}
+                      onChange={(event) =>
+                        setDraft((old) => ({
+                          ...old,
+                          initialStack: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <p
+                  className={
+                    configError ? 'poker-setting-error' : 'poker-setting-hint'
+                  }
+                  role={configError ? 'alert' : undefined}
+                >
+                  {configError ??
+                    `起始深度 ${(draftConfig.initialStack / draftConfig.bigBlind).toFixed(1)} BB。低于大盲的席位下一手补充至初始筹码。`}
+                </p>
+              </section>
+              <section>
+                <h3>AI 难度</h3>
+                <fieldset
+                  className="poker-difficulty-options"
+                  aria-label="选择下一手 AI 难度"
+                >
+                  {(Object.keys(AI_DIFFICULTIES) as AiDifficulty[]).map(
+                    (level) => (
+                      <button
+                        type="button"
+                        key={level}
+                        aria-pressed={difficulty === level}
+                        onClick={() => setDifficulty(level)}
+                      >
+                        {AI_DIFFICULTIES[level].label}
+                      </button>
                     ),
                   )}
-                </details>
-              )}
-          </div>
-        </section>
-        <aside className="poker-side" aria-label="难度设置与行动记录">
-          <section className="poker-settings">
-            <h2>AI 难度</h2>
-            <fieldset
-              className="poker-difficulty-options"
-              aria-label="选择下一手 AI 难度"
-            >
-              {(Object.keys(AI_DIFFICULTIES) as AiDifficulty[]).map((level) => (
-                <button
-                  type="button"
-                  key={level}
-                  aria-pressed={difficulty === level}
-                  onClick={() => setDifficulty(level)}
-                >
-                  {AI_DIFFICULTIES[level].label}
-                </button>
-              ))}
-            </fieldset>
-            <p>{AI_DIFFICULTIES[difficulty].description}</p>
-            {state && !completed && (
-              <small className="poker-pending-setting">
-                {difficulty !== handDifficulty
-                  ? `下一手切换为${AI_DIFFICULTIES[difficulty].label}；本手保持${AI_DIFFICULTIES[handDifficulty].label}。`
-                  : '修改在下一手生效。'}
-              </small>
-            )}
-          </section>
-          <section className="poker-opponents">
-            <h2>桌上的四种性格</h2>
-            <ul>
-              {SEATS.filter((s) => s !== 0).map((s) => (
-                <li key={s}>
-                  <span className={`poker-personality-marker avatar-${s}`} />
-                  <strong>{SEAT_NAMES[s]}</strong>
-                  <small>{BOT_STYLES[STYLES[s]].label}</small>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <section className="poker-price">
-            <h2>当前价格</h2>
-            {legal && humanTurn && legal.call > 0 ? (
-              <>
-                <strong>{pct(legal.potOdds)}</strong>
+                </fieldset>
                 <p>
-                  跟注 {legal.call}，争夺跟注后 {legal.pot + legal.call}{' '}
-                  的可争夺底池。
+                  {AI_DIFFICULTIES[difficulty].description}每个 AI
+                  还有独立的均衡、稳健、积极或灵活性格。
                 </p>
-                <small>静态门槛，未计入未来行动与权益实现。</small>
-              </>
-            ) : (
-              <>
-                <strong>
-                  {completed ? '复盘时间' : humanTurn ? '免费过牌' : '等待行动'}
-                </strong>
-                <p>先考虑位置、底池中的人数和对手的公开行动。</p>
-              </>
-            )}
-          </section>
-          <section className="poker-music-settings">
-            <h2>桌边音乐</h2>
-            <p>低音、电钢琴与轻刷鼓，安静地陪你想一手牌。</p>
-            <label>
-              <span>音量</span>
-              <input
-                type="range"
-                min="0"
-                max="60"
-                step="1"
-                value={Math.round(musicVolume * 100)}
-                onChange={(e) => setMusicVolume(Number(e.target.value) / 100)}
-                aria-label="背景音乐音量"
-              />
-              <output>{Math.round(musicVolume * 100)}%</output>
-            </label>
-            <small>
-              {music
-                ? paused
-                  ? '随练习暂停，继续后恢复。'
-                  : '正在播放 · 原创桌边旋律'
-                : '默认关闭，点击上方音乐按钮开启。'}
-            </small>
-          </section>
-          <section className="poker-log">
-            <h2>最近行动</h2>
-            {state?.actions.length ? (
-              <ol>
-                {state.actions.slice(-6).map((d, i) => (
-                  <li
-                    key={`${state.actions.length - 6 + i}`}
-                    className={d.seat === 0 ? 'is-human' : ''}
+              </section>
+              <section>
+                <h3>桌边声音</h3>
+                <div className="poker-sound-toggles">
+                  <button
+                    type="button"
+                    aria-pressed={music}
+                    onClick={toggleMusic}
                   >
-                    <small>{STREET_LABELS[d.street]}</small>
-                    <span>
-                      {SEAT_NAMES[d.seat]} · {actionLabel(d)}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p>发牌后，这里会留下每位玩家的行动。</p>
-            )}
-            <output className="poker-screen-reader" aria-live="polite">
-              {latest
-                ? `${SEAT_NAMES[latest.seat]} ${actionLabel(latest)}`
-                : ''}
-            </output>
-          </section>
-          <details className="poker-rules">
-            <summary>
-              规则与复盘说明 <ChevronDown size={15} />
-            </summary>
-            <p>
-              用两张手牌与公共牌组成最佳五张牌。按钮之后依次为小盲、大盲；翻牌前由大盲之后先行动，翻牌后由按钮之后尚未弃牌的席位先行动。
-            </p>
-            <p>
-              滑块表示本轮累计投入。全下金额不同时按主池、边池分别结算；弃牌后仍会等待其他席位完成对局。
-            </p>
-            <p>
-              AI
-              使用自己的手牌与公开行动推测范围，不能读取你的底牌。难度改变范围与行动策略，不改变发牌。
-            </p>
-            <p>
-              复盘分数比较模型候选行动的估计
-              EV，不根据最后输赢打分。这里没有运行严格 GTO
-              求解器，也没有大模型。
-            </p>
-            <a
-              href="https://www.pokertda.com/view-poker-tda-rules/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              规则参考 ↗
-            </a>
-          </details>
-        </aside>
-      </div>
-      <section className="poker-review" aria-labelledby="poker-review-heading">
-        <header>
-          <div>
-            <BookOpen size={19} />
-            <h2 id="poker-review-heading">逐个选择，拆开思路。</h2>
-          </div>
-          <p>
-            {average !== null ? (
-              <>
-                <b>{average}</b> / 100 本手平均模型评分
-              </>
-            ) : (
-              '只看决策时已知的信息。'
-            )}
-          </p>
-        </header>
-        {practice.recent.length > 0 && (
-          <fieldset className="poker-history" aria-label="选择最近的练习记录">
-            <button
-              type="button"
-              aria-pressed={!archive}
-              onClick={() => setArchive(null)}
-            >
-              当前对局
-            </button>
-            {practice.recent.map((h, i) => (
+                    <Music2 size={16} />
+                    背景音乐 {music ? '开' : '关'}
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={sound}
+                    onClick={() => setSound((value) => !value)}
+                  >
+                    <Volume2 size={16} />
+                    音效 {sound ? '开' : '关'}
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={voice}
+                    disabled={!voiceAvailable}
+                    title={!voiceAvailable ? voiceStatus : undefined}
+                    onClick={() => setVoice((value) => !value)}
+                  >
+                    <MessageCircle size={16} />
+                    行动语音 {voice ? '开' : '关'}
+                  </button>
+                </div>
+                <label className="poker-volume-control">
+                  <span>音乐音量</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="60"
+                    step="1"
+                    value={Math.round(musicVolume * 100)}
+                    onChange={(event) =>
+                      setMusicVolume(Number(event.target.value) / 100)
+                    }
+                    aria-label="背景音乐音量"
+                  />
+                  <output>{Math.round(musicVolume * 100)}%</output>
+                </label>
+                <p>
+                  原创电钢琴、低音与轻刷鼓。{voiceStatus}
+                  暂停或切到后台时，音乐和语音随之停止。
+                </p>
+              </section>
+              <details className="poker-rules">
+                <summary>
+                  规则与模型说明 <ChevronDown size={15} />
+                </summary>
+                <p>
+                  两张手牌与公共牌组成最佳五张牌。单挑按钮位付小盲，翻牌前先行动；多人桌按按钮后的大小盲与顺序轮流行动。
+                </p>
+                <p>
+                  滑块是本轮累计投入。不同全下金额建立主池、边池，分别结算；弃牌后仍会等待其他席位完成对局。
+                </p>
+                <p>
+                  AI 只能使用自己的底牌和公开行动；复盘比较近似模型的候选
+                  EV，不根据输赢打分，也不是严格 GTO 求解结果。
+                </p>
+                <a
+                  href="https://www.pokertda.com/view-poker-tda-rules/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  规则参考 ↗
+                </a>
+              </details>
               <button
                 type="button"
-                key={`${h.hand}-${i}`}
-                aria-pressed={archive === h}
-                onClick={() => setArchive(h)}
+                className="poker-primary poker-apply-config"
+                disabled={Boolean(configError)}
+                onClick={applyConfig}
               >
-                记录 {practice.hands - i}
+                应用到下一手 <Check size={16} />
+              </button>
+            </div>
+          ) : (
+            <section className="poker-review">
+              <header>
+                <div>
+                  <BookOpen size={19} />
+                  <h3>逐个选择，拆开思路。</h3>
+                </div>
+                <p>
+                  {average !== null ? (
+                    <>
+                      <b>{average}</b> / 100 平均模型评分
+                    </>
+                  ) : (
+                    '只看当时已经知道的信息。'
+                  )}
+                </p>
+              </header>
+              {practice.recent.length > 0 && (
+                <fieldset
+                  className="poker-history"
+                  aria-label="选择最近的练习记录"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={!archive}
+                    onClick={() => setArchive(null)}
+                  >
+                    当前对局
+                  </button>
+                  {practice.recent.map((hand, i) => (
+                    <button
+                      type="button"
+                      key={`${hand.hand}-${i}`}
+                      aria-pressed={archive === hand}
+                      onClick={() => setArchive(hand)}
+                    >
+                      记录 {practice.hands - i}
+                      <small>
+                        {hand.delta >= 0 ? '+' : ''}
+                        {hand.delta}
+                      </small>
+                    </button>
+                  ))}
+                </fieldset>
+              )}
+              {archive && (
+                <div className="poker-review-cards">
+                  <span>
+                    {archive.config?.tableSize ?? 5} 人 ·{' '}
+                    {AI_DIFFICULTIES[archive.difficulty].label}
+                  </span>
+                  {archive.hero.map((card) => (
+                    <PlayingCard card={card} key={card} small />
+                  ))}
+                  <span>结束公共牌</span>
+                  {archive.board.map((card) => (
+                    <PlayingCard card={card} key={card} small />
+                  ))}
+                </div>
+              )}
+              {shownReview ? (
+                shownReview.length > 0 ? (
+                  <div className="poker-review-list">
+                    {shownReview.map((point, i) => (
+                      <ReviewCard
+                        key={`${archive?.hand || state?.hand}-${point.index}`}
+                        point={point}
+                        first={i === 0}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="poker-empty-review">
+                    <Check size={20} />
+                    本手在你行动前已经结束。
+                  </p>
+                )
+              ) : completed ? (
+                reviewError ? (
+                  <div className="poker-empty-review">
+                    <p>复盘暂时不可用，完整行动线仍可查看。</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReviewError(false);
+                        setReviewAttempt((n) => n + 1);
+                      }}
+                    >
+                      <RotateCcw size={15} />
+                      重试
+                    </button>
+                  </div>
+                ) : (
+                  <p className="poker-empty-review">
+                    <LoaderCircle className="poker-spinner" size={20} />
+                    正在整理范围、候选行动与评分…
+                  </p>
+                )
+              ) : (
+                <p className="poker-empty-review">
+                  <Spade size={22} />
+                  完成一手后，这里展开你的每个选择。
+                </p>
+              )}
+              {state?.result &&
+                !archive &&
+                (state.result.pots.length > 1 ||
+                  state.result.returned.some((chips) => chips > 0)) && (
+                  <details className="poker-pot-breakdown">
+                    <summary>
+                      主池、边池与退款 <ChevronDown size={14} />
+                    </summary>
+                    {state.result.pots.map((pot, i) => (
+                      <p key={i}>
+                        {i === 0 ? '主池' : `边池 ${i}`} {pot.amount} →{' '}
+                        {pot.winners.map((seat) => SEAT_NAMES[seat]).join('、')}
+                      </p>
+                    ))}
+                    {seats
+                      .filter((seat) => state.result!.returned[seat] > 0)
+                      .map((seat) => (
+                        <p key={seat}>
+                          {SEAT_NAMES[seat]}未被跟注的{' '}
+                          {state.result!.returned[seat]} 已退回。
+                        </p>
+                      ))}
+                  </details>
+                )}
+              {state?.actions.length && !archive ? (
+                <details className="poker-hand-timeline">
+                  <summary>
+                    当前手完整行动线 <ChevronDown size={15} />
+                  </summary>
+                  <ol>
+                    {state.actions.map((decision, i) => (
+                      <li
+                        key={i}
+                        className={decision.seat === 0 ? 'is-human' : ''}
+                      >
+                        <small>{STREET_LABELS[decision.street]}</small>
+                        <span>{SEAT_NAMES[decision.seat]}</span>
+                        <strong>{actionLabel(decision)}</strong>
+                        <span>底池 {decision.pot}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              ) : null}
+              <p className="poker-review-limit">
+                分数是当前范围和简化后续模型中的相对评价。100
+                分表示接近候选中的最好选择，不是获胜概率或 GTO
+                认证；近似模型存在范围和未来行动误差。
+              </p>
+              <div className="poker-practice-record">
+                <strong>{practice.hands} 手</strong>
+                <span>盈利 {practice.wins} 手</span>
+                <span>
+                  累计 {practice.net >= 0 ? '+' : ''}
+                  {practice.net}
+                </span>
                 <small>
-                  {h.delta >= 0 ? '+' : ''}
-                  {h.delta}
+                  {storageAvailable
+                    ? '本机保留最近 8 手；历史五人桌记录仍在。'
+                    : '存储不可用，当前页面内保留。'}
                 </small>
-              </button>
-            ))}
-          </fieldset>
-        )}
-        {archive && (
-          <div className="poker-review-cards">
-            <span>{AI_DIFFICULTIES[archive.difficulty].label} · 记录手牌</span>
-            {archive.hero.map((c) => (
-              <PlayingCard card={c} key={c} small />
-            ))}
-            <span>结束公共牌</span>
-            {archive.board.map((c) => (
-              <PlayingCard card={c} key={c} small />
-            ))}
-          </div>
-        )}
-        {shownReview ? (
-          shownReview.length > 0 ? (
-            <div className="poker-review-list">
-              {shownReview.map((point, i) => (
-                <ReviewCard
-                  key={`${archive?.hand || state?.hand}-${point.index}`}
-                  point={point}
-                  first={i === 0}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="poker-empty-review">
-              <Check size={20} />
-              本手在你行动前已经结束，下一手再观察自己的决策。
-            </p>
-          )
-        ) : completed ? (
-          reviewError ? (
-            <div className="poker-empty-review">
-              <p>复盘暂时不可用，完整行动记录仍可查看。</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setReviewError(false);
-                  setReviewAttempt((n) => n + 1);
-                }}
-              >
-                <RotateCcw size={15} />
-                重试复盘
-              </button>
-            </div>
-          ) : (
-            <p className="poker-empty-review">
-              <LoaderCircle className="poker-spinner" size={20} />
-              正在计算各个选择的范围、候选行动与评分…
-            </p>
-          )
-        ) : (
-          <p className="poker-empty-review">
-            <Spade size={22} />
-            完成一手牌后，查看每个行动的模型评分、候选尺度和思路解析。
-          </p>
-        )}
-        {state?.actions.length ? (
-          <details className="poker-hand-timeline">
-            <summary>
-              当前手完整行动线 <ChevronDown size={15} />
-            </summary>
-            <ol>
-              {state.actions.map((d, i) => (
-                <li key={i} className={d.seat === 0 ? 'is-human' : ''}>
-                  <small>{STREET_LABELS[d.street]}</small>
-                  <span>{SEAT_NAMES[d.seat]}</span>
-                  <strong>{actionLabel(d)}</strong>
-                  <span>底池 {d.pot}</span>
-                </li>
-              ))}
-            </ol>
-          </details>
-        ) : null}
-        <p className="poker-review-limit">
-          评分是当前范围与简化后续模型中的相对评价；100
-          分表示接近候选中的最好行动，不是获胜概率或已求解的 GTO
-          结论。范围推断、权益实现和对手应对都有误差，多人博弈尤其需要保留判断。结果不会被用于倒推评分。
-        </p>
-      </section>
-      <div className="poker-practice-record">
-        <span>本机五人桌记录</span>
-        <strong>{practice.hands} 手</strong>
-        <span>盈利 {practice.wins} 手</span>
-        <span>
-          累计 {practice.net >= 0 ? '+' : ''}
-          {practice.net} 虚拟筹码
-        </span>
-        <small>
-          {storageAvailable
-            ? '最近 8 手可回看，仅保存在当前浏览器。'
-            : '浏览器禁止本地存储，仅在本次页面内保留。'}
-        </small>
-      </div>
+              </div>
+            </section>
+          )}
+        </div>
+      </dialog>
     </div>
   );
 }

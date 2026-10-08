@@ -43,6 +43,15 @@ export class HoldemLoungeMusic {
     );
   }
 
+  /** Unlock in the music-setting click while the modal has paused the table. */
+  async unlock() {
+    if (this.closed) return;
+    const generation = this.generation;
+    await this.context.resume();
+    if (!this.closed && generation === this.generation && !this.timer)
+      await this.context.suspend();
+  }
+
   async play() {
     if (this.closed || this.timer) return;
     const generation = ++this.generation;

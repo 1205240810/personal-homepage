@@ -63,7 +63,7 @@ function HoldemPreview() {
       </div>
       <div className="room-holdem-table">
         <span className="room-table-rim" />
-        <span className="room-table-caption">FIVE SEATS</span>
+        <span className="room-table-caption">YOUR TABLE</span>
         {[1, 2, 3, 4].map((seat) => (
           <div
             className={`room-opponent-cards room-opponent-seat-${seat}`}
@@ -102,8 +102,8 @@ function HoldemPreview() {
         <span className="room-chip room-chip-three" />
       </div>
       <div className="room-preview-bottom">
-        <span>4 AI / 3 LEVELS</span>
-        <span>五人桌 · 决策评分</span>
+        <span>2–9 SEATS / 3 LEVELS</span>
+        <span>自定义牌桌 · 教学复盘</span>
       </div>
     </div>
   );

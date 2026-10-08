@@ -1,0 +1,114 @@
+{
+  "tool": "built-in imagegen",
+  "transparent_background": true,
+  "assets": [
+    {
+      "seat": 0,
+      "file": "/assets/poker/portraits/seat-0.webp",
+      "source": "exec-3de80fc5-d098-45f3-837b-efcfe59d39bf.png",
+      "sha256": "50e7d8a8f1675287979cfc9431c16d1592ef62cdbb37b84b2f19a264bb796cf3",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 44606,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional young East Asian adult man with neatly tousled short dark hair, clean-shaven, dark charcoal casual overshirt over a warm beige tee; subtly curious expression. Player avatar."
+    },
+    {
+      "seat": 1,
+      "file": "/assets/poker/portraits/seat-1.webp",
+      "source": "exec-3ae834c0-b283-479a-a94b-19714712f97c.png",
+      "sha256": "0a5b820de74048f02d8e78517b3a51ca2378195f116a6f62183101ff5448d036",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 47460,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional adult man in his forties with short dark brown hair and a neatly trimmed beard, navy blue knitted polo, composed analytical expression."
+    },
+    {
+      "seat": 2,
+      "file": "/assets/poker/portraits/seat-2.webp",
+      "source": "exec-c8073828-e995-4ed6-8632-769623887e07.png",
+      "sha256": "f041a34b35ca67c86b3b2df7c63e1d83a67dc28616c37039391c5593787e99fa",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 51330,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional adult East Asian woman in her forties with thin round metal eyeglasses, tied back dark hair, cream cable-knit cardigan, thoughtful reserved expression."
+    },
+    {
+      "seat": 3,
+      "file": "/assets/poker/portraits/seat-3.webp",
+      "source": "exec-425ad1a7-134e-4806-b984-2612e93b474e.png",
+      "sha256": "af1e3f63df8c5bcad0ea2161b62858634db53faec19b81131e75ea72991cff58",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 47110,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional young adult Black man with short textured hair, rust-brown casual jacket over charcoal tee, alert confident expression."
+    },
+    {
+      "seat": 4,
+      "file": "/assets/poker/portraits/seat-4.webp",
+      "source": "exec-ecdaaffe-1ff1-4fd6-bd55-50143b44e475.png",
+      "sha256": "d86d9ccb54f3478abc1c8ff6aed3f053cf7c5267eed11077e9f74705ad1e8403",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 40740,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional adult East Asian woman with sleek chin-length black bob haircut, deep indigo collared shirt, quiet enigmatic slight smile."
+    },
+    {
+      "seat": 5,
+      "file": "/assets/poker/portraits/seat-5.webp",
+      "source": "exec-1e166cc9-0a13-45d5-be4d-3e8b482d2738.png",
+      "sha256": "93824b2849a36c1b24cf1756fd4fd118d7930ca523b64c13cbbb5f162ba71ca4",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 63038,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional older adult white man with swept silver hair, short silver beard, olive tweed waistcoat over cream shirt, relaxed observant expression."
+    },
+    {
+      "seat": 6,
+      "file": "/assets/poker/portraits/seat-6.webp",
+      "source": "exec-ecfa55fb-2209-4743-8388-605cb152deaf.png",
+      "sha256": "bf699afc4ecb7a9e9436a037354b29c7cd6d436496d01d6bbfcf64da2ab07096",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 49910,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional adult South Asian man with short neat dark hair and subtle rectangular glasses, muted teal overshirt, focused thoughtful expression."
+    },
+    {
+      "seat": 7,
+      "file": "/assets/poker/portraits/seat-7.webp",
+      "source": "exec-cd3be3f8-f298-4d59-b09e-4af5038eab68.png",
+      "sha256": "ab79926710e2d13dd87dff4681383c3ba7205bd60d437efeb87141a7d2704248",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 45604,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional adult Middle Eastern woman with shoulder-length dark curls, moss-green blazer over warm gray top, assured relaxed expression."
+    },
+    {
+      "seat": 8,
+      "file": "/assets/poker/portraits/seat-8.webp",
+      "source": "exec-afe647bc-3906-43cf-abff-86be162cb7fe.png",
+      "sha256": "607c73b832dc6b0c7ab91944fe8802cbb6e38b1603be878cadf9cf6fd6845ec4",
+      "dimensions": [
+        512,
+        512
+      ],
+      "bytes": 47554,
+      "prompt": "Use case: stylized-concept. Asset type: one isolated half-body character portrait for a premium 2D poker game. High-end semi-realistic 3D game character render, believable adult proportions and detailed face, tactile woven fabric, subtle cinematic soft warm key light and cool forest-green rim light, restrained dark green/ink/cream palette. One adult person only, seated upright, head and upper torso with relaxed bent forearms fully visible, looking slightly down towards a poker table in front, calm attentive expression. Front-facing three-quarter view of no more than 10 degrees. Centered square composition, full head uncut with generous transparent margin; upper body ends at waist. Actual transparent background, no table, no chair, no surrounding scene, no card symbols, no chips, no typography, no logo, no watermark. Consistent small-scale readable silhouette and refined realistic materials, not anime, not chibi, not cartoon caricature.\nSubject: A fictional adult man with medium tan skin, short dark hair and subtle mustache, charcoal turtleneck and brown suede jacket, patient composed expression."
+    }
+  ]
+}

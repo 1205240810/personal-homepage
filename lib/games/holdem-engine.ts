@@ -1,7 +1,7 @@
 import { rankHand } from './holdem-cards.ts';
 
-export type Seat = 0 | 1 | 2 | 3 | 4;
-export type SeatValues<T> = [T, T, T, T, T];
+export type Seat = number;
+export type SeatValues<T> = T[];
 export const SEATS = [0, 1, 2, 3, 4] as const;
 export type Street = 'preflop' | 'flop' | 'turn' | 'river' | 'complete';
 export type PokerAction =
@@ -24,6 +24,7 @@ export type Decision = PublicAction & {
   stack: number;
   effectiveRisk: number;
   button: Seat;
+  tableSize: number;
   activeSeats: Seat[];
   stacks: SeatValues<number>;
   committed: SeatValues<number>;
@@ -43,6 +44,7 @@ export type SettledPot = {
 export type HoldemState = {
   hand: number;
   button: Seat;
+  tableSize: number;
   smallBlind: number;
   bigBlind: number;
   deck: number[];
@@ -75,12 +77,66 @@ export type HoldemState = {
   };
 };
 
-export const nextSeat = (seat: Seat, offset = 1): Seat =>
-  ((((seat + offset) % 5) + 5) % 5) as Seat;
-/** Kept for older consumers; on a five-seat table this means the next seat. */
+export type TableConfig = {
+  tableSize: number;
+  smallBlind: number;
+  bigBlind: number;
+  initialStack: number;
+};
+export const DEFAULT_TABLE_CONFIG: Readonly<TableConfig> = Object.freeze({
+  tableSize: 5,
+  smallBlind: 5,
+  bigBlind: 10,
+  initialStack: 1000,
+});
+export function validateTableConfig(config: TableConfig): string | null {
+  if (
+    !config ||
+    !Number.isSafeInteger(config.tableSize) ||
+    config.tableSize < 2 ||
+    config.tableSize > 9
+  )
+    return '人数必须是 2–9 之间的整数';
+  if (
+    !Number.isSafeInteger(config.smallBlind) ||
+    !Number.isSafeInteger(config.bigBlind) ||
+    config.smallBlind < 1 ||
+    config.smallBlind >= config.bigBlind ||
+    config.bigBlind > 100000
+  )
+    return '盲注必须是整数，满足 1 ≤ 小盲 < 大盲 ≤ 100000';
+  if (
+    !Number.isSafeInteger(config.initialStack) ||
+    config.initialStack < config.bigBlind ||
+    config.initialStack > 10000000
+  )
+    return '初始筹码必须是整数，不少于大盲且不超过 10000000';
+  return null;
+}
+export function tableSeats(
+  stateOrCount: Pick<HoldemState, 'tableSize'> | number,
+): Seat[] {
+  const count =
+    typeof stateOrCount === 'number' ? stateOrCount : stateOrCount.tableSize;
+  if (!Number.isSafeInteger(count) || count < 2 || count > 9)
+    throw new Error('人数必须是 2–9 之间的整数');
+  return Array.from({ length: count }, (_, seat) => seat);
+}
+export const nextSeat = (seat: Seat, offset = 1, tableSize = 5): Seat =>
+  (((seat + offset) % tableSize) + tableSize) % tableSize;
+/** Compatibility alias; pass the current table size when outside the default table. */
 export const otherSeat = nextSeat;
-export const seatsAfter = (seat: Seat): Seat[] =>
-  Array.from({ length: 5 }, (_, index) => nextSeat(seat, index + 1));
+export const seatsAfter = (seat: Seat, tableSize = 5): Seat[] =>
+  tableSeats(tableSize).map((_, index) => nextSeat(seat, index + 1, tableSize));
+export function blindSeats(state: Pick<HoldemState, 'button' | 'tableSize'>) {
+  return {
+    small:
+      state.tableSize === 2
+        ? state.button
+        : nextSeat(state.button, 1, state.tableSize),
+    big: nextSeat(state.button, state.tableSize === 2 ? 1 : 2, state.tableSize),
+  };
+}
 export const potSize = (state: HoldemState) =>
   state.committed.reduce((sum, chips) => sum + chips, 0);
 export const STREET_LABELS: Record<Street, string> = {
@@ -90,18 +146,13 @@ export const STREET_LABELS: Record<Street, string> = {
   river: '河牌',
   complete: '本手结束',
 };
-const tuple = <T>(value: T): SeatValues<T> => [
-  value,
-  value,
-  value,
-  value,
-  value,
-];
+const tuple = <T>(value: T, tableSize: number): SeatValues<T> =>
+  Array.from({ length: tableSize }, () => value);
 const copy = <T>(values: SeatValues<T>): SeatValues<T> => [...values];
 const liveSeats = (state: HoldemState) =>
-  SEATS.filter((seat) => !state.folded[seat]);
+  tableSeats(state).filter((seat) => !state.folded[seat]);
 const currentWager = (state: HoldemState) => {
-  const canBet = SEATS.filter(
+  const canBet = tableSeats(state).filter(
     (seat) => !state.folded[seat] && state.stacks[seat] > 0,
   ).length;
   return Math.max(
@@ -122,66 +173,97 @@ export function shuffledDeck(random = Math.random) {
   return deck;
 }
 
-export function startHand({
-  hand = 1,
-  button = 0,
-  stacks = [1000, 1000, 1000, 1000, 1000],
-  deck = shuffledDeck(),
-}: {
-  hand?: number;
-  button?: Seat;
-  stacks?: SeatValues<number>;
-  deck?: number[];
-} = {}): HoldemState {
+export function startHand(
+  options: Partial<TableConfig> & {
+    hand?: number;
+    button?: Seat;
+    stacks?: SeatValues<number>;
+    deck?: number[];
+  } = {},
+): HoldemState {
+  const hand = options.hand ?? 1;
+  const button = options.button ?? 0;
+  const deck = options.deck ?? shuffledDeck();
+  if (options.stacks !== undefined && !Array.isArray(options.stacks))
+    throw new Error('筹码必须是按座位排列的数组');
+  const tableSize =
+    options.tableSize ??
+    options.stacks?.length ??
+    DEFAULT_TABLE_CONFIG.tableSize;
+  if (
+    options.tableSize !== undefined &&
+    options.stacks &&
+    options.stacks.length !== tableSize
+  )
+    throw new Error('筹码数组长度与人数不一致');
+  const smallBlind = options.smallBlind ?? DEFAULT_TABLE_CONFIG.smallBlind;
+  const bigBlind = options.bigBlind ?? DEFAULT_TABLE_CONFIG.bigBlind;
+  const initialStack =
+    options.initialStack ?? DEFAULT_TABLE_CONFIG.initialStack;
+  // Continuing hands may carry short stacks or a winner's accumulated stack. The
+  // UI's initial buy-in limits do not cap chips already won at the table.
+  const validation = validateTableConfig({
+    tableSize,
+    smallBlind,
+    bigBlind,
+    initialStack:
+      options.stacks && options.initialStack === undefined
+        ? Math.max(initialStack, bigBlind)
+        : initialStack,
+  });
+  if (validation) throw new Error(validation);
   if (
     deck.length !== 52 ||
     new Set(deck).size !== 52 ||
     deck.some((c) => !Number.isInteger(c) || c < 0 || c > 51)
   )
     throw new Error('无效牌组');
+  const stacks = options.stacks ?? tuple(initialStack, tableSize);
   if (
-    stacks.length !== 5 ||
-    stacks.some((s) => !Number.isSafeInteger(s) || s <= 0) ||
+    stacks.some((stack) => !Number.isSafeInteger(stack) || stack <= 0) ||
     !Number.isSafeInteger(stacks.reduce((a, b) => a + b, 0))
   )
-    throw new Error('五个座位的筹码必须为正整数');
-  if (!SEATS.includes(button) || !Number.isSafeInteger(hand) || hand < 1)
+    throw new Error('各座位筹码必须为正整数且总额安全');
+  if (
+    !Number.isSafeInteger(button) ||
+    button < 0 ||
+    button >= tableSize ||
+    !Number.isSafeInteger(hand) ||
+    hand < 1
+  )
     throw new Error('无效座位或手牌编号');
-  const holes: SeatValues<number[]> = [[], [], [], [], []];
-  for (const [index, seat] of seatsAfter(button).entries()) {
-    holes[seat] = [deck[index], deck[index + 5]];
-  }
+  const holes = tuple<number[]>([], tableSize);
+  for (const [index, seat] of seatsAfter(button, tableSize).entries())
+    holes[seat] = [deck[index], deck[index + tableSize]];
   const state: HoldemState = {
     hand,
     button,
-    smallBlind: 5,
-    bigBlind: 10,
+    tableSize,
+    smallBlind,
+    bigBlind,
     deck: [...deck],
-    cursor: 10,
+    cursor: tableSize * 2,
     holes,
     board: [],
     stacks: copy(stacks),
     startingStacks: copy(stacks),
-    committed: tuple(0),
-    streetBets: tuple(0),
-    folded: tuple(false),
-    acted: tuple(false),
-    raiseOpen: tuple(true),
-    lastActedBet: tuple(0),
-    lastRaise: 10,
+    committed: tuple(0, tableSize),
+    streetBets: tuple(0, tableSize),
+    folded: tuple(false, tableSize),
+    acted: tuple(false, tableSize),
+    raiseOpen: tuple(true, tableSize),
+    lastActedBet: tuple(0, tableSize),
+    lastRaise: bigBlind,
     street: 'preflop',
-    toAct: nextSeat(button, 3),
+    toAct: null,
     actions: [],
     result: null,
   };
-  pay(state, nextSeat(button), Math.min(5, state.stacks[nextSeat(button)]));
-  pay(
-    state,
-    nextSeat(button, 2),
-    Math.min(10, state.stacks[nextSeat(button, 2)]),
-  );
+  const blinds = blindSeats(state);
+  pay(state, blinds.small, Math.min(smallBlind, state.stacks[blinds.small]));
+  pay(state, blinds.big, Math.min(bigBlind, state.stacks[blinds.big]));
   refreshRaises(state);
-  continueAction(state, nextSeat(button, 2));
+  continueAction(state, blinds.big);
   return state;
 }
 
@@ -193,7 +275,7 @@ function pay(state: HoldemState, seat: Seat, amount: number) {
 
 function refreshRaises(state: HoldemState) {
   const wager = currentWager(state);
-  for (const seat of SEATS) {
+  for (const seat of tableSeats(state)) {
     state.raiseOpen[seat] =
       !state.folded[seat] &&
       state.stacks[seat] > 0 &&
@@ -233,7 +315,7 @@ export function legalActions(state: HoldemState) {
     canRaise:
       state.raiseOpen[seat] &&
       maxTo > currentBet &&
-      SEATS.some(
+      tableSeats(state).some(
         (opponent) =>
           opponent !== seat &&
           !state.folded[opponent] &&
@@ -287,6 +369,7 @@ export function act(previous: HoldemState, action: PokerAction): HoldemState {
     paid: 0,
     effectiveRisk: 0,
     button: state.button,
+    tableSize: state.tableSize,
     activeSeats: liveSeats(state),
     stacks: copy(state.stacks),
     committed: copy(state.committed),
@@ -312,9 +395,9 @@ export function act(previous: HoldemState, action: PokerAction): HoldemState {
     const increase = action.to - before;
     record.paid = action.to - state.streetBets[seat];
     const maxOpponent = Math.max(
-      ...SEATS.filter(
-        (opponent) => opponent !== seat && !state.folded[opponent],
-      ).map((opponent) => state.streetBets[opponent] + state.stacks[opponent]),
+      ...tableSeats(state)
+        .filter((opponent) => opponent !== seat && !state.folded[opponent])
+        .map((opponent) => state.streetBets[opponent] + state.stacks[opponent]),
     );
     record.effectiveRisk = Math.min(
       record.paid,
@@ -361,7 +444,9 @@ function continueAction(state: HoldemState, after: Seat) {
     settle(state, 'fold');
     return;
   }
-  const pending = seatsAfter(after).find((seat) => needsAction(state, seat));
+  const pending = seatsAfter(after, state.tableSize).find((seat) =>
+    needsAction(state, seat),
+  );
   if (pending !== undefined) {
     state.toAct = pending;
     return;
@@ -389,14 +474,16 @@ function advanceStreet(state: HoldemState) {
       : state.board.length === 4
         ? 'turn'
         : 'river';
-  state.streetBets = tuple(0);
-  state.acted = tuple(false);
-  state.raiseOpen = tuple(true);
-  state.lastActedBet = tuple(0);
+  state.streetBets = tuple(0, state.tableSize);
+  state.acted = tuple(false, state.tableSize);
+  state.raiseOpen = tuple(true, state.tableSize);
+  state.lastActedBet = tuple(0, state.tableSize);
   state.lastRaise = state.bigBlind;
   refreshRaises(state);
   state.toAct =
-    seatsAfter(state.button).find((seat) => needsAction(state, seat)) ?? null;
+    seatsAfter(state.button, state.tableSize).find((seat) =>
+      needsAction(state, seat),
+    ) ?? null;
   if (state.toAct === null) runOut(state);
 }
 
@@ -407,21 +494,23 @@ function runOut(state: HoldemState) {
 
 function settle(state: HoldemState, reason: 'fold' | 'showdown') {
   const live = liveSeats(state);
-  const ranks = SEATS.map((seat) =>
+  const ranks = tableSeats(state).map((seat) =>
     reason === 'showdown' && !state.folded[seat]
       ? rankHand([...state.holes[seat], ...state.board])
       : null,
   );
   const labels = ranks.map((rank) => rank?.label ?? '') as SeatValues<string>;
-  const payouts = tuple(0);
-  const returned = tuple(0);
+  const payouts = tuple(0, state.tableSize);
+  const returned = tuple(0, state.tableSize);
   const pots: SettledPot[] = [];
   const levels = [
     ...new Set(state.committed.filter((chips) => chips > 0)),
   ].sort((a, b) => a - b);
   let lower = 0;
   for (const level of levels) {
-    const contributors = SEATS.filter((seat) => state.committed[seat] >= level);
+    const contributors = tableSeats(state).filter(
+      (seat) => state.committed[seat] >= level,
+    );
     const amount = (level - lower) * contributors.length;
     lower = level;
     if (contributors.length === 1) {
@@ -449,17 +538,17 @@ function settle(state: HoldemState, reason: 'fold' | 'showdown') {
     let odd = pot.amount % pot.winners.length;
     for (const seat of pot.winners) payouts[seat] += perSeat;
     // TDA: each actual pot is split separately; odd chips start left of button.
-    for (const seat of seatsAfter(state.button))
+    for (const seat of seatsAfter(state.button, state.tableSize))
       if (odd > 0 && pot.winners.includes(seat)) {
         payouts[seat]++;
         odd--;
       }
   }
-  for (const seat of SEATS) {
+  for (const seat of tableSeats(state)) {
     state.stacks[seat] += returned[seat] + payouts[seat];
     state.committed[seat] -= returned[seat];
   }
-  const winners = SEATS.filter((seat) => payouts[seat] > 0);
+  const winners = tableSeats(state).filter((seat) => payouts[seat] > 0);
   state.result = {
     winner: winners.length === 1 ? winners[0] : 'tie',
     winners,

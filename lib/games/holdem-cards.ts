@@ -228,8 +228,8 @@ export function sampleRangeWorlds(
   samples = 600,
   random: () => number = Math.random,
 ): EquityWorld[] {
-  if (hole.length !== 2 || board.length > 5 || opponents.length > 4)
-    throw new RangeError('权益模型需要两张底牌、至多五张公共牌及四个对手。');
+  if (hole.length !== 2 || board.length > 5 || opponents.length > 8)
+    throw new RangeError('权益模型需要两张底牌、至多五张公共牌及八个对手。');
   if (!Number.isSafeInteger(samples) || samples < 1)
     throw new RangeError('抽样次数必须是正整数。');
   requireUnique([...hole, ...board]);

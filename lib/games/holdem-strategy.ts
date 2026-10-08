@@ -12,7 +12,7 @@ import {
 import {
   legalActions,
   nextSeat,
-  SEATS,
+  tableSeats,
   type HoldemState,
   type PokerAction,
   type Decision,
@@ -39,7 +39,13 @@ export const DEFAULT_SEAT_STYLES: BotStyle[] = [
   'careful',
   'active',
   'tricky',
+  'balanced',
+  'careful',
+  'active',
+  'tricky',
 ];
+export const seatStyle = (seat: Seat): BotStyle =>
+  DEFAULT_SEAT_STYLES[seat] ?? 'balanced';
 export const REVIEW_SAMPLES: Record<AiDifficulty, number> = {
   casual: 600,
   standard: 900,
@@ -54,9 +60,35 @@ const clamp = (value: number, low = 0, high = 1) =>
   Math.min(high, Math.max(low, value));
 const sigmoid = (value: number) => 1 / (1 + Math.exp(-value));
 export const pct = (value: number) => `${Math.round(value * 100)}%`;
-export const positionLabel = (state: Pick<HoldemState, 'button'>, seat: Seat) =>
-  ['按钮', '小盲', '大盲', '前位', '截止位'][(seat - state.button + 5) % 5];
-export const nextButton = (state: HoldemState) => nextSeat(state.button);
+type PositionState = Pick<HoldemState, 'button' | 'tableSize'>;
+const positionOffset = (state: PositionState, seat: Seat) =>
+  (seat - state.button + state.tableSize) % state.tableSize;
+export function positionLabel(state: PositionState, seat: Seat) {
+  const offset = positionOffset(state, seat);
+  if (state.tableSize === 2) return offset === 0 ? '按钮 / 小盲' : '大盲';
+  if (offset < 3) return ['按钮', '小盲', '大盲'][offset];
+  if (offset === state.tableSize - 1) return '截止位';
+  if (offset === state.tableSize - 2 && state.tableSize >= 6) return '劫持位';
+  if (offset === state.tableSize - 3 && state.tableSize >= 7) return '低劫位';
+  return offset === 3 ? '前位' : `前位 +${offset - 3}`;
+}
+function latePosition(state: PositionState, seat: Seat) {
+  const offset = positionOffset(state, seat);
+  return (
+    offset === 0 || (state.tableSize > 3 && offset === state.tableSize - 1)
+  );
+}
+function hasPosition(
+  decision: Pick<Decision, 'button' | 'tableSize' | 'activeSeats' | 'seat'>,
+) {
+  const order = (seat: Seat) =>
+    positionOffset(decision, seat) || decision.tableSize;
+  return decision.activeSeats.every(
+    (seat) => seat === decision.seat || order(seat) < order(decision.seat),
+  );
+}
+export const nextButton = (state: HoldemState) =>
+  nextSeat(state.button, 1, state.tableSize);
 
 export function seededRandom(seed: number): () => number {
   let value = seed >>> 0;
@@ -71,6 +103,36 @@ function seedFor(value: unknown): number {
   for (let index = 0; index < text.length; index++)
     seed = Math.imul(seed ^ text.charCodeAt(index), 16777619);
   return seed >>> 0;
+}
+function normalizedDecisionSeed(decision: Decision, bigBlind: number) {
+  const {
+    action: _action,
+    paid: _paid,
+    effectiveRisk: _risk,
+    ...before
+  } = decision;
+  return {
+    ...before,
+    pot: before.pot / bigBlind,
+    call: before.call / bigBlind,
+    stack: before.stack / bigBlind,
+    streetBet: before.streetBet / bigBlind,
+    stacks: before.stacks.map((value) => value / bigBlind),
+    committed: before.committed.map((value) => value / bigBlind),
+    streetBets: before.streetBets.map((value) => value / bigBlind),
+    lastRaise: before.lastRaise / bigBlind,
+    minTo: before.minTo / bigBlind,
+    maxTo: before.maxTo / bigBlind,
+    history: before.history.map((action) => ({
+      ...action,
+      paid: action.paid / bigBlind,
+      streetBet: action.streetBet / bigBlind,
+      action:
+        action.action.type === 'raise'
+          ? { type: 'raise', to: action.action.to / bigBlind }
+          : action.action,
+    })),
+  };
 }
 
 /** A ranking feature, NOT equity. Calibrated only for this local response model. */
@@ -116,6 +178,51 @@ function strengthFeature(hole: readonly number[], board: readonly number[]) {
       )
     )
       value -= 0.055;
+  }
+  if (hand.category === 2) {
+    const boardCounts = new Map<number, number>();
+    for (const card of board)
+      boardCounts.set(
+        cardRank(card),
+        (boardCounts.get(cardRank(card)) ?? 0) + 1,
+      );
+    const privatePairs = hand.kickers
+      .slice(0, 2)
+      .filter(
+        (rank) =>
+          hole.some((card) => cardRank(card) === rank) &&
+          (boardCounts.get(rank) ?? 0) < 2,
+      );
+    if (privatePairs.length === 0) value = 0.3 + (ranks[0] - 8) * 0.012;
+    else if (
+      privatePairs.length === 1 &&
+      [...boardCounts.values()].some((count) => count >= 2)
+    ) {
+      const rank = privatePairs[0];
+      const boardHigh = Math.max(...board.map(cardRank));
+      const kicker = Math.max(2, ...ranks.filter((value) => value !== rank));
+      value =
+        rank > boardHigh
+          ? 0.84
+          : rank === boardHigh
+            ? 0.73 + (kicker - 2) * 0.006
+            : 0.53 + (kicker - 2) * 0.004;
+    }
+  }
+  if (
+    hand.category === 3 &&
+    board.filter((card) => cardRank(card) === hand.kickers[0]).length >= 3
+  ) {
+    // Public trips do not turn every unrelated pair of hole cards into a strong private hand.
+    value = 0.27 + (ranks[0] - 8) * 0.015;
+  } else if (hand.category === 3) {
+    const trips = hand.kickers[0];
+    const pocketSet = ranks[0] === trips && ranks[1] === trips;
+    const privateKicker = Math.max(
+      2,
+      ...ranks.filter((rank) => rank !== trips),
+    );
+    value = pocketSet ? 0.9 + trips / 500 : 0.85 + (privateKicker - 2) * 0.008;
   }
   if (board.length < 5) value += drawFeature(hole, board) * 0.14;
   return clamp(value, 0.03, 0.999);
@@ -166,16 +273,40 @@ function boardForStreet(
 }
 function rangeWeight(
   hole: readonly number[],
-  decision: Pick<Decision, 'board' | 'button' | 'history'>,
+  decision: Pick<Decision, 'board' | 'button' | 'tableSize' | 'history'>,
   seat: Seat,
   style: BotStyle,
+  strengthCache: Map<string, number>,
 ) {
-  const position = (seat - decision.button + 5) % 5;
+  const position = positionOffset(decision, seat);
+  const openingThreshold =
+    decision.tableSize === 2
+      ? position === 0
+        ? 0.43
+        : 0.49
+      : position === 0
+        ? 0.48
+        : position === 1
+          ? decision.tableSize > 4
+            ? 0.55
+            : 0.5
+          : position === 2
+            ? 0.54
+            : position === decision.tableSize - 1
+              ? 0.56
+              : position === decision.tableSize - 2
+                ? 0.6
+                : 0.64 + Math.max(0, decision.tableSize - 6) * 0.01;
   let weight = 1;
   const history = decision.history.filter((action) => action.seat === seat);
   for (const action of history) {
     const board = boardForStreet(decision.board, action.street);
-    const strength = strengthFeature(hole, board);
+    const key = `${Math.min(...hole) * 52 + Math.max(...hole)}|${board.join(',')}`;
+    let strength = strengthCache.get(key);
+    if (strength === undefined) {
+      strength = strengthFeature(hole, board);
+      strengthCache.set(key, strength);
+    }
     const raiseBefore = decision.history.some(
       (prior) =>
         prior !== action &&
@@ -187,7 +318,7 @@ function rangeWeight(
       (action.street === 'preflop'
         ? raiseBefore
           ? 0.63
-          : [0.48, 0.55, 0.54, 0.64, 0.56][position]
+          : openingThreshold
         : 0.54) + styleOffset(style);
     if (action.action.type === 'raise') {
       const bluff =
@@ -214,7 +345,7 @@ export function buildOpponentRanges(
   hole: readonly number[],
   decision: Pick<
     Decision,
-    'board' | 'button' | 'history' | 'activeSeats' | 'seat'
+    'board' | 'button' | 'tableSize' | 'history' | 'activeSeats' | 'seat'
   >,
   styles: readonly BotStyle[] = DEFAULT_SEAT_STYLES,
 ): OpponentRange[] {
@@ -222,6 +353,7 @@ export function buildOpponentRanges(
   const remaining = Array.from({ length: 52 }, (_, card) => card).filter(
     (card) => !known.has(card),
   );
+  const strengthCache = new Map<string, number>();
   return decision.activeSeats
     .filter((seat) => seat !== decision.seat)
     .map((seat) => {
@@ -236,6 +368,7 @@ export function buildOpponentRanges(
               decision,
               seat as Seat,
               styles[seat] ?? 'balanced',
+              strengthCache,
             ),
           });
         }
@@ -251,6 +384,7 @@ function snapshot(state: HoldemState, seat: Seat): Decision {
     street: state.street as Decision['street'],
     board: [...state.board],
     button: state.button,
+    tableSize: state.tableSize,
     pot: legal.pot,
     call: legal.call,
     stack: state.stacks[seat],
@@ -258,7 +392,7 @@ function snapshot(state: HoldemState, seat: Seat): Decision {
     action: { type: 'check' },
     paid: 0,
     effectiveRisk: 0,
-    activeSeats: SEATS.filter((player) => !state.folded[player]),
+    activeSeats: tableSeats(state).filter((player) => !state.folded[player]),
     stacks: [...state.stacks],
     committed: [...state.committed],
     streetBets: [...state.streetBets],
@@ -293,12 +427,16 @@ export function chooseBotAction(
   const legal = legalActions(state);
   if (!legal) throw new Error('没有可行动的玩家');
   const seat = legal.seat;
-  const opponents = SEATS.filter(
+  const opponents = tableSeats(state).filter(
     (player) => player !== seat && !state.folded[player],
   ).length;
   const multiway = Math.max(0, opponents - 1);
-  const position = (seat - state.button + 5) % 5;
-  const inPosition = position === 0 || position === 4;
+  const inPosition = hasPosition({
+    button: state.button,
+    tableSize: state.tableSize,
+    seat,
+    activeSeats: tableSeats(state).filter((player) => !state.folded[player]),
+  });
   const aggression =
     style === 'active'
       ? 1.3
@@ -315,9 +453,9 @@ export function chooseBotAction(
     state.stacks[seat],
     Math.max(
       0,
-      ...SEATS.filter((player) => player !== seat && !state.folded[player]).map(
-        (player) => state.stacks[player],
-      ),
+      ...tableSeats(state)
+        .filter((player) => player !== seat && !state.folded[player])
+        .map((player) => state.stacks[player]),
     ),
   );
   const spr = effective / Math.max(1, legal.pot);
@@ -332,7 +470,7 @@ export function chooseBotAction(
   const lastAggressor = priorRaises.at(-1)?.seat;
   const cbet = state.street === 'flop' && lastAggressor === seat;
   const unopened = state.street === 'preflop' && priorRaises.length === 0;
-  const steal = unopened && inPosition;
+  const steal = unopened && latePosition(state, seat);
   const bigValue =
     adjusted >
     (state.street === 'preflop'
@@ -455,7 +593,7 @@ export function decideBot(
     hand: state.hand,
     seat,
     hole,
-    decision,
+    decision: normalizedDecisionSeed(decision, state.bigBlind),
     difficulty,
     style,
   });
@@ -531,7 +669,9 @@ export function projectedPotEquity(
   let contestable = 0;
   let expectedReturn = 0;
   for (const level of levels) {
-    const contributors = SEATS.filter((seat) => contributions[seat] >= level);
+    const contributors = tableSeats(contributions.length).filter(
+      (seat) => contributions[seat] >= level,
+    );
     const amount = (level - previous) * contributors.length;
     previous = level;
     if (contributors.length < 2 || !contributors.includes(decision.seat))
@@ -558,7 +698,18 @@ export type ReviewAlternative = {
   evBB: number;
   standardErrorBB: number;
   score: number;
+  /** Extreme effective investment makes the local response model sensitive. */
+  scoreSensitive?: boolean;
   reason: string;
+};
+export type ReviewExplanation = {
+  conclusion: string;
+  reasons: string[];
+  purpose: string;
+  sizing: string;
+  alternatives: string[];
+  nextQuestion: string;
+  gtoContext: string;
 };
 export type ReviewPoint = {
   index: number;
@@ -574,6 +725,7 @@ export type ReviewPoint = {
   principle: string;
   board: number[];
   score: number;
+  scoreSensitive?: boolean;
   recommendation: { action: PokerAction; label: string; evBB: number };
   alternatives: ReviewAlternative[];
   regretBB: number;
@@ -587,6 +739,8 @@ export type ReviewPoint = {
   limitations: string[];
   /** Sensitivity allowance for the heuristic model, not a statistical confidence interval. */
   modelAllowanceBB?: number;
+  /** Optional only for older locally stored hands; newly computed reviews always include it. */
+  explanations?: ReviewExplanation;
 };
 const actionLabel = (action: PokerAction, call: number) =>
   action.type === 'raise'
@@ -679,7 +833,7 @@ function rangeDescription(decision: Decision, seat: Seat, style: BotStyle) {
     latest?.action.type === 'check' && raises
       ? '；最近过牌也可能是控池或慢打'
       : '';
-  return `${positionLabel({ button: decision.button }, seat)} · ${BOT_STYLES[style].label}：${observed}；${interpretation}${checkNote}。所有组合均排除你的底牌与当时公共牌。`;
+  return `${positionLabel(decision, seat)} · ${BOT_STYLES[style].label}：${observed}；${interpretation}${checkNote}。所有组合均排除你的底牌与当时公共牌。`;
 }
 
 function recommendationReason(
@@ -709,6 +863,138 @@ function recommendationReason(
       : '这个尺度主要争取弃牌收益或隔离更宽的范围：先问哪些更好的牌真的会弃、哪些更弱的牌会跟。';
   return `${purpose}${opponents > 1 ? '多人底池的立即获胜要求所有仍可弃牌的对手一起放弃，单人的弃牌率不能直接套用。' : '单挑时小尺度可保留较宽的跟注范围，大尺度更依赖明确价值或可信诈唬。'}${allIns ? `当前 ${allIns} 名全下对手不会弃牌，加注最多改变其他玩家及边池，不能诈唬拿走仍需摊牌的主池。` : ''}`;
 }
+function teachingExplanation({
+  decision,
+  hole,
+  recommendation,
+  alternatives,
+  bigBlind,
+  equity,
+  hand,
+  position,
+  spr,
+  close,
+  conservative,
+  sizingSensitive,
+}: {
+  decision: Decision;
+  hole: readonly number[];
+  recommendation: PokerAction;
+  alternatives: ReviewAlternative[];
+  bigBlind: number;
+  equity: number;
+  hand: ReturnType<typeof handContext>;
+  position: string;
+  spr: number;
+  close: boolean;
+  conservative: boolean;
+  sizingSensitive: boolean;
+}): ReviewExplanation {
+  const chosen = actionLabel(decision.action, decision.call);
+  const recommended = actionLabel(recommendation, decision.call);
+  const same = actionKey(decision.action) === actionKey(recommendation);
+  const conclusion = sizingSensitive
+    ? `${chosen}涉及极大投入，估值对少数强牌跟注假设很敏感；先把${recommended}作为稳健参照，高分也不能验证这个尺度。`
+    : same
+      ? `推荐${recommended}：这次选择与当前公开信息下的稳健方案一致。`
+      : close
+        ? `${chosen}和${recommended}的估值接近；先理解两者目的，不因这手输赢判错。`
+        : `这轮优先考虑${recommended}，重新检查${chosen}的价格和下注目的。`;
+  const holeText = hole.map(cardLabel).join(' ');
+  const ranks = hole.map(cardRank).sort((a, b) => b - a);
+  const suited = cardSuit(hole[0]) === cardSuit(hole[1]);
+  const boardText = decision.board.map(cardLabel).join(' ');
+  const handReason =
+    decision.board.length < 3
+      ? `${holeText} 是${ranks[0] === ranks[1] ? '口袋对子' : suited ? '同花起手牌' : '不同花起手牌'}；${ranks[1] >= 10 ? '高张有顶对潜力，但仍要防被紧范围支配' : ranks[0] === ranks[1] ? '对子强度与成三条后的取值取决于位置和深度' : '弱点数不能只凭入池便宜就扩大投入'}。`
+      : `${holeText} 在 ${boardText} 上是${rankHand([...hole, ...decision.board]).label}；${hand.playsBoard ? '最佳五张来自公共牌，要考虑分池而非独赢' : hand.draw ? '还有听牌潜力，需要区分补牌价值和立即弃牌收益' : hand.madeCategory <= 1 ? '重点是控制底池、识别会继续的更强组合' : '重点是找出愿意投入的更弱成牌'}。`;
+  const priceReason = decision.call
+    ? `跟注 ${round(decision.call / bigBlind)} BB 争夺当前 ${round(decision.pot / bigBlind)} BB，需要约 ${pct(decision.call / (decision.pot + decision.call))} 静态权益；公开范围份额约 ${pct(equity)}，还要看能否兑现。`
+    : `现在可以免费过牌；约 ${pct(equity)} 的公开范围摊牌份额，并不自动意味着下注有利。`;
+  const activeOpponents = decision.activeSeats.filter(
+    (seat) => seat !== decision.seat,
+  );
+  const latestRaise = decision.history
+    .filter(
+      (action) =>
+        activeOpponents.includes(action.seat) && action.action.type === 'raise',
+    )
+    .at(-1);
+  const publicNote = latestRaise
+    ? `${positionLabel(decision, latestRaise.seat)}最近${actionLabel(latestRaise.action, latestRaise.paid)}，继续范围需收紧看待`
+    : '当前对手尚未表现出持续加注压力，过牌也不能直接当作弱牌';
+  const rangeReason = `你在${position}，还有 ${activeOpponents.length} 个对手，SPR 约 ${spr.toFixed(1)}；${publicNote}。`;
+  const allIns = activeOpponents.filter(
+    (seat) => decision.stacks[seat] === 0,
+  ).length;
+  const purpose =
+    recommendation.type === 'fold'
+      ? '保留剩余筹码，不为了追回之前投入而高价追逐边缘权益。'
+      : recommendation.type === 'check'
+        ? '免费保留摊牌与补牌机会，避免把底池扩大到只剩强牌继续。'
+        : recommendation.type === 'call'
+          ? `用当前价格保留${hand.draw ? '补牌与摊牌' : '现有摊牌'}权益，保持对手较宽的范围。`
+          : !hand.playsBoard &&
+              (hand.madeCategory >= 2 ||
+                equity >
+                  Math.max(0.43, 1 / (activeOpponents.length + 1) + 0.16))
+            ? '向更弱成牌和听牌取值，确认它们愿意按这个尺度继续。'
+            : hand.draw
+              ? '用半诈唬同时争取弃牌收益与补成后的价值，不能只因为有听牌就加注。'
+              : '争取弃牌收益或隔离更宽范围，必须明确哪些更强牌真的会弃。';
+  const currentBet = Math.max(
+    ...decision.streetBets,
+    decision.streetBet + decision.call,
+  );
+  const sizing =
+    recommendation.type === 'raise'
+      ? `加注到 ${recommendation.to}（${round(recommendation.to / bigBlind)} BB），本次新增 ${recommendation.to - decision.streetBet}；${decision.street === 'preflop' ? '这是结合当前入池与下注的局部尺度，不是通用开局表' : `额外加注约为跟注后底池的 ${pct((recommendation.to - currentBet) / Math.max(1, decision.pot + decision.call))}`}。${allIns ? '全下对手不会弃牌，尺度只能改变其他玩家及边池。' : ''}`
+      : recommendation.type === 'call'
+        ? `只补 ${decision.call}（${round(decision.call / bigBlind)} BB）${decision.call >= decision.stack ? '，这是当前筹码范围内的全下跟注' : '，下一街重新评估而非自动跟到底'}。`
+        : recommendation.type === 'check'
+          ? '本次新增投入为 0；遇到后续下注或公共牌变化，再重新判断。'
+          : '本次新增投入为 0；已经投入的筹码是沉没成本。';
+  const seen = new Set<string>();
+  const otherChoices = alternatives
+    .filter((option) => {
+      if (
+        actionKey(option.action) === actionKey(recommendation) ||
+        seen.has(option.action.type)
+      )
+        return false;
+      seen.add(option.action.type);
+      return true;
+    })
+    .slice(0, 3)
+    .map((option) => {
+      if (option.action.type === 'raise')
+        return `${option.label}：增加投入和面对再加注的风险；${option.action.to - currentBet > 2 * (decision.pot + decision.call) ? '极大尺度依赖少数强牌是否跟注，不能按单次数值峰值认可' : conservative ? '估值差接近模型预留，优先较少投入的方案' : hand.draw ? '听牌可半诈唬，但必须有足够弃牌收益' : '需要明确的价值对象或可信弃牌率'}。`;
+      if (option.action.type === 'fold')
+        return `${option.label}：${decision.call === 0 ? '免费过牌不花钱，直接弃牌会白白放弃权益' : '保留筹码，但也放弃当前可争夺的权益，需与价格比较'}。`;
+      if (option.action.type === 'check')
+        return `${option.label}：保留免费观察，但${recommendation.type === 'raise' ? '可能错过当前更弱牌愿意支付的价值' : '未来遇到下注仍需继续判断'}。`;
+      return `${option.label}：保留权益，但${recommendation.type === 'fold' ? '当前价格与收紧后的范围不足以支持继续' : recommendation.type === 'raise' ? '没有主动向更弱牌取值或施压' : '不能消除后位加注与权益兑现风险'}。`;
+    });
+  const nextQuestion =
+    decision.street === 'preflop'
+      ? '如果后位再加注，你准备继续哪些更强起手牌？'
+      : decision.street === 'flop'
+        ? '下一张牌会让谁的范围变强，你准备保留哪些成牌与听牌？'
+        : decision.street === 'turn'
+          ? '哪些河牌会改变你的取值对象或让你必须放弃？'
+          : '哪些具体更弱组合会跟这个尺度，哪些更强组合真的会弃？';
+  return {
+    conclusion,
+    reasons: [handReason, priceReason, rangeReason],
+    purpose,
+    sizing,
+    alternatives: otherChoices,
+    nextQuestion,
+    gtoContext:
+      'GTO 讨论整组手牌在同一局面如何分配行动及混合频率，而非单手 EV 排名。这里使用公开范围近似和稳健推荐，没有求解专业均衡范围或精确频率；高分也不表示该动作应执行 100%。',
+  };
+}
+
 function candidates(decision: Decision, bigBlind: number): PokerAction[] {
   const actions: PokerAction[] = [
     { type: 'fold' },
@@ -747,6 +1033,40 @@ function candidates(decision: Decision, bigBlind: number): PokerAction[] {
   ];
 }
 
+type ModelHandFeatures = {
+  quality: number;
+  category: number;
+  topPair: boolean;
+  draw: number;
+  wetPenalty: number;
+};
+function modelHandFeatures(
+  hole: readonly number[],
+  board: readonly number[],
+): ModelHandFeatures {
+  const hand = board.length >= 3 ? rankHand([...hole, ...board]) : null;
+  const privatePair =
+    hand?.category === 1 &&
+    hole.some((card) => cardRank(card) === hand.kickers[0]);
+  const boardSuitCount = Math.max(
+    0,
+    ...[0, 1, 2, 3].map(
+      (suit) => board.filter((card) => cardSuit(card) === suit).length,
+    ),
+  );
+  return {
+    quality: strengthFeature(hole, board),
+    category: hand?.category ?? -1,
+    topPair: Boolean(
+      privatePair &&
+      hand &&
+      hand.kickers[0] >= Math.max(...board.map(cardRank)),
+    ),
+    draw: drawFeature(hole, board),
+    wetPenalty: boardSuitCount >= 4 ? 0.25 : boardSuitCount >= 3 ? 0.14 : 0,
+  };
+}
+
 /** Probability of continuing in our disclosed local response model, not a GTO frequency.
  * It uses sampled private cards and ONLY the decision-time board, never the runout. */
 export function continuationProbability(
@@ -757,45 +1077,41 @@ export function continuationProbability(
   style: BotStyle,
   opponents: number,
   raised: boolean,
+  cachedFeatures?: ModelHandFeatures,
+  betMultiple?: number,
 ) {
   if (cost <= 0) return 1;
-  const quality = strengthFeature(hole, board);
+  const features = cachedFeatures ?? modelHandFeatures(hole, board);
+  const quality = features.quality;
   const price = cost / Math.max(1, pot + cost);
+  const multiple = Math.max(0, betMultiple ?? cost / Math.max(1, pot - cost));
+  const overbet = Math.max(0, Math.log2(Math.max(1, multiple / 1.5)));
   const threshold =
     (board.length < 3 ? 0.37 : 0.31) +
     price * 0.75 +
     Math.max(0, opponents - 1) * 0.028 +
     styleOffset(style) +
-    (raised ? 0.025 : 0);
+    (raised ? 0.025 : 0) +
+    Math.min(0.32, overbet * 0.065);
   let probability = 0.025 + 0.95 * sigmoid((quality - threshold) * 11);
   if (board.length >= 3) {
-    const hand = rankHand([...hole, ...board]);
-    const privatePair =
-      hand.category === 1 &&
-      hole.some((card) => cardRank(card) === hand.kickers[0]);
-    const topPair =
-      privatePair && hand.kickers[0] >= Math.max(...board.map(cardRank));
     // A normal single bet does not make a private top pair vanish from the
     // defending range. Tight opponents still defend it; wet boards and large
     // prices reduce that floor, rather than making every pair equivalent.
-    const boardSuitCount = Math.max(
-      ...[0, 1, 2, 3].map(
-        (suit) => board.filter((card) => cardSuit(card) === suit).length,
-      ),
-    );
-    const wetPenalty =
-      boardSuitCount >= 4 ? 0.25 : boardSuitCount >= 3 ? 0.14 : 0;
-    if (topPair && price <= 0.34)
+    if (features.topPair && price <= 0.34)
       probability = Math.max(
         probability,
-        (style === 'careful' ? 0.72 : 0.84) - wetPenalty,
+        (style === 'careful' ? 0.72 : 0.84) - features.wetPenalty,
       );
-    if (hand.category >= 2 && price <= 0.38)
+    if (features.category >= 2 && quality >= 0.72 && price <= 0.38)
       probability = Math.max(probability, 0.9);
-    if (drawFeature(hole, board) >= 1 && price <= 0.26)
+    if (features.draw >= 1 && price <= 0.26)
       probability = Math.max(probability, 0.62);
+    if (features.category < 3 && overbet > 0)
+      probability *= Math.exp(-overbet * 0.9);
+    if (features.category >= 6) probability = Math.max(probability, 0.85);
   }
-  return clamp(probability, 0.025, 0.99);
+  return clamp(probability, 0.025 / Math.max(1, multiple ** 1.1), 0.99);
 }
 function payout(
   contributions: readonly number[],
@@ -809,7 +1125,9 @@ function payout(
   let previous = 0;
   let won = 0;
   for (const level of levels) {
-    const contributors = SEATS.filter((seat) => contributions[seat] >= level);
+    const contributors = tableSeats(contributions.length).filter(
+      (seat) => contributions[seat] >= level,
+    );
     const amount = (level - previous) * contributors.length;
     previous = level;
     if (contributors.length === 1) {
@@ -830,9 +1148,59 @@ function candidateValues(
   worlds: readonly EquityWorld[],
   ranges: readonly OpponentRange[],
   styles: readonly BotStyle[],
+  featureCache: Map<number, ModelHandFeatures> = new Map(),
 ) {
   if (action.type === 'fold') return worlds.map(() => 0);
   const hero = decision.seat;
+  const featuresFor = (hole: readonly number[]) => {
+    const key = Math.min(...hole) * 52 + Math.max(...hole);
+    let features = featureCache.get(key);
+    if (!features) {
+      features = modelHandFeatures(hole, decision.board);
+      featureCache.set(key, features);
+    }
+    return features;
+  };
+  type DefensePlan = { threshold: number; partial: number };
+  const defensePlans = new Map<Seat, DefensePlan>();
+  const defenseFloor = (
+    range: OpponentRange,
+    quality: number,
+    multiple: number,
+  ) => {
+    let plan = defensePlans.get(range.seat);
+    if (!plan) {
+      // A one-bet defense reference applied to the top of a public weighted
+      // range. It is not a solved multiplayer equilibrium or actual hidden hand.
+      const entries = range.combos
+        .map((combo) => ({
+          quality: featuresFor(combo.cards).quality,
+          weight: combo.weight,
+        }))
+        .sort((a, b) => b.quality - a.quality);
+      const target =
+        entries.reduce((sum, entry) => sum + entry.weight, 0) / (1 + multiple);
+      let above = 0;
+      for (let index = 0; index < entries.length;) {
+        const threshold = entries[index].quality;
+        let group = 0;
+        while (index < entries.length && entries[index].quality === threshold)
+          group += entries[index++].weight;
+        if (above + group >= target) {
+          plan = { threshold, partial: clamp((target - above) / group) };
+          break;
+        }
+        above += group;
+      }
+      plan ??= { threshold: 0, partial: 1 };
+      defensePlans.set(range.seat, plan);
+    }
+    return quality > plan.threshold
+      ? 1
+      : quality === plan.threshold
+        ? plan.partial
+        : 0;
+  };
   const target =
     action.type === 'raise'
       ? action.to
@@ -847,16 +1215,15 @@ function candidateValues(
     const committed = [...decision.committed];
     committed[hero] += paid;
     const active = decision.folded.map((folded) => !folded);
-    const ranks = SEATS.map(() => 0);
+    const ranks = tableSeats(decision).map(() => 0);
     ranks[hero] = world.ranks[0];
-    let responsePot =
-      decision.committed.reduce((sum, value) => sum + value, 0) + paid;
     // Respond in table order, including opponents who still owe the current bet.
     const order = ranges
       .map((range, index) => ({ range, index }))
       .sort(
         (a, b) =>
-          ((a.range.seat - hero + 5) % 5) - ((b.range.seat - hero + 5) % 5),
+          ((a.range.seat - hero + decision.tableSize) % decision.tableSize) -
+          ((b.range.seat - hero + decision.tableSize) % decision.tableSize),
       );
     for (const { range, index } of order) {
       const seat = range.seat as Seat;
@@ -866,19 +1233,46 @@ function candidateValues(
         decision.stacks[seat],
         Math.max(0, target - decision.streetBets[seat]),
       );
-      const probability = continuationProbability(
+      const callerCap = committed[seat] + cost;
+      const callerPot = committed.reduce(
+        (sum, amount) => sum + Math.min(amount, callerCap),
+        0,
+      );
+      const sizingMultiple =
+        action.type === 'raise'
+          ? Math.min(
+              (target -
+                Math.max(
+                  ...decision.streetBets,
+                  decision.streetBet + decision.call,
+                )) /
+                Math.max(1, decision.pot + decision.call),
+              cost / Math.max(1, decision.pot + decision.call),
+            )
+          : undefined;
+      let probability = continuationProbability(
         world.holes[index + 1],
         decision.board,
         cost,
-        responsePot,
+        callerPot,
         styles[seat] ?? 'balanced',
         ranges.length,
         action.type === 'raise',
+        featuresFor(world.holes[index + 1]),
+        sizingMultiple,
       );
+      if ((sizingMultiple ?? 0) >= 2)
+        probability = Math.max(
+          probability,
+          defenseFloor(
+            range,
+            featuresFor(world.holes[index + 1]).quality,
+            sizingMultiple!,
+          ),
+        );
       if (world.responseRolls[index] > probability) active[seat] = false;
       else {
         committed[seat] += cost;
-        responsePot += cost;
       }
     }
     const gross = payout(committed, active, ranks, hero);
@@ -893,13 +1287,13 @@ function candidateValues(
       0,
       committed[hero] -
         Math.max(
-          ...SEATS.filter((seat) => seat !== hero).map(
-            (seat) => committed[seat],
-          ),
+          ...tableSeats(decision)
+            .filter((seat) => seat !== hero)
+            .map((seat) => committed[seat]),
         ),
     );
-    const heroQuality = strengthFeature(world.holes[0], decision.board);
-    const inPosition = [0, 4].includes((hero - decision.button + 5) % 5);
+    const heroQuality = featuresFor(world.holes[0]).quality;
+    const inPosition = hasPosition(decision);
     // A deliberately conservative equity-realization proxy. Future wagers are
     // not solved; out-of-position weak hands do not realize every lucky runout.
     let realization =
@@ -933,7 +1327,7 @@ function candidateValues(
           Math.max(0, target - decision.streetBets[range.seat]),
         );
         if (decision.stacks[range.seat] - call < increment) continue;
-        const quality = strengthFeature(world.holes[index + 1], decision.board);
+        const quality = featuresFor(world.holes[index + 1]).quality;
         const risk =
           0.28 *
           sigmoid(
@@ -972,23 +1366,25 @@ export function reviewHand(
   return state.actions.flatMap((decision, index) => {
     if (decision.seat !== 0) return [];
     const ranges = buildOpponentRanges(hole, decision, styles);
-    const {
-      action: _action,
-      paid: _paid,
-      effectiveRisk: _risk,
-      ...beforeAction
-    } = decision;
     const worlds = sampleRangeWorlds(
       hole,
       decision.board,
       ranges,
       samples,
-      random ?? seededRandom(seedFor({ hole, beforeAction, styles })),
+      random ??
+        seededRandom(
+          seedFor({
+            hole,
+            beforeAction: normalizedDecisionSeed(decision, bigBlind),
+            styles,
+          }),
+        ),
     );
     const estimate = equityFromWorlds(worlds);
     const options = candidates(decision, bigBlind);
+    const featureCache = new Map<number, ModelHandFeatures>();
     const values = options.map((action) =>
-      candidateValues(decision, action, worlds, ranges, styles),
+      candidateValues(decision, action, worlds, ranges, styles, featureCache),
     );
     const expected = values.map(mean);
     const bestIndex = expected.reduce(
@@ -998,41 +1394,88 @@ export function reviewHand(
     const actualIndex = options.findIndex(
       (action) => actionKey(action) === actionKey(decision.action),
     );
-    const pairedError = values.map((value) =>
-      standardError(value.map((ev, sample) => values[bestIndex][sample] - ev)),
-    );
-    // Scores discount paired sampling noise and a separate model allowance.
-    // They do not grade luck or claim equilibrium EV.
-    const modelAllowance =
+    const baseModelAllowance =
       Math.max(bigBlind * 0.2, decision.pot * 0.12) *
       ({ preflop: 1.75, flop: 1.35, turn: 0.65, river: 0.35 } as const)[
         decision.street
       ];
-    const tolerance = pairedError.map(
-      (error) => Math.max(bigBlind * 0.08, error * 1.96) + modelAllowance,
-    );
-    const scale = Math.max(bigBlind * 3, decision.pot * 0.35);
-    const score = expected.map((ev, candidate) =>
-      Math.round(
-        Math.exp(
-          -Math.max(0, expected[bestIndex] - ev - tolerance[candidate]) / scale,
-        ) * 100,
-      ),
-    );
     const investment = (action: PokerAction) =>
       action.type === 'raise'
         ? action.to - decision.streetBet
         : action.type === 'call'
           ? decision.call
           : 0;
-    // When values cannot be reliably distinguished, recommend the cheaper
-    // viable action, rather than implying the noisy numerical maximum is exact.
-    // A free check weakly dominates a gratuitous fold and is preferred in ties.
+    const effectiveInvestment = (action: PokerAction) =>
+      Math.min(
+        investment(action),
+        Math.max(
+          0,
+          ...ranges.map(
+            (range) =>
+              decision.streetBets[range.seat] +
+              decision.stacks[range.seat] -
+              decision.streetBet,
+          ),
+        ),
+      );
+    // Each candidate has its own model sensitivity allowance. An extreme
+    // all-in must not spread its uncertainty across ordinary value bets/checks.
+    // The 3% reserve is a disclosed heuristic, not a solved risk premium.
+    const allowances = options.map((action) =>
+      action.type === 'fold'
+        ? 0
+        : baseModelAllowance +
+          0.03 *
+            Math.max(
+              0,
+              effectiveInvestment(action) -
+                decision.call -
+                2 * (decision.pot + decision.call),
+            ),
+    );
+    const samplingError = values.map(standardError);
+    const conservativeValues = expected.map(
+      (value, candidate) =>
+        value - allowances[candidate] - samplingError[candidate] * 1.96,
+    );
+    const anchorIndex = conservativeValues.reduce(
+      (best, value, candidate) =>
+        (options[candidate].type !== 'fold' || decision.call > 0) &&
+        value > conservativeValues[best]
+          ? candidate
+          : best,
+      decision.call ? 0 : 1,
+    );
+    const pairedError = values.map((value) =>
+      standardError(
+        value.map((ev, sample) => values[anchorIndex][sample] - ev),
+      ),
+    );
+    const samplingTolerance = pairedError.map((error) =>
+      Math.max(bigBlind * 0.08, error * 1.96),
+    );
+    const tolerance = samplingTolerance.map(
+      (error, candidate) => error + allowances[candidate],
+    );
+    const scale = Math.max(bigBlind * 3, decision.pot * 0.35);
+    const score = expected.map((ev, candidate) =>
+      Math.round(
+        Math.exp(
+          -Math.max(0, expected[anchorIndex] - ev - tolerance[candidate]) /
+            scale,
+        ) * 100,
+      ),
+    );
+    // First choose a candidate-specific conservative EV anchor. Compare close
+    // choices against that anchor with paired Monte Carlo noise, then prefer
+    // lower investment. A free check dominates a gratuitous fold in a tie.
     const plausible = options
       .map((action, candidate) => ({ action, candidate }))
       .filter(
         ({ action, candidate }) =>
-          expected[bestIndex] - expected[candidate] <= tolerance[candidate] &&
+          conservativeValues[anchorIndex] - conservativeValues[candidate] <=
+            samplingTolerance[candidate] +
+              Math.min(allowances[anchorIndex], allowances[candidate]) &&
           !(action.type === 'fold' && decision.call === 0),
       );
     const recommendationIndex =
@@ -1040,17 +1483,18 @@ export function reviewHand(
         (a, b) =>
           investment(a.action) - investment(b.action) ||
           expected[b.candidate] - expected[a.candidate],
-      )[0]?.candidate ?? bestIndex;
+      )[0]?.candidate ?? anchorIndex;
     const recommendation = options[recommendationIndex];
     const conservativeRecommendation = recommendationIndex !== bestIndex;
     const regret = Math.max(0, expected[bestIndex] - expected[actualIndex]);
     const uncertainty = pairedError[actualIndex] * 1.96;
+    const modelAllowance = allowances[actualIndex];
     const close =
-      regret <= Math.max(bigBlind * 0.08, uncertainty) + modelAllowance;
+      expected[anchorIndex] - expected[actualIndex] <= tolerance[actualIndex];
     const threshold = decision.call
       ? decision.call / (decision.pot + decision.call)
       : null;
-    const position = positionLabel({ button: decision.button }, 0);
+    const position = positionLabel(decision, 0);
     const effective = Math.min(
       decision.stack,
       Math.max(0, ...ranges.map((range) => decision.stacks[range.seat])),
@@ -1076,7 +1520,9 @@ export function reviewHand(
       `最高数值候选 ${actionLabel(options[bestIndex], decision.call)}，估计增量 EV ${formatBB(expected[bestIndex] / bigBlind)} BB；推荐 ${actionLabel(recommendation, decision.call)} 的估值为 ${formatBB(expected[recommendationIndex] / bigBlind)} BB；你的选择 ${formatBB(expected[actualIndex] / bigBlind)} BB。`,
       ...(conservativeRecommendation
         ? [
-            '候选估值接近，采用较稳健的选择：差异处于配对抽样容差与模型敏感性预留之内，优先减少本次投入，而不是宣称数值排名就是唯一正确动作。',
+            allowances[bestIndex] > baseModelAllowance
+              ? '极大尺度估值敏感，采用较稳健的选择：逐项扣除抽样误差和各自模型预留，再比较稳健锚点附近的动作；巨额下注的数值峰值不构成可靠最优证据。'
+              : '候选估值接近，采用较稳健的选择：先逐项扣除其抽样误差和模型敏感性预留，再比较稳健锚点附近的动作，不宣称单次数值排名就是唯一正确答案。',
           ]
         : []),
       recommendationReason(
@@ -1101,6 +1547,7 @@ export function reviewHand(
           evBB: round(expected[candidate] / bigBlind),
           standardErrorBB: round(standardError(values[candidate]) / bigBlind),
           score: score[candidate],
+          scoreSensitive: allowances[candidate] > baseModelAllowance,
           reason: `${recommendationReason(action, decision, estimate.equity, ranges.length, hand)} ${
             action.type === 'fold'
               ? '弃牌的增量 EV 设为 0，之前投入的筹码是沉没成本。'
@@ -1109,7 +1556,7 @@ export function reviewHand(
                 : action.type === 'call'
                   ? '计入本次跟注、仍待行动玩家的响应和可争夺底池；用摊牌样本估值，早期街另作权益实现折价。'
                   : '按此尺度重算每个对手的跟注/弃牌，并逐层结算主池、边池和未被跟注的返还。'
-          }`,
+          }${allowances[candidate] > baseModelAllowance ? ' 这个尺度的有效新增风险超过跟注后两倍底池，对极少数强牌是否继续非常敏感；抽样高分只说明无法可靠区分，不能验证巨额下注。' : ''}`,
         }),
       )
       .sort((a, b) => b.evBB - a.evBB);
@@ -1123,16 +1570,20 @@ export function reviewHand(
         pot: decision.pot,
         call: decision.call,
         threshold,
-        title: !close
-          ? `优先比较 ${actionLabel(recommendation, decision.call)}`
-          : conservativeRecommendation
-            ? '候选估值接近，采用较稳健的选择'
-            : '这个选择接近模型首选',
+        title:
+          modelAllowance > baseModelAllowance
+            ? '极大尺度对模型假设敏感，优先稳健参照'
+            : !close
+              ? `优先比较 ${actionLabel(recommendation, decision.call)}`
+              : conservativeRecommendation
+                ? '候选估值接近，采用较稳健的选择'
+                : '这个选择接近模型首选',
         advice: reasoning.join(' '),
         principle:
           'GTO 的核心是完整范围与对手响应的平衡。这里是公开范围的一轮响应 EV 近似，不是严格 GTO 求解、精确频率或完整多街最优解。',
         board: [...decision.board],
         score: score[actualIndex],
+        scoreSensitive: modelAllowance > baseModelAllowance,
         recommendation: {
           action: recommendation,
           label: actionLabel(recommendation, decision.call),
@@ -1147,14 +1598,30 @@ export function reviewHand(
         opponents: ranges.length,
         spr: round(spr),
         rangeNotes,
+        explanations: teachingExplanation({
+          decision,
+          hole,
+          recommendation,
+          alternatives,
+          bigBlind,
+          equity: estimate.equity,
+          hand,
+          position,
+          spr,
+          close,
+          conservative: conservativeRecommendation,
+          sizingSensitive: modelAllowance > baseModelAllowance,
+        }),
         model: '公开范围 · 一轮响应与风险折价 EV',
         limitations: [
           '范围与跟注概率由本地启发式估计，未求解均衡。',
+          '公开历史按位置、风格与动作类型修正范围，尚未拟合所有历史下注尺度；实际对手偏差仍会改变结论。',
+          '超池下注按当前公开加权范围强端设置保守的一轮防守参照；1 / (1 + 有效下注/底池) 是启发式，不是多人均衡防守频率。公共两对、三条与私人牌力分别处理。',
           '非全下早期局面加入保守权益兑现及再加注暴露折价，但没有求解未来下注树；这些系数仍是启发式。',
           '抽样误差仅是 95% 配对 Monte Carlo 容差；另设模型敏感性预留，不能把后者当作统计置信区间。',
           '多人边池分别结算；无法以一个总权益直接代替所有边池权益。',
           '所有候选共用相同样本；评分反映模型内差异，接近的动作不作硬性优劣判断。',
-          '评分扣除配对抽样容差与模型预留后，按 100 × exp(−剩余 EV 损失 / max(3 BB, 35% 当前底池)) 平滑归一；模型预留为 max(0.2 BB, 12% 底池) × 街道系数（翻牌前 1.75、翻牌 1.35、转牌 0.65、河牌 0.35）。它是训练指标，不是求解器认可度。',
+          '推荐先按候选 EV − 95% 抽样误差 − 该候选模型预留寻找稳健锚点；评分比较该锚点的配对 EV 差，原始最高 EV 仍用于展示相对损失。模型基准预留为 max(0.2 BB, 12% 底池) × 街道系数（1.75 / 1.35 / 0.65 / 0.35），新增有效风险超出跟注后两倍底池的部分另留 3%；弃牌增量已知为 0。评分按 100 × exp(−容差外损失 / max(3 BB, 35% 当前底池)) 平滑归一，它是训练指标，不是求解器认可度。',
         ],
       },
     ];
