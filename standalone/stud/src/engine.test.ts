@@ -1,0 +1,22 @@
+import { describe,it,expect } from 'vitest';
+import { act,advance,compare,decide,equity,evaluate,finished,initial,limits,shuffle,startHand,view,type Game } from './engine';
+const c=(r:number,s=0)=>s*13+r-2;
+const seeded=(seed:number)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+function next(g:Game){while(g.phase==='dealing'||g.phase==='runout')g=advance(g,g.revision);return g}
+describe('poker ranking',()=>{
+ it('recognizes all nine categories',()=>{const hands=[[c(14),c(11,1),c(9,2),c(5,3),c(2)],[c(8),c(8,1),c(14),c(5),c(3)],[c(8),c(8,1),c(3),c(3,1),c(14)],[c(8),c(8,1),c(8,2),c(5),c(3)],[c(8),c(9),c(10,1),c(11),c(12)],[c(2),c(5),c(8),c(11),c(14)],[c(8),c(8,1),c(8,2),c(5),c(5,1)],[c(8),c(8,1),c(8,2),c(8,3),c(3)],[c(8),c(9),c(10),c(11),c(12)]];hands.forEach((h,i)=>expect(evaluate(h)[0]).toBe(i))});
+ it('wheel, kickers and suit ties',()=>{const wheel=[c(14),c(2,1),c(3,2),c(4),c(5)];expect(evaluate(wheel)).toEqual([4,5]);expect(compare(evaluate(wheel),[4,6])).toBe(-1);expect(compare(evaluate([c(14),c(14,1),c(12),c(8),c(2)]),evaluate([c(14),c(14,2),c(11),c(9),c(3)]))).toBe(1);expect(compare(evaluate([c(2),c(4),c(7),c(10),c(14)]),evaluate([c(2,1),c(4,1),c(7,1),c(10,1),c(14,1)]))).toBe(0)});
+ it('ignores incomplete visible straights and flushes',()=>{expect(evaluate([c(10),c(11),c(12),c(13)],true)[0]).toBe(0);expect(compare(evaluate([c(3),c(3,1)],true),evaluate([c(14),c(13)],true))).toBe(1)})
+});
+describe('betting state machine',()=>{
+ it('rejects illegal, wrong-seat and stale actions',()=>{const g=startHand(initial(),seeded(12));expect(act(g,(1-g.turn)as 0|1,{type:'check'})).toBe(g);expect(act(g,g.turn,{type:'raise',to:9})).toBe(g);expect(act(g,g.turn,{type:'call'})).toBe(g);const a=act(g,g.turn,{type:'raise',to:20});expect(act(a,a.turn,{type:'check'})).toBe(a);expect(act(a,a.turn,{type:'call'},g.revision)).toBe(a);expect(act(a,a.turn,{type:'raise',to:30})).toBe(a);expect(act(a,a.turn,{type:'raise',to:40}).paid[a.turn]).toBe(40)});
+ it('caps effective all-in and runs out without side pots',()=>{let g=startHand(initial([30,970]),seeded(14));g=act(g,g.turn,{type:'raise',to:25});g=act(g,g.turn,{type:'call'});expect(g.phase).toBe('runout');g=next(g);expect(g.phase).toBe('complete');expect(g.cards[0]).toHaveLength(5);expect(g.lastPot).toBe(60);expect(g.stacks[0]+g.stacks[1]).toBe(1000)});
+ it('allows short all-in and resolves ante-only all-in',()=>{let g=startHand(initial([8,992]),seeded(2));expect(limits(g).max).toBe(3);g=act(g,g.turn,{type:'raise',to:3});g=act(g,g.turn,{type:'call'});expect(next(g).lastPot).toBe(16);g=startHand(initial([3,997]),seeded(2));expect(g.phase).toBe('runout');expect(next(g).lastPot).toBe(6)});
+ it('folds settle immediately without exposing hole cards',()=>{const g=startHand(initial(),seeded(2)),done=act(g,g.turn,{type:'fold'});expect(done.phase).toBe('complete');expect(done.revealed).toBe(false);expect(done.stacks.reduce((a,b)=>a+b)).toBe(1000)});
+ it('ends at ten hands and conserves all virtual chips under random play',()=>{const rng=seeded(744);for(let match=0;match<100;match++){let g=initial();let steps=0;while(!finished(g)||!['ready','complete'].includes(g.phase)){if(['ready','complete'].includes(g.phase))g=startHand(g,rng);else if(g.phase==='betting'){const l=limits(g),x=rng();g=act(g,g.turn,x<.06?{type:'fold'}:x<.3&&l.max>l.current?{type:'raise',to:Math.min(l.max,l.min)}:l.call?{type:'call'}:{type:'check'})}else g=advance(g,g.revision);expect(g.stacks[0]+g.stacks[1]+g.pot).toBe(1000);expect(g.stacks.every(x=>x>=0)).toBe(true);expect(++steps).toBeLessThan(1000)}expect(startHand(g,rng)).toBe(g)}})
+});
+describe('AI information boundary',()=>{
+ it('contains no hole card or live deck, is invariant under private changes',()=>{const g=startHand(initial(),seeded(9));const altered=structuredClone(g);altered.cards[0][0]=51;altered.deck.reverse();expect(view(g,1)).toEqual(view(altered,1));expect(decide(view(g,1),'normal',seeded(18))).toEqual(decide(view(altered,1),'normal',seeded(18)))});
+ it('calculates near-certain equity of unbeatable complete hand',()=>{const v=view(startHand(initial(),seeded(3)),1);v.own=[c(10),c(11),c(12),c(13),c(14)];v.exposed=[c(2,1),c(4,1),c(6,1),c(8,1)];expect(equity(v,200,seeded(1))).toBe(1)});
+ it('shuffles a complete unmodified deck',()=>{expect([...shuffle(seeded(1))].sort((a,b)=>a-b)).toEqual(Array.from({length:52},(_,i)=>i))})
+});
