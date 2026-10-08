@@ -2,6 +2,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -66,6 +67,14 @@ import {
 } from '@/lib/games/holdem-strategy';
 import { HoldemLoungeMusic } from '@/lib/games/holdem-music';
 import {
+  createTableReplay,
+  validateTableReplay,
+  validateReplayAction,
+  type BotDecisionTrace,
+  type ReplayAction,
+  type TableReplay,
+} from '@/lib/games/holdem-replay';
+import {
   announcePoker,
   pokerVoiceBusy,
   pokerVoiceAvailability,
@@ -81,6 +90,8 @@ type StoredHand = {
   points: ReviewPoint[];
   difficulty: AiDifficulty;
   config?: TableConfig;
+  reviewVersion?: 2;
+  tableReplay?: TableReplay;
 };
 type Practice = {
   hands: number;
@@ -92,6 +103,7 @@ const EMPTY_PRACTICE: Practice = { hands: 0, wins: 0, net: 0, recent: [] };
 // Five-seat analysis has a different model; preserve the original v1 records untouched.
 const STORAGE_KEY = 'tscjj:holdem-practice:v2';
 const SETTINGS_KEY = 'tscjj:holdem-settings:v2';
+const MAX_PRACTICE_BYTES = 2_000_000;
 const SEAT_NAMES = [
   '你',
   '循环',
@@ -326,10 +338,33 @@ function validExplanation(value: ReviewPoint['explanations']) {
     )
   );
 }
+function storedReplay(hand: StoredHand): TableReplay | undefined {
+  const replay = hand.tableReplay;
+  if (!validateTableReplay(replay)) return undefined;
+  const sameCards = (a: number[], b: number[]) =>
+    a.length === b.length && a.every((card, i) => card === b[i]);
+  if (
+    replay.hand !== hand.hand ||
+    !sameCards(replay.holes[0], hand.hero) ||
+    !sameCards(replay.board, hand.board) ||
+    replay.stacks[0] - replay.startingStacks[0] !== hand.delta ||
+    (hand.config &&
+      (replay.tableSize !== hand.config.tableSize ||
+        replay.smallBlind !== hand.config.smallBlind ||
+        replay.bigBlind !== hand.config.bigBlind))
+  )
+    return undefined;
+  return replay;
+}
 function readPractice(): Practice {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw || raw.length > 700000) return EMPTY_PRACTICE;
+    if (
+      !raw ||
+      raw.length > MAX_PRACTICE_BYTES ||
+      new TextEncoder().encode(raw).length > MAX_PRACTICE_BYTES
+    )
+      return EMPTY_PRACTICE;
     const saved = JSON.parse(raw) as Practice;
     if (
       !Number.isSafeInteger(saved.hands) ||
@@ -371,6 +406,15 @@ function readPractice(): Practice {
                 typeof p.principle === 'string' &&
                 typeof p.title === 'string' &&
                 typeof p.action === 'string' &&
+                (p.scoreGapBB === undefined ||
+                  (Number.isFinite(p.scoreGapBB) && p.scoreGapBB >= 0)) &&
+                (p.comparison === undefined ||
+                  ['clear', 'close', 'sensitive'].includes(p.comparison)) &&
+                (p.scoreReference === undefined ||
+                  (p.scoreReference &&
+                    typeof p.scoreReference.label === 'string' &&
+                    Number.isFinite(p.scoreReference.evBB) &&
+                    validateReplayAction(p.scoreReference.action))) &&
                 validExplanation(p.explanations) &&
                 typeof p.street === 'string' &&
                 Object.hasOwn(STREET_LABELS, p.street) &&
@@ -395,6 +439,7 @@ function readPractice(): Practice {
                 p.alternatives.length > 0 &&
                 p.alternatives.every(
                   (a) =>
+                    a &&
                     [a.evBB, a.standardErrorBB, a.score].every(
                       Number.isFinite,
                     ) &&
@@ -409,11 +454,44 @@ function readPractice(): Practice {
                 Array.isArray(p.limitations) &&
                 p.limitations.every((note) => typeof note === 'string'),
             ),
-        ),
+        )
+        .map((hand) => {
+          const tableReplay = storedReplay(hand);
+          return {
+            hand: hand.hand,
+            delta: hand.delta,
+            hero: hand.hero,
+            board: hand.board,
+            points: hand.points,
+            difficulty: hand.difficulty,
+            config: hand.config,
+            reviewVersion: hand.reviewVersion === 2 ? 2 : undefined,
+            ...(tableReplay ? { tableReplay } : {}),
+          };
+        }),
     };
   } catch {
     return EMPTY_PRACTICE;
   }
+}
+
+function boundedPractice(practice: Practice) {
+  const recent = practice.recent.slice(0, 8);
+  let value = { ...practice, recent };
+  let serialized = JSON.stringify(value);
+  while (
+    recent.length &&
+    new TextEncoder().encode(serialized).length > MAX_PRACTICE_BYTES
+  ) {
+    recent.pop();
+    value = { ...practice, recent: [...recent] };
+    serialized = JSON.stringify(value);
+  }
+  return {
+    value,
+    serialized,
+    trimmed: recent.length !== practice.recent.length,
+  };
 }
 
 function seatPosition(seat: Seat, count: number) {
@@ -597,16 +675,32 @@ function TableSeat({
   );
 }
 
-function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
-  const grade =
-    point.score >= 85 ? 'good' : point.score >= 60 ? 'mixed' : 'costly';
+function ReviewCard({
+  point,
+  first,
+  legacy = false,
+}: {
+  point: ReviewPoint;
+  first: boolean;
+  legacy?: boolean;
+}) {
+  const sensitive = point.scoreSensitive || point.comparison === 'sensitive';
+  const grade = sensitive
+    ? 'sensitive'
+    : point.score >= 85
+      ? 'good'
+      : point.score >= 60
+        ? 'mixed'
+        : 'costly';
   const selected = point.alternatives.find((a) => a.label === point.action);
   return (
     <details className={`poker-review-point grade-${grade}`} open={first}>
       <summary>
         <span className="poker-review-score">
-          <b>{Math.round(point.score)}</b>
-          <small>{point.scoreSensitive ? '尺度敏感' : '模型评分'}</small>
+          <b>{sensitive ? '待评' : point.score.toFixed(1)}</b>
+          <small>
+            {sensitive ? '估值敏感' : legacy ? '旧模型评分' : '模型评分'}
+          </small>
         </span>
         <span className="poker-review-title">
           <small>
@@ -630,17 +724,36 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
           )}
         </div>
         <div className="poker-review-recommendation">
-          <span>模型推荐</span>
+          <span>{legacy ? '模型推荐' : '稳健推荐'}</span>
           <strong>{point.recommendation.label}</strong>
           <small>
-            你的选择与最高估值相差 {point.regretBB.toFixed(1)} BB · 模型置信度
+            {legacy ? '旧模型候选差值' : '与常规数值参照的原始 EV 差'}{' '}
+            {(point.scoreGapBB ?? point.regretBB).toFixed(2)} BB · 模型置信度
             {point.confidence === 'medium' ? '中' : '低'}
           </small>
         </div>
-        {point.scoreSensitive && (
+        {point.scoreReference && !legacy && (
+          <p className="poker-score-reference">
+            数值参照：<strong>{point.scoreReference.label}</strong> · 候选 EV{' '}
+            {point.scoreReference.evBB >= 0 ? '+' : ''}
+            {point.scoreReference.evBB.toFixed(2)} BB。
+            {point.scoreReference.label === point.recommendation.label
+              ? '它同时也是本次稳健推荐。'
+              : '它用于计算数分；稳健推荐另考虑抽样接近、模型敏感性和投入尺度。'}
+          </p>
+        )}
+        {sensitive && (
           <p className="poker-score-sensitive">
             这个尺度远超当前可争夺底池，估值对对手继续范围非常敏感。
-            高分仅表示本模型无法可靠区分，建议先参考较稳定的常规尺度。
+            暂不评分；建议先参考较稳定的常规尺度。
+          </p>
+        )}
+        {!sensitive && !legacy && point.comparison && (
+          <p className="poker-score-comparison">
+            原始 EV 差 {(point.scoreGapBB ?? point.regretBB).toFixed(2)} BB ·{' '}
+            {point.comparison === 'close'
+              ? '抽样接近：分数仍按原始差值计算，不能据此断言动作完全等价。'
+              : '在当前抽样与模型预留下可辨认差异。'}
           </p>
         )}
         {point.explanations ? (
@@ -709,20 +822,26 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
               {point.alternatives.map((option, i) => (
                 <tr
                   key={i}
-                  className={
-                    option === selected
-                      ? 'is-selected'
-                      : option.label === point.recommendation.label
-                        ? 'is-recommended'
-                        : ''
-                  }
+                  className={[
+                    option === selected ? 'is-selected' : '',
+                    option.label === point.recommendation.label
+                      ? 'is-recommended'
+                      : '',
+                    option.label === point.scoreReference?.label && !legacy
+                      ? 'is-reference'
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                 >
                   <th scope="row">
                     {option.label}
                     {option.label === point.action && <small>你的选择</small>}
                     {option.label === point.recommendation.label && (
-                      <small>模型推荐</small>
+                      <small>{legacy ? '模型推荐' : '稳健推荐'}</small>
                     )}
+                    {option.label === point.scoreReference?.label &&
+                      !legacy && <small>数值参照</small>}
                   </th>
                   <td>
                     {option.evBB >= 0 ? '+' : ''}
@@ -730,14 +849,20 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
                     <small>±{option.standardErrorBB.toFixed(1)}</small>
                   </td>
                   <td>
-                    {Math.round(option.score)}
-                    {option.scoreSensitive && <small>尺度敏感</small>}
+                    {option.scoreSensitive ? '—' : option.score.toFixed(1)}
+                    {option.scoreSensitive && <small>暂不评分</small>}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        {point.scoreReference && !legacy && (
+          <p className="poker-candidate-legend">
+            你的选择是已执行的动作；数值参照是常规候选中的最高估计
+            EV；稳健推荐可能选较少投入、估值接近的动作。
+          </p>
+        )}
         <details className="poker-model-details">
           <summary>
             候选动作的思路 <ChevronDown size={14} />
@@ -774,8 +899,12 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
           </p>
           {point.modelAllowanceBB !== undefined && (
             <p>
-              评分与稳健推荐另留 {point.modelAllowanceBB.toFixed(1)} BB
-              的模型敏感性空间，用来缓和范围及后续行动近似的影响；它是启发式预留，并非统计置信区间。
+              {legacy ? '旧模型评分与推荐' : '动作差异判断与稳健推荐'}另留{' '}
+              {point.modelAllowanceBB.toFixed(1)} BB 的模型敏感性空间；
+              {legacy
+                ? '旧评分可能受这项预留影响。'
+                : '新版数分仍按原始 EV 差计算，不扣除这项预留。'}
+              它是启发式预留，并非统计置信区间。
             </p>
           )}
           <ul>
@@ -786,6 +915,433 @@ function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
         </details>
       </div>
     </details>
+  );
+}
+
+function safeTableReplay(state: HoldemState): TableReplay | undefined {
+  if (state.street !== 'complete' || !state.result) return undefined;
+  try {
+    return createTableReplay(state);
+  } catch {
+    return undefined;
+  }
+}
+
+const INTENT_NAMES: Record<string, string> = {
+  value: '价值下注',
+  steal: '争夺位置底池',
+  continuation: '持续下注',
+  'semi-bluff': '半诈唬',
+  bluff: '选择性诈唬',
+  'price-call': '按价格防守',
+  'loose-call': '宽范围跟注',
+  'price-fold': '价格不利时弃牌',
+  check: '控制底池',
+  'ev-call': '价格校验后跟注',
+  'ev-fold': '价格校验后弃牌',
+};
+function traceActionLabel(action: PokerAction, call: number) {
+  if (action.type === 'raise') return `加注到 ${action.to}`;
+  return action.type === 'fold'
+    ? '弃牌'
+    : action.type === 'check'
+      ? '过牌'
+      : `跟注 ${call}`;
+}
+
+function RecordedBotTrace({ trace }: { trace: BotDecisionTrace }) {
+  const mixed = trace.mixing;
+  return (
+    <div className="poker-trace">
+      <div className="poker-trace-heading">
+        <span>实际执行目的</span>
+        <strong>{INTENT_NAMES[trace.selectedIntent] ?? '本地混合策略'}</strong>
+        <small>
+          {BOT_STYLES[trace.style].label} ·{' '}
+          {AI_DIFFICULTIES[trace.difficulty].label}
+        </small>
+      </div>
+      <div className="poker-decision-board">
+        <span>它当时的底牌</span>
+        {trace.hole.map((card) => (
+          <PlayingCard key={card} card={card} small />
+        ))}
+        <span>当时公共牌</span>
+        {trace.board.length ? (
+          trace.board.map((card) => (
+            <PlayingCard key={card} card={card} small />
+          ))
+        ) : (
+          <small>尚未发出</small>
+        )}
+      </div>
+      <div className="poker-trace-metrics">
+        <span>
+          决策前底池 <b>{(trace.pot / trace.bigBlind).toFixed(1)} BB</b>
+        </span>
+        <span>
+          跟注价格 <b>{(trace.call / trace.bigBlind).toFixed(1)} BB</b>
+        </span>
+        <span>
+          {trace.position} · <b>{trace.opponents} 位对手</b>
+        </span>
+      </div>
+      <ol className="poker-trace-reasons">
+        {trace.rationale.map((reason, i) => (
+          <li key={i}>{reason}</li>
+        ))}
+      </ol>
+      <details className="poker-model-details">
+        <summary>
+          展开实际抽样与混合参数 <ChevronDown size={14} />
+        </summary>
+        <p>
+          以下参数在该行动执行前记录，保留了实际使用的随机抽样。它不是事后按照已知底牌重算的解释。
+        </p>
+        <dl className="poker-trace-parameters">
+          <div>
+            <dt>范围摊牌份额</dt>
+            <dd>{pct(trace.rawEquity)}</dd>
+          </div>
+          <div>
+            <dt>可争夺筹码份额</dt>
+            <dd>{pct(trace.equity)}</dd>
+          </div>
+          <div>
+            <dt>策略调整后的份额</dt>
+            <dd>{pct(mixed.adjustedEquity)}</dd>
+          </div>
+          <div>
+            <dt>权益实现调整</dt>
+            <dd>{pct(mixed.realizedEquity)}</dd>
+          </div>
+          <div>
+            <dt>范围抽样数</dt>
+            <dd>{trace.samples}</dd>
+          </div>
+          <div>
+            <dt>实际混合随机值</dt>
+            <dd>{mixed.roll.toFixed(3)}</dd>
+          </div>
+          <div>
+            <dt>权益扰动随机值</dt>
+            <dd>{mixed.equityJitterRoll.toFixed(3)}</dd>
+          </div>
+          <div>
+            <dt>诈唬触发阈值</dt>
+            <dd>{pct(mixed.bluffProbability)}</dd>
+          </div>
+        </dl>
+        <div className="poker-trace-flags">
+          <span>{mixed.inPosition ? '有后位优势' : '未处于最后行动位'}</span>
+          <span>{mixed.draw > 0 ? '有听牌特征' : '无明显听牌特征'}</span>
+          <span>{mixed.blocker ? '有阻断特征' : '无阻断特征'}</span>
+          <span>
+            {mixed.bluffEligible
+              ? mixed.bluffTriggered
+                ? '诈唬分支已触发'
+                : '允许混合诈唬，本次未触发'
+              : '本次不进入诈唬分支'}
+          </span>
+          {mixed.cbet && <span>持续下注条件成立</span>}
+          {mixed.steal && <span>位置争夺条件成立</span>}
+        </div>
+        {trace.override && (
+          <p className="poker-trace-override">
+            跟注 EV 校验：{trace.override.callEVBB >= 0 ? '+' : ''}
+            {trace.override.callEVBB.toFixed(2)} BB，预留{' '}
+            {trace.override.toleranceBB.toFixed(2)} BB。
+            {trace.override.changed
+              ? `实际从${traceActionLabel(trace.override.from, trace.call)}改为${traceActionLabel(trace.override.to, trace.call)}。`
+              : '校验保留了原策略动作。'}
+          </p>
+        )}
+      </details>
+      {trace.candidates.length > 0 && (
+        <details className="poker-model-details">
+          <summary>
+            查看当时的候选 EV 诊断 <ChevronDown size={14} />
+          </summary>
+          <div className="poker-candidate-wrap">
+            <table className="poker-candidates">
+              <caption>
+                同一批样本下的局部 EV <small>单位 BB，± 为抽样标准误</small>
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">候选动作</th>
+                  <th scope="col">估计 EV</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trace.candidates.map((candidate, i) => (
+                  <tr key={i}>
+                    <th scope="row">
+                      {traceActionLabel(candidate.action, trace.call)}
+                    </th>
+                    <td>
+                      {candidate.evBB >= 0 ? '+' : ''}
+                      {candidate.evBB.toFixed(1)}
+                      <small>±{candidate.standardErrorBB.toFixed(1)}</small>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p>
+            执行动作来自上面的风格、范围和混合规则；这组候选诊断不表示 AI
+            必须选择表内最大值，也不是已求解的 GTO 频率。
+          </p>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function ReplayActionCard({
+  action,
+  replay,
+  heroPoints,
+  first,
+  legacy,
+}: {
+  action: ReplayAction;
+  replay: TableReplay;
+  heroPoints: ReviewPoint[] | null;
+  first: boolean;
+  legacy: boolean;
+}) {
+  const heroPoint =
+    action.seat === 0
+      ? heroPoints?.find((point) => point.index === action.index)
+      : undefined;
+  return (
+    <details
+      className={`poker-replay-action ${action.seat === 0 ? 'is-human' : ''}`}
+      open={first}
+    >
+      <summary>
+        <span className="poker-replay-order">
+          {String(action.index + 1).padStart(2, '0')}
+        </span>
+        <span>
+          <strong>
+            {SEAT_NAMES[action.seat]} <b>{actionLabel(action)}</b>
+          </strong>
+          <small>
+            决策前底池 {action.pot} · 剩余 {action.stack}
+          </small>
+        </span>
+        <ChevronDown size={16} />
+      </summary>
+      <div className="poker-replay-action-body">
+        {action.seat !== 0 ? (
+          action.botTrace ? (
+            <RecordedBotTrace trace={action.botTrace} />
+          ) : (
+            <p className="poker-replay-no-trace">
+              这次行动没有保存即时策略记录，无法事后重建它实际使用的抽样和随机选择。
+            </p>
+          )
+        ) : (
+          <>
+            <div className="poker-decision-board">
+              <span>你的底牌</span>
+              {replay.holes[0].map((card) => (
+                <PlayingCard card={card} key={card} small />
+              ))}
+              <span>当时公共牌</span>
+              {action.board.length ? (
+                action.board.map((card) => (
+                  <PlayingCard card={card} key={card} small />
+                ))
+              ) : (
+                <small>尚未发出</small>
+              )}
+            </div>
+            <p className="poker-replay-information">
+              这是你的实际行动。下面仍以当时公开信息评分，不使用事后揭开的 AI
+              底牌。
+            </p>
+            {heroPoint ? (
+              <ReviewCard point={heroPoint} first legacy={legacy} />
+            ) : (
+              <p className="poker-replay-no-trace">
+                这次行动没有对应的个人决策评分。
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function TableReplayView({
+  replay,
+  heroPoints,
+  legacy,
+}: {
+  replay: TableReplay;
+  heroPoints: ReviewPoint[] | null;
+  legacy: boolean;
+}) {
+  const [filter, setFilter] = useState<'all' | number>('all');
+  const selectedSeat =
+    filter === 'all' || filter >= replay.tableSize ? 'all' : filter;
+  const streets = ['preflop', 'flop', 'turn', 'river'] as const;
+  const seatIds = tableSeats(replay.tableSize);
+  return (
+    <div className="poker-table-replay">
+      <div className="poker-replay-information">
+        <strong>本手已结束，现在可以看全桌底牌。</strong>
+        <p>
+          包括已弃牌的席位。实际 AI
+          诊断只使用它当时自己的两张牌、已发公共牌和公开行动；你的评分仍使用当时的信息，不拿真实对手底牌倒推。
+        </p>
+      </div>
+      <div className="poker-replay-board">
+        <span>结束时公共牌</span>
+        <div className="poker-hole">
+          {replay.board.length ? (
+            replay.board.map((card) => (
+              <PlayingCard card={card} key={card} small />
+            ))
+          ) : (
+            <small>翻牌前结束，未发公共牌</small>
+          )}
+        </div>
+        <small>
+          {replay.tableSize} 人桌 · 盲注 {replay.smallBlind}/{replay.bigBlind}
+        </small>
+      </div>
+      <div className="poker-replay-seats" data-count={replay.tableSize}>
+        {seatIds.map((seat) => {
+          const delta = replay.stacks[seat] - replay.startingStacks[seat];
+          return (
+            <button
+              type="button"
+              className={`poker-replay-seat ${replay.folded[seat] ? 'is-folded' : ''} ${replay.result.winners.includes(seat) ? 'is-winner' : ''}`}
+              key={seat}
+              aria-pressed={selectedSeat === seat}
+              aria-label={`查看${SEAT_NAMES[seat]}的行动`}
+              onClick={() => setFilter(selectedSeat === seat ? 'all' : seat)}
+            >
+              <span className="poker-replay-seat-name">
+                <strong>{SEAT_NAMES[seat]}</strong>
+                <small>{positionLabel(replay, seat)}</small>
+              </span>
+              <span className="poker-hole">
+                {replay.holes[seat].map((card) => (
+                  <PlayingCard card={card} key={card} small />
+                ))}
+              </span>
+              <span className="poker-replay-seat-result">
+                <small>
+                  {replay.folded[seat]
+                    ? '已弃牌'
+                    : replay.result.winners.includes(seat)
+                      ? '赢得底池'
+                      : '摊牌'}
+                </small>
+                <b>
+                  {delta >= 0 ? '+' : ''}
+                  {delta.toLocaleString()}
+                </b>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <label className="poker-replay-filter">
+        <span>行动视角</span>
+        <select
+          value={selectedSeat}
+          onChange={(event) =>
+            setFilter(
+              event.target.value === 'all' ? 'all' : Number(event.target.value),
+            )
+          }
+        >
+          <option value="all">全桌完整行动</option>
+          {seatIds.map((seat) => (
+            <option value={seat} key={seat}>
+              只看{SEAT_NAMES[seat]}
+            </option>
+          ))}
+        </select>
+        <small>点击席位也能筛选</small>
+      </label>
+      <div className="poker-replay-streets">
+        {streets
+          .filter((street) =>
+            replay.actions.some((action) => action.street === street),
+          )
+          .map((street) => {
+            const allActions = replay.actions.filter(
+              (action) => action.street === street,
+            );
+            const actions = allActions.filter(
+              (action) =>
+                selectedSeat === 'all' || action.seat === selectedSeat,
+            );
+            const board = allActions[0].board;
+            return (
+              <section key={street} className="poker-replay-street">
+                <header>
+                  <h4>{STREET_LABELS[street]}</h4>
+                  <div className="poker-hole">
+                    {board.map((card) => (
+                      <PlayingCard key={card} card={card} small />
+                    ))}
+                  </div>
+                  <small>{actions.length} 次行动</small>
+                </header>
+                {actions.length ? (
+                  actions.map((action, i) => (
+                    <ReplayActionCard
+                      key={action.index}
+                      action={action}
+                      replay={replay}
+                      heroPoints={heroPoints}
+                      first={i === 0 && street === 'preflop'}
+                      legacy={legacy}
+                    />
+                  ))
+                ) : (
+                  <p className="poker-replay-no-trace">
+                    该席位在这一轮没有行动。
+                  </p>
+                )}
+              </section>
+            );
+          })}
+      </div>
+      <details className="poker-pot-breakdown">
+        <summary>
+          结算明细 <ChevronDown size={14} />
+        </summary>
+        {replay.result.pots.map((pot, i) => (
+          <p key={i}>
+            {i === 0 ? '主池' : `边池 ${i}`} {pot.amount} →{' '}
+            {pot.winners.map((seat) => SEAT_NAMES[seat]).join('、')}
+          </p>
+        ))}
+        {seatIds
+          .filter((seat) => replay.result.returned[seat] > 0)
+          .map((seat) => (
+            <p key={seat}>
+              {SEAT_NAMES[seat]}未被跟注的 {replay.result.returned[seat]}{' '}
+              已退回。
+            </p>
+          ))}
+      </details>
+      <p className="poker-replay-limit">
+        全桌回放是事后观察；算法诊断是行动前保存的真实记录。混合随机值和局部 EV
+        都来自本地近似模型，不是专业求解器的动作频率。
+      </p>
+    </div>
   );
 }
 
@@ -825,6 +1381,7 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
   const [reviewError, setReviewError] = useState(false);
   const [reviewAttempt, setReviewAttempt] = useState(0);
   const [archive, setArchive] = useState<StoredHand | null>(null);
+  const [reviewView, setReviewView] = useState<'hero' | 'table'>('hero');
   const [notice, setNotice] = useState('');
   const [ready, setReady] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
@@ -961,7 +1518,7 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
     const seat = state.toAct;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    void getStrategy<{ action: PokerAction }>({
+    void getStrategy<{ action: PokerAction; trace: BotDecisionTrace }>({
       type: 'bot',
       state,
       seat,
@@ -969,7 +1526,7 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
       difficulty: handDifficulty,
       styles: STYLES,
     })
-      .then(({ action }) => {
+      .then(({ action, trace }) => {
         if (cancelled) return;
         const voiceDeadline = Date.now() + 6000;
         const advance = () => {
@@ -981,7 +1538,7 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
             return;
           }
           setState((current) =>
-            current === state ? act(current, action) : current,
+            current === state ? act(current, action, trace) : current,
           );
         };
         timer = setTimeout(advance, voice ? 1150 : 620);
@@ -1029,6 +1586,8 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
             points,
             difficulty: handDifficulty,
             config: handConfig,
+            reviewVersion: 2,
+            tableReplay: safeTableReplay(state),
           };
           setPractice((p) => ({
             ...p,
@@ -1047,7 +1606,14 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
   useEffect(() => {
     if (!ready) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(practice));
+      const bounded = boundedPractice(practice);
+      localStorage.setItem(STORAGE_KEY, bounded.serialized);
+      if (bounded.trimmed) {
+        // oxlint-disable-next-line react/react-compiler -- Match the displayed archive to the byte-bounded records actually persisted.
+        setPractice((current) =>
+          current === practice ? bounded.value : current,
+        );
+      }
       localStorage.setItem(
         SETTINGS_KEY,
         JSON.stringify({ difficulty, volume: musicVolume, config }),
@@ -1158,12 +1724,34 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
   }
   const latest = state?.actions.at(-1);
   const shownReview = archive?.points || review;
-  const average = shownReview?.length
-    ? Math.round(
-        shownReview.reduce((sum, point) => sum + point.score, 0) /
-          shownReview.length,
-      )
+  const scoreable = shownReview?.filter(
+    (point) => !point.scoreSensitive && point.comparison !== 'sensitive',
+  );
+  const average = scoreable?.length
+    ? (
+        scoreable.reduce((sum, point) => sum + point.score, 0) /
+        scoreable.length
+      ).toFixed(1)
     : null;
+  const currentScoreable = review?.filter(
+    (point) => !point.scoreSensitive && point.comparison !== 'sensitive',
+  );
+  const currentAverage = currentScoreable?.length
+    ? (
+        currentScoreable.reduce((sum, point) => sum + point.score, 0) /
+        currentScoreable.length
+      ).toFixed(1)
+    : null;
+  const shownReplay = useMemo(
+    () =>
+      archive
+        ? archive.tableReplay
+        : completed && state
+          ? safeTableReplay(state)
+          : undefined,
+    [archive, completed, state],
+  );
+  const legacyReview = Boolean(archive && archive.reviewVersion !== 2);
   const delta = state ? state.stacks[0] - state.startingStacks[0] : 0;
   const currentConfig = state ? handConfig : config;
   const seats = tableSeats(currentConfig.tableSize);
@@ -1473,9 +2061,11 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
                   <small> 虚拟筹码</small>
                 </strong>
                 <p>
-                  {average === null
-                    ? '正在整理你的决策…'
-                    : `本手平均模型评分 ${average} / 100`}
+                  {currentAverage === null
+                    ? review
+                      ? '本手没有可计入均分的选择。'
+                      : '正在整理你的决策…'
+                    : `本手平均模型评分 ${currentAverage} / 100`}
                 </p>
               </div>
               <button
@@ -1838,12 +2428,19 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
               <header>
                 <div>
                   <BookOpen size={19} />
-                  <h3>逐个选择，拆开思路。</h3>
+                  <h3>
+                    {reviewView === 'hero'
+                      ? '逐个选择，拆开思路。'
+                      : '揭开底牌，重看这一手。'}
+                  </h3>
                 </div>
                 <p>
-                  {average !== null ? (
+                  {reviewView === 'table' ? (
+                    '真实行动线与行动前保存的 AI 诊断。'
+                  ) : average !== null ? (
                     <>
-                      <b>{average}</b> / 100 平均模型评分
+                      <b>{average}</b> / 100 平均
+                      {legacyReview ? '旧模型' : '模型'}评分
                     </>
                   ) : (
                     '只看当时已经知道的信息。'
@@ -1878,114 +2475,177 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
                   ))}
                 </fieldset>
               )}
-              {archive && (
-                <div className="poker-review-cards">
-                  <span>
-                    {archive.config?.tableSize ?? 5} 人 ·{' '}
-                    {AI_DIFFICULTIES[archive.difficulty].label}
-                  </span>
-                  {archive.hero.map((card) => (
-                    <PlayingCard card={card} key={card} small />
-                  ))}
-                  <span>结束公共牌</span>
-                  {archive.board.map((card) => (
-                    <PlayingCard card={card} key={card} small />
-                  ))}
-                </div>
-              )}
-              {shownReview ? (
-                shownReview.length > 0 ? (
-                  <div className="poker-review-list">
-                    {shownReview.map((point, i) => (
-                      <ReviewCard
-                        key={`${archive?.hand || state?.hand}-${point.index}`}
-                        point={point}
-                        first={i === 0}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="poker-empty-review">
-                    <Check size={20} />
-                    本手在你行动前已经结束。
-                  </p>
-                )
-              ) : completed ? (
-                reviewError ? (
-                  <div className="poker-empty-review">
-                    <p>复盘暂时不可用，完整行动线仍可查看。</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReviewError(false);
-                        setReviewAttempt((n) => n + 1);
-                      }}
-                    >
-                      <RotateCcw size={15} />
-                      重试
-                    </button>
-                  </div>
-                ) : (
-                  <p className="poker-empty-review">
-                    <LoaderCircle className="poker-spinner" size={20} />
-                    正在整理范围、候选行动与评分…
-                  </p>
-                )
-              ) : (
-                <p className="poker-empty-review">
-                  <Spade size={22} />
-                  完成一手后，这里展开你的每个选择。
+              <div className="poker-review-switch" aria-label="复盘视角">
+                <button
+                  type="button"
+                  aria-pressed={reviewView === 'hero'}
+                  onClick={() => setReviewView('hero')}
+                >
+                  <BookOpen size={16} />
+                  我的选择
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={reviewView === 'table'}
+                  onClick={() => setReviewView('table')}
+                >
+                  <Spade size={16} />
+                  全桌回放
+                </button>
+              </div>
+              {legacyReview && (
+                <p className="poker-legacy-review">
+                  这是保留的旧模型记录，分数未用新版规则重新校准；它仍可作为当时的练习笔记。
                 </p>
               )}
-              {state?.result &&
-                !archive &&
-                (state.result.pots.length > 1 ||
-                  state.result.returned.some((chips) => chips > 0)) && (
-                  <details className="poker-pot-breakdown">
-                    <summary>
-                      主池、边池与退款 <ChevronDown size={14} />
-                    </summary>
-                    {state.result.pots.map((pot, i) => (
-                      <p key={i}>
-                        {i === 0 ? '主池' : `边池 ${i}`} {pot.amount} →{' '}
-                        {pot.winners.map((seat) => SEAT_NAMES[seat]).join('、')}
-                      </p>
-                    ))}
-                    {seats
-                      .filter((seat) => state.result!.returned[seat] > 0)
-                      .map((seat) => (
-                        <p key={seat}>
-                          {SEAT_NAMES[seat]}未被跟注的{' '}
-                          {state.result!.returned[seat]} 已退回。
-                        </p>
+              {reviewView === 'table' ? (
+                shownReplay ? (
+                  <TableReplayView
+                    key={
+                      archive
+                        ? `archive-${archive.hand}-${practice.recent.indexOf(archive)}`
+                        : `live-${state?.hand}`
+                    }
+                    replay={shownReplay}
+                    heroPoints={shownReview}
+                    legacy={legacyReview}
+                  />
+                ) : (
+                  <div className="poker-empty-review poker-replay-unavailable">
+                    <Spade size={24} />
+                    <strong>
+                      {archive
+                        ? '旧记录未保存全桌回放'
+                        : completed
+                          ? '本手没有可用的全桌回放'
+                          : '结束一手后，打开全桌回放'}
+                    </strong>
+                    <p>
+                      {archive
+                        ? '保留你的原始决策复盘，不事后猜测对手底牌、随机选择或策略理由。'
+                        : completed
+                          ? '你的个人复盘仍可查看。无法验证的回放数据不会展示。'
+                          : '进行中仍保持对手底牌隐藏；结束后可查看已弃牌的手牌和每一轮行动。'}
+                    </p>
+                  </div>
+                )
+              ) : (
+                <>
+                  {archive && (
+                    <div className="poker-review-cards">
+                      <span>
+                        {archive.config?.tableSize ?? 5} 人 ·{' '}
+                        {AI_DIFFICULTIES[archive.difficulty].label}
+                      </span>
+                      {archive.hero.map((card) => (
+                        <PlayingCard card={card} key={card} small />
                       ))}
-                  </details>
-                )}
-              {state?.actions.length && !archive ? (
-                <details className="poker-hand-timeline">
-                  <summary>
-                    当前手完整行动线 <ChevronDown size={15} />
-                  </summary>
-                  <ol>
-                    {state.actions.map((decision, i) => (
-                      <li
-                        key={i}
-                        className={decision.seat === 0 ? 'is-human' : ''}
-                      >
-                        <small>{STREET_LABELS[decision.street]}</small>
-                        <span>{SEAT_NAMES[decision.seat]}</span>
-                        <strong>{actionLabel(decision)}</strong>
-                        <span>底池 {decision.pot}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </details>
-              ) : null}
-              <p className="poker-review-limit">
-                分数是当前范围和简化后续模型中的相对评价。100
-                分表示接近候选中的最好选择，不是获胜概率或 GTO
-                认证；近似模型存在范围和未来行动误差。
-              </p>
+                      <span>结束公共牌</span>
+                      {archive.board.map((card) => (
+                        <PlayingCard card={card} key={card} small />
+                      ))}
+                    </div>
+                  )}
+                  {shownReview ? (
+                    shownReview.length > 0 ? (
+                      <div className="poker-review-list">
+                        {shownReview.map((point, i) => (
+                          <ReviewCard
+                            key={`${archive?.hand || state?.hand}-${point.index}`}
+                            point={point}
+                            first={i === 0}
+                            legacy={legacyReview}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="poker-empty-review">
+                        <Check size={20} />
+                        本手在你行动前已经结束。
+                      </p>
+                    )
+                  ) : completed ? (
+                    reviewError ? (
+                      <div className="poker-empty-review">
+                        <p>复盘暂时不可用，完整行动线仍可查看。</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReviewError(false);
+                            setReviewAttempt((n) => n + 1);
+                          }}
+                        >
+                          <RotateCcw size={15} />
+                          重试
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="poker-empty-review">
+                        <LoaderCircle className="poker-spinner" size={20} />
+                        正在整理范围、候选行动与评分…
+                      </p>
+                    )
+                  ) : (
+                    <p className="poker-empty-review">
+                      <Spade size={22} />
+                      完成一手后，这里展开你的每个选择。
+                    </p>
+                  )}
+                  {state?.result &&
+                    !archive &&
+                    (state.result.pots.length > 1 ||
+                      state.result.returned.some((chips) => chips > 0)) && (
+                      <details className="poker-pot-breakdown">
+                        <summary>
+                          主池、边池与退款 <ChevronDown size={14} />
+                        </summary>
+                        {state.result.pots.map((pot, i) => (
+                          <p key={i}>
+                            {i === 0 ? '主池' : `边池 ${i}`} {pot.amount} →{' '}
+                            {pot.winners
+                              .map((seat) => SEAT_NAMES[seat])
+                              .join('、')}
+                          </p>
+                        ))}
+                        {seats
+                          .filter((seat) => state.result!.returned[seat] > 0)
+                          .map((seat) => (
+                            <p key={seat}>
+                              {SEAT_NAMES[seat]}未被跟注的{' '}
+                              {state.result!.returned[seat]} 已退回。
+                            </p>
+                          ))}
+                      </details>
+                    )}
+                  {state?.actions.length && !archive ? (
+                    <details className="poker-hand-timeline">
+                      <summary>
+                        当前手完整行动线 <ChevronDown size={15} />
+                      </summary>
+                      <ol>
+                        {state.actions.map((decision, i) => (
+                          <li
+                            key={i}
+                            className={decision.seat === 0 ? 'is-human' : ''}
+                          >
+                            <small>{STREET_LABELS[decision.street]}</small>
+                            <span>{SEAT_NAMES[decision.seat]}</span>
+                            <strong>{actionLabel(decision)}</strong>
+                            <span>底池 {decision.pot}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </details>
+                  ) : null}
+                  <p className="poker-review-limit">
+                    {legacyReview
+                      ? '旧分数沿用当时的近似模型，不作新版准确性承诺。'
+                      : '新版数分把相对常规数值参照的原始 EV 损失映射到 0–100；显示 100 只表示在当前精度内接近这组有限候选的参照。'}
+                    不是获胜概率、专业 GTO
+                    百分比或全局最优证明。无法稳定估值的大尺度暂不评分，也不计入均分。
+                  </p>
+                </>
+              )}
               <div className="poker-practice-record">
                 <strong>{practice.hands} 手</strong>
                 <span>盈利 {practice.wins} 手</span>
@@ -1995,7 +2655,7 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
                 </span>
                 <small>
                   {storageAvailable
-                    ? '本机保留最近 8 手；历史五人桌记录仍在。'
+                    ? '本机最多保留最近 8 手；达到存储上限时先移除最旧记录，累计统计保留。'
                     : '存储不可用，当前页面内保留。'}
                 </small>
               </div>

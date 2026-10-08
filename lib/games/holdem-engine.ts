@@ -1,4 +1,10 @@
 import { rankHand } from './holdem-cards.ts';
+import {
+  copyBotDecisionTrace,
+  sameReplayAction,
+  validateBotDecisionTrace,
+  type BotDecisionTrace,
+} from './holdem-replay.ts';
 
 export type Seat = number;
 export type SeatValues<T> = T[];
@@ -18,6 +24,8 @@ export type PublicAction = {
 };
 /** Everything known before this choice, without another seat's cards or future board. */
 export type Decision = PublicAction & {
+  /** Recorded only when this actual AI action is applied, for completed-hand replay. */
+  botTrace?: BotDecisionTrace;
   board: number[];
   pot: number;
   call: number;
@@ -327,7 +335,11 @@ export function legalActions(state: HoldemState) {
   };
 }
 
-export function act(previous: HoldemState, action: PokerAction): HoldemState {
+export function act(
+  previous: HoldemState,
+  action: PokerAction,
+  botTrace?: BotDecisionTrace,
+): HoldemState {
   const legal = legalActions(previous);
   if (!legal) throw new Error('现在不能行动');
   if (!action || !['fold', 'check', 'call', 'raise'].includes(action.type))
@@ -345,6 +357,25 @@ export function act(previous: HoldemState, action: PokerAction): HoldemState {
   )
     throw new Error('加注额度不符合规则');
   const seat = legal.seat;
+  if (
+    botTrace !== undefined &&
+    (!validateBotDecisionTrace(botTrace) ||
+      botTrace.seat !== seat ||
+      botTrace.tableSize !== previous.tableSize ||
+      botTrace.street !== previous.street ||
+      botTrace.bigBlind !== previous.bigBlind ||
+      botTrace.pot !== legal.pot ||
+      botTrace.call !== legal.call ||
+      botTrace.opponents !== liveSeats(previous).length - 1 ||
+      botTrace.hole.length !== previous.holes[seat].length ||
+      botTrace.hole.some(
+        (card, index) => card !== previous.holes[seat][index],
+      ) ||
+      botTrace.board.length !== previous.board.length ||
+      botTrace.board.some((card, index) => card !== previous.board[index]) ||
+      !sameReplayAction(botTrace.selectedAction, action))
+  )
+    throw new Error('AI 决策诊断与本次实际行动不一致');
   const state: HoldemState = {
     ...previous,
     board: [...previous.board],
@@ -358,6 +389,7 @@ export function act(previous: HoldemState, action: PokerAction): HoldemState {
     actions: [...previous.actions],
   };
   const record: Decision = {
+    ...(botTrace ? { botTrace: copyBotDecisionTrace(botTrace) } : {}),
     seat,
     street: state.street as Decision['street'],
     board: [...state.board],

@@ -19,6 +19,8 @@ import {
   type Seat,
   type PublicAction,
 } from './holdem-engine.ts';
+import type { BotDecisionTrace } from './holdem-replay.ts';
+export type { BotDecisionTrace } from './holdem-replay.ts';
 
 export type BotStyle = 'balanced' | 'careful' | 'active' | 'tricky';
 export type AiDifficulty = 'casual' | 'standard' | 'advanced';
@@ -109,6 +111,7 @@ function normalizedDecisionSeed(decision: Decision, bigBlind: number) {
     action: _action,
     paid: _paid,
     effectiveRisk: _risk,
+    botTrace: _trace,
     ...before
   } = decision;
   return {
@@ -413,17 +416,23 @@ function snapshot(state: HoldemState, seat: Seat): Decision {
   };
 }
 
-export function chooseBotAction(
+export type BotHandFeatures = {
+  draw: number;
+  aceBlocker: boolean;
+  nutBlocker?: boolean;
+  showdownValue?: boolean;
+};
+export function chooseBotPolicy(
   state: HoldemState,
   equity: number,
   style: BotStyle,
   random = Math.random,
   difficulty: AiDifficulty = 'standard',
-  handFeatures: { draw: number; aceBlocker: boolean } = {
+  handFeatures: BotHandFeatures = {
     draw: 0,
     aceBlocker: false,
   },
-): PokerAction {
+) {
   const legal = legalActions(state);
   if (!legal) throw new Error('没有可行动的玩家');
   const seat = legal.seat;
@@ -448,7 +457,8 @@ export function chooseBotAction(
   const errors =
     difficulty === 'casual' ? 0.14 : difficulty === 'standard' ? 0.045 : 0.015;
   const roll = random();
-  const adjusted = clamp(equity + (random() - 0.5) * errors);
+  const equityJitterRoll = random();
+  const adjusted = clamp(equity + (equityJitterRoll - 0.5) * errors);
   const effective = Math.min(
     state.stacks[seat],
     Math.max(
@@ -465,10 +475,16 @@ export function chooseBotAction(
       ? adjusted * (inPosition ? 0.97 : 0.88 - Math.min(0.07, multiway * 0.025))
       : adjusted;
   const priorRaises = state.actions.filter(
-    (action) => action.action.type === 'raise',
+    (action) => action.street === 'preflop' && action.action.type === 'raise',
   );
   const lastAggressor = priorRaises.at(-1)?.seat;
-  const cbet = state.street === 'flop' && lastAggressor === seat;
+  const cbet =
+    state.street === 'flop' &&
+    lastAggressor === seat &&
+    legal.call === 0 &&
+    !state.actions.some(
+      (action) => action.street === 'flop' && action.action.type === 'raise',
+    );
   const unopened = state.street === 'preflop' && priorRaises.length === 0;
   const steal = unopened && latePosition(state, seat);
   const bigValue =
@@ -481,6 +497,18 @@ export function chooseBotAction(
     (action) => action.seat === 0 && action.action.type === 'call',
   ).length;
   const advancedDraw = difficulty === 'advanced' && handFeatures.draw > 0;
+  const allInOpponents = tableSeats(state).filter(
+    (player) =>
+      player !== seat && !state.folded[player] && state.stacks[player] === 0,
+  ).length;
+  // Pure bluffs need a foldable target and little showdown value. A generic
+  // ace is not a river nut blocker; only decision-time board-specific removal
+  // supports that adjustment. No pure bluff can win a contested all-in pot.
+  const pureBluffEligible =
+    legal.canRaise &&
+    allInOpponents === 0 &&
+    !handFeatures.showdownValue &&
+    !bigValue;
   const bluffRate =
     ((style === 'active'
       ? 0.105
@@ -489,20 +517,59 @@ export function chooseBotAction(
         : style === 'careful'
           ? 0.02
           : 0.06) /
-      (1 + multiway * 1.8)) *
+      (1 + multiway * 2.6)) *
     (inPosition ? 1.25 : 0.8) *
-    (steal ? 1.8 : cbet ? 1.3 : 1);
+    (steal ? 1.8 : cbet ? 1.3 : 1) *
+    (opponents >= 4 ? 0.35 : 1);
   const selectiveBluff =
     difficulty === 'advanced'
       ? (bluffRate *
           (advancedDraw
             ? 1.8
-            : handFeatures.aceBlocker && state.street === 'river'
-              ? 1.2
+            : handFeatures.nutBlocker && state.street === 'river'
+              ? 1.45
               : 0.65)) /
         (1 + heroCalls * 0.35)
       : bluffRate;
-  const bluff = roll < selectiveBluff;
+  const pureBluffProbability = pureBluffEligible
+    ? clamp(selectiveBluff, 0, 0.3)
+    : 0;
+  const semiBluffEligible =
+    legal.canRaise &&
+    advancedDraw &&
+    allInOpponents === 0 &&
+    inPosition &&
+    opponents <= 2;
+  const semiBluffProbability = semiBluffEligible
+    ? (legal.call ? 0.16 : 0.2) / (1 + multiway * 2.6)
+    : 0;
+  const bluffEligible = pureBluffEligible || semiBluffEligible;
+  const bluffProbability = Math.max(pureBluffProbability, semiBluffProbability);
+  const bluff = roll < pureBluffProbability;
+  const semiBluff = roll < semiBluffProbability;
+  const finish = (action: PokerAction, intent: string, reason: string) => ({
+    action,
+    intent,
+    rationale: [
+      reason,
+      `${positionLabel(state, seat)}面对 ${opponents} 位对手；可争夺底池 ${legal.pot}，跟注 ${legal.call}。策略权益 ${(equity * 100).toFixed(1)}%，扰动后 ${(adjusted * 100).toFixed(1)}%，兑现代理 ${(realized * 100).toFixed(1)}%。`,
+      `实际混合抽样为 ${roll.toFixed(3)}；本局部策略诈唬触发阈值 ${bluffProbability.toFixed(3)}${allInOpponents ? '，全下主池不能靠弃牌赢走，本策略保守取消诈唬分支；边池可能有弃牌收益，未在此展开' : ''}。这些阈值来自本地启发式，不是求解器混合频率。`,
+    ],
+    mixing: {
+      roll,
+      equityJitterRoll,
+      adjustedEquity: adjusted,
+      realizedEquity: realized,
+      bluffProbability,
+      bluffEligible,
+      bluffTriggered: intent === 'bluff' || intent === 'semi-bluff',
+      draw: handFeatures.draw,
+      blocker: Boolean(handFeatures.nutBlocker),
+      inPosition,
+      cbet,
+      steal,
+    },
+  });
   const raiseTo = () => {
     let size: number;
     if (state.street === 'preflop') {
@@ -555,28 +622,122 @@ export function chooseBotAction(
       realized < legal.potOdds + margin &&
       !(cheapBlind && realized > 0.22) &&
       !bluff &&
+      !semiBluff &&
       !looseCall
     )
-      return { type: 'fold' };
-    if (
-      legal.canRaise &&
-      ((bigValue && roll < 0.72 * aggression) ||
-        (value && steal && roll < 0.55 * aggression) ||
-        (advancedDraw && inPosition && multiway === 0 && roll < 0.16) ||
-        bluff)
-    )
-      return { type: 'raise', to: raiseTo() };
-    return { type: 'call' };
+      return finish(
+        { type: 'fold' },
+        'price-fold',
+        `兑现代理低于静态赔率加防守余量：${pct(realized)} < ${pct(legal.potOdds + margin)}，没有命中合法诈唬或宽松跟注分支。`,
+      );
+    if (legal.canRaise) {
+      if (bigValue && roll < 0.72 * aggression)
+        return finish(
+          { type: 'raise', to: raiseTo() },
+          'value',
+          `强权益价值加注分支命中：${pct(adjusted)} 超过强牌阈值，${roll.toFixed(3)} < ${(0.72 * aggression).toFixed(3)}；尺度由当前街、牌面和SPR生成。`,
+        );
+      if (value && steal && roll < 0.55 * aggression)
+        return finish(
+          { type: 'raise', to: raiseTo() },
+          'steal',
+          `未加注底池的后位隔离分支命中，${roll.toFixed(3)} < ${(0.55 * aggression).toFixed(3)}；位置允许争夺底池，但仍需要现有权益。`,
+        );
+      if (semiBluff)
+        return finish(
+          { type: 'raise', to: raiseTo() },
+          'semi-bluff',
+          `听牌半诈唬分支命中：补牌特征 ${handFeatures.draw.toFixed(1)}、有位置且无全下对手，${roll.toFixed(3)} < ${semiBluffProbability.toFixed(3)}。`,
+        );
+      if (bluff)
+        return finish(
+          { type: 'raise', to: raiseTo() },
+          handFeatures.draw ? 'semi-bluff' : 'bluff',
+          `选择性${handFeatures.draw ? '半诈唬' : '诈唬'}分支命中，${roll.toFixed(3)} < ${pureBluffProbability.toFixed(3)}${handFeatures.nutBlocker ? '；持有牌面相关坚果阻挡牌' : ''}。对手均仍能弃牌，人数增加已降低触发率。`,
+        );
+    }
+    return finish(
+      { type: 'call' },
+      looseCall && realized < legal.potOdds + margin
+        ? 'loose-call'
+        : 'price-call',
+      looseCall && realized < legal.potOdds + margin
+        ? '入门档宽松跟注分支被实际抽样命中；这是可见策略偏差，不是均衡跟注依据。'
+        : `保留摊牌权益：当前价格通过防守条件，或可低成本防守盲注；未命中价值或合法诈唬加注分支。`,
+    );
   }
-  if (
-    legal.canRaise &&
-    ((value && roll < (style === 'tricky' ? 0.44 : 0.68) * aggression) ||
-      (cbet && adjusted > 0.34 && roll < 0.42 / (1 + multiway)) ||
-      (advancedDraw && inPosition && roll < 0.2 / (1 + multiway)) ||
-      bluff)
-  )
-    return { type: 'raise', to: raiseTo() };
-  return { type: 'check' };
+  if (legal.canRaise) {
+    const valueProbability = (style === 'tricky' ? 0.44 : 0.68) * aggression;
+    if (value && roll < valueProbability)
+      return finish(
+        { type: 'raise', to: raiseTo() },
+        'value',
+        `价值下注分支命中：权益 ${pct(adjusted)} 超过价值阈值，${roll.toFixed(3)} < ${valueProbability.toFixed(3)}；按实际底池生成下注尺度。`,
+      );
+    if (
+      cbet &&
+      allInOpponents === 0 &&
+      adjusted > 0.34 &&
+      roll < 0.42 / (1 + multiway * 1.8)
+    )
+      return finish(
+        { type: 'raise', to: raiseTo() },
+        'continuation',
+        `翻牌前主动加注者的持续下注分支命中：当前权益高于34%，${roll.toFixed(3)} < ${(0.42 / (1 + multiway * 1.8)).toFixed(3)}；多人底池已减少频率。`,
+      );
+    if (semiBluff)
+      return finish(
+        { type: 'raise', to: raiseTo() },
+        'semi-bluff',
+        `有位置的听牌半诈唬分支命中：补牌特征 ${handFeatures.draw.toFixed(1)}，${roll.toFixed(3)} < ${semiBluffProbability.toFixed(3)}；没有不能弃牌的全下对手。`,
+      );
+    if (bluff)
+      return finish(
+        { type: 'raise', to: raiseTo() },
+        handFeatures.draw ? 'semi-bluff' : 'bluff',
+        `选择性${handFeatures.draw ? '半诈唬' : '诈唬'}分支命中，${roll.toFixed(3)} < ${pureBluffProbability.toFixed(3)}${handFeatures.nutBlocker ? '；牌面相关坚果阻挡牌提高了触发权重' : ''}，没有把任意A自动当成河牌阻挡牌。`,
+      );
+  }
+  return finish(
+    { type: 'check' },
+    'check',
+    '免费过牌分支：本次没有触发价值、持续下注或合法诈唬加注，保留摊牌与后续重新判断的机会。',
+  );
+}
+
+export function chooseBotAction(
+  state: HoldemState,
+  equity: number,
+  style: BotStyle,
+  random = Math.random,
+  difficulty: AiDifficulty = 'standard',
+  handFeatures: BotHandFeatures = { draw: 0, aceBlocker: false },
+): PokerAction {
+  return chooseBotPolicy(state, equity, style, random, difficulty, handFeatures)
+    .action;
+}
+
+export function botHandFeatures(
+  hole: readonly number[],
+  board: readonly number[],
+): BotHandFeatures {
+  const hand = board.length >= 3 ? rankHand([...hole, ...board]) : null;
+  const flushSuit = [0, 1, 2, 3].find(
+    (suit) => board.filter((card) => cardSuit(card) === suit).length >= 3,
+  );
+  const quality = strengthFeature(hole, board);
+  return {
+    draw: drawFeature(hole, board),
+    aceBlocker: hole.some((card) => cardRank(card) === 14),
+    nutBlocker:
+      flushSuit !== undefined &&
+      hole.some(
+        (card) => cardRank(card) === 14 && cardSuit(card) === flushSuit,
+      ),
+    showdownValue: hand
+      ? quality >= 0.6 && hand.category >= 1
+      : quality >= 0.67,
+  };
 }
 
 export function decideBot(
@@ -606,17 +767,16 @@ export function decideBot(
   );
   const estimate = equityFromWorlds(worlds);
   const weightedEquity = projectedPotEquity(decision, worlds, ranges);
-  let action = chooseBotAction(
+  const policy = chooseBotPolicy(
     state,
     weightedEquity,
     style,
     seededRandom(seed ^ 0xa71ef3),
     difficulty,
-    {
-      draw: drawFeature(hole, decision.board),
-      aceBlocker: hole.some((card) => cardRank(card) === 14),
-    },
+    botHandFeatures(hole, decision.board),
   );
+  let action = policy.action;
+  let override: BotDecisionTrace['override'];
   // A decision-specific EV check handles side pots and players still owing chips;
   // a single current pot-odds threshold cannot represent those situations.
   if (
@@ -637,8 +797,68 @@ export function decideBot(
       state.bigBlind * (difficulty === 'advanced' ? 0.15 : 0.35);
     if (callEV > tolerance) action = { type: 'call' };
     else if (callEV < -tolerance) action = { type: 'fold' };
+    override = {
+      reason: 'call-ev',
+      from: policy.action,
+      to: action,
+      callEVBB: callEV / state.bigBlind,
+      toleranceBB: tolerance / state.bigBlind,
+      changed: actionKey(action) !== actionKey(policy.action),
+    };
   }
-  return { action, equity: weightedEquity, samples: estimate.samples };
+  const diagnosticOptions = [
+    ...new Map(
+      [
+        ...candidates({ ...decision, action }, state.bigBlind),
+        policy.action,
+      ].map((candidate) => [actionKey(candidate), candidate]),
+    ).values(),
+  ];
+  const featureCache = new Map<number, ModelHandFeatures>();
+  const diagnosticValues = diagnosticOptions.map((candidate) =>
+    candidateValues(decision, candidate, worlds, ranges, styles, featureCache),
+  );
+  const rationale = [...policy.rationale];
+  if (override)
+    rationale.push(
+      `实际执行跟注EV核对：跟注估值 ${override.callEVBB.toFixed(2)} BB，抽样加策略容差 ±${override.toleranceBB.toFixed(2)} BB；${override.changed ? `从${actionLabel(policy.action, decision.call)}改为${actionLabel(action, decision.call)}` : '保留原策略动作'}。此核对处理可争夺边池和待行动玩家，不是均衡求解。`,
+    );
+  rationale.push(
+    '候选EV在决策当时用相同合法抽样计算，是一轮响应诊断；行动仍按上述真实混合分支及跟注核对执行，并非选择候选表最高值。',
+  );
+  const trace: BotDecisionTrace = {
+    seat,
+    tableSize: decision.tableSize,
+    street: decision.street,
+    hole: [...hole],
+    board: [...decision.board],
+    pot: decision.pot,
+    call: decision.call,
+    bigBlind: state.bigBlind,
+    position: positionLabel(decision, seat),
+    opponents: ranges.length,
+    equity: weightedEquity,
+    rawEquity: estimate.equity,
+    samples: estimate.samples,
+    style,
+    difficulty,
+    selectedAction: action,
+    policyAction: policy.action,
+    selectedIntent: override?.changed
+      ? action.type === 'call'
+        ? 'ev-call'
+        : 'ev-fold'
+      : policy.intent,
+    rationale,
+    mixing: policy.mixing,
+    candidates: diagnosticOptions.map((candidate, index) => ({
+      action: candidate,
+      evBB: mean(diagnosticValues[index]) / state.bigBlind,
+      standardErrorBB: standardError(diagnosticValues[index]) / state.bigBlind,
+    })),
+    ...(override ? { override } : {}),
+  };
+  return { action, equity: weightedEquity, samples: estimate.samples, trace };
 }
 
 /** Chip-weighted equity over only the layers this caller can contest, assuming
@@ -689,7 +909,7 @@ export function projectedPotEquity(
         expectedReturn += amount / winners.length / worlds.length;
     }
   }
-  return contestable ? expectedReturn / contestable : 0;
+  return contestable ? clamp(expectedReturn / contestable) : 0;
 }
 
 export type ReviewAlternative = {
@@ -700,6 +920,8 @@ export type ReviewAlternative = {
   score: number;
   /** Extreme effective investment makes the local response model sensitive. */
   scoreSensitive?: boolean;
+  scoreGapBB?: number;
+  comparison?: 'clear' | 'close' | 'sensitive';
   reason: string;
 };
 export type ReviewExplanation = {
@@ -726,6 +948,10 @@ export type ReviewPoint = {
   board: number[];
   score: number;
   scoreSensitive?: boolean;
+  /** Raw EV loss relative to the strongest non-sensitive candidate. */
+  scoreGapBB?: number;
+  comparison?: 'clear' | 'close' | 'sensitive';
+  scoreReference?: { action: PokerAction; label: string; evBB: number };
   recommendation: { action: PokerAction; label: string; evBB: number };
   alternatives: ReviewAlternative[];
   regretBB: number;
@@ -760,6 +986,13 @@ function handContext(hole: readonly number[], decision: Decision) {
   const board = decision.board;
   const notes: string[] = [];
   const draw = drawFeature(hole, board);
+  const missedDraw =
+    board.length === 5 &&
+    drawFeature(hole, board.slice(0, 4)) > 0 &&
+    rankHand([...hole, ...board]).category < 4;
+  const privateValue =
+    board.length >= 3 && strengthFeature(hole, board) >= 0.72;
+  const blocker = botHandFeatures(hole, board).nutBlocker;
   let madeCategory = -1;
   let playsBoard = false;
   if (board.length < 3) {
@@ -787,6 +1020,10 @@ function handContext(hole: readonly number[], decision: Decision) {
       notes.push(
         '你的最佳五张牌完全来自公共牌，不能把公共强牌当成自己的专属优势；尤其留意分池而非独赢的可能性。',
       );
+    if (missedDraw)
+      notes.push(
+        `转牌时的听牌没有在河牌补成。${hand.category === 0 ? '剩余高牌摊牌价值较低，但能否诈唬仍要识别可信弃牌对象和阻挡牌。' : '仍保留现有成牌的摊牌价值，不要把所有错过的听牌自动转成诈唬。'}`,
+      );
     const suitCounts = [0, 1, 2, 3].map(
       (suit) => board.filter((card) => cardSuit(card) === suit).length,
     );
@@ -807,7 +1044,46 @@ function handContext(hole: readonly number[], decision: Decision) {
         '你持有 A，移除了部分 AA、AK 组合；这只是范围修正，不能仅凭一个 A 判断诈唬成功。',
       );
   }
-  return { notes, draw, madeCategory, playsBoard };
+  return {
+    notes,
+    draw,
+    madeCategory,
+    playsBoard,
+    missedDraw,
+    privateValue,
+    blocker,
+  };
+}
+
+function bluffLesson(
+  action: PokerAction,
+  decision: Decision,
+  hand: ReturnType<typeof handContext>,
+) {
+  if (action.type !== 'raise')
+    return hand.missedDraw
+      ? '河牌错过听牌时，先比较现有摊牌价值与对手会弃掉的更强组合；没有合适阻挡牌和弃牌对象，不必自动诈唬。'
+      : '';
+  const opponents = decision.activeSeats.filter(
+    (seat) => seat !== decision.seat,
+  );
+  const risk = Math.min(
+    action.to - decision.streetBet,
+    Math.max(
+      0,
+      ...opponents.map(
+        (seat) =>
+          decision.streetBets[seat] +
+          decision.stacks[seat] -
+          decision.streetBet,
+      ),
+    ),
+  );
+  const allIns = opponents.filter((seat) => decision.stacks[seat] === 0).length;
+  if (allIns)
+    return '存在全下对手，通过弃牌直接赢走全部可争夺底池的概率为0；可另考虑边池价值，但不能把主池当纯诈唬奖励。';
+  const required = risk / Math.max(1, decision.pot + risk);
+  return `仅作纯诈唬的静态参照：若被跟注必输，用新增有效风险 ${risk} 争夺现有底池 ${decision.pot}，需要所有对手一起弃牌约 ${pct(required)}（风险 / (风险 + 底池)）。${hand.draw ? '这手有补牌权益，半诈唬可从被跟注后补成获得价值，不能直接套用必输公式。' : hand.privateValue ? '这手已有私人牌力，下注先找更弱牌取值，不能按纯诈唬解释。' : hand.missedDraw ? '河牌错过听牌已没有未来补牌权益，需要真实弃牌对象。' : '这只是忽略后续下注的盈亏平衡示例，不是最佳诈唬频率。'}${hand.blocker ? '当前持有牌面相关A高同花阻挡牌，移除了对手部分强继续组合；仍需核对会弃的范围。' : '任意A不等于当前牌面的坚果阻挡牌。'}`;
 }
 
 function rangeDescription(decision: Decision, seat: Seat, style: BotStyle) {
@@ -854,14 +1130,13 @@ function recommendationReason(
     return `思路是按当前价格保留${hand.draw ? '听牌补成与现有摊牌' : hand.madeCategory >= 2 ? '当前强牌的摊牌' : '边缘摊牌'}权益。${decision.raiseOpen ? '跟注保留较宽的对手范围，加注则可能赶走弱牌、留下更强的继续范围。' : '当前没有有效加注机会，重点比较跟注后可争夺的主池与边池。'}检查后位尚待行动的玩家，${decision.street === 'river' ? '河牌直接比较被支配与分池可能性' : '后续面对大下注仍需重新判断，赔率达标不代表必须一路跟到底'}。`;
   const likelyValue =
     !hand.playsBoard &&
-    (hand.madeCategory >= 2 ||
-      equity > Math.max(0.43, 1 / (opponents + 1) + 0.16));
+    (hand.privateValue || equity > Math.max(0.43, 1 / (opponents + 1) + 0.16));
   const purpose = likelyValue
     ? '这个尺度更偏向价值取值：列出愿意跟注的较弱对子、听牌或较弱成牌，再判断更大尺度是否只留下强牌。'
     : hand.draw
       ? '这个尺度更偏向半诈唬：同时争取立即弃牌与补牌后的价值，避免把所有听牌都自动加注。'
       : '这个尺度主要争取弃牌收益或隔离更宽的范围：先问哪些更好的牌真的会弃、哪些更弱的牌会跟。';
-  return `${purpose}${opponents > 1 ? '多人底池的立即获胜要求所有仍可弃牌的对手一起放弃，单人的弃牌率不能直接套用。' : '单挑时小尺度可保留较宽的跟注范围，大尺度更依赖明确价值或可信诈唬。'}${allIns ? `当前 ${allIns} 名全下对手不会弃牌，加注最多改变其他玩家及边池，不能诈唬拿走仍需摊牌的主池。` : ''}`;
+  return `${purpose}${opponents > 1 ? '多人底池的立即获胜要求所有仍可弃牌的对手一起放弃，单人的弃牌率不能直接套用。' : '单挑时小尺度可保留较宽的跟注范围，大尺度更依赖明确价值或可信诈唬。'}${allIns ? `当前 ${allIns} 名全下对手不会弃牌，加注最多改变其他玩家及边池，不能诈唬拿走仍需摊牌的主池。` : ''}${bluffLesson(action, decision, hand)}`;
 }
 function teachingExplanation({
   decision,
@@ -894,7 +1169,7 @@ function teachingExplanation({
   const recommended = actionLabel(recommendation, decision.call);
   const same = actionKey(decision.action) === actionKey(recommendation);
   const conclusion = sizingSensitive
-    ? `${chosen}涉及极大投入，估值对少数强牌跟注假设很敏感；先把${recommended}作为稳健参照，高分也不能验证这个尺度。`
+    ? `${chosen}涉及极大投入，估值对少数强牌跟注假设很敏感；这类尺度暂不可靠评分，先把${recommended}作为稳健参照。`
     : same
       ? `推荐${recommended}：这次选择与当前公开信息下的稳健方案一致。`
       : close
@@ -935,7 +1210,7 @@ function teachingExplanation({
         : recommendation.type === 'call'
           ? `用当前价格保留${hand.draw ? '补牌与摊牌' : '现有摊牌'}权益，保持对手较宽的范围。`
           : !hand.playsBoard &&
-              (hand.madeCategory >= 2 ||
+              (hand.privateValue ||
                 equity >
                   Math.max(0.43, 1 / (activeOpponents.length + 1) + 0.16))
             ? '向更弱成牌和听牌取值，确认它们愿意按这个尺度继续。'
@@ -986,7 +1261,7 @@ function teachingExplanation({
   return {
     conclusion,
     reasons: [handReason, priceReason, rangeReason],
-    purpose,
+    purpose: `${purpose}${bluffLesson(recommendation, decision, hand)}`,
     sizing,
     alternatives: otherChoices,
     nextQuestion,
@@ -1454,17 +1729,40 @@ export function reviewHand(
     const samplingTolerance = pairedError.map((error) =>
       Math.max(bigBlind * 0.08, error * 1.96),
     );
-    const tolerance = samplingTolerance.map(
-      (error, candidate) => error + allowances[candidate],
+    const stableIndex = expected.reduce(
+      (best, value, candidate) =>
+        allowances[candidate] <= baseModelAllowance &&
+        !(options[candidate].type === 'fold' && decision.call === 0) &&
+        value > expected[best]
+          ? candidate
+          : best,
+      decision.call ? 0 : 1,
     );
-    const scale = Math.max(bigBlind * 3, decision.pot * 0.35);
-    const score = expected.map((ev, candidate) =>
-      Math.round(
-        Math.exp(
-          -Math.max(0, expected[anchorIndex] - ev - tolerance[candidate]) /
-            scale,
-        ) * 100,
-      ),
+    const scoreGaps = expected.map((ev) =>
+      Math.max(0, expected[stableIndex] - ev),
+    );
+    const comparisonError = values.map(
+      (value) =>
+        standardError(
+          value.map((ev, sample) => values[stableIndex][sample] - ev),
+        ) * 1.96,
+    );
+    const comparisons = options.map((_, candidate) =>
+      allowances[candidate] > baseModelAllowance
+        ? ('sensitive' as const)
+        : scoreGaps[candidate] <=
+            Math.max(bigBlind * 0.08, comparisonError[candidate]) +
+              Math.max(allowances[stableIndex], allowances[candidate])
+          ? ('close' as const)
+          : ('clear' as const),
+    );
+    // Quality and uncertainty are separate: a noisy/suboptimal estimate does
+    // not receive bonus points merely because its model tolerance is large.
+    // The scale is a disclosed training heuristic, not a fitted GTO grade.
+    const scale = Math.max(bigBlind * 0.5, decision.pot * 0.25);
+    const score = expected.map(
+      (_, candidate) =>
+        Math.round(Math.exp(-scoreGaps[candidate] / scale) * 1000) / 10,
     );
     // First choose a candidate-specific conservative EV anchor. Compare close
     // choices against that anchor with paired Monte Carlo noise, then prefer
@@ -1476,6 +1774,7 @@ export function reviewHand(
           conservativeValues[anchorIndex] - conservativeValues[candidate] <=
             samplingTolerance[candidate] +
               Math.min(allowances[anchorIndex], allowances[candidate]) &&
+          comparisons[candidate] !== 'clear' &&
           !(action.type === 'fold' && decision.call === 0),
       );
     const recommendationIndex =
@@ -1487,10 +1786,9 @@ export function reviewHand(
     const recommendation = options[recommendationIndex];
     const conservativeRecommendation = recommendationIndex !== bestIndex;
     const regret = Math.max(0, expected[bestIndex] - expected[actualIndex]);
-    const uncertainty = pairedError[actualIndex] * 1.96;
+    const uncertainty = comparisonError[actualIndex];
     const modelAllowance = allowances[actualIndex];
-    const close =
-      expected[anchorIndex] - expected[actualIndex] <= tolerance[actualIndex];
+    const close = comparisons[actualIndex] !== 'clear';
     const threshold = decision.call
       ? decision.call / (decision.pot + decision.call)
       : null;
@@ -1518,6 +1816,7 @@ export function reviewHand(
         : '当前可以免费过牌，比较主动取值与保留摊牌权益。',
       `对 ${ranges.length} 个仍在牌局的对手，公开范围模型估计摊牌份额 ${pct(estimate.equity)}；这不是被加注跟注后的条件权益。`,
       `最高数值候选 ${actionLabel(options[bestIndex], decision.call)}，估计增量 EV ${formatBB(expected[bestIndex] / bigBlind)} BB；推荐 ${actionLabel(recommendation, decision.call)} 的估值为 ${formatBB(expected[recommendationIndex] / bigBlind)} BB；你的选择 ${formatBB(expected[actualIndex] / bigBlind)} BB。`,
+      `数值评分参照为普通尺度的${actionLabel(options[stableIndex], decision.call)}（${formatBB(expected[stableIndex] / bigBlind)} BB）；你的原始估值差为 ${(scoreGaps[actualIndex] / bigBlind).toFixed(2)} BB。分数不扣误差，也不因模型不确定而奖励成满分；是否能可靠区分另作说明。`,
       ...(conservativeRecommendation
         ? [
             allowances[bestIndex] > baseModelAllowance
@@ -1548,6 +1847,8 @@ export function reviewHand(
           standardErrorBB: round(standardError(values[candidate]) / bigBlind),
           score: score[candidate],
           scoreSensitive: allowances[candidate] > baseModelAllowance,
+          scoreGapBB: round(scoreGaps[candidate] / bigBlind),
+          comparison: comparisons[candidate],
           reason: `${recommendationReason(action, decision, estimate.equity, ranges.length, hand)} ${
             action.type === 'fold'
               ? '弃牌的增量 EV 设为 0，之前投入的筹码是沉没成本。'
@@ -1584,6 +1885,13 @@ export function reviewHand(
         board: [...decision.board],
         score: score[actualIndex],
         scoreSensitive: modelAllowance > baseModelAllowance,
+        scoreGapBB: round(scoreGaps[actualIndex] / bigBlind),
+        comparison: comparisons[actualIndex],
+        scoreReference: {
+          action: options[stableIndex],
+          label: actionLabel(options[stableIndex], decision.call),
+          evBB: round(expected[stableIndex] / bigBlind),
+        },
         recommendation: {
           action: recommendation,
           label: actionLabel(recommendation, decision.call),
@@ -1621,7 +1929,8 @@ export function reviewHand(
           '抽样误差仅是 95% 配对 Monte Carlo 容差；另设模型敏感性预留，不能把后者当作统计置信区间。',
           '多人边池分别结算；无法以一个总权益直接代替所有边池权益。',
           '所有候选共用相同样本；评分反映模型内差异，接近的动作不作硬性优劣判断。',
-          '推荐先按候选 EV − 95% 抽样误差 − 该候选模型预留寻找稳健锚点；评分比较该锚点的配对 EV 差，原始最高 EV 仍用于展示相对损失。模型基准预留为 max(0.2 BB, 12% 底池) × 街道系数（1.75 / 1.35 / 0.65 / 0.35），新增有效风险超出跟注后两倍底池的部分另留 3%；弃牌增量已知为 0。评分按 100 × exp(−容差外损失 / max(3 BB, 35% 当前底池)) 平滑归一，它是训练指标，不是求解器认可度。',
+          '数值分为 100 × exp(−普通稳定参照的原始 EV 损失 / max(0.5 BB, 25% 当前底池))，不扣除抽样误差或模型容差；这个比例是透明的训练启发式，未经专业策略拟合。极端尺度单独标记敏感，数值不作可靠评分。',
+          '稳健推荐另按候选 EV − 95% 抽样误差 − 各自模型预留选择近似且少投入的方案，因此可与数值最高分不同。模型基准预留为 max(0.2 BB, 12% 底池) × 街道系数（1.75 / 1.35 / 0.65 / 0.35），新增有效风险超出跟注后两倍底池的部分另留 3%；它仅用于可区分程度与推荐，不提高质量分。',
         ],
       },
     ];

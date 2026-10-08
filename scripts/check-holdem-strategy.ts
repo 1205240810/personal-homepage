@@ -17,6 +17,8 @@ import {
 } from '../lib/games/holdem-engine.ts';
 import {
   chooseBotAction,
+  chooseBotPolicy,
+  botHandFeatures,
   decideBot,
   buildOpponentRanges,
   reviewHand,
@@ -29,6 +31,7 @@ import {
   type BotStyle,
   type AiDifficulty,
 } from '../lib/games/holdem-strategy.ts';
+import { validateBotDecisionTrace } from '../lib/games/holdem-replay.ts';
 const styles: BotStyle[] = ['balanced', 'careful', 'active', 'tricky'];
 const difficulties: AiDifficulty[] = ['casual', 'standard', 'advanced'];
 function assertAction(state: HoldemState, action: PokerAction) {
@@ -201,6 +204,193 @@ await test('AI 仅访问自己的底牌及当前公开信息，固定状态可�
         state,
         chooseBotAction(noCards, 0.31, style, seededRandom(717), difficulty),
       );
+});
+
+await test('真实策略诊断记录执行分支和EV覆核，不以候选最高值伪造选择过程', () => {
+  const state = startHand({ deck: shuffledDeck(seededRandom(117)) });
+  const seat = state.toAct!;
+  const result = decideBot(state, seat, 'active', 'standard');
+  assert(validateBotDecisionTrace(result.trace));
+  assert.deepEqual(result.trace.selectedAction, result.action);
+  assert.deepEqual(result.trace.hole, state.holes[seat]);
+  assert.deepEqual(result.trace.board, state.board);
+  assert(
+    result.trace.rationale.some((reason) => reason.includes('实际混合抽样')),
+  );
+  assert(
+    result.trace.rationale.some((reason) =>
+      reason.includes('并非选择候选表最高值'),
+    ),
+  );
+  const override = result.trace.override;
+  if (override) {
+    assert.deepEqual(override.from, result.trace.policyAction);
+    assert.deepEqual(override.to, result.action);
+    assert.equal(
+      override.changed,
+      JSON.stringify(override.from) !== JSON.stringify(override.to),
+    );
+    if (override.callEVBB > override.toleranceBB)
+      assert.equal(result.action.type, 'call');
+    if (override.callEVBB < -override.toleranceBB)
+      assert.equal(result.action.type, 'fold');
+  }
+  const selected = result.trace.candidates.find(
+    (option) => JSON.stringify(option.action) === JSON.stringify(result.action),
+  )!;
+  assert(selected && Number.isFinite(selected.evBB));
+  const after = act(state, result.action, result.trace);
+  assert.deepEqual(after.actions.at(-1)!.botTrace, result.trace);
+  assert.deepEqual(result, decideBot(state, seat, 'active', 'standard'));
+  result.trace.board.push(51);
+  assert.equal(
+    after.actions.at(-1)!.botTrace!.board.length,
+    state.board.length,
+    '引擎保存独立诊断副本',
+  );
+});
+
+await test('诈唬有真实触发与牌面条件：多人收紧、全下主池禁用，坚果阻挡牌区别任意A', () => {
+  let heads = startHand({
+    tableSize: 2,
+    button: 1,
+    deck: shuffledDeck(seededRandom(817)),
+  });
+  heads = act(heads, { type: 'call' });
+  heads = act(heads, { type: 'check' });
+  const random = () => 0.001;
+  const weak = { draw: 0, aceBlocker: false, showdownValue: false };
+  const bluff = chooseBotPolicy(
+    heads,
+    0.05,
+    'active',
+    random,
+    'advanced',
+    weak,
+  );
+  assert.equal(bluff.intent, 'bluff');
+  assert.equal(bluff.action.type, 'raise');
+  assert(bluff.mixing.bluffEligible && bluff.mixing.bluffTriggered);
+  assert(bluff.mixing.roll < bluff.mixing.bluffProbability);
+  const strong = chooseBotPolicy(heads, 0.05, 'active', random, 'advanced', {
+    ...weak,
+    showdownValue: true,
+  });
+  assert.equal(strong.mixing.bluffEligible, false);
+  assert.equal(strong.intent, 'check');
+  const river = {
+    ...heads,
+    street: 'river' as const,
+    board: [2, 18, 34, 45, 48],
+  };
+  const ace = chooseBotPolicy(river, 0.05, 'active', random, 'advanced', {
+    ...weak,
+    aceBlocker: true,
+  });
+  const blocker = chooseBotPolicy(river, 0.05, 'active', random, 'advanced', {
+    ...weak,
+    aceBlocker: true,
+    nutBlocker: true,
+  });
+  assert(blocker.mixing.bluffProbability > ace.mixing.bluffProbability);
+  assert.equal(
+    botHandFeatures([49, 4], river.board).nutBlocker,
+    false,
+    '无关花色A不是坚果同花阻挡牌',
+  );
+  assert.equal(
+    botHandFeatures([50, 4], river.board).nutBlocker,
+    true,
+    'A♣阻挡当前三张梅花的坚果范围',
+  );
+  let many = startHand({ tableSize: 5, deck: shuffledDeck(seededRandom(993)) });
+  while (many.street === 'preflop') {
+    const legal = legalActions(many)!;
+    many = act(many, legal.call ? { type: 'call' } : { type: 'check' });
+  }
+  const multi = chooseBotPolicy(many, 0.05, 'active', random, 'advanced', weak);
+  assert(multi.mixing.bluffProbability < bluff.mixing.bluffProbability / 4);
+  const withAllIn = {
+    ...many,
+    stacks: many.stacks.map((stack, seat) => (seat === 2 ? 0 : stack)),
+  };
+  const noBluff = chooseBotPolicy(
+    withAllIn,
+    0.05,
+    'active',
+    random,
+    'advanced',
+    { ...weak, draw: 1.6 },
+  );
+  assert.equal(noBluff.mixing.bluffProbability, 0);
+  assert.equal(noBluff.mixing.bluffTriggered, false);
+  assert.equal(noBluff.intent, 'check');
+  assert(
+    noBluff.rationale.some((reason) => reason.includes('边池可能有弃牌收益')),
+  );
+  const reopen = {
+    ...heads,
+    actions: [
+      {
+        ...reviewFixture().actions[0],
+        seat: heads.toAct!,
+        street: 'preflop' as const,
+        action: { type: 'raise', to: 30 } as PokerAction,
+      },
+      {
+        ...reviewFixture().actions[0],
+        seat: 1,
+        street: 'flop' as const,
+        action: { type: 'raise', to: 10 } as PokerAction,
+      },
+    ],
+  };
+  assert.equal(
+    chooseBotPolicy(reopen, 0.36, 'balanced', () => 0.2, 'advanced', weak)
+      .mixing.cbet,
+    false,
+    '翻牌已有下注后的再次行动不是持续下注',
+  );
+});
+
+await test('组合听牌1.6的真实AI诊断可被原子保存，坚果权益浮点不越过1', () => {
+  const assignments = new Map([
+    [0, 36],
+    [3, 32],
+    [7, 40],
+    [8, 28],
+    [9, 1],
+  ]);
+  const remaining = Array.from({ length: 52 }, (_, card) => card).filter(
+    (card) => ![...assignments.values()].includes(card),
+  );
+  const deck = Array.from(
+    { length: 52 },
+    (_, index) => assignments.get(index) ?? remaining.shift()!,
+  );
+  let state = startHand({ tableSize: 3, deck });
+  state = act(state, { type: 'call' });
+  state = act(state, { type: 'call' });
+  state = act(state, { type: 'check' });
+  const result = decideBot(state, 1, 'tricky', 'advanced');
+  assert.equal(result.trace.mixing.draw, 1.6);
+  assert(validateBotDecisionTrace(result.trace));
+  assert.equal(
+    act(state, result.action, result.trace).actions.at(-1)!.botTrace!.mixing
+      .draw,
+    1.6,
+  );
+  const decision = reviewFixture().actions.find((action) => action.seat === 0)!;
+  const ranges = decision.activeSeats
+    .filter((seat) => seat !== 0)
+    .map((seat) => ({ seat, combos: [] }));
+  const worlds = Array.from({ length: 110 }, () => ({
+    holes: [[0, 1], ...ranges.map(() => [2, 3])],
+    ranks: [2, ...ranges.map(() => 1)],
+    responseRolls: ranges.map(() => 0.5),
+  }));
+  const equity = projectedPotEquity(decision, worlds, ranges);
+  assert(equity <= 1 && Math.abs(equity - 1) < 1e-12);
 });
 
 await test('复盘信息防火墙：不访问四名对手底牌、牌组或最终公共牌', () => {
@@ -423,7 +613,7 @@ await test('三档难度确实改变策略，而非只更换标签或抽样次�
     JSON.stringify(
       chooseBotAction(
         post,
-        0.3,
+        0.38,
         'balanced',
         seededRandom(seed * 919),
         'standard',
@@ -434,7 +624,7 @@ await test('三档难度确实改变策略，而非只更换标签或抽样次�
     JSON.stringify(
       chooseBotAction(
         post,
-        0.3,
+        0.38,
         'balanced',
         seededRandom(seed * 919),
         'advanced',
@@ -444,7 +634,7 @@ await test('三档难度确实改变策略，而非只更换标签或抽样次�
   assert.notEqual(standard, advanced);
 });
 
-await test('候选动作全部合法；采样容差内的近似动作不被扣分', () => {
+await test('候选全部合法；质量分与相近推荐独立，不再靠容差填成100', () => {
   let state = startHand({ deck: shuffledDeck(seededRandom(899)) });
   while (state.toAct !== 0) state = act(state, { type: 'call' });
   const before = state;
@@ -452,14 +642,27 @@ await test('候选动作全部合法；采样容差内的近似动作不被扣�
   const point = reviewHand(state, 240)[0];
   for (const candidate of point.alternatives)
     assertAction(before, candidate.action);
-  assert.equal(
-    point.alternatives.find(
-      (option) =>
-        JSON.stringify(option.action) ===
-        JSON.stringify(point.recommendation.action),
-    )!.score,
-    100,
+  const recommended = point.alternatives.find(
+    (option) =>
+      JSON.stringify(option.action) ===
+      JSON.stringify(point.recommendation.action),
+  )!;
+  assert.equal(recommended.comparison, 'close');
+  const stable = point.alternatives.filter((option) => !option.scoreSensitive);
+  assert.equal(Math.max(...stable.map((option) => option.score)), 100);
+  assert(
+    stable.some((option) => option.score < 95),
+    '不同EV不能因为抽样容差都变100',
   );
+  assert(point.scoreReference);
+  for (const option of stable) {
+    const scaleBB = Math.max(0.5, (point.pot / state.bigBlind) * 0.25);
+    const rawGap = Math.max(0, point.scoreReference.evBB - option.evBB);
+    assert(
+      Math.abs(option.score - 100 * Math.exp(-rawGap / scaleBB)) < 1.2,
+      '分数依据原始EV差，不扣配对MC或模型预留',
+    );
+  }
 });
 
 await test('复盘解释对应实际手牌、免费过牌与已观察的范围行动', () => {
@@ -543,15 +746,20 @@ await test('线上 43o 回归：弱对子不会因为对手魔法过度弃牌而
   assert.equal(points[2].recommendation.action.type, 'fold');
   assert.equal(points[3].recommendation.action.type, 'check');
   assert(
-    points[1].score >= 75,
-    '可防守的弱对子免费过牌不应因为假设过度弃牌而得零分',
+    points[1].score > 20 && points[1].score < 100,
+    '弱对子过牌应保留摊牌价值，但较低数值EV不能自动被误差奖励成100',
   );
   assert.equal(points[3].score, 100);
-  assert(
-    points[0].alternatives.find((option) => option.action.type === 'fold')!
-      .score >= 90,
-    '未求解后续树的翻牌前模型必须容许更稳健的弃牌',
+  const fold = points[0].alternatives.find(
+    (option) => option.action.type === 'fold',
+  )!;
+  assert(fold.score > points[0].score, '免费退出比实际弱牌跟注的数值损失少');
+  assert.equal(
+    fold.comparison,
+    'close',
+    '翻牌前模型的不确定性另行说明，不能从分数消除',
   );
+  assert.equal(points[1].comparison, 'close');
   assert(points.every((point) => (point.modelAllowanceBB ?? 0) > 0));
   assert.match(points[1].advice, /启发式/);
   assert(points[1].limitations.some((limit) => limit.includes('统计置信区间')));
@@ -658,7 +866,7 @@ await test('J♥3♥ 配对翻牌回归：常规价值下注可取值，不因 3
     1400,
   )[0];
   assert.equal(aggressive.scoreSensitive, true);
-  assert.match(aggressive.explanations!.conclusion, /高分也不能验证/);
+  assert.match(aggressive.explanations!.conclusion, /暂不可靠评分/);
   assert.equal(aggressive.recommendation.action.type, 'raise');
   assert(
     aggressive.recommendation.action.type === 'raise' &&
@@ -685,6 +893,16 @@ await test('J♥3♥ 配对翻牌回归：常规价值下注可取值，不因 3
   assert.equal(shortPoint.modelAllowanceBB, point.modelAllowanceBB);
   console.log(
     `J3 回归：正常30 EV ${normal.evBB} BB/${point.score}分；全下990 EV ${extreme.evBB} BB；推荐${point.recommendation.label}。`,
+  );
+  console.log(
+    'J3 新评分分布',
+    point.alternatives.map((option) => ({
+      action: option.label,
+      evBB: option.evBB,
+      score: option.score,
+      comparison: option.comparison,
+      scoreSensitive: option.scoreSensitive,
+    })),
   );
 });
 
@@ -767,6 +985,91 @@ await test('稳健推荐不会把明显高价值的私人坚果下注降级成�
         JSON.stringify(option.action) ===
         JSON.stringify(point.recommendation.action),
     )!.evBB,
+  );
+  const folded = reviewHand(
+    { ...state, actions: [{ ...decision, action: { type: 'fold' } }] },
+    1400,
+  )[0];
+  assert(
+    folded.score < 5,
+    '免费持有私人坚果却弃牌应明确损失，而非容差奖励满分',
+  );
+  assert.equal(folded.comparison, 'clear');
+  console.log(
+    `私人皇家坚果免费弃牌：${folded.score}分，原始差 ${folded.scoreGapBB} BB，${folded.comparison}。`,
+  );
+});
+
+await test('河牌空气大跟注按真实模型损失降分，误差不抵消损失', () => {
+  const state = startHand();
+  state.holes[0] = [0, 20]; // 2♠7♠; no pair, straight, or flush.
+  const decision: Decision = {
+    seat: 0,
+    street: 'river',
+    board: [45, 38, 33, 29, 10],
+    button: 0,
+    tableSize: 5,
+    pot: 600,
+    call: 300,
+    stack: 950,
+    streetBet: 0,
+    action: { type: 'call' },
+    paid: 300,
+    effectiveRisk: 300,
+    activeSeats: [0, 1],
+    stacks: [950, 650, 1000, 1000, 1000],
+    committed: [50, 350, 200, 0, 0],
+    streetBets: [0, 300, 0, 0, 0],
+    folded: [false, false, true, true, true],
+    lastRaise: 300,
+    raiseOpen: true,
+    minTo: 600,
+    maxTo: 950,
+    history: [
+      {
+        seat: 1,
+        street: 'river',
+        action: { type: 'raise', to: 300 },
+        paid: 300,
+        streetBet: 300,
+      },
+    ],
+  };
+  const point = reviewHand({ ...state, actions: [decision] }, 1400)[0];
+  const call = point.alternatives.find(
+    (option) => option.action.type === 'call',
+  )!;
+  const fold = point.alternatives.find(
+    (option) => option.action.type === 'fold',
+  )!;
+  assert(call.evBB < -15);
+  assert(point.score < 40);
+  assert.equal(point.comparison, 'clear');
+  assert.equal(point.recommendation.action.type, 'fold');
+  assert.equal(fold.score, 100);
+  const raise = point.alternatives.find(
+    (option) => option.action.type === 'raise' && option.action.to === 600,
+  )!;
+  assert.match(raise.reason, /50%.*风险 \/ \(风险 \+ 底池\)/);
+  assert.match(raise.reason, /河牌错过听牌已没有未来补牌权益/);
+  assert.match(raise.reason, /任意A不等于当前牌面/);
+  const allInDecision = {
+    ...decision,
+    activeSeats: [0, 1, 2],
+    stacks: [950, 0, 650, 1000, 1000],
+    committed: [50, 100, 350, 0, 0],
+    streetBets: [0, 100, 300, 0, 0],
+    folded: [false, false, false, true, true],
+    pot: 500,
+  };
+  const allInPoint = reviewHand({ ...state, actions: [allInDecision] }, 240)[0];
+  assert(
+    allInPoint.alternatives
+      .filter((option) => option.action.type === 'raise')
+      .every((option) => option.reason.includes('概率为0')),
+  );
+  console.log(
+    `河牌27空气跟注300/底池600：EV ${call.evBB} BB，${point.score}分，${point.comparison}；推荐${point.recommendation.label}。`,
   );
 });
 
