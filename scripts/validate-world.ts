@@ -83,6 +83,26 @@ for (const scene of SCENES) {
       `门坐标无效: ${door.nodeId}`,
     );
   }
+  for (const fixture of scene.fixtures ?? []) {
+    const node = scene.nodes.find((item) => item.id === fixture.nodeId);
+    assert(node, `场景实体缺少互动节点: ${fixture.nodeId}`);
+    assert(
+      node.action.type === 'open-arcade',
+      `街机实体应通往游戏室: ${fixture.nodeId}`,
+    );
+    assert(
+      [fixture.x, fixture.y, fixture.width, fixture.height].every(
+        Number.isFinite,
+      ) &&
+        fixture.width > 0 &&
+        fixture.height > 0 &&
+        fixture.x - fixture.width / 2 >= 0 &&
+        fixture.x + fixture.width / 2 <= scene.width &&
+        fixture.y - fixture.height >= 0 &&
+        fixture.y <= scene.height,
+      `无效场景实体坐标: ${fixture.nodeId}`,
+    );
+  }
   const tiled = JSON.parse(
     await readFile(`public/maps/${scene.id}.json`, 'utf8'),
   );

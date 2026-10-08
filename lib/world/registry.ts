@@ -60,7 +60,7 @@ const room = (
   description: [
     '驾驶员的档案，与沿途留下的生活记录。',
     '翻一页旧笔记，也看看当时的比赛与思路。',
-    '试一件作品，接一段电路，留一份工程笔记。',
+    '试一件作品，留一份工程笔记，也在街机角落玩一局。',
   ][frame],
   art: [
     '/art/interior-cockpit-hd.png',
@@ -89,7 +89,21 @@ const room = (
       ? [{ x: 438, y: 130, radius: 120, color: 0x73cdc5, strength: 0.15 }]
       : []),
   ],
-  layoutVersion: 22,
+  layoutVersion: frame === 2 ? 23 : 22,
+  ...(frame === 2
+    ? {
+        fixtures: [
+          {
+            kind: 'arcade-cabinet' as const,
+            nodeId: 'arcade-terminal',
+            x: 288,
+            y: 453,
+            width: 68,
+            height: 98,
+          },
+        ],
+      }
+    : {}),
   returnTo: { sceneId: 'hub', spawnId: returnSpawn },
   overview: { x: 50, y: 50 },
   spawnPoints: {
@@ -197,7 +211,7 @@ export const SCENES: SceneDefinition[] = [
         x: 1037,
         y: 658,
         label: '试作间',
-        hint: '项目，以及可以亲手接通的小回路。',
+        hint: '项目工作台、工程笔记与角落里的小街机。',
         radius: 38,
         category: 'projects',
         action: { type: 'enter-scene', sceneId: 'graduate' },
@@ -403,6 +417,17 @@ export const SCENES: SceneDefinition[] = [
         action: { type: 'open-collection', chapter: 'graduate' },
       },
       {
+        id: 'arcade-terminal',
+        effectPoint: { x: 281, y: 391 },
+        x: 333,
+        y: 439,
+        label: '街机角 · 游戏室',
+        hint: '选一个游戏玩一局，返回后仍在这台街机旁。',
+        category: 'play',
+        radius: 38,
+        action: { type: 'open-arcade' },
+      },
+      {
         id: 'tiny-repairer',
         x: 608,
         y: 295,
@@ -414,7 +439,17 @@ export const SCENES: SceneDefinition[] = [
         action: { type: 'discover', discovery: 'pocket-mecha' },
       },
     ],
-    [rect(363, 194, 157, 35), rect(639, 267, 59, 62), rect(188, 273, 72, 58)],
+    [
+      rect(363, 194, 157, 35),
+      rect(639, 267, 59, 62),
+      rect(188, 273, 72, 58),
+      [
+        [258, 429],
+        [304, 429],
+        [313, 450],
+        [266, 456],
+      ],
+    ],
   ),
   {
     id: 'vault',

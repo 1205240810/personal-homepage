@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ArrowRight, SunMedium } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowUpRight, ArrowRight, Gamepad2, SunMedium } from 'lucide-react';
 import { MusicControl } from '@/components/world/music-control';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { ArrivalAtmosphere } from './arrival-atmosphere';
@@ -101,6 +102,17 @@ export default function Arrival({ art }: { art: ArrivalArt }) {
             </span>
             <ArrowRight size={23} strokeWidth={1.4} />
           </a>
+          <Link
+            href="/games"
+            onClick={(e) => enter(e, '/games')}
+            className="arrival-games"
+          >
+            <Gamepad2 size={19} strokeWidth={1.4} aria-hidden="true" />
+            <span>
+              游戏室<small>德州扑克 · 灯阵谜题</small>
+            </span>
+            <ArrowUpRight size={18} strokeWidth={1.4} aria-hidden="true" />
+          </Link>
         </nav>
       </div>
       <footer className="arrival-footer">

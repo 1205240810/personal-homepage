@@ -132,6 +132,37 @@ test('机甲通道连续，舱室都可原路返回，公开内容不被游戏�
   );
 });
 
+void test('试作间街机具有实体碰撞，可从舱门接近并保留所有旧节点的通路', () => {
+  const room = getScene('graduate');
+  const arcade = room.nodes.find((node) => node.id === 'arcade-terminal');
+  assert(arcade && arcade.action.type === 'open-arcade');
+  assert(room.fixtures?.some((fixture) => fixture.nodeId === arcade.id));
+  assert.equal(
+    traversable({ x: 285, y: 440 }, room.walkable, room.obstacles),
+    false,
+    '街机柜体不是可以穿过的贴图',
+  );
+  assert(traversable(arcade, room.walkable, room.obstacles));
+  assert(
+    findRoute(room.spawnPoints.default, arcade, room.walkable, room.obstacles),
+    '舱门到街机操作位置的地面应连通',
+  );
+  for (const id of [
+    'project-console',
+    'circuit-console',
+    'workshop-notes',
+    'tiny-repairer',
+    'graduate-exit',
+  ]) {
+    const node = room.nodes.find((item) => item.id === id);
+    assert(node);
+    assert(
+      findRoute(arcade, node, room.walkable, room.obstacles),
+      `街机应保留到旧节点 ${id} 的通路`,
+    );
+  }
+});
+
 import { addressPlan } from '../lib/project-preview.ts';
 test('OSPF 示例对应公开项目的四节点规划，参数变化后重新生成全部地址', () => {
   const base = addressPlan(1, 20)!;

@@ -103,6 +103,33 @@
           ],
           "visible": true,
           "rotation": 0
+        },
+        {
+          "id": 303,
+          "name": "obstacle-3",
+          "type": "obstacle",
+          "x": 0,
+          "y": 0,
+          "polygon": [
+            {
+              "x": 258,
+              "y": 429
+            },
+            {
+              "x": 304,
+              "y": 429
+            },
+            {
+              "x": 313,
+              "y": 450
+            },
+            {
+              "x": 266,
+              "y": 456
+            }
+          ],
+          "visible": true,
+          "rotation": 0
         }
       ]
     },
@@ -245,6 +272,18 @@
         },
         {
           "id": 104,
+          "name": "arcade-terminal",
+          "type": "open-arcade",
+          "x": 333,
+          "y": 439,
+          "width": 0,
+          "height": 0,
+          "point": true,
+          "rotation": 0,
+          "visible": true
+        },
+        {
+          "id": 105,
           "name": "tiny-repairer",
           "type": "discover",
           "x": 608,

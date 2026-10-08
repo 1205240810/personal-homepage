@@ -1,19 +1,21 @@
 # 徒手拆机甲 · 个人工作台与机甲档案馆
 
-「徒手拆机甲」的个人主页。文章、项目和个人档案可以直接阅读；喜欢探索的访客，也可以走进机甲，沿维修栈道进入不同舱室。游戏是了解内容的另一条路，所有文章和作品都不需要通关才能访问。
+「徒手拆机甲」的个人主页。文章、项目和个人档案可以直接阅读；喜欢探索的访客，也可以走进机甲，沿维修栈道进入不同舱室。游戏室提供独立可玩的浏览器小游戏，所有文章和作品都不需要通关才能访问。
 
 本公开仓库同时保存当前网站与早期「林间小院」的独立学习案例。公开历史已移除实名、未确认草稿与私藏档案数据；原始历史另作私有备份。项目整体尚未设置开源许可证。
 
 - [正式网站](https://tscjj.com/)：腾讯云自托管，域名与 HTTPS 的配置见 [部署说明](docs/SELF-HOSTING.md#域名与-https)。
 - [原 Sites 预览](https://tscjj-mecha-archive.c66745946.chatgpt.site/)：托管受众为仅所有者，与正式网站独立维护。
 - [林间小院学习案例](examples/forest-courtyard/README.md)：独立运行旧版场景，阅读机制讲解并动手修改。
-- [日常维护](docs/MAINTENANCE.md) · [GitHub 维护与版本恢复](docs/GITHUB-MAINTENANCE.md) · [自有服务器部署](docs/SELF-HOSTING.md) · [来源记录](docs/SOURCES.md)
+- [日常维护](docs/MAINTENANCE.md) · [游戏室与扩展](docs/GAMES.md) · [GitHub 维护与版本恢复](docs/GITHUB-MAINTENANCE.md) · [自有服务器部署](docs/SELF-HOSTING.md) · [来源记录](docs/SOURCES.md)
 
 ## 当前版本可以做什么
 
-- **有质感的入口**：四幅机甲开屏原画随机呈现，可选择直接进入工作台或探索世界。
+- **有质感的入口**：四幅机甲开屏原画随机呈现，可选择直接进入工作台或探索世界，也能从次要入口进入游戏室。
 - **直接使用的工作台**：文章检索、栏目、个人档案和项目都有明确入口。六个项目按网络工程、数据与算法、效率工具分类；提供地址规划、相册筛选、配送路径、日均成本四种交互示例，以及两个源码流程导览。
-- **可选的机甲探索**：2.5D 外景连接航迹室、旧纸库和试作间，含轻量物件反馈、音乐和可选小游戏。阅读面板打开时暂停移动，关闭后继续探索。
+- **可选的机甲探索**：2.5D 外景连接航迹室、旧纸库和试作间，含轻量物件反馈、音乐和可选小游戏。阅读面板打开时暂停移动，关闭后继续探索。试作间的街机角连接游戏室，返回时恢复原场景与人物位置。
+- **独立游戏室**：`/games` 统一选游戏，欢迎页、工作台导航及侧栏均有入口。德州扑克练习桌与信号接力拥有独立地址，可以直接分享；进入游戏才加载对应代码。
+- **德州扑克练习桌**：与浏览器内的 AI 对手进行单挑，用虚拟筹码练习弃牌、过牌、跟注与加注，逐手查看策略复盘，本机保存练习记录。AI 使用本地混合启发式策略，权益由随机对手范围的蒙特卡洛抽样估算；复盘参考赔率与 GTO 思路，不是严格 GTO 求解器，也不调用联网大模型。没有充值、提现或真钱交易。
 - **渐进灯阵**：12 关分三个阶段，从 4×4 到 5×5；提供提示、撤回、重来和本次游玩的最佳步数记录。刷新后重置成绩。
 - **可维护的文章档案**：74 篇公开旧文已迁入，保留日期、标签和来源链接。教育、经历和荣誉由独立数据文件管理；未确认草稿仅在维护者本地保存。
 - **独立的私藏边界**：仓库保留访问控制代码，不包含私藏档案数据。Sites 版本需要本地密文、主人身份与独立密码配置；Node 部署关闭私藏接口，不影响普通文章。
@@ -34,7 +36,7 @@ npm run dev
 访问终端显示的本地地址，默认是 `http://localhost:3000/`。开发模式自动编译文章目录；维护者本地若有 `content/drafts/*.md`，会额外显示标记为草稿的内容，工作台精选仍只展示正式文章。公开克隆不含这四篇待核对草稿，也不需要私藏室配置即可阅读和探索。
 
 ```sh
-npm run check          # 编译内容、类型检查、世界/文章/项目/灯阵验证
+npm run check          # 编译内容、类型检查、世界/文章/项目/游戏验证
 npm run build          # Sites / Cloudflare 正式构建，仅含已发布文章
 npm run build:preview  # 私有审阅构建，可包含本地草稿
 npm run build:node     # 独立 Node 服务端构建，仅含已发布文章
@@ -68,6 +70,9 @@ npm run dev
 | `/projects` | 项目列表与源链接 | `content/data/projects.json` |
 | `/about` | 简介、教育、经历与荣誉 | `content/data/profile.json`、`awards.json` |
 | `/explore` | 机甲世界与舱室 | `lib/world/registry.ts`、`engine.ts` |
+| `/games` | 游戏室与游戏选择 | `lib/games/catalog.ts`、`components/games/game-room.tsx` |
+| `/games/holdem-lab` | 德州扑克练习与复盘 | `lib/games/holdem-*.ts`、`components/games/` |
+| `/games/signal-pulse` | 十二关灯阵 | `lib/pulse-puzzle.ts`、`components/home/pulse-game.tsx` |
 | `/vault` | 主人私藏入口 | `lib/private-vault/`、`app/api/vault/` |
 
 文章 ID、公开 slug 与地图坐标相互独立。移动或重画书架不会改变文章地址；新增文章自动进入对应栏目。
@@ -81,15 +86,17 @@ flowchart LR
   C -->|暂停、恢复、进入场景| E
 ```
 
-主站使用 React、TypeScript、Vinext / Vite、Phaser 与 Tiled JSON，可构建为 Cloudflare Worker 或独立 Node 服务端。Phaser 只在探索页按需加载；引导页和直接阅读入口不必启动游戏。
+主站使用 React、TypeScript、Vinext / Vite、Phaser 与 Tiled JSON，可构建为 Cloudflare Worker 或独立 Node 服务端。Phaser 只在探索页按需加载；引导页和直接阅读入口不必启动世界。游戏室使用轻量目录，各游戏通过独立路由接入；规则计算、AI 策略与 React 界面分开维护，不搭通用插件系统。详见 [游戏室与扩展](docs/GAMES.md)。
 
 ## 仓库结构
 
 ```text
 app/                         页面与服务端接口
-components/home/             工作台、项目预览、灯阵小游戏
+components/home/             工作台、项目预览、复用的灯阵小游戏
+components/games/            游戏室、独立游戏界面与计算 Worker
 components/world/            游戏与 React 阅读面板的连接
 lib/content/                 内容读取接口；generated.json 由脚本生成
+lib/games/                   游戏目录、扑克规则、牌力评估与策略复盘
 lib/world/                   场景注册、角色、导航、碰撞、遮挡
 lib/private-vault/           私藏室服务端逻辑；密文数据仅本地保存
 content/                     公开文章、档案与项目数据；本地草稿被忽略

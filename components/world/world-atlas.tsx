@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowUpRight, DoorOpen } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, DoorOpen, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DISTRICTS, getScene } from '@/lib/world/registry';
 import type { ArticleSummary } from '@/lib/content/source';
@@ -77,8 +77,26 @@ export function WorldAtlas({
           </section>
         ))}
       </div>
+      <section className="mecha-atlas-arcade" aria-label="试作间的游戏厅">
+        <Gamepad2 size={23} aria-hidden="true" />
+        <div>
+          <small>AFTER HOURS · 试作间的街机角</small>
+          <h3>忙完以后，来玩一局。</h3>
+          <p>在舱室里走近街机，也可以直接打开游戏室选择游戏。</p>
+        </div>
+        <button
+          onClick={() => onAction({ type: 'enter-scene', sceneId: 'graduate' })}
+        >
+          找到街机
+          <DoorOpen size={15} />
+        </button>
+        <button onClick={() => onAction({ type: 'open-arcade' })}>
+          打开游戏室
+          <ArrowUpRight size={15} />
+        </button>
+      </section>
       <p className="mecha-atlas-note">
-        探索进度保存在本机。文章、作品和个人档案随时可以打开。
+        探索进度保存在本机。文章、作品、游戏和个人档案随时可以打开。
       </p>
       {DISCOVERIES.some((d) => snapshot?.discoveries.includes(d.id)) && (
         <details className="discovery-notebook">

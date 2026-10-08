@@ -1,6 +1,76 @@
 .world-menu-toggle {
   display: none;
 }
+.mecha-atlas-arcade {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  max-width: 1100px;
+  margin: 22px auto;
+  padding: 18px 20px;
+  border: 1px solid #c19b6047;
+  border-radius: 8px;
+  background: #101e23;
+  color: #e3ded0;
+}
+.mecha-atlas-arcade > svg {
+  color: #caa672;
+  flex-shrink: 0;
+}
+.mecha-atlas-arcade > div {
+  flex: 1;
+  min-width: 220px;
+}
+.mecha-atlas-arcade small {
+  color: #b6a88e;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.mecha-atlas-arcade h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 4px 0;
+}
+.mecha-atlas-arcade p {
+  margin: 0;
+  color: #a6b7b6;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.mecha-atlas-arcade button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 13px;
+  border: 1px solid #c4b08a4d;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.mecha-atlas-arcade button:last-child {
+  color: #efc990;
+  background: #8d713322;
+}
+.mecha-atlas-arcade button:hover {
+  border-color: #d2b587;
+  background: #8d713338;
+}
+@media (max-width: 700px) {
+  .mecha-atlas-arcade {
+    padding: 15px;
+    gap: 10px;
+  }
+  .mecha-atlas-arcade > div {
+    min-width: 0;
+    flex-basis: calc(100% - 36px);
+  }
+  .mecha-atlas-arcade button {
+    flex: 1;
+  }
+}
 .touch-help {
   display: none;
 }

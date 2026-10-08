@@ -9,6 +9,7 @@ export type WorldAction =
   | { type: 'open-collection'; chapter?: Chapter }
   | { type: 'enter-scene'; sceneId: string; spawnId?: string }
   | { type: 'open-projects' }
+  | { type: 'open-arcade' }
   | { type: 'open-vault' }
   | { type: 'open-game'; game: MiniGameId }
   | { type: 'discover'; discovery: DiscoveryId }
@@ -57,6 +58,14 @@ export type SceneDefinition = {
   spawnPoints: Record<string, Point>;
   walkable: number[][][];
   obstacles?: number[][][];
+  fixtures?: {
+    kind: 'arcade-cabinet';
+    nodeId: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }[];
   layoutVersion?: number;
   nodes: InteractionNode[];
   overview: Point;

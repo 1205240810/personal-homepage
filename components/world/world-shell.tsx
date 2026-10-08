@@ -94,6 +94,22 @@ export default function WorldShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPad, setShowPad] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
+  const [leavingArcade, setLeavingArcade] = useState(false);
+  const openArcade = useCallback(() => {
+    game.current?.setDirection({ x: 0, y: 0 });
+    // pause() resets keyboard/touch input and saves the exact scene position
+    // before a full-page navigation. The game room returns to /explore.
+    game.current?.pause(true);
+    setLeavingArcade(true);
+    window.location.assign('/games?from=explore');
+  }, []);
+  useEffect(() => {
+    const restore = () => setLeavingArcade(false);
+    // Browser Back can restore this document from the back/forward cache.
+    // Clear the departure state so it resumes rather than staying frozen.
+    window.addEventListener('pageshow', restore);
+    return () => window.removeEventListener('pageshow', restore);
+  }, []);
   useEffect(() => {
     const query = matchMedia(
       '(max-width: 700px), (pointer: coarse) and (max-width: 1100px), (max-height: 500px) and (max-width: 1000px)',
@@ -135,6 +151,10 @@ export default function WorldShell({
     }
     if (action.type === 'open-projects') {
       setPanel('projects');
+      return;
+    }
+    if (action.type === 'open-arcade') {
+      openArcade();
       return;
     }
     if (action.type === 'open-game') {
@@ -223,9 +243,11 @@ export default function WorldShell({
     };
   }, []);
   useEffect(() => {
-    game.current?.pause(!!panel || blueprint || help || (compact && menuOpen));
+    game.current?.pause(
+      !!panel || blueprint || help || leavingArcade || (compact && menuOpen),
+    );
     if (!panel) abortRef.current?.abort();
-  }, [panel, blueprint, help, ready, compact, menuOpen]);
+  }, [panel, blueprint, help, ready, compact, menuOpen, leavingArcade]);
   useEffect(() => {
     if (panel || blueprint) setMenuOpen(false);
   }, [panel, blueprint]);
@@ -352,6 +374,10 @@ export default function WorldShell({
               <FolderGit2 size={15} />
               项目
             </Button>
+            <Button variant="ghost" className="nav-button" onClick={openArcade}>
+              <Gamepad2 size={15} />
+              游戏室
+            </Button>
             <Button
               variant="ghost"
               className="nav-button"
@@ -388,7 +414,7 @@ export default function WorldShell({
                 : getScene(scene.returnTo.sceneId).title}
             </button>
           )}
-          {ready && !loadingScene && near && !panel && (
+          {ready && !loadingScene && !leavingArcade && near && !panel && (
             <button className="interaction-prompt" onClick={interact}>
               <kbd>E</kbd>
               <span>
@@ -406,13 +432,15 @@ export default function WorldShell({
               )}
             </div>
           )}
-          {(!ready || loadingScene) && !error && (
-            <div className="world-loading" role="status">
+          {(!ready || loadingScene || leavingArcade) && !error && (
+            <output className="world-loading" aria-live="polite">
               <LoaderCircle size={14} />{' '}
-              {loadingScene
-                ? `正在进入${getScene(loadingScene).title}`
-                : '正在进入机甲'}
-            </div>
+              {leavingArcade
+                ? '正在进入游戏室 · 探索位置已保存'
+                : loadingScene
+                  ? `正在进入${getScene(loadingScene).title}`
+                  : '正在进入机甲'}
+            </output>
           )}
           {error && (
             <div className="world-error" role="alert">

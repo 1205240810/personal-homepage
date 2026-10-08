@@ -204,6 +204,7 @@
 }
 .arrival-choices {
   display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
   gap: 15px;
 }
@@ -251,6 +252,32 @@
 }
 .arrival-explore small {
   color: #b2b9ab;
+}
+.arrival-choices a.arrival-games {
+  flex: 1 0 100%;
+  justify-content: flex-start;
+  min-height: 44px;
+  min-width: 0;
+  padding: 7px 0;
+  gap: 11px;
+  border-radius: 0;
+  color: #e5dbc8;
+}
+.arrival-games > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+.arrival-choices .arrival-games small {
+  margin-top: 0;
+  color: #bdc7bf;
+}
+.arrival-games > svg:last-child {
+  margin-left: 3px;
+}
+.arrival-choices .arrival-games:hover {
+  color: #f3c994;
+  transform: none;
 }
 .arrival-choices a:hover {
   transform: translateY(-3px);
@@ -362,6 +389,11 @@
   .arrival-choices {
     gap: 12px;
   }
+  .arrival-choices a.arrival-games {
+    flex-basis: 100%;
+    min-height: 44px;
+    padding: 4px 2px;
+  }
   .arrival-choices a {
     flex: 1;
     min-width: 0;
@@ -396,6 +428,9 @@
   .arrival-choices {
     flex-direction: column;
     gap: 10px;
+  }
+  .arrival-choices a.arrival-games {
+    flex-basis: auto;
   }
   .arrival-choices a {
     padding: 13px 18px;

@@ -37,11 +37,11 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 ## 接入新内容与场景
 
-- `/` 引导页下的 `/workbench` 与 `/explore` 共用 `ContentSource.list/get`。工作台精选只取正式文章，栏目自动收录新增内容。
+- `/` 引导页下的 `/workbench` 与 `/explore` 共用 `ContentSource.list/get`。工作台精选只取正式文章，栏目自动收录新增内容；游戏入口统一到 `/games`，不占用文章栏目。
 - `lib/world/registry.ts` 是空间唯一数据源。SceneDefinition 的 `width/height` 对应背景，`walkable` 指定可通行多边形，`obstacles` 指定家具脚底，`foreground` 为按深度遮挡的原画轮廓；`playerScale` 控制人物比例。节点与出生点必须可通行。`returnTo` 指向枢纽独立返回点。
 - 当前为斜俯视 2.5D；新增舱室只需注册背景、地面、家具、人物比例、返回点和互动节点，不改角色控制。当前四个内舱均为独立1536×1024原图，逻辑坐标887×591；前景遮挡从原生分辨率取样，普通独立背景不设 frame。
 - 运行 `npm run maps` 同步 Tiled 导出，再运行 `npm run check`。不能只编辑导出地图而不同步注册表。
-- 内容动作使用 open-content / open-collection / open-projects；可选游戏使用 open-game，场景连接使用 enter-scene。inspect / discover 只承接小反馈，任何内容均不依赖游戏完成。
+- 内容动作使用 open-content / open-collection / open-projects；场景内的原有轻量小游戏使用 open-game，独立游戏室使用 open-arcade，场景连接使用 enter-scene。inspect / discover 只承接小反馈，任何内容均不依赖游戏完成。
 - `npm run check` 验证重复 ID、入口、出生点、节点可达性、文章引用、草稿隔离与 Markdown 自动收录。
 
 ## 官方备份迁移
@@ -52,6 +52,14 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 必须逐项核对：文章总数、标题/日期/标签、图片下载结果、公式、代码块、表格、内部链接。备份中草稿仍标 draft；不能按文章是否存在推断已发表。输出迁移报告后才更新正式包。2026-09-08 已完成74篇公开文章抓取迁移，并取得79篇官方SQLite备份。额外5篇保持私藏，不进入本管线。完整原文/代码/公式/表格核对见 docs/cnblogs-public-audit.json。
 
+已提供保守的官方 SQLite 检查器：
+
+```sh
+node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
+```
+
+它保留原始文件和 SHA-256，核对官方 blog_Content 表，只提取访问权限为公开的文章到被忽略的 review.json。**不会自动修改站点文章**。已迁入的 ID 带出既有标签与地址；新记录一律待核对。官方 SQLite 阅读器中没有可靠的已发表状态或标签映射，不能把访问权限 0 当成已发表。依据：[官方客户端固定版本](https://github.com/cnblogs/vscode-cnb/blob/3838c373338ad5a1376cb6223000e6e2b61d4890/src/service/blog-export/blog-export-post.store.ts)。JSON/XML 待取得实际备份再添加适配，避免猜测字段丢内容。
+
 ## 状态、动效与排障
 
 探索状态位于本机 `mecha-archive-world-v1`，包含场景、布局版本、位置、已看物件和游戏成绩。布局变更时提高 `layoutVersion`，旧位置回到对应出生点，已失效物件 ID 被过滤。旧 exploration 字段仅为存档兼容保留，不参与河流、桥或升降台计算。
@@ -60,13 +68,19 @@ HTML 旧文集中在 `content/articles/cnblogs.json`。复杂代码、表格、�
 
 地图载入失败仍可从上方直接阅读，或访问 `/archive`、`/projects`、`/about` 与 `/posts/:slug`。
 
-已提供保守的官方 SQLite 检查器：
+## 游戏室与浏览器游戏
 
-```sh
-node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
-```
+欢迎页保留工作台与机甲两个主入口，额外提供游戏室链接；工作台导航和侧栏均通向 `/games`。`lib/games/catalog.ts` 维护稳定游戏 ID、名称、说明、独立地址、分类、控制说明与预计游玩时长。新增游戏需完成独立页面与实际玩法，再加入目录，不显示未配置内容的假入口。具体模块边界与检查步骤见 [游戏室与扩展](GAMES.md)。
 
-它保留原始文件和 SHA-256，核对官方 blog_Content 表，只提取访问权限为公开的文章到被忽略的 review.json。**不会自动修改站点文章**。已迁入的 ID 带出既有标签与地址；新记录一律待核对。官方 SQLite 阅读器中没有可靠的已发表状态或标签映射，不能把访问权限 0 当成已发表。依据：[官方客户端固定版本](https://github.com/cnblogs/vscode-cnb/blob/3838c373338ad5a1376cb6223000e6e2b61d4890/src/service/blog-export/blog-export-post.store.ts)。JSON/XML 待取得实际备份再添加适配，避免猜测字段丢内容。
+当前独立游戏为 `/games/holdem-lab` 的德州扑克练习桌，以及 `/games/signal-pulse` 的信号接力。灯阵复用原有 `PulseGame` 与十二关数据，不复制一套规则。界面共享 `GamePageFrame` 与 `components/games/games.css`；独立灯阵适配样式为 `signal-pulse.css`。
+
+试作间的 `arcade-terminal` 是可达的街机角，执行 `open-arcade`。离开世界前先清空方向输入、暂停并保存人物位置，再打开 `/games?from=explore`。选择游戏时继续携带 `?from=explore`；返回游戏室保留该参数，「返回机甲」只跳转 `/explore`，不附加 scene 参数覆盖原存档。新增这种跨页面入口时，必须一起检查浏览器后退、手机触控与返回后的停步状态。
+
+德州扑克是单挑单机练习，全部筹码为虚拟数值。发牌、合法行动、底池结算、牌型比较、AI 与复盘由浏览器运行；AI 不读取玩家隐藏底牌来做策略决策，也不调用联网大模型。`holdem-cards.ts` 比较真实五至七张牌，并对随机合法对手底牌和剩余公共牌做蒙特卡洛抽样。`holdem-strategy.ts` 根据权益、底池赔率与对手风格生成混合启发式行动；复盘提供赔率、下注目的与 GTO 思路的解释，不应宣传为严格 GTO 求解或精确最优频率。
+
+权益计算假设对手未知牌均匀随机；真实行动范围可能更紧或更宽，因此估计不能直接等同于面对当前 AI 的真实胜率。代码默认抽样次数与 Worker 内抽样次数可能不同，不在页面文案里承诺固定精度。修改牌型、全下、盲注、加注重新开放或复盘逻辑，应运行相应规则检查，而不是只点击几手确认。
+
+练习记录使用本机 `localStorage` 键 `tscjj:holdem-practice:v1`，保存累计手数、胜局数、虚拟筹码净变化与最近八手的玩家底牌、公共牌和复盘；不恢复正在进行中的对局。它和文章数据、机甲探索存档分开，不会因推送 GitHub 自动同步。信号接力的完成统计仍只保存在当前页面内存，刷新重置，目录页不能把它宣传为永久存档。隐私模式或存储不可用时仍应可以开局；分享游戏地址不会携带个人练习记录。
 
 ## 项目、美术与音乐
 
@@ -88,7 +102,7 @@ OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函
 
 ## 手机适配
 
-工作台的内容 DOM 顺序为文章、项目、其他入口，桌面用 Grid 并排排版；手机先呈现文章。六个项目可按类型筛选，手机选择项目后先提供摘要和展开入口，再复用同一套交互预览。主要触控控件至少 44px，输入字号 16px；正文代码固定 14px，避免 pre/code 重复缩小。修改项目卡片或 5×5 灯阵时应检查窄屏溢出、操作按钮和焦点顺序。
+工作台的内容 DOM 顺序为文章、项目、游戏室与探索入口，桌面用 Grid 并排排版；手机先呈现文章。六个项目可按类型筛选，手机选择项目后先提供摘要和展开入口，再复用同一套交互预览。游戏室双卡在手机改为单列，牌桌与灯阵通过独立页面加载。主要触控控件至少 44px，输入字号 16px；正文代码固定 14px，避免 pre/code 重复缩小。修改项目卡片、游戏控制区或 5×5 灯阵时应检查窄屏溢出、操作按钮和焦点顺序。
 
 文章抽屉直接子项不参与 Flex 收缩，关闭栏固定；手机主题筛选可展开，选中后收起。探索菜单和手动方向盘可折叠，点击物件自动寻路沿用原实现。触控布局同时考虑竖屏宽度、粗指针与短横屏，横屏保留可展开的方向盘。竖屏画布上下为导航与工具预留空间，地图继续 cover 与跟随人物，不修改地图坐标或碰撞；画布外由当前场景的暗化背景自然延伸。
 

@@ -4,6 +4,7 @@ import { SCENES, getScene, ARCHIVE_GANTRY } from './registry';
 import { traversable, clearSegment, findRoute } from './navigation';
 import { distance } from './geometry';
 import { getDiscovery } from './discoveries';
+import { makeArcadeTexture } from './arcade-cabinet';
 import type {
   GameHandle,
   InteractionNode,
@@ -186,6 +187,14 @@ export function createWorld(
         this.roomLights.push({ image, strength: light.strength });
       }
       this.createSpatialLayers(key, def.frame);
+      for (const fixture of def.fixtures ?? []) {
+        if (fixture.kind === 'arcade-cabinet')
+          this.add
+            .image(fixture.x, fixture.y, makeArcadeTexture(this))
+            .setOrigin(0.5, 1)
+            .setDisplaySize(fixture.width, fixture.height)
+            .setDepth(fixture.y - 2);
+      }
       makePlayerTextures(this);
       this.shadow = this.add
         .ellipse(state.position.x, state.position.y + 1, 27, 8, 0x070e12, 0.55)

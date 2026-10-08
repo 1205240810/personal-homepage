@@ -1,9 +1,10 @@
 'use client';
+import Link from 'next/link';
 import { ProjectWorkbench } from './project-library';
-import { PulseGame } from './pulse-game';
-import { ArrowUpRight, ScanLine } from 'lucide-react';
+import { ArrowUpRight, Gamepad2, ScanLine } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import type { ArticleSummary } from '@/lib/content/source';
+import { GAMES } from '@/lib/games/catalog';
 import './workbench.css';
 export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
   const featured = posts.filter((p) => p.status !== 'draft').slice(0, 3);
@@ -24,6 +25,9 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
           <a href="/about">
             <span className="b-nav-index b-mono">03</span>关于
           </a>
+          <Link href="/games">
+            <span className="b-nav-index b-mono">04</span>游戏室
+          </Link>
           <a href="/explore" className="b-explore-nav">
             进入机甲 <ArrowUpRight size={14} />
           </a>
@@ -72,7 +76,25 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
           <ProjectWorkbench />
         </div>
         <aside className="b-sidebar" aria-label="休息与探索">
-          <PulseGame />
+          <Link href="/games" className="b-game-room">
+            <div className="b-game-room-head">
+              <span className="b-mono">THE ARCADE</span>
+              <Gamepad2 size={23} strokeWidth={1.4} aria-hidden="true" />
+            </div>
+            <strong>游戏室</strong>
+            <p>换换脑子。找一张练习桌，或解一阵灯谜。</p>
+            <div className="b-game-room-titles">
+              {GAMES.map((game, index) => (
+                <span key={game.id}>
+                  <i className="b-mono">{String(index + 1).padStart(2, '0')}</i>
+                  {game.title}
+                </span>
+              ))}
+            </div>
+            <span className="b-game-room-enter">
+              选一个游戏 <ArrowUpRight size={17} aria-hidden="true" />
+            </span>
+          </Link>
           <a href="/explore" className="b-mode-link">
             <span className="b-mode-symbol">
               <ScanLine size={22} strokeWidth={1.2} />
