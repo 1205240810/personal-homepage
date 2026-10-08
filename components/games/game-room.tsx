@@ -129,6 +129,35 @@ function PulsePreview() {
   );
 }
 
+function BlackjackPreview() {
+  return (
+    <div className="room-blackjack-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>BLACKJACK / 21</span>
+        <Layers3 size={18} strokeWidth={1.4} />
+      </div>
+      <div className="room-blackjack-dealer">
+        <span>庄家</span>
+        <i>?</i>
+      </div>
+      <div className="room-blackjack-hand">
+        <span>
+          <b>A</b>
+          <i>♠</i>
+        </span>
+        <span className="is-red">
+          <b>7</b>
+          <i>♥</i>
+        </span>
+      </div>
+      <div className="room-preview-bottom">
+        <span>HIT / STAND</span>
+        <span>两种模式 · 赛后教练</span>
+      </div>
+    </div>
+  );
+}
+
 export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
   return (
     <main className="games-shell game-room">
@@ -138,7 +167,7 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
           <Gamepad2 size={16} strokeWidth={1.5} aria-hidden="true" /> THE ARCADE
         </span>
         <h1>来一局，换换脑子。</h1>
-        <p>坐到练习桌前，或者解一阵灯谜。选一个喜欢的，随时开始。</p>
+        <p>打牌、推演，或者解一阵灯谜。选一个喜欢的，随时开始。</p>
       </div>
       <section className="game-room-selection" aria-label="选择游戏">
         {GAMES.map((game, index) => (
@@ -148,7 +177,13 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
             key={game.id}
           >
             <div className="room-game-preview">
-              {game.id === 'holdem-lab' ? <HoldemPreview /> : <PulsePreview />}
+              {game.id === 'holdem-lab' ? (
+                <HoldemPreview />
+              ) : game.id === 'blackjack' ? (
+                <BlackjackPreview />
+              ) : (
+                <PulsePreview />
+              )}
             </div>
             <div className="room-game-copy">
               <div className="room-game-meta">

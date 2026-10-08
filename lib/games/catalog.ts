@@ -1,4 +1,4 @@
-export type GameId = 'holdem-lab' | 'signal-pulse';
+export type GameId = 'holdem-lab' | 'blackjack' | 'signal-pulse';
 
 export type GameDefinition = {
   id: GameId;
@@ -22,6 +22,16 @@ export const GAMES: readonly GameDefinition[] = [
     category: '策略练习',
     controls: '鼠标或触控选择行动',
     estimatedDuration: '每手约 1–3 分钟',
+  },
+  {
+    id: 'blackjack',
+    title: '暗牌 21',
+    description:
+      '经典 21 点与策略庄家，两种节奏。要牌还是停牌？结束后让教练拆解当时的选择。',
+    href: '/games/blackjack',
+    category: '牌桌推演',
+    controls: '点击要牌或停牌；H 要牌、S 停牌、N 新局',
+    estimatedDuration: '每局约 1 分钟',
   },
   {
     id: 'signal-pulse',

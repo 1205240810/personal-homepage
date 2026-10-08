@@ -8,6 +8,7 @@
 | --- | --- |
 | `/games` | 选择实际可玩的游戏 |
 | `/games/holdem-lab` | 2–9 人自定义练习室，逐步决策评分与教学复盘 |
+| `/games/blackjack` | 暗牌 21，经典/策略庄家与赛后教练 |
 | `/games/signal-pulse` | 十二关灯阵，支持选关、提示、撤回与重来 |
 | `/games?from=explore` | 从机甲街机角进入，主要返回入口为机甲 |
 
@@ -43,6 +44,10 @@ flowchart LR
 | `lib/games/holdem-music.ts` | 原创编曲、音量与音源生命周期 |
 | `lib/games/holdem-voice.ts` | 可选中文行动播报与自身语音队列清理 |
 | `public/assets/poker/portraits/` | 九席原创透明人物素材 |
+
+| `standalone/blackjack/src/` | 暗牌 21 的单一维护源码、纯规则和教练 |
+| `scripts/sync-blackjack.mjs` | 构建前同步独立游戏到宿主运行组件 |
+| `components/games/blackjack/` | 客户端按需加载、宿主导航与生成源码 |
 | `lib/pulse-puzzle.ts` | 灯阵关卡、按键翻转与最短解求解 |
 | `components/home/pulse-game.tsx` | 两种入口共同复用的灯阵界面 |
 | `lib/world/registry.ts` | 机甲内街机节点、站位与家具定义 |
@@ -117,3 +122,7 @@ AI 使用本地混合策略，打法风格与难度分别管理。席位按均�
 - [DeepStack 论文](https://arxiv.org/abs/1701.01724)：严格的策略求解涉及范围、不完全信息和后续博弈价值；本项目的范围抽样与有限响应模型不能替代这种求解。
 
 复盘展示每次行动当时的公共牌，避免用最终牌面解释早先决策。Worker 被浏览器限制时，小量计算回退到主线程；等待本手复盘归档后才能开始下一手。
+
+## 暗牌 21 的维护
+
+上传的独立项目已原生接入 `/games/blackjack`，共用本站 React，不使用 iframe 或第二份 React。经典 S17 与策略庄家分别记录积分；教练默认关闭，结束后才使用行动时快照计算要牌/停牌。规则、同步源码、Worker 和存储边界见 [暗牌 21 接入说明](BLACKJACK.md)。
