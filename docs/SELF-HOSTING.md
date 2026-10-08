@@ -56,13 +56,13 @@ mecha_build_unit="personal-homepage-build-$mecha_short"
 sudo systemd-run --no-block --unit="$mecha_build_unit" --uid=mecha --gid=mecha \
   --working-directory="$mecha_build" \
   --setenv=PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin \
-  --property=Type=oneshot --property=TimeoutStartSec=0 \
+  --property=Type=oneshot --property=TimeoutStartSec=15min \
   --property=StandardOutput=journal --property=StandardError=journal \
   /bin/bash -c 'npm ci && npm run check && npm run build:node'
 sudo journalctl -u "$mecha_build_unit" -n 100 --no-pager
 ```
 
-任务提交成功不等于构建成功，随后按需读取日志，确认检查、构建和退出状态，再复制发布产物。控制台每次执行使用新的 shell；跨次操作需重新设置路径变量，并填写实际任务名查看日志。
+任务提交成功不等于构建成功，随后按需读取日志，确认检查、构建和退出状态，再复制发布产物。使用明确的 15 分钟启动限时；2026-10-08 实测通过，原先传入零值会被该服务器立即超时终止。构建超过限时应先检查日志，再按实际原因处理。控制台每次执行使用新的 shell；跨次操作需重新设置路径变量，并填写实际任务名查看日志。
 
 ### GitHub 下载缓慢时
 
