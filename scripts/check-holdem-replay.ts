@@ -112,7 +112,7 @@ void test('全桌底牌与回放只在完成后生成，包含已弃牌的 AI �
 });
 
 void test('实际 AI 行动与诊断原子关联，并隔离调用方随后对诊断的修改', () => {
-  const initial = startHand();
+  const initial = startHand({ deck: shuffledDeck(seededRandom(104729)) });
   const move = passive(initial);
   const input = traceFor(initial, move);
   const expected = clone(input);
@@ -120,7 +120,7 @@ void test('实际 AI 行动与诊断原子关联，并隔离调用方随后对�
   const state = act(initial, move, input);
   assert.equal(JSON.stringify(initial), saved);
   assert.deepEqual(state.actions[0].botTrace, expected);
-  input.hole[0] = 51;
+  input.hole[0] = (input.hole[0] + 1) % 52;
   input.board.push(50);
   input.rationale[0] = '改写';
   input.mixing.roll = 0.99;
@@ -131,12 +131,14 @@ void test('实际 AI 行动与诊断原子关联，并隔离调用方随后对�
   assert.deepEqual(completed.actions[0].botTrace, expected);
   const replay = createTableReplay(completed);
   assert.deepEqual(replay.actions[0].botTrace, expected);
-  replay.holes[0][0] = 51;
+  const originalHeroCard = completed.holes[0][0];
+  replay.holes[0][0] = (originalHeroCard + 1) % 52;
   replay.result.payouts[0] = -1;
   replay.actions[0].board.push(50);
   replay.actions[0].botTrace!.rationale[0] = '再次改写';
   assert.deepEqual(completed.actions[0].botTrace, expected);
-  assert.notEqual(completed.holes[0][0], 51);
+  assert.equal(completed.holes[0][0], originalHeroCard);
+  assert.notEqual(completed.holes[0][0], replay.holes[0][0]);
   assert(completed.result!.payouts[0] >= 0);
   assert.deepEqual(completed.actions[0].board, []);
 });
