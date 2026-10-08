@@ -1,0 +1,10 @@
+{
+  "test": "jsdom production HTML with real Node worker_threads executing the embedded browser worker source",
+  "classic": "当时更建议要牌。精确计算 · 有限单副牌",
+  "strategic": "当时更建议要牌。精确计算 · 有限单副牌",
+  "workers": 2,
+  "blobCreated": 2,
+  "blobRevoked": 2,
+  "externalAssets": 0,
+  "browserVisualVerified": false
+}

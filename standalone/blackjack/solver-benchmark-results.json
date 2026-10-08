@@ -1,0 +1,319 @@
+{
+  "description": "Single-run timings are environment-dependent; coach caps 150000 nodes/1200ms; dealer uncapped exact.",
+  "coach": [
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "10",
+        "2"
+      ],
+      "up": "6",
+      "ms": 18.10066599999999,
+      "recommendation": "hit",
+      "hitEV": -0.159435817658934,
+      "standEV": -0.16037864175353098,
+      "bustProbability": 0.30612244897959184,
+      "gap": 0.0009428240945969779,
+      "method": "exact-finite",
+      "nodes": 4532
+    },
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "10",
+        "6"
+      ],
+      "up": "10",
+      "ms": 1.4758809999999585,
+      "recommendation": "hit",
+      "hitEV": -0.506929242578811,
+      "standEV": -0.5429518538245026,
+      "bustProbability": 0.5907407407407407,
+      "gap": 0.036022611245691616,
+      "method": "exact-finite",
+      "nodes": 341
+    },
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "A",
+        "2"
+      ],
+      "up": "A",
+      "ms": 95.64139599999999,
+      "recommendation": "hit",
+      "hitEV": -0.06780750054319938,
+      "standEV": -0.6617322958046415,
+      "bustProbability": 0,
+      "gap": 0.5939247952614422,
+      "method": "exact-finite",
+      "nodes": 32642
+    },
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "A",
+        "2"
+      ],
+      "up": "10",
+      "ms": 26.16823900000003,
+      "recommendation": "hit",
+      "hitEV": -0.0888165591444598,
+      "standEV": -0.5387047129380114,
+      "bustProbability": 0,
+      "gap": 0.44988815379355157,
+      "method": "exact-finite",
+      "nodes": 11483
+    },
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "A",
+        "2"
+      ],
+      "up": "6",
+      "ms": 128.17139699999996,
+      "recommendation": "hit",
+      "hitEV": 0.16849534285670642,
+      "standEV": -0.11416741607118426,
+      "bustProbability": 0,
+      "gap": 0.28266275892789067,
+      "method": "exact-finite",
+      "nodes": 32596
+    },
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "A",
+        "A"
+      ],
+      "up": "2",
+      "ms": 258.35669500000006,
+      "recommendation": "hit",
+      "hitEV": 0.09477696073284374,
+      "standEV": -0.2743273392580556,
+      "bustProbability": 0,
+      "gap": 0.36910429999089933,
+      "method": "exact-finite",
+      "nodes": 70461
+    },
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "A",
+        "2"
+      ],
+      "up": "2",
+      "ms": 209.633829,
+      "recommendation": "hit",
+      "hitEV": 0.03926636012968668,
+      "standEV": -0.282713434575647,
+      "bustProbability": 0,
+      "gap": 0.32197979470533367,
+      "method": "exact-finite",
+      "nodes": 64173
+    },
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "2",
+        "2"
+      ],
+      "up": "2",
+      "ms": 158.17016499999988,
+      "recommendation": "hit",
+      "hitEV": -0.11317408777508403,
+      "standEV": -0.290802723324422,
+      "bustProbability": 0,
+      "gap": 0.17762863554933794,
+      "method": "exact-finite",
+      "nodes": 47294
+    },
+    {
+      "kind": "coach",
+      "mode": "classic",
+      "player": [
+        "A",
+        "3"
+      ],
+      "up": "2",
+      "ms": 177.92860900000005,
+      "recommendation": "hit",
+      "hitEV": 0.01691358701798462,
+      "standEV": -0.28421146031333333,
+      "bustProbability": 0,
+      "gap": 0.30112504733131795,
+      "method": "exact-finite",
+      "nodes": 60067
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "10",
+        "2"
+      ],
+      "up": "6",
+      "ms": 46.747179999999844,
+      "recommendation": "hit",
+      "hitEV": -0.2516795445674573,
+      "standEV": -0.9470208990164057,
+      "bustProbability": 0.30612244897959184,
+      "gap": 0.6953413544489484,
+      "method": "exact-finite",
+      "nodes": 9913
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "10",
+        "6"
+      ],
+      "up": "10",
+      "ms": 2.034067999999934,
+      "recommendation": "hit",
+      "hitEV": -0.5340322264561951,
+      "standEV": -0.5614397962563242,
+      "bustProbability": 0.5907407407407407,
+      "gap": 0.02740756980012915,
+      "method": "exact-finite",
+      "nodes": 1128
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "A",
+        "2"
+      ],
+      "up": "A",
+      "ms": 357.45818799999984,
+      "recommendation": "hit",
+      "hitEV": -0.18013391406154897,
+      "standEV": -0.9563955933058615,
+      "bustProbability": 0,
+      "gap": 0.7762616792443126,
+      "method": "exact-finite",
+      "nodes": 64208
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "A",
+        "2"
+      ],
+      "up": "10",
+      "ms": 69.77466600000002,
+      "recommendation": "hit",
+      "hitEV": -0.13316134116980594,
+      "standEV": -0.8871029910576625,
+      "bustProbability": 0,
+      "gap": 0.7539416498878566,
+      "method": "exact-finite",
+      "nodes": 23212
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "A",
+        "2"
+      ],
+      "up": "6",
+      "ms": 220.53145099999983,
+      "recommendation": "hit",
+      "hitEV": 0.03229540047354747,
+      "standEV": -0.8516176128175599,
+      "bustProbability": 0,
+      "gap": 0.8839130132911074,
+      "method": "exact-finite",
+      "nodes": 57026
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "A",
+        "A"
+      ],
+      "up": "2",
+      "ms": 414.45886499999983,
+      "recommendation": "hit",
+      "hitEV": 0.02494345993001787,
+      "standEV": -0.7595140744605525,
+      "bustProbability": 0,
+      "gap": 0.7844575343905704,
+      "method": "exact-finite",
+      "nodes": 107613
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "A",
+        "2"
+      ],
+      "up": "2",
+      "ms": 418.21229600000015,
+      "recommendation": "hit",
+      "hitEV": -0.02220354996934265,
+      "standEV": -0.6763281973008416,
+      "bustProbability": 0,
+      "gap": 0.654124647331499,
+      "method": "exact-finite",
+      "nodes": 99893
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "2",
+        "2"
+      ],
+      "up": "2",
+      "ms": 275.1350239999997,
+      "recommendation": "hit",
+      "hitEV": -0.19262796881174193,
+      "standEV": -0.9999999999999998,
+      "bustProbability": 0,
+      "gap": 0.8073720311882578,
+      "method": "exact-finite",
+      "nodes": 71532
+    },
+    {
+      "kind": "coach",
+      "mode": "strategic",
+      "player": [
+        "A",
+        "3"
+      ],
+      "up": "2",
+      "ms": 461.87957600000027,
+      "recommendation": "hit",
+      "hitEV": -0.061577895698269325,
+      "standEV": -0.576184665514309,
+      "bustProbability": 0,
+      "gap": 0.5146067698160397,
+      "method": "exact-finite",
+      "nodes": 94815
+    }
+  ],
+  "dealer": {
+    "cases": 990,
+    "maxNodes": 743,
+    "worst": "1,1 vs 20",
+    "maxMs": 6.934096999999838,
+    "totalMs": 61.349959000000126,
+    "fallbacks": 0
+  }
+}
