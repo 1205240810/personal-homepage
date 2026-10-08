@@ -3,350 +3,422 @@ import { test } from 'node:test';
 import {
   act,
   legalActions,
-  otherSeat,
+  nextSeat,
+  SEATS,
+  seatsAfter,
   potSize,
   shuffledDeck,
   startHand,
   type HoldemState,
   type PokerAction,
   type Seat,
+  type SeatValues,
 } from '../lib/games/holdem-engine.ts';
 
-// Both players must play the royal flush on the board. Burn cards are explicit
-// so run-outs can be checked without comparing against a second evaluator.
-const prefix = [1, 2, 5, 6, 0, 32, 36, 40, 3, 44, 4, 48];
-const royalBoardDeck = [
-  ...prefix,
-  ...Array.from({ length: 52 }, (_, i) => i).filter(
-    (card) => !prefix.includes(card),
-  ),
-];
+const sum = (numbers: readonly number[]) => numbers.reduce((a, b) => a + b, 0);
 const royalBoard = [32, 36, 40, 44, 48];
-const sum = (numbers: readonly number[]) =>
-  numbers.reduce((total, value) => total + value, 0);
-
+function makeDeck(prefix: number[]) {
+  assert.equal(new Set(prefix).size, prefix.length);
+  return [
+    ...prefix,
+    ...Array.from({ length: 52 }, (_, i) => i).filter(
+      (card) => !prefix.includes(card),
+    ),
+  ];
+}
+const royalDeck = makeDeck([
+  0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 2, 32, 36, 40, 6, 44, 10, 48,
+]);
 function assertConserved(state: HoldemState) {
   assert.equal(
     sum(state.stacks) + (state.street === 'complete' ? 0 : potSize(state)),
     sum(state.startingStacks),
-    `筹码不守恒: ${state.street}`,
   );
   assert(
-    state.stacks.every((stack) => Number.isSafeInteger(stack) && stack >= 0),
+    state.stacks.every((chips) => Number.isSafeInteger(chips) && chips >= 0),
   );
   assert(
     state.committed.every((chips) => Number.isSafeInteger(chips) && chips >= 0),
   );
+  if (state.result) {
+    assert.equal(sum(state.result.payouts), state.result.pot);
+    assert.equal(potSize(state), state.result.pot);
+    assert.equal(
+      sum(state.result.pots.map((pot) => pot.amount)),
+      state.result.pot,
+    );
+    for (const pot of state.result.pots) {
+      assert(
+        pot.winners.every(
+          (seat) => pot.eligible.includes(seat) && !state.folded[seat],
+        ),
+      );
+    }
+  } else {
+    assert.notEqual(state.toAct, null);
+    assert(!state.folded[state.toAct!]);
+    assert(state.stacks[state.toAct!] > 0);
+  }
 }
-
-function action(state: HoldemState, next: PokerAction) {
-  const saved = JSON.stringify(state);
-  const result = act(state, next);
-  assert.equal(JSON.stringify(state), saved, '行动不能改写上一份状态');
+function action(previous: HoldemState, move: PokerAction) {
+  const saved = JSON.stringify(previous);
+  const result = act(previous, move);
+  assert.equal(JSON.stringify(previous), saved, '不得改写之前的手牌状态');
   assertConserved(result);
   return result;
 }
-
 function newHand(options: Parameters<typeof startHand>[0] = {}) {
-  const state = startHand({ deck: royalBoardDeck, ...options });
+  const state = startHand({ deck: royalDeck, ...options });
   assertConserved(state);
   return state;
 }
-
-function limpToFlop(button: Seat = 0) {
-  let state = newHand({ button });
-  state = action(state, { type: 'call' });
-  return action(state, { type: 'check' });
+function limpToFlop(options: Parameters<typeof startHand>[0] = {}) {
+  let state = newHand(options);
+  for (let i = 0; i < 5 && state.street === 'preflop'; i++) {
+    state = action(
+      state,
+      legalActions(state)!.canCheck ? { type: 'check' } : { type: 'call' },
+    );
+  }
+  assert.equal(state.street, 'flop');
+  return state;
+}
+function checkToEnd(previous: HoldemState) {
+  let state = previous;
+  let actions = 0;
+  while (state.street !== 'complete') {
+    const legal = legalActions(state)!;
+    state = action(
+      state,
+      legal.canCheck ? { type: 'check' } : { type: 'call' },
+    );
+    assert(++actions < 100);
+  }
+  return state;
 }
 
-void test('合法牌组验证及可复现洗牌，发牌不会重复使用底牌或烧牌', () => {
-  assert.throws(() => startHand({ deck: [0, 1] }), /牌组/);
+void test('五人座位、盲注和发牌顺序在所有按钮位置正确，验证筹码和随机源', () => {
+  assert.throws(() => startHand({ deck: [1, 2] }), /牌组/);
   assert.throws(
-    () => startHand({ deck: Array.from({ length: 52 }, () => 0) }),
-    /牌组/,
+    () => startHand({ stacks: [0, 1000, 1000, 1000, 1000] }),
+    /筹码/,
   );
-  assert.throws(() => startHand({ stacks: [0, 1000] }), /筹码/);
-  assert.throws(() => startHand({ stacks: [10.5, 1000] }), /筹码/);
-  const seeded = () => {
-    let seed = 93;
-    return () => {
-      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-      return seed / 4294967296;
-    };
-  };
-  const deck = shuffledDeck(seeded());
-  assert.deepEqual(deck, shuffledDeck(seeded()));
-  assert.equal(new Set(deck).size, 52);
-  const state = newHand();
-  assert.deepEqual(state.holes, [
-    [2, 6],
-    [1, 5],
-  ]);
-  assert.equal(state.cursor, 4);
-  assert.deepEqual(state.board, []);
-});
-
-void test('单挑 button 是小盲，翻牌前先手；翻牌后由大盲先手', () => {
-  for (const button of [0, 1] as const) {
-    let state = newHand({ button });
-    assert.equal(state.toAct, button);
-    assert.equal(state.streetBets[button], 5);
-    assert.equal(state.streetBets[otherSeat(button)], 10);
-    assert.deepEqual(
-      state.holes[otherSeat(button)],
-      [1, 5],
-      '大盲先收到每轮发牌',
-    );
-    assert.deepEqual(
-      state.holes[button],
-      [2, 6],
-      'button／小盲最后收到每轮发牌',
-    );
-    assert.equal(legalActions(state)?.call, 5);
-    state = action(state, { type: 'call' });
-    state = action(state, { type: 'check' });
-    assert.equal(state.street, 'flop');
-    assert.equal(state.toAct, otherSeat(button));
-    assert.deepEqual(state.board, royalBoard.slice(0, 3));
-    assert.deepEqual(state.streetBets, [0, 0]);
-    for (const street of ['turn', 'river'] as const) {
-      state = action(state, { type: 'check' });
-      state = action(state, { type: 'check' });
-      assert.equal(state.street, street);
-      assert.equal(state.toAct, otherSeat(button));
-    }
+  assert.throws(
+    () => startHand({ stacks: [10.5, 1000, 1000, 1000, 1000] }),
+    /筹码/,
+  );
+  assert.throws(
+    () => startHand({ stacks: [Number.MAX_SAFE_INTEGER, 1, 1, 1, 1] }),
+    /筹码/,
+  );
+  assert.throws(() => shuffledDeck(() => 1), /随机数/);
+  assert.throws(() => startHand({ button: 5 as Seat }), /座位/);
+  for (const button of SEATS) {
+    const state = newHand({ button });
+    assert.equal(state.toAct, nextSeat(button, 3));
+    assert.equal(state.streetBets[nextSeat(button)], 5);
+    assert.equal(state.streetBets[nextSeat(button, 2)], 10);
+    assert.equal(state.cursor, 10);
+    for (const [index, seat] of seatsAfter(button).entries())
+      assert.deepEqual(state.holes[seat], [
+        royalDeck[index],
+        royalDeck[index + 5],
+      ]);
+    assert.equal(new Set(state.holes.flat()).size, 10);
+    assert.deepEqual(limpToFlop({ button }).board, royalBoard.slice(0, 3));
+    assert.equal(limpToFlop({ button }).toAct, nextSeat(button));
   }
 });
 
-void test('小盲 limp 不能跳过大盲的过牌或加注权', () => {
-  const limped = action(newHand(), { type: 'call' });
-  assert.equal(limped.street, 'preflop');
-  assert.equal(limped.toAct, 1);
-  assert.deepEqual(limped.acted, [true, false]);
-  const legal = legalActions(limped)!;
-  assert.equal(legal.canCheck, true);
-  assert.equal(legal.canRaise, true);
-  assert.equal(legal.minTo, 20);
-  const checked = action(limped, { type: 'check' });
-  assert.equal(checked.street, 'flop');
-  let raised = action(limped, { type: 'raise', to: 30 });
-  assert.equal(raised.street, 'preflop');
-  assert.equal(raised.toAct, 0);
-  assert.equal(legalActions(raised)?.call, 20);
-  raised = action(raised, { type: 'call' });
-  assert.equal(raised.street, 'flop');
-  assert.equal(potSize(raised), 60);
-});
-
-void test('大额下注后对手弃牌，退回未匹配下注，底池与筹码守恒', () => {
-  const raised = action(newHand(), { type: 'raise', to: 500 });
-  assert.equal(potSize(raised), 510);
-  const state = action(raised, { type: 'fold' });
-  assert.equal(state.street, 'complete');
-  assert.equal(state.toAct, null);
-  assert.deepEqual(state.board, []);
-  assert.equal(state.result?.winner, 0);
-  assert.equal(state.result?.reason, 'fold');
-  assert.deepEqual(state.result?.returned, [490, 0]);
-  assert.equal(state.result?.pot, 20);
-  assert.deepEqual(state.stacks, [1010, 990]);
-  assert.deepEqual(state.committed, [10, 10]);
-  assert.equal(legalActions(state), null);
-  assert.throws(() => act(state, { type: 'check' }), /不能行动/);
-});
-
-void test('小盲直接弃牌时大盲未匹配的五枚盲注退回', () => {
-  const state = action(newHand(), { type: 'fold' });
-  assert.deepEqual(state.result?.returned, [0, 5]);
-  assert.equal(state.result?.pot, 10);
-  assert.equal(state.result?.winner, 1);
-  assert.deepEqual(state.stacks, [995, 1005]);
-});
-
-void test('双方全下并跟注后自动跑完五张公共牌，烧牌不参与摊牌', () => {
-  let state = action(newHand({ stacks: [40, 40] }), { type: 'raise', to: 40 });
-  assert.equal(state.toAct, 1);
-  assert.equal(state.street, 'preflop');
-  assert.equal(legalActions(state)?.call, 30);
-  state = action(state, { type: 'call' });
-  assert.equal(state.street, 'complete');
-  assert.deepEqual(state.board, royalBoard);
-  assert.equal(state.cursor, 12);
-  assert.equal(new Set([...state.holes.flat(), ...state.board]).size, 9);
-  assert.equal(state.result?.reason, 'showdown');
-  assert.equal(state.result?.pot, 80);
-  assert.deepEqual(state.result?.returned, [0, 0]);
-});
-
-void test('短筹码跟注全下只争夺匹配底池，超额下注退回', () => {
-  let state = action(newHand({ stacks: [100, 45] }), {
-    type: 'raise',
-    to: 100,
-  });
-  const legal = legalActions(state)!;
-  assert.equal(legal.owed, 90);
-  assert.equal(legal.call, 35);
-  assert.equal(legal.pot, 55, '未匹配的55枚筹码不应计算为可争夺底池');
-  assert.equal(legal.potOdds, 35 / 90);
-  state = action(state, { type: 'call' });
-  assert.deepEqual(state.board, royalBoard);
-  assert.equal(state.result?.winner, 'tie');
-  assert.deepEqual(state.result?.returned, [55, 0]);
-  assert.equal(state.result?.pot, 90);
-  assert.deepEqual(state.stacks, [100, 45]);
-});
-
-void test('对手已经全下时不能再加注，只能跟注或弃牌', () => {
-  const state = action(newHand({ stacks: [35, 1000] }), {
-    type: 'raise',
-    to: 35,
-  });
-  const legal = legalActions(state)!;
-  assert.equal(state.stacks[0], 0);
-  assert.equal(legal.canRaise, false);
-  assert.equal(legal.canCheck, false);
-  assert.equal(legal.call, 25);
-  const original = JSON.stringify(state);
-  assert.throws(() => act(state, { type: 'raise', to: 100 }), /加注/);
-  assert.throws(() => act(state, { type: 'check' }), /不能过牌/);
-  assert.equal(JSON.stringify(state), original, '拒绝非法行动不能污染状态');
-});
-
-void test('最小再加注按最近完整加注增量计算，不按底池或总注额倍增', () => {
+void test('每位玩家依次行动，大盲拥有最后过牌或加注选项', () => {
   let state = newHand();
-  assert.equal(legalActions(state)?.minTo, 20);
+  for (const seat of [3, 4, 0, 1] as const) {
+    assert.equal(state.toAct, seat);
+    state = action(state, { type: 'call' });
+  }
+  assert.equal(state.toAct, 2);
+  assert.equal(state.street, 'preflop');
+  assert.equal(legalActions(state)!.canCheck, true);
+  assert.equal(legalActions(state)!.minTo, 20);
+  const checked = action(state, { type: 'check' });
+  assert.equal(checked.street, 'flop');
+  const raised = action(state, { type: 'raise', to: 30 });
+  assert.equal(raised.toAct, 3);
+  assert.equal(legalActions(raised)!.call, 20);
+});
+
+void test('英雄弃牌后其他玩家继续行动，只剩一个活跃席位时结束', () => {
+  let state = newHand({ button: 2 });
+  assert.equal(state.toAct, 0);
+  state = action(state, { type: 'fold' });
+  assert.equal(state.street, 'preflop');
+  assert.equal(state.toAct, 1);
+  state = action(state, { type: 'fold' });
+  state = action(state, { type: 'fold' });
+  state = action(state, { type: 'fold' });
+  assert.equal(state.street, 'complete');
+  assert.deepEqual(state.result!.winners, [4]);
+  assert.deepEqual(state.result!.returned, [0, 0, 0, 0, 5]);
+  assert.equal(state.result!.pot, 10);
+  assert.equal(state.stacks[4], 1005);
+  assert.deepEqual(state.board, []);
+});
+
+void test('加注增量控制最小再加注，不允许非法行动污染历史', () => {
+  let state = newHand();
   state = action(state, { type: 'raise', to: 30 });
   assert.equal(state.lastRaise, 20);
-  assert.equal(legalActions(state)?.minTo, 50);
+  assert.equal(legalActions(state)!.minTo, 50);
   assert.throws(() => act(state, { type: 'raise', to: 49 }), /加注/);
+  assert.throws(() => act(state, { type: 'check' }), /不能过牌/);
   state = action(state, { type: 'raise', to: 70 });
   assert.equal(state.lastRaise, 40);
-  assert.equal(legalActions(state)?.minTo, 110);
-  assert.throws(() => act(state, { type: 'raise', to: 100 }), /加注/);
-  state = action(state, { type: 'raise', to: 110 });
-  assert.equal(state.lastRaise, 40);
-  assert.equal(legalActions(state)?.minTo, 150);
+  assert.equal(legalActions(state)!.minTo, 110);
   const flop = limpToFlop();
-  assert.equal(legalActions(flop)?.minTo, 10);
+  assert.equal(legalActions(flop)!.minTo, 10);
+  assert.throws(() => act(flop, { type: 'call' }), /无需跟注/);
   assert.equal(
-    legalActions(action(flop, { type: 'raise', to: 15 }))?.minTo,
+    legalActions(action(flop, { type: 'raise', to: 15 }))!.minTo,
     30,
   );
 });
 
-void test('不足完整加注的短全下不重开已行动玩家的加注权', () => {
-  let state = newHand({ stacks: [1000, 35] });
-  state = action(state, { type: 'raise', to: 30 });
-  assert.equal(legalActions(state)?.minTo, 50);
-  assert.equal(legalActions(state)?.maxTo, 35);
-  state = action(state, { type: 'raise', to: 35 });
-  assert.equal(state.lastRaise, 20, '五枚短加注不能覆盖二十枚完整增量');
-  assert.equal(state.raiseOpen[0], false);
-  assert.equal(state.toAct, 0);
-  const legal = legalActions(state)!;
-  assert.equal(legal.call, 5);
-  assert.equal(legal.canCheck, false);
-  assert.equal(legal.canRaise, false);
+void test('单次不足完整增量的短全下，不重开之前已下注玩家的加注权', () => {
+  let state = newHand({ stacks: [1000, 1000, 1000, 1000, 35] });
+  state = action(state, { type: 'raise', to: 30 }); // seat 3
+  state = action(state, { type: 'raise', to: 35 }); // seat 4 short all-in
+  for (let i = 0; i < 3; i++) state = action(state, { type: 'call' });
+  assert.equal(state.toAct, 3);
+  assert.equal(state.lastRaise, 20);
+  assert.equal(state.raiseOpen[3], false);
+  assert.equal(legalActions(state)!.canRaise, false);
   assert.throws(() => act(state, { type: 'raise', to: 55 }), /加注/);
+  state = action(state, { type: 'call' });
+  assert.equal(state.street, 'flop');
+});
+
+void test('累计短全下重开面对完整增量的原下注者，但不重开中途跟注者', () => {
+  let state = limpToFlop({ stacks: [1000, 1000, 22, 1000, 30] });
+  // TDA rule 49 example scaled: A 10, B all-in12, C calls12, D all-in20, E calls20.
+  assert.equal(state.toAct, 1);
+  state = action(state, { type: 'raise', to: 10 });
+  state = action(state, { type: 'raise', to: 12 });
+  state = action(state, { type: 'call' });
+  state = action(state, { type: 'raise', to: 20 });
+  state = action(state, { type: 'call' });
+  assert.equal(state.toAct, 1);
+  assert.equal(state.lastRaise, 10);
+  assert.equal(state.lastActedBet[1], 10);
+  assert.equal(state.raiseOpen[1], true);
+  assert.equal(legalActions(state)!.minTo, 30);
   const called = action(state, { type: 'call' });
-  assert.equal(called.street, 'complete');
-  assert.equal(called.result?.pot, 70);
-  const folded = action(state, { type: 'fold' });
-  assert.equal(folded.result?.winner, 1);
-  assert.deepEqual(folded.result?.returned, [0, 5]);
+  assert.equal(called.toAct, 3);
+  assert.equal(called.lastActedBet[3], 12);
+  assert.equal(legalActions(called)!.call, 8);
+  assert.equal(legalActions(called)!.canRaise, false);
+  const reraised = action(state, { type: 'raise', to: 30 });
+  assert.equal(reraised.toAct, 3);
+  assert.equal(legalActions(reraised)!.canRaise, true);
 });
 
-void test('面临下注时拒绝过牌，没有欠注时拒绝虚假跟注', () => {
-  const preflop = newHand();
-  assert.throws(() => act(preflop, { type: 'check' }), /不能过牌/);
-  const flop = limpToFlop();
-  assert.throws(() => act(flop, { type: 'call' }), /无需跟注/);
-  const bet = action(flop, { type: 'raise', to: 50 });
-  assert.throws(() => act(bet, { type: 'check' }), /不能过牌/);
-  assert.throws(() => act(bet, { type: 'raise', to: 99 }), /加注/);
+void test('短开注不能直接补成最低下注：完整加注增量叠加，已过牌者不重开', () => {
+  let state = limpToFlop({ stacks: [1000, 1000, 15, 1000, 1000] });
+  state = action(state, { type: 'check' }); // seat1
+  state = action(state, { type: 'raise', to: 5 }); // seat2 all-in5
+  assert.equal(legalActions(state)!.minTo, 15);
+  assert.throws(() => act(state, { type: 'raise', to: 10 }), /加注/);
+  const raised = action(state, { type: 'raise', to: 15 });
+  assert.equal(raised.lastRaise, 10);
+  assert.equal(legalActions(raised)!.minTo, 25);
+  for (let i = 0; i < 3; i++) state = action(state, { type: 'call' });
+  assert.equal(state.toAct, 1);
+  assert.equal(legalActions(state)!.canRaise, false);
 });
 
-void test('相同公共牌成最强牌时严格平分底池，不用花色破平局', () => {
-  let state = limpToFlop();
-  for (let i = 0; i < 6; i++) state = action(state, { type: 'check' });
+void test('五人不同筹码全下按主池与每个边池分别平分，未跟注额退回', () => {
+  let state = newHand({ button: 2, stacks: [150, 100, 70, 40, 25] });
+  state = action(state, { type: 'raise', to: 150 });
+  for (let i = 0; i < 4; i++) state = action(state, { type: 'call' });
   assert.equal(state.street, 'complete');
   assert.deepEqual(state.board, royalBoard);
-  assert.equal(state.result?.winner, 'tie');
-  assert.equal(state.result?.labels[0], '同花顺');
-  assert.equal(state.result?.labels[1], '同花顺');
-  assert.equal(state.result?.pot, 20);
-  assert.deepEqual(state.stacks, [1000, 1000]);
+  assert.equal(state.cursor, 18);
+  assert.equal(new Set([...state.holes.flat(), ...state.board]).size, 15);
+  assert.deepEqual(
+    state.result!.pots.map((pot) => pot.amount),
+    [125, 60, 90, 60],
+  );
+  assert.deepEqual(state.result!.returned, [50, 0, 0, 0, 0]);
+  assert.deepEqual(state.stacks, [150, 100, 70, 40, 25]);
+  assert.deepEqual(state.result!.payouts, [100, 100, 70, 40, 25]);
+  assert.deepEqual(
+    state.result!.pots.map((pot) => pot.eligible),
+    [
+      [0, 1, 2, 3, 4],
+      [0, 1, 2, 3],
+      [0, 1, 2],
+      [0, 1],
+    ],
+  );
 });
 
-void test('非平局摊牌将匹配底池完整付给胜者，结算不遗留筹码', () => {
-  // AA versus KK on 2 / 7 / 9 / J / Q, with no flush or straight.
-  const first = [44, 48, 45, 49, 50, 0, 21, 30, 51, 38, 2, 41];
-  const deck = [
-    ...first,
-    ...Array.from({ length: 52 }, (_, card) => card).filter(
-      (card) => !first.includes(card),
-    ),
-  ];
-  let state = newHand({ stacks: [100, 100], deck });
+void test('仅余一个有筹码玩家时无干边池加注，可跟注或弃牌后自动跑牌', () => {
+  let state = newHand({ button: 2, stacks: [100, 30, 40, 50, 1000] });
+  state = action(state, { type: 'raise', to: 100 });
+  for (let i = 0; i < 3; i++) state = action(state, { type: 'call' });
+  assert.equal(state.toAct, 4);
+  assert.equal(legalActions(state)!.canRaise, false);
+  assert.throws(() => act(state, { type: 'raise', to: 200 }), /加注/);
+  assert.equal(action(state, { type: 'call' }).street, 'complete');
+  assert.equal(action(state, { type: 'fold' }).street, 'complete');
+});
+
+void test('短大盲不改变其他可下注席位的完整入池额；仅余一人时只匹配实际全下', () => {
+  let state = newHand({ button: 2, stacks: [100, 100, 100, 3, 4] });
+  assert.equal(legalActions(state)!.call, 10);
+  assert.equal(state.raiseOpen[3], false);
+  assert.equal(state.raiseOpen[4], false);
+  state = action(state, { type: 'call' });
+  state = action(state, { type: 'fold' });
+  state = action(state, { type: 'fold' });
+  assert.equal(state.street, 'complete');
+  assert.equal(state.result!.returned[0], 6);
+  const only = newHand({ button: 2, stacks: [100, 1, 2, 3, 4] });
+  const a = action(action(only, { type: 'call' }), { type: 'call' });
+  const b = action(a, { type: 'call' });
+  assert.equal(b.street, 'complete');
+});
+
+void test('弃牌玩家的筹码留在底池，无权获分；每个边池依牌力独立归属', () => {
+  // button2: deal order3,4,0,1,2. 0 gets AA, 1 KK, 2 QQ, 3 33, 4 44.
+  const deck = makeDeck([
+    4, 8, 48, 44, 40, 5, 9, 49, 45, 41, 0, 1, 17, 30, 2, 35, 3, 39,
+  ]);
+  let state = newHand({ button: 2, stacks: [25, 100, 70, 100, 100], deck });
+  state = action(state, { type: 'raise', to: 25 });
   state = action(state, { type: 'raise', to: 100 });
   state = action(state, { type: 'call' });
-  assert.deepEqual(state.board, [0, 21, 30, 38, 41]);
-  assert.equal(state.result?.winner, 0);
-  assert.equal(state.result?.pot, 200);
-  assert.deepEqual(state.stacks, [200, 0]);
-  assert.deepEqual(state.result?.returned, [0, 0]);
+  state = action(state, { type: 'fold' }); // SB dead5
+  state = action(state, { type: 'fold' }); // BB dead10
+  assert.equal(state.street, 'complete');
+  assert.deepEqual(state.result!.winners, [0, 1]);
+  assert.deepEqual(state.result!.payouts, [90, 90, 0, 0, 0]);
+  assert.deepEqual(state.result!.returned, [0, 30, 0, 0, 0]);
+  assert.deepEqual(
+    state.result!.pots.map((pot) => pot.amount),
+    [90, 90],
+  );
+  assert.deepEqual(state.result!.labels.slice(3), ['', '']);
 });
 
-void test('翻牌后的全下只发剩余街，弃牌退款保留前面街的匹配底池', () => {
-  let allIn = newHand({ stacks: [40, 40] });
-  allIn = action(allIn, { type: 'call' });
-  allIn = action(allIn, { type: 'check' });
-  assert.equal(allIn.cursor, 8);
-  allIn = action(allIn, { type: 'raise', to: 30 });
-  allIn = action(allIn, { type: 'call' });
-  assert.deepEqual(allIn.board, royalBoard);
-  assert.equal(allIn.cursor, 12);
-  assert.equal(allIn.result?.pot, 80);
-  const flopBet = action(limpToFlop(), { type: 'raise', to: 50 });
-  const folded = action(flopBet, { type: 'fold' });
-  assert.equal(folded.result?.winner, 1);
-  assert.equal(folded.result?.pot, 20);
-  assert.deepEqual(folded.result?.returned, [0, 50]);
-  assert.deepEqual(folded.stacks, [990, 1010]);
-});
-
-void test('短盲注全下仍保留未补齐玩家的跟弃决策，无欠注时直接发完', () => {
-  let state = newHand({ stacks: [1000, 7] });
-  assert.equal(state.street, 'preflop');
-  assert.equal(state.toAct, 0);
-  assert.equal(legalActions(state)?.call, 2);
-  assert.equal(legalActions(state)?.canRaise, false);
+void test('弃牌投入的分层合并为同一主池，避免奇数筹码被重复分配', () => {
+  // 0,1,2 play the board straight; folded3,4 create an odd15 of dead blind money.
+  let state = newHand({ button: 2, stacks: [11, 11, 11, 1000, 1000] });
+  state = action(state, { type: 'raise', to: 11 });
   state = action(state, { type: 'call' });
-  assert.equal(state.result?.pot, 14);
-  assert.deepEqual(state.stacks, [1000, 7]);
-  for (const stacks of [
-    [3, 1000],
-    [1000, 3],
-  ] as [number, number][]) {
-    const short = newHand({ stacks });
-    assert.equal(short.street, 'complete');
-    assert.deepEqual(short.board, royalBoard);
-    assert.equal(short.result?.pot, 6);
-    assert.deepEqual(short.stacks, stacks);
-  }
+  state = action(state, { type: 'call' });
+  state = action(state, { type: 'fold' });
+  state = action(state, { type: 'fold' });
+  assert.equal(state.result!.pot, 48);
+  assert.deepEqual(state.result!.payouts, [16, 16, 16, 0, 0]);
+  assert.deepEqual(
+    state.result!.pots.map((pot) => pot.amount),
+    [48],
+  );
 });
 
-void test('下一手换 button 和手数由调用方传入，沿用结算后的筹码', () => {
-  const ended = action(newHand(), { type: 'fold' });
-  const next = newHand({
-    hand: ended.hand + 1,
-    button: otherSeat(ended.button),
-    stacks: [...ended.stacks],
+void test('真实主池奇数筹码从按钮左侧的获胜者开始发放', () => {
+  let state = newHand({ button: 2, stacks: [11, 11, 11, 3, 1000] });
+  state = action(state, { type: 'raise', to: 11 });
+  state = action(state, { type: 'call' });
+  state = action(state, { type: 'call' });
+  state = action(state, { type: 'fold' }); // BB seat4; SB seat3 remains all-in and ties main pot.
+  assert.equal(state.street, 'complete');
+  // 主池15由四人分，余数从seat3开始；边池31由三人分，余数从seat0开始。
+  assert.deepEqual(
+    state.result!.pots.map((pot) => pot.amount),
+    [15, 31],
+  );
+  assert.deepEqual(state.result!.payouts, [15, 14, 13, 4, 0]);
+});
+
+void test('选择记录保存行动前公开信息，外部行动对象与之后牌面不能污染记录', () => {
+  const state = newHand({ button: 2 });
+  const move: PokerAction = { type: 'raise', to: 30 };
+  const raised = action(state, move);
+  move.to = 900;
+  const decision = raised.actions[0];
+  assert.deepEqual(decision.action, { type: 'raise', to: 30 });
+  assert.deepEqual(decision.board, []);
+  assert.deepEqual(decision.activeSeats, [0, 1, 2, 3, 4]);
+  assert.deepEqual(decision.stacks, state.stacks);
+  assert.deepEqual(decision.committed, state.committed);
+  assert.equal(decision.button, 2);
+  assert.equal(decision.raiseOpen, true);
+  assert.equal(decision.minTo, 20);
+  assert.equal(decision.maxTo, 1000);
+  assert(!('holes' in decision) && !('deck' in decision));
+  const continued = action(raised, { type: 'call' });
+  assert.deepEqual(continued.actions[1].history[0], {
+    seat: 0,
+    street: 'preflop',
+    action: { type: 'raise', to: 30 },
+    paid: 30,
+    streetBet: 0,
   });
-  assert.equal(next.hand, 2);
-  assert.equal(next.button, 1);
-  assert.equal(next.toAct, 1);
-  assert.deepEqual(next.startingStacks, ended.stacks);
-  assert.deepEqual(next.committed, [10, 5]);
-  assert.deepEqual(ended.stacks, [995, 1005], '开始新手不能修改上手结算');
+  assert(!('board' in continued.actions[1].history[0]));
+  checkToEnd(continued);
+  assert.deepEqual(decision.board, []);
+});
+
+void test('1,000 随机五人多街、多尺度及短筹码手牌无循环且筹码始终守恒', () => {
+  let seed = 19237;
+  const random = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const counts = { showdown: 0, fold: 0, sidepot: 0, heroFoldContinued: 0 };
+  for (let hand = 1; hand <= 1000; hand++) {
+    const stacks = SEATS.map(
+      () => 1 + Math.floor(random() * 400),
+    ) as SeatValues<number>;
+    let state = newHand({
+      hand,
+      button: (hand % 5) as Seat,
+      stacks,
+      deck: shuffledDeck(random),
+    });
+    let moves = 0;
+    while (state.street !== 'complete') {
+      const legal = legalActions(state)!;
+      const chance = random();
+      let move: PokerAction;
+      if (chance < 0.15) move = { type: 'fold' };
+      else if (legal.canRaise && chance > 0.6) {
+        const low = Math.min(legal.minTo, legal.maxTo);
+        const to =
+          chance > 0.92
+            ? legal.maxTo
+            : low + Math.floor(random() * (legal.maxTo - low + 1));
+        move = { type: 'raise', to };
+      } else move = legal.canCheck ? { type: 'check' } : { type: 'call' };
+      const before = state;
+      state = action(state, move);
+      if (
+        before.toAct === 0 &&
+        move.type === 'fold' &&
+        state.street !== 'complete'
+      )
+        counts.heroFoldContinued++;
+      assert(++moves < 160, `第 ${hand} 手重复行动`);
+    }
+    counts[state.result!.reason]++;
+    if (state.result!.pots.length > 1) counts.sidepot++;
+  }
+  assert(
+    counts.showdown > 100 &&
+      counts.fold > 20 &&
+      counts.sidepot > 100 &&
+      counts.heroFoldContinued > 50,
+  );
+  console.log('五人随机手牌覆盖', counts);
 });

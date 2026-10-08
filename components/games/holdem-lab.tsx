@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Cpu,
   LoaderCircle,
+  Music2,
   Pause,
   Play,
   RotateCcw,
@@ -19,8 +20,6 @@ import {
   cardLabel,
   cardRank,
   cardSuit,
-  estimateEquity,
-  type EquityEstimate,
 } from '@/lib/games/holdem-cards';
 import {
   act,
@@ -28,21 +27,28 @@ import {
   legalActions,
   potSize,
   startHand,
+  SEATS,
   STREET_LABELS,
   type HoldemState,
   type PokerAction,
+  type Seat,
+  type SeatValues,
 } from '@/lib/games/holdem-engine';
 import {
+  AI_DIFFICULTIES,
   BOT_STYLES,
-  chooseBotAction,
+  DEFAULT_SEAT_STYLES,
+  REVIEW_SAMPLES,
+  decideBot,
   nextButton,
   pct,
   positionLabel,
-  quickEquity,
   reviewHand,
+  type AiDifficulty,
   type BotStyle,
   type ReviewPoint,
 } from '@/lib/games/holdem-strategy';
+import { HoldemLoungeMusic } from '@/lib/games/holdem-music';
 import './holdem-lab.css';
 
 type StoredHand = {
@@ -51,6 +57,7 @@ type StoredHand = {
   hero: number[];
   board: number[];
   points: ReviewPoint[];
+  difficulty: AiDifficulty;
 };
 type Practice = {
   hands: number;
@@ -59,10 +66,26 @@ type Practice = {
   recent: StoredHand[];
 };
 const EMPTY_PRACTICE: Practice = { hands: 0, wins: 0, net: 0, recent: [] };
-const STORAGE_KEY = 'tscjj:holdem-practice:v1';
+// Five-seat analysis has a different model; preserve the original v1 records untouched.
+const STORAGE_KEY = 'tscjj:holdem-practice:v2';
+const SETTINGS_KEY = 'tscjj:holdem-settings:v2';
+const SEAT_NAMES: SeatValues<string> = ['你', '循环', '灯塔', '疾风', '帷幕'];
+const STYLES: BotStyle[] = [...DEFAULT_SEAT_STYLES];
 type Job =
-  | { type: 'equity'; hole: number[]; board: number[] }
-  | { type: 'review'; state: HoldemState };
+  | {
+      type: 'bot';
+      state: HoldemState;
+      seat: Seat;
+      style: BotStyle;
+      difficulty: AiDifficulty;
+      styles: BotStyle[];
+    }
+  | {
+      type: 'review';
+      state: HoldemState;
+      difficulty: AiDifficulty;
+      styles: BotStyle[];
+    };
 
 function PlayingCard({
   card,
@@ -79,7 +102,7 @@ function PlayingCard({
         className={`poker-card is-back ${small ? 'is-small' : ''}`}
         aria-label="未亮出的牌"
       >
-        <Spade size={small ? 18 : 25} aria-hidden="true" />
+        <Spade size={small ? 13 : 22} aria-hidden="true" />
       </span>
     );
   const rank = cardRank(card);
@@ -104,6 +127,11 @@ function PlayingCard({
 function usePokerWorker() {
   const worker = useRef<Worker | null>(null);
   const serial = useRef(0);
+  const generation = useRef(0);
+  const disposed = useRef(false);
+  const fallbacks = useRef(
+    new Map<ReturnType<typeof setTimeout>, (error: Error) => void>(),
+  );
   const pending = useRef(
     new Map<
       number,
@@ -111,6 +139,9 @@ function usePokerWorker() {
     >(),
   );
   useEffect(() => {
+    disposed.current = false;
+    generation.current++;
+    const effectGeneration = generation.current;
     let instance: Worker | null = null;
     try {
       instance = new Worker(new URL('./holdem-worker.ts', import.meta.url), {
@@ -120,6 +151,11 @@ function usePokerWorker() {
       instance.onmessage = (
         event: MessageEvent<{ id: number; result?: unknown; error?: string }>,
       ) => {
+        if (
+          generation.current !== effectGeneration ||
+          worker.current !== instance
+        )
+          return;
         const task = pending.current.get(event.data.id);
         if (!task) return;
         pending.current.delete(event.data.id);
@@ -127,6 +163,11 @@ function usePokerWorker() {
         else task.resolve(event.data.result);
       };
       instance.onerror = () => {
+        if (
+          generation.current !== effectGeneration ||
+          worker.current !== instance
+        )
+          return;
         for (const task of pending.current.values())
           task.reject(new Error('计算线程不可用'));
         pending.current.clear();
@@ -137,46 +178,96 @@ function usePokerWorker() {
       worker.current = null;
     }
     const tasks = pending.current;
+    const timers = fallbacks.current;
     return () => {
+      disposed.current = true;
+      // oxlint-disable-next-line react-hooks/exhaustive-deps -- This imperative lifecycle counter invalidates async work; it is not a DOM ref.
+      generation.current++;
       instance?.terminate();
       worker.current = null;
       for (const task of tasks.values()) task.reject(new Error('页面已离开'));
       tasks.clear();
+      for (const [timer, reject] of timers) {
+        clearTimeout(timer);
+        reject(new Error('页面已离开'));
+      }
+      timers.clear();
     };
   }, []);
-  return useCallback(
-    <T,>(job: Job): Promise<T> =>
-      new Promise<T>((resolve, reject) => {
-        if (!worker.current) {
-          reject(new Error('计算线程不可用'));
-          return;
-        }
-        const id = ++serial.current;
-        pending.current.set(id, {
-          resolve: (result) => resolve(result as T),
-          reject,
-        });
+  return useCallback(<T,>(job: Job): Promise<T> => {
+    const jobGeneration = generation.current;
+    if (disposed.current) return Promise.reject(new Error('页面已离开'));
+    return new Promise<T>((resolve, reject) => {
+      if (!worker.current) {
+        reject(new Error('计算线程不可用'));
+        return;
+      }
+      const id = ++serial.current;
+      pending.current.set(id, {
+        resolve: (result) => resolve(result as T),
+        reject,
+      });
+      try {
         worker.current.postMessage({ ...job, id });
-      }).catch(() => {
-        // Some browsers block module workers; the small local calculation still keeps play available.
-        return (
-          job.type === 'equity'
-            ? estimateEquity(job.hole, job.board, 280)
-            : reviewHand(job.state, 360)
-        ) as T;
-      }),
-    [],
-  );
+      } catch (error) {
+        pending.current.delete(id);
+        reject(error instanceof Error ? error : new Error('计算请求失败'));
+      }
+    }).catch((error: unknown) => {
+      if (disposed.current || generation.current !== jobGeneration) throw error;
+      return new Promise<T>((resolve, reject) => {
+        // Defer fallback to let the loading status paint in browsers without module workers.
+        const timer = setTimeout(() => {
+          // oxlint-disable-next-line react/react-compiler -- Stable ref registry tracks cancellable computation timers, independent of render data.
+          fallbacks.current.delete(timer);
+          if (disposed.current || generation.current !== jobGeneration) {
+            reject(new Error('页面已离开'));
+            return;
+          }
+          try {
+            resolve(
+              (job.type === 'bot'
+                ? decideBot(
+                    job.state,
+                    job.seat,
+                    job.style,
+                    job.difficulty,
+                    job.styles,
+                  )
+                : reviewHand(
+                    job.state,
+                    REVIEW_SAMPLES[job.difficulty],
+                    undefined,
+                    job.styles,
+                  )) as T,
+            );
+          } catch (failure) {
+            reject(
+              failure instanceof Error ? failure : new Error('策略计算失败'),
+            );
+          }
+        }, 0);
+        fallbacks.current.set(timer, reject);
+      });
+    });
+  }, []);
 }
 
+const validCards = (cards: unknown): cards is number[] =>
+  Array.isArray(cards) &&
+  cards.every((c) => Number.isInteger(c) && c >= 0 && c < 52);
 function readPractice(): Practice {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw || raw.length > 200000) return EMPTY_PRACTICE;
+    if (!raw || raw.length > 700000) return EMPTY_PRACTICE;
     const saved = JSON.parse(raw) as Practice;
     if (
-      ![saved.hands, saved.wins, saved.net].every(Number.isFinite) ||
+      !Number.isSafeInteger(saved.hands) ||
       saved.hands < 0 ||
+      !Number.isSafeInteger(saved.wins) ||
+      saved.wins < 0 ||
+      saved.wins > saved.hands ||
+      !Number.isFinite(saved.net) ||
       !Array.isArray(saved.recent)
     )
       return EMPTY_PRACTICE;
@@ -189,27 +280,61 @@ function readPractice(): Practice {
             h &&
             Number.isFinite(h.delta) &&
             Number.isInteger(h.hand) &&
-            Array.isArray(h.hero) &&
+            validCards(h.hero) &&
             h.hero.length === 2 &&
-            Array.isArray(h.board) &&
+            validCards(h.board) &&
             h.board.length <= 5 &&
-            [...h.hero, ...h.board].every(
-              (c) => Number.isInteger(c) && c >= 0 && c < 52,
-            ) &&
+            typeof h.difficulty === 'string' &&
+            Object.hasOwn(AI_DIFFICULTIES, h.difficulty) &&
             Array.isArray(h.points) &&
-            h.points.length <= 60 &&
+            h.points.length <= 100 &&
             h.points.every(
               (p) =>
                 p &&
+                Number.isFinite(p.score) &&
+                p.score >= 0 &&
+                p.score <= 100 &&
                 Number.isFinite(p.equity) &&
                 typeof p.advice === 'string' &&
                 typeof p.principle === 'string' &&
                 typeof p.title === 'string' &&
                 typeof p.action === 'string' &&
-                Array.isArray(p.board) &&
+                typeof p.street === 'string' &&
+                Object.hasOwn(STREET_LABELS, p.street) &&
+                [
+                  p.spr,
+                  p.regretBB,
+                  p.uncertaintyBB,
+                  p.pot,
+                  p.call,
+                  p.samples,
+                  p.opponents,
+                ].every(Number.isFinite) &&
+                (p.modelAllowanceBB === undefined ||
+                  (Number.isFinite(p.modelAllowanceBB) &&
+                    p.modelAllowanceBB >= 0)) &&
+                typeof p.position === 'string' &&
+                typeof p.model === 'string' &&
+                ['low', 'medium'].includes(p.confidence) &&
+                validCards(p.board) &&
                 p.board.length <= 5 &&
-                p.board.every((c) => Number.isInteger(c) && c >= 0 && c < 52) &&
-                p.street in STREET_LABELS,
+                Array.isArray(p.alternatives) &&
+                p.alternatives.length > 0 &&
+                p.alternatives.every(
+                  (a) =>
+                    [a.evBB, a.standardErrorBB, a.score].every(
+                      Number.isFinite,
+                    ) &&
+                    typeof a.label === 'string' &&
+                    typeof a.reason === 'string',
+                ) &&
+                p.recommendation &&
+                typeof p.recommendation.label === 'string' &&
+                Number.isFinite(p.recommendation.evBB) &&
+                Array.isArray(p.rangeNotes) &&
+                p.rangeNotes.every((note) => typeof note === 'string') &&
+                Array.isArray(p.limitations) &&
+                p.limitations.every((note) => typeof note === 'string'),
             ),
         ),
     };
@@ -218,11 +343,255 @@ function readPractice(): Practice {
   }
 }
 
+function TableSeat({
+  seat,
+  state,
+  paused,
+}: {
+  seat: Seat;
+  state: HoldemState | null;
+  paused: boolean;
+}) {
+  const hero = seat === 0;
+  const folded = Boolean(state?.folded[seat]);
+  const active = state?.toAct === seat && !paused;
+  const completed = state?.street === 'complete';
+  const showCards =
+    hero ||
+    Boolean(completed && state?.result?.reason === 'showdown' && !folded);
+  const winner = Boolean(state?.result?.winners.includes(seat));
+  const allIn = state && !completed && !folded && state.stacks[seat] === 0;
+  const latest = state?.actions.findLast((d) => d.seat === seat);
+  return (
+    <div
+      className={`poker-seat poker-seat-${seat} ${hero ? 'is-hero' : ''} ${folded ? 'is-folded' : ''} ${active ? 'is-acting' : ''} ${winner ? 'is-winner' : ''}`}
+      aria-label={`${SEAT_NAMES[seat]}席位${active ? '，正在行动' : ''}${folded ? '，已弃牌' : ''}`}
+    >
+      <div className="poker-seat-identity">
+        <span className={`poker-avatar avatar-${seat}`} aria-hidden="true">
+          {hero ? '你' : <Cpu size={16} strokeWidth={1.5} />}
+        </span>
+        <span>
+          <strong>
+            {SEAT_NAMES[seat]}
+            {state?.button === seat && (
+              <i className="poker-dealer" title="按钮位" aria-label="按钮位">
+                D
+              </i>
+            )}
+          </strong>
+          <small>
+            {state
+              ? positionLabel(state, seat)
+              : hero
+                ? '你的席位'
+                : `AI ${seat}`}{' '}
+            · {hero ? '玩家' : BOT_STYLES[STYLES[seat]].label}
+          </small>
+        </span>
+        <b className="poker-seat-stack">
+          {state?.stacks[seat] ?? 1000}
+          <small>筹码</small>
+        </b>
+      </div>
+      <div className="poker-seat-bottom">
+        <div className="poker-hole" aria-label={`${SEAT_NAMES[seat]}的手牌`}>
+          {(state?.holes[seat] ?? [undefined, undefined]).map((c, i) => (
+            <PlayingCard
+              key={c ?? i}
+              card={c}
+              hidden={!showCards || c === undefined}
+              small={!hero}
+            />
+          ))}
+        </div>
+        <div className="poker-seat-state">
+          <span>
+            {folded
+              ? '已弃牌'
+              : allIn
+                ? '全下'
+                : winner
+                  ? `收回 ${state?.result?.payouts[seat]}`
+                  : active
+                    ? hero
+                      ? '轮到你'
+                      : '思考中…'
+                    : latest
+                      ? actionLabel(latest)
+                      : '等待发牌'}
+          </span>
+          {state?.streetBets[seat] && !completed ? (
+            <small>本轮 {state.streetBets[seat]}</small>
+          ) : completed && showCards && state?.result?.labels[seat] ? (
+            <small>{state.result.labels[seat]}</small>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReviewCard({ point, first }: { point: ReviewPoint; first: boolean }) {
+  const grade =
+    point.score >= 85 ? 'good' : point.score >= 60 ? 'mixed' : 'costly';
+  const selected = point.alternatives.find((a) => a.label === point.action);
+  return (
+    <details className={`poker-review-point grade-${grade}`} open={first}>
+      <summary>
+        <span className="poker-review-score">
+          <b>{Math.round(point.score)}</b>
+          <small>模型评分</small>
+        </span>
+        <span className="poker-review-title">
+          <small>
+            {STREET_LABELS[point.street]} · {point.position} · {point.opponents}{' '}
+            位对手
+          </small>
+          <strong>{point.action}</strong>
+          <span>{point.title}</span>
+        </span>
+        <ChevronDown size={17} />
+      </summary>
+      <div className="poker-review-body">
+        <div className="poker-decision-board">
+          <span>决策时公共牌</span>
+          {point.board.length ? (
+            point.board.map((card) => (
+              <PlayingCard card={card} key={card} small />
+            ))
+          ) : (
+            <small>翻牌前，尚未发出</small>
+          )}
+        </div>
+        <div className="poker-review-recommendation">
+          <span>模型推荐</span>
+          <strong>{point.recommendation.label}</strong>
+          <small>
+            你的选择与最高估值相差 {point.regretBB.toFixed(1)} BB · 模型置信度
+            {point.confidence === 'medium' ? '中' : '低'}
+          </small>
+        </div>
+        <p>{point.advice}</p>
+        <div className="poker-review-metrics">
+          <span>
+            公开范围摊牌份额 <b>{pct(point.equity)}</b>
+          </span>
+          {point.threshold !== null && (
+            <span>
+              静态跟注门槛 <b>{pct(point.threshold)}</b>
+            </span>
+          )}
+          <span>
+            底池 <b>{point.pot}</b>
+          </span>
+          <span>
+            SPR <b>{point.spr.toFixed(1)}</b>
+          </span>
+        </div>
+        <div className="poker-candidate-wrap">
+          <table className="poker-candidates">
+            <caption>
+              候选模型 EV 比较{' '}
+              <small>单位 BB，比较的是当前决策之后的估计净值</small>
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">行动</th>
+                <th scope="col">模型 EV</th>
+                <th scope="col">评分</th>
+              </tr>
+            </thead>
+            <tbody>
+              {point.alternatives.map((option, i) => (
+                <tr
+                  key={i}
+                  className={
+                    option === selected
+                      ? 'is-selected'
+                      : option.label === point.recommendation.label
+                        ? 'is-recommended'
+                        : ''
+                  }
+                >
+                  <th scope="row">
+                    {option.label}
+                    {option.label === point.action && <small>你的选择</small>}
+                    {option.label === point.recommendation.label && (
+                      <small>模型推荐</small>
+                    )}
+                  </th>
+                  <td>
+                    {option.evBB >= 0 ? '+' : ''}
+                    {option.evBB.toFixed(1)}
+                    <small>±{option.standardErrorBB.toFixed(1)}</small>
+                  </td>
+                  <td>{Math.round(option.score)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <details className="poker-model-details">
+          <summary>
+            候选动作的思路 <ChevronDown size={14} />
+          </summary>
+          <ul>
+            {point.alternatives.map((option, i) => (
+              <li key={i}>
+                <strong>{option.label}</strong>：{option.reason}
+              </li>
+            ))}
+          </ul>
+        </details>
+        <p className="poker-principle">{point.principle}</p>
+        {point.rangeNotes.length > 0 && (
+          <details className="poker-model-details">
+            <summary>
+              对手范围与推导依据 <ChevronDown size={14} />
+            </summary>
+            <ul>
+              {point.rangeNotes.map((note, i) => (
+                <li key={i}>{note}</li>
+              ))}
+            </ul>
+          </details>
+        )}
+        <details className="poker-model-details">
+          <summary>
+            抽样误差与模型限制 <ChevronDown size={14} />
+          </summary>
+          <p>
+            {point.model}，{point.samples} 次抽样；候选差值抽样误差约 ±
+            {point.uncertaintyBB.toFixed(1)} BB。表内 ±
+            值为抽样标准误，不包含模型误差。
+          </p>
+          {point.modelAllowanceBB !== undefined && (
+            <p>
+              评分与稳健推荐另留 {point.modelAllowanceBB.toFixed(1)} BB
+              的模型敏感性空间，用来缓和范围及后续行动近似的影响；它是启发式预留，并非统计置信区间。
+            </p>
+          )}
+          <ul>
+            {point.limitations.map((note, i) => (
+              <li key={i}>{note}</li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    </details>
+  );
+}
+
 export function HoldemLab() {
   const [state, setState] = useState<HoldemState | null>(null);
-  const [style, setStyle] = useState<BotStyle>('balanced');
+  const [difficulty, setDifficulty] = useState<AiDifficulty>('standard');
+  const [handDifficulty, setHandDifficulty] =
+    useState<AiDifficulty>('standard');
   const [paused, setPaused] = useState(false);
   const [sound, setSound] = useState(false);
+  const [music, setMusic] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.22);
   const [raiseChoice, setRaiseChoice] = useState<{
     turn: HoldemState;
     to: number;
@@ -236,9 +605,13 @@ export function HoldemLab() {
   const [ready, setReady] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
   const soundRef = useRef<AudioContext | null>(null);
+  const musicRef = useRef<HoldemLoungeMusic | null>(null);
   const counted = useRef<HoldemState | null>(null);
   const reviewed = useRef<HoldemState | null>(null);
+  const mounted = useRef(true);
   const getStrategy = usePokerWorker();
+  const completed = state?.street === 'complete';
+  const humanTurn = state?.toAct === 0 && !paused;
   const legal = state ? legalActions(state) : null;
   const raiseTo = legal
     ? raiseChoice?.turn === state
@@ -251,28 +624,77 @@ export function HoldemLab() {
   const setRaiseTo = (to: number) => {
     if (state) setRaiseChoice({ turn: state, to });
   };
-  const humanTurn = state?.toAct === 0 && !paused;
-  const completed = state?.street === 'complete';
 
   useEffect(() => {
-    // oxlint-disable-next-line react/react-compiler -- Browser-only storage must hydrate after the shared server/client initial render.
+    mounted.current = true;
+    // oxlint-disable-next-line react/react-compiler -- Browser storage hydrates after shared initial render.
     setPractice(readPractice());
+    try {
+      const settings = JSON.parse(
+        localStorage.getItem(SETTINGS_KEY) || '{}',
+      ) as { difficulty?: AiDifficulty; volume?: number };
+      if (
+        typeof settings.difficulty === 'string' &&
+        Object.hasOwn(AI_DIFFICULTIES, settings.difficulty)
+      )
+        setDifficulty(settings.difficulty);
+      if (Number.isFinite(settings.volume))
+        setMusicVolume(Math.min(0.6, Math.max(0, settings.volume!)));
+    } catch {
+      /* Settings are optional. */
+    }
     setReady(true);
-  }, []);
-  useEffect(() => {
     const hide = () => {
-      if (document.hidden) setPaused(true);
+      if (document.hidden) {
+        setPaused(true);
+        musicRef.current?.pause();
+        void soundRef.current?.suspend();
+      }
     };
     document.addEventListener('visibilitychange', hide);
     return () => {
+      mounted.current = false;
       document.removeEventListener('visibilitychange', hide);
+      musicRef.current?.close();
+      musicRef.current = null;
       void soundRef.current?.close();
+      soundRef.current = null;
     };
   }, []);
 
+  useEffect(() => {
+    musicRef.current?.setVolume(musicVolume);
+    if (music && !paused && !document.hidden)
+      void musicRef.current?.play().catch(() => {
+        if (mounted.current) setNotice('音乐暂时无法播放，可以继续练习。');
+      });
+    else musicRef.current?.pause();
+  }, [music, musicVolume, paused]);
+
+  const toggleMusic = () => {
+    if (music) {
+      musicRef.current?.pause();
+      setMusic(false);
+      return;
+    }
+    try {
+      if (!musicRef.current) musicRef.current = new HoldemLoungeMusic();
+      musicRef.current.setVolume(musicVolume);
+      setMusic(true);
+      // Resume directly from this explicit click to satisfy mobile autoplay policy.
+      if (!paused && !document.hidden)
+        void musicRef.current.play().catch(() => {
+          setMusic(false);
+          setNotice('浏览器暂时无法播放音乐。');
+        });
+    } catch {
+      setNotice('浏览器不支持当前音乐播放。');
+    }
+  };
+
   const tone = useCallback(
     (win = false) => {
-      if (!sound) return;
+      if (!sound || document.hidden) return;
       try {
         const context =
           soundRef.current || (soundRef.current = new AudioContext());
@@ -284,7 +706,7 @@ export function HoldemLab() {
           win ? 640 : 330,
           context.currentTime,
         );
-        gain.gain.setValueAtTime(0.045, context.currentTime);
+        gain.gain.setValueAtTime(0.04, context.currentTime);
         gain.gain.exponentialRampToValueAtTime(
           0.001,
           context.currentTime + 0.13,
@@ -294,55 +716,64 @@ export function HoldemLab() {
         oscillator.start();
         oscillator.stop(context.currentTime + 0.14);
       } catch {
-        /* Sound is optional; play stays available. */
+        /* Sound is optional. */
       }
     },
     [sound],
   );
 
   useEffect(() => {
-    if (!state || state.toAct !== 1 || paused) return;
+    if (!state || state.toAct === null || state.toAct === 0 || paused) return;
+    const seat = state.toAct;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const decide = (equity: number) => {
-      if (cancelled) return;
-      const action = chooseBotAction(state, equity, style);
-      timer = setTimeout(() => {
-        if (!cancelled)
-          setState((current) =>
-            current === state ? act(current, action) : current,
-          );
-      }, 500);
-    };
-    void getStrategy<EquityEstimate>({
-      type: 'equity',
-      hole: state.holes[1],
-      board: state.board,
+    void getStrategy<{ action: PokerAction }>({
+      type: 'bot',
+      state,
+      seat,
+      style: STYLES[seat],
+      difficulty: handDifficulty,
+      styles: STYLES,
     })
-      .then((result) => decide(result.equity))
-      .catch(() => decide(quickEquity(state.holes[1])));
+      .then(({ action }) => {
+        if (cancelled) return;
+        timer = setTimeout(() => {
+          if (!cancelled)
+            setState((current) =>
+              current === state ? act(current, action) : current,
+            );
+        }, 520);
+      })
+      .catch(() => {
+        if (!cancelled) setNotice('AI 计算暂时不可用，请暂停后继续。');
+      });
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [state, paused, style, getStrategy]);
+  }, [state, paused, handDifficulty, getStrategy]);
 
   useEffect(() => {
     if (!state?.result) return;
     if (counted.current !== state) {
       counted.current = state;
       const delta = state.stacks[0] - state.startingStacks[0];
-      // oxlint-disable-next-line react/react-compiler -- Persist exactly one completed engine snapshot, independent of later review retries.
+      // oxlint-disable-next-line react/react-compiler -- Archive each completed engine snapshot exactly once.
       setPractice((p) => ({
         ...p,
         hands: p.hands + 1,
-        wins: p.wins + Number(state.result!.winner === 0),
+        wins: p.wins + Number(delta > 0),
         net: p.net + delta,
       }));
-      tone(state.result.winner === 0);
+      tone(delta > 0);
     }
     let cancelled = false;
-    void getStrategy<ReviewPoint[]>({ type: 'review', state })
+    void getStrategy<ReviewPoint[]>({
+      type: 'review',
+      state,
+      difficulty: handDifficulty,
+      styles: STYLES,
+    })
       .then((points) => {
         if (cancelled) return;
         setReview(points);
@@ -354,6 +785,7 @@ export function HoldemLab() {
             hero: state.holes[0],
             board: state.board,
             points,
+            difficulty: handDifficulty,
           };
           setPractice((p) => ({
             ...p,
@@ -367,17 +799,21 @@ export function HoldemLab() {
     return () => {
       cancelled = true;
     };
-  }, [state, getStrategy, reviewAttempt, tone]);
+  }, [state, getStrategy, reviewAttempt, tone, handDifficulty]);
 
   useEffect(() => {
     if (!ready) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(practice));
+      localStorage.setItem(
+        SETTINGS_KEY,
+        JSON.stringify({ difficulty, volume: musicVolume }),
+      );
     } catch {
-      // oxlint-disable-next-line react/react-compiler -- Reflect a browser storage failure; this does not depend on rendered state.
+      // oxlint-disable-next-line react/react-compiler -- Reflect browser storage failure.
       setStorageAvailable(false);
     }
-  }, [practice, ready]);
+  }, [practice, difficulty, musicVolume, ready]);
 
   const play = useCallback(
     (action: PokerAction) => {
@@ -428,14 +864,19 @@ export function HoldemLab() {
   }, [humanTurn, legal, play]);
 
   function deal() {
-    const resetStacks = !state || state.stacks.some((s) => s < 10);
+    const stacks = (
+      state
+        ? state.stacks.map((stack) => (stack < 10 ? 1000 : stack))
+        : [1000, 1000, 1000, 1000, 1000]
+    ) as SeatValues<number>;
     setState(
       startHand({
         hand: state ? state.hand + 1 : 1,
         button: state ? nextButton(state) : 0,
-        stacks: resetStacks ? [1000, 1000] : state.stacks,
+        stacks,
       }),
     );
+    setHandDifficulty(difficulty);
     setPaused(false);
     setReview(null);
     setReviewError(false);
@@ -443,26 +884,37 @@ export function HoldemLab() {
     setNotice('');
     tone();
   }
-
   function setSize(fraction: number) {
     if (!legal || !state) return;
-    const target =
-      Math.max(...state.streetBets) +
-      Math.round((legal.pot + legal.call) * fraction);
-    setRaiseTo(Math.min(legal.maxTo, Math.max(legal.minTo, target)));
+    setRaiseTo(
+      Math.min(
+        legal.maxTo,
+        Math.max(
+          legal.minTo,
+          Math.max(...state.streetBets) +
+            Math.round((legal.pot + legal.call) * fraction),
+        ),
+      ),
+    );
   }
-
   const latest = state?.actions.at(-1);
   const shownReview = archive?.points || review;
+  const average = shownReview?.length
+    ? Math.round(
+        shownReview.reduce((sum, point) => sum + point.score, 0) /
+          shownReview.length,
+      )
+    : null;
+  const delta = state ? state.stacks[0] - state.startingStacks[0] : 0;
   return (
     <div className="holdem-lab">
       <div className="poker-topbar">
         <p>
           <span className="poker-live-dot" aria-hidden="true" />
-          单机练习桌 <span>虚拟筹码 / 盲注 5、10</span>
+          五人练习桌 <span>虚拟筹码 · 盲注 5 / 10</span>
         </p>
         <div className="poker-utilities">
-          {state && !completed && (
+          {(state || music) && (
             <button
               type="button"
               onClick={() => setPaused((p) => !p)}
@@ -474,9 +926,17 @@ export function HoldemLab() {
           )}
           <button
             type="button"
-            onClick={() => {
-              setSound((v) => !v);
-            }}
+            className={music ? 'is-on' : ''}
+            onClick={toggleMusic}
+            aria-pressed={music}
+            aria-label={music ? '关闭背景音乐' : '打开背景音乐'}
+          >
+            <Music2 size={16} />
+            <span>音乐</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSound((v) => !v)}
             aria-pressed={sound}
             aria-label={sound ? '关闭游戏音效' : '打开游戏音效'}
           >
@@ -486,55 +946,22 @@ export function HoldemLab() {
       </div>
       <div className="poker-layout">
         <section
-          className={`poker-table-wrap ${paused && !completed ? 'is-paused' : ''}`}
-          aria-label="德州扑克练习桌"
+          className={`poker-table-wrap ${paused ? 'is-paused' : ''}`}
+          aria-label="五人德州扑克练习桌"
         >
           <div className="poker-table">
-            <div className="poker-seat poker-bot">
-              <div className="poker-seat-info">
-                <span className="poker-cpu">
-                  <Cpu size={20} strokeWidth={1.5} />
-                </span>
-                <span>
-                  <strong>AI 对手</strong>
-                  <small>
-                    {state ? positionLabel(state, 1) : '与你进行单挑练习'} /{' '}
-                    {BOT_STYLES[style].label}
-                  </small>
-                </span>
-                <b>
-                  {state?.stacks[1] ?? 1000}
-                  <small>筹码</small>
-                </b>
-              </div>
-              <div className="poker-hole" aria-label="AI 对手手牌">
-                {state ? (
-                  state.holes[1].map((c) => (
-                    <PlayingCard
-                      key={c}
-                      card={c}
-                      hidden={!completed || state.result?.reason !== 'showdown'}
-                      small
-                    />
-                  ))
-                ) : (
-                  <>
-                    <PlayingCard hidden small />
-                    <PlayingCard hidden small />
-                  </>
-                )}
-              </div>
-              {state?.streetBets[1] ? (
-                <span className="poker-wager">本轮 {state.streetBets[1]}</span>
-              ) : null}
-            </div>
+            {SEATS.map((seat) => (
+              <TableSeat seat={seat} key={seat} state={state} paused={paused} />
+            ))}
             <div className="poker-center">
               <div className="poker-pot">
-                <span>{state ? STREET_LABELS[state.street] : '德州扑克'}</span>
+                <span>
+                  {state ? STREET_LABELS[state.street] : 'NO LIMIT HOLD’EM'}
+                </span>
                 <strong>
-                  {state ? (state.result?.pot ?? potSize(state)) : '1 vs 1'}
+                  {state ? (state.result?.pot ?? potSize(state)) : '5 人桌'}
                 </strong>
-                <small>{state ? '底池筹码' : '牌力、位置与决策'}</small>
+                <small>{state ? '底池筹码' : '一位玩家，四种性格'}</small>
               </div>
               <div className="poker-board" aria-label="公共牌">
                 {Array.from({ length: 5 }, (_, i) =>
@@ -551,78 +978,29 @@ export function HoldemLab() {
               </div>
               <output className="poker-table-status" aria-live="polite">
                 {!state
-                  ? '从一手牌开始，结束后再回看你的选择。'
-                  : completed
-                    ? state.result?.winner === 'tie'
-                      ? '平分底池'
-                      : state.result?.winner === 0
-                        ? '你赢下了这一手'
-                        : 'AI 赢下了这一手'
-                    : paused
-                      ? '练习已暂停'
-                      : state.toAct === 1
-                        ? 'AI 正在思考…'
-                        : '轮到你行动'}
+                  ? '先打一手，再回看每个选择。'
+                  : paused
+                    ? '练习已暂停'
+                    : completed
+                      ? `${state.result?.winners.map((s) => SEAT_NAMES[s]).join('、')} ${state.result?.winners.length === 1 ? '赢下底池' : '分享底池'}`
+                      : state.toAct === 0
+                        ? '轮到你行动'
+                        : `${state.toAct === null ? 'AI' : SEAT_NAMES[state.toAct]}正在思考…`}
               </output>
-              {completed && state.result?.reason === 'showdown' && (
-                <p className="poker-showdown">
-                  你：{state.result.labels[0]}{' '}
-                  <span>AI：{state.result.labels[1]}</span>
-                </p>
+              {state && !completed && (
+                <small className="poker-live-count">
+                  {state.folded.filter((f) => !f).length} 位仍在底池 ·{' '}
+                  {AI_DIFFICULTIES[handDifficulty].label}
+                </small>
               )}
-              {completed &&
-                state.result &&
-                state.result.returned.some((n) => n > 0) && (
-                  <p className="poker-returned">
-                    未被跟注的 {Math.max(...state.result.returned)} 筹码已退回。
-                  </p>
-                )}
             </div>
-            <div className="poker-seat poker-human">
-              <div className="poker-hole" aria-label="你的手牌">
-                {state ? (
-                  state.holes[0].map((c) => <PlayingCard key={c} card={c} />)
-                ) : (
-                  <>
-                    <PlayingCard hidden />
-                    <PlayingCard hidden />
-                  </>
-                )}
-              </div>
-              <div className="poker-seat-info">
-                <span className="poker-you">你</span>
-                <span>
-                  <strong>你的席位</strong>
-                  <small>
-                    {state ? positionLabel(state, 0) : '100 BB 起始筹码'}
-                  </small>
-                </span>
-                <b>
-                  {state?.stacks[0] ?? 1000}
-                  <small>筹码</small>
-                </b>
-              </div>
-              {state?.streetBets[0] && !completed ? (
-                <span className="poker-wager">本轮 {state.streetBets[0]}</span>
-              ) : null}
-            </div>
-            {state && state.button === 0 && (
-              <span className="poker-dealer is-human" title="按钮位">
-                D
-              </span>
-            )}
-            {state && state.button === 1 && (
-              <span className="poker-dealer is-bot" title="按钮位">
-                D
-              </span>
-            )}
           </div>
           <div className="poker-action-panel">
             {!state ? (
               <div className="poker-start">
                 <div>
-                  <h2>先打一手，再拆开思路。</h2>
-                  <p>两张手牌、五张公共牌。只用虚拟筹码，不设倒计时。</p>
+                  <h2>五个席位，更多博弈。</h2>
+                  <p>观察位置与不同对手，逐个选择拆开复盘。</p>
                 </div>
                 <button
                   type="button"
@@ -637,13 +1015,13 @@ export function HoldemLab() {
               <div className="poker-finish">
                 <div>
                   <strong>
-                    {state.stacks[0] - state.startingStacks[0] >= 0 ? '+' : ''}
-                    {state.stacks[0] - state.startingStacks[0]} 筹码
+                    {delta >= 0 ? '+' : ''}
+                    {delta} 筹码
                   </strong>
                   <p>
                     {state.stacks.some((s) => s < 10)
-                      ? '本轮筹码不足，下一手补充到各 100 BB。'
-                      : '按钮位下一手轮换。可以先阅读本手复盘。'}
+                      ? '筹码不足的席位下一手补充至 100 BB。'
+                      : '按钮位轮换，先回看当时的选择。'}
                   </p>
                 </div>
                 <button
@@ -662,11 +1040,13 @@ export function HoldemLab() {
                   <span>
                     {paused
                       ? '点击继续恢复对局'
-                      : humanTurn
-                        ? legal?.canCheck
-                          ? '你可以免费过牌，也可以主动下注。'
-                          : `跟注需 ${legal?.call} 筹码${legal?.call === state.stacks[0] ? '（全下）' : ''}`
-                        : '等待 AI 的行动'}
+                      : state.folded[0]
+                        ? '你已弃牌，观察其他席位的行动。'
+                        : humanTurn
+                          ? legal?.canCheck
+                            ? '可以免费过牌，也可以主动下注。'
+                            : `跟注需 ${legal?.call} 筹码${legal?.call === state.stacks[0] ? '（全下）' : ''}`
+                          : `等待${state.toAct === null ? '其他席位' : SEAT_NAMES[state.toAct]}行动`}
                   </span>
                   <small>第 {state.hand} 手</small>
                 </div>
@@ -686,7 +1066,9 @@ export function HoldemLab() {
                     }
                     disabled={!humanTurn}
                   >
-                    {legal?.canCheck ? '过牌' : `跟注 ${legal?.call ?? ''}`}{' '}
+                    {legal?.canCheck
+                      ? '过牌'
+                      : `跟注 ${humanTurn ? (legal?.call ?? '') : ''}`}{' '}
                     <kbd>C</kbd>
                   </button>
                   <button
@@ -695,7 +1077,7 @@ export function HoldemLab() {
                     onClick={() => play({ type: 'raise', to: raiseTo })}
                     disabled={!humanTurn || !legal?.canRaise}
                   >
-                    {state.streetBets[1] === 0 ? '下注' : '加注到'}{' '}
+                    {Math.max(...state.streetBets) === 0 ? '下注' : '加注到'}{' '}
                     {humanTurn && legal?.canRaise ? raiseTo : ''}
                   </button>
                 </div>
@@ -735,10 +1117,10 @@ export function HoldemLab() {
                       </button>
                     </div>
                     <label>
-                      <span>总下注</span>
+                      <span>本轮总下注</span>
                       <input
                         type="range"
-                        aria-label="调整本轮总下注额度"
+                        aria-label="调整本轮累计总下注额度"
                         min={Math.min(legal.minTo, legal.maxTo)}
                         max={legal.maxTo}
                         step={1}
@@ -749,36 +1131,75 @@ export function HoldemLab() {
                     </label>
                   </div>
                 )}
-                <p className="poker-action-error" role="alert">
-                  {notice}
-                </p>
               </>
             )}
+            <p className="poker-action-error" role="alert">
+              {notice}
+            </p>
+            {completed &&
+              state?.result &&
+              (state.result.pots.length > 1 ||
+                state.result.returned.some((n) => n > 0)) && (
+                <details className="poker-pot-breakdown">
+                  <summary>
+                    底池分配 <ChevronDown size={14} />
+                  </summary>
+                  {state.result.pots.map((pot, i) => (
+                    <p key={i}>
+                      {i === 0 ? '主池' : `边池 ${i}`} {pot.amount} →{' '}
+                      {pot.winners.map((s) => SEAT_NAMES[s]).join('、')}
+                    </p>
+                  ))}
+                  {SEATS.filter((s) => state.result!.returned[s] > 0).map(
+                    (s) => (
+                      <p key={s}>
+                        {SEAT_NAMES[s]}未被跟注的 {state.result!.returned[s]}{' '}
+                        已退回。
+                      </p>
+                    ),
+                  )}
+                </details>
+              )}
           </div>
         </section>
-        <aside className="poker-side" aria-label="练习设置与决策参考">
+        <aside className="poker-side" aria-label="难度设置与行动记录">
           <section className="poker-settings">
-            <h2>练习对手</h2>
+            <h2>AI 难度</h2>
             <fieldset
-              className="poker-style-options"
-              aria-label="选择 AI 对手风格"
+              className="poker-difficulty-options"
+              aria-label="选择下一手 AI 难度"
             >
-              {(Object.keys(BOT_STYLES) as BotStyle[]).map((s) => (
+              {(Object.keys(AI_DIFFICULTIES) as AiDifficulty[]).map((level) => (
                 <button
                   type="button"
-                  key={s}
-                  disabled={Boolean(state && !completed)}
-                  aria-pressed={style === s}
-                  onClick={() => setStyle(s)}
+                  key={level}
+                  aria-pressed={difficulty === level}
+                  onClick={() => setDifficulty(level)}
                 >
-                  {BOT_STYLES[s].label}
+                  {AI_DIFFICULTIES[level].label}
                 </button>
               ))}
             </fieldset>
-            <p>
-              {BOT_STYLES[style].description}{' '}
-              {state && !completed && '本手结束后可切换。'}
-            </p>
+            <p>{AI_DIFFICULTIES[difficulty].description}</p>
+            {state && !completed && (
+              <small className="poker-pending-setting">
+                {difficulty !== handDifficulty
+                  ? `下一手切换为${AI_DIFFICULTIES[difficulty].label}；本手保持${AI_DIFFICULTIES[handDifficulty].label}。`
+                  : '修改在下一手生效。'}
+              </small>
+            )}
+          </section>
+          <section className="poker-opponents">
+            <h2>桌上的四种性格</h2>
+            <ul>
+              {SEATS.filter((s) => s !== 0).map((s) => (
+                <li key={s}>
+                  <span className={`poker-personality-marker avatar-${s}`} />
+                  <strong>{SEAT_NAMES[s]}</strong>
+                  <small>{BOT_STYLES[STYLES[s]].label}</small>
+                </li>
+              ))}
+            </ul>
           </section>
           <section className="poker-price">
             <h2>当前价格</h2>
@@ -787,54 +1208,86 @@ export function HoldemLab() {
                 <strong>{pct(legal.potOdds)}</strong>
                 <p>
                   跟注 {legal.call}，争夺跟注后 {legal.pot + legal.call}{' '}
-                  的底池。
+                  的可争夺底池。
                 </p>
-                <small>静态权益门槛，尚未计入未来下注。</small>
+                <small>静态门槛，未计入未来行动与权益实现。</small>
               </>
             ) : (
               <>
                 <strong>
                   {completed ? '复盘时间' : humanTurn ? '免费过牌' : '等待行动'}
                 </strong>
-                <p>先考虑你的牌、所在位置，以及对手可能持有的范围。</p>
+                <p>先考虑位置、底池中的人数和对手的公开行动。</p>
               </>
             )}
+          </section>
+          <section className="poker-music-settings">
+            <h2>桌边音乐</h2>
+            <p>低音、电钢琴与轻刷鼓，安静地陪你想一手牌。</p>
+            <label>
+              <span>音量</span>
+              <input
+                type="range"
+                min="0"
+                max="60"
+                step="1"
+                value={Math.round(musicVolume * 100)}
+                onChange={(e) => setMusicVolume(Number(e.target.value) / 100)}
+                aria-label="背景音乐音量"
+              />
+              <output>{Math.round(musicVolume * 100)}%</output>
+            </label>
+            <small>
+              {music
+                ? paused
+                  ? '随练习暂停，继续后恢复。'
+                  : '正在播放 · 原创桌边旋律'
+                : '默认关闭，点击上方音乐按钮开启。'}
+            </small>
           </section>
           <section className="poker-log">
             <h2>最近行动</h2>
             {state?.actions.length ? (
               <ol>
-                {state.actions.slice(-5).map((d, i) => (
-                  <li key={`${state.actions.length - 5 + i}`}>
+                {state.actions.slice(-6).map((d, i) => (
+                  <li
+                    key={`${state.actions.length - 6 + i}`}
+                    className={d.seat === 0 ? 'is-human' : ''}
+                  >
                     <small>{STREET_LABELS[d.street]}</small>
                     <span>
-                      {d.seat === 0 ? '你' : 'AI'} · {actionLabel(d)}
+                      {SEAT_NAMES[d.seat]} · {actionLabel(d)}
                     </span>
                   </li>
                 ))}
               </ol>
             ) : (
-              <p>行动后会在这里留下记录。</p>
+              <p>发牌后，这里会留下每位玩家的行动。</p>
             )}
             <output className="poker-screen-reader" aria-live="polite">
               {latest
-                ? `${latest.seat === 0 ? '你' : 'AI'} ${actionLabel(latest)}`
+                ? `${SEAT_NAMES[latest.seat]} ${actionLabel(latest)}`
                 : ''}
             </output>
           </section>
           <details className="poker-rules">
             <summary>
-              怎样玩与怎样复盘 <ChevronDown size={15} />
+              规则与复盘说明 <ChevronDown size={15} />
             </summary>
             <p>
-              用两张手牌与公共牌组成最佳五张牌。单挑时，按钮位付小盲并在翻牌前先行动，翻牌后由大盲先行动。
+              用两张手牌与公共牌组成最佳五张牌。按钮之后依次为小盲、大盲；翻牌前由大盲之后先行动，翻牌后由按钮之后尚未弃牌的席位先行动。
             </p>
             <p>
-              你可以弃牌、过牌、跟注或加注。下注滑块表示本轮累计投入，最小加注按上一完整加注增量计算。
+              滑块表示本轮累计投入。全下金额不同时按主池、边池分别结算；弃牌后仍会等待其他席位完成对局。
             </p>
             <p>
-              AI 使用本地牌力估计与混合策略；复盘参考 GTO
-              的范围、赔率与尺度思路。当前未运行 GTO 求解器，也未接入大模型。
+              AI
+              使用自己的手牌与公开行动推测范围，不能读取你的底牌。难度改变范围与行动策略，不改变发牌。
+            </p>
+            <p>
+              复盘分数比较模型候选行动的估计
+              EV，不根据最后输赢打分。这里没有运行严格 GTO
+              求解器，也没有大模型。
             </p>
             <a
               href="https://www.pokertda.com/view-poker-tda-rules/"
@@ -848,11 +1301,19 @@ export function HoldemLab() {
       </div>
       <section className="poker-review" aria-labelledby="poker-review-heading">
         <header>
-          <span>
+          <div>
             <BookOpen size={19} />
-            <h2 id="poker-review-heading">逐手复盘</h2>
-          </span>
-          <p>先看当时的决策，再看最后的结果。</p>
+            <h2 id="poker-review-heading">逐个选择，拆开思路。</h2>
+          </div>
+          <p>
+            {average !== null ? (
+              <>
+                <b>{average}</b> / 100 本手平均模型评分
+              </>
+            ) : (
+              '只看决策时已知的信息。'
+            )}
+          </p>
         </header>
         {practice.recent.length > 0 && (
           <fieldset className="poker-history" aria-label="选择最近的练习记录">
@@ -870,7 +1331,7 @@ export function HoldemLab() {
                 aria-pressed={archive === h}
                 onClick={() => setArchive(h)}
               >
-                记录 {practice.hands - i}{' '}
+                记录 {practice.hands - i}
                 <small>
                   {h.delta >= 0 ? '+' : ''}
                   {h.delta}
@@ -881,11 +1342,11 @@ export function HoldemLab() {
         )}
         {archive && (
           <div className="poker-review-cards">
-            <span>记录中的手牌</span>
+            <span>{AI_DIFFICULTIES[archive.difficulty].label} · 记录手牌</span>
             {archive.hero.map((c) => (
               <PlayingCard card={c} key={c} small />
             ))}
-            <span>公共牌</span>
+            <span>结束公共牌</span>
             {archive.board.map((c) => (
               <PlayingCard card={c} key={c} small />
             ))}
@@ -895,49 +1356,11 @@ export function HoldemLab() {
           shownReview.length > 0 ? (
             <div className="poker-review-list">
               {shownReview.map((point, i) => (
-                <details
+                <ReviewCard
                   key={`${archive?.hand || state?.hand}-${point.index}`}
-                  className="poker-review-point"
-                  open={i === 0}
-                >
-                  <summary>
-                    <span className="poker-review-street">
-                      {STREET_LABELS[point.street]}
-                    </span>
-                    <span>
-                      <strong>{point.action}</strong>
-                      <small>{point.title}</small>
-                    </span>
-                    <ChevronDown size={17} />
-                  </summary>
-                  <div className="poker-review-body">
-                    <div className="poker-decision-board">
-                      <span className="poker-board-caption">当时公共牌</span>
-                      {point.board.length ? (
-                        point.board.map((card) => (
-                          <PlayingCard key={card} card={card} small />
-                        ))
-                      ) : (
-                        <small>翻牌前，尚未发出</small>
-                      )}
-                    </div>
-                    <div className="poker-review-metrics">
-                      <span>
-                        随机范围估计权益 <b>{pct(point.equity)}</b>
-                      </span>
-                      {point.threshold !== null && (
-                        <span>
-                          静态跟注门槛 <b>{pct(point.threshold)}</b>
-                        </span>
-                      )}
-                      <span>
-                        决策时底池 <b>{point.pot}</b>
-                      </span>
-                    </div>
-                    <p>{point.advice}</p>
-                    <p className="poker-principle">{point.principle}</p>
-                  </div>
-                </details>
+                  point={point}
+                  first={i === 0}
+                />
               ))}
             </div>
           ) : (
@@ -949,7 +1372,7 @@ export function HoldemLab() {
         ) : completed ? (
           reviewError ? (
             <div className="poker-empty-review">
-              <p>复盘计算暂时不可用；你仍可查看行动记录。</p>
+              <p>复盘暂时不可用，完整行动记录仍可查看。</p>
               <button
                 type="button"
                 onClick={() => {
@@ -964,33 +1387,50 @@ export function HoldemLab() {
           ) : (
             <p className="poker-empty-review">
               <LoaderCircle className="poker-spinner" size={20} />
-              正在整理本手决策…
+              正在计算各个选择的范围、候选行动与评分…
             </p>
           )
         ) : (
           <p className="poker-empty-review">
             <Spade size={22} />
-            完成一手牌后，这里会展开你的行动与策略参考。
+            完成一手牌后，查看每个行动的模型评分、候选尺度和思路解析。
           </p>
         )}
+        {state?.actions.length ? (
+          <details className="poker-hand-timeline">
+            <summary>
+              当前手完整行动线 <ChevronDown size={15} />
+            </summary>
+            <ol>
+              {state.actions.map((d, i) => (
+                <li key={i} className={d.seat === 0 ? 'is-human' : ''}>
+                  <small>{STREET_LABELS[d.street]}</small>
+                  <span>{SEAT_NAMES[d.seat]}</span>
+                  <strong>{actionLabel(d)}</strong>
+                  <span>底池 {d.pot}</span>
+                </li>
+              ))}
+            </ol>
+          </details>
+        ) : null}
         <p className="poker-review-limit">
-          复盘基于 {360}{' '}
-          次蒙特卡洛抽样，对手假设为随机未知手牌；有抽样误差，也没有按对手的下注收紧范围。它提供赔率与思路参考，不是精确
-          GTO 动作频率或多轮 EV。输赢本身不决定行动是否合理。
+          评分是当前范围与简化后续模型中的相对评价；100
+          分表示接近候选中的最好行动，不是获胜概率或已求解的 GTO
+          结论。范围推断、权益实现和对手应对都有误差，多人博弈尤其需要保留判断。结果不会被用于倒推评分。
         </p>
       </section>
       <div className="poker-practice-record">
-        <span>本机练习记录</span>
+        <span>本机五人桌记录</span>
         <strong>{practice.hands} 手</strong>
-        <span>赢下 {practice.wins} 手</span>
+        <span>盈利 {practice.wins} 手</span>
         <span>
           累计 {practice.net >= 0 ? '+' : ''}
           {practice.net} 虚拟筹码
         </span>
         <small>
           {storageAvailable
-            ? '记录仅保存在当前浏览器，最近 8 手可回看。'
-            : '浏览器禁止本地存储，记录仅在本次页面内保留。'}
+            ? '最近 8 手可回看，仅保存在当前浏览器。'
+            : '浏览器禁止本地存储，仅在本次页面内保留。'}
         </small>
       </div>
     </div>

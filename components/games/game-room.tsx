@@ -63,11 +63,16 @@ function HoldemPreview() {
       </div>
       <div className="room-holdem-table">
         <span className="room-table-rim" />
-        <span className="room-table-caption">HEADS UP</span>
-        <div className="room-opponent-cards">
-          <i />
-          <i />
-        </div>
+        <span className="room-table-caption">FIVE SEATS</span>
+        {[1, 2, 3, 4].map((seat) => (
+          <div
+            className={`room-opponent-cards room-opponent-seat-${seat}`}
+            key={seat}
+          >
+            <i />
+            <i />
+          </div>
+        ))}
         <div className="room-community-cards">
           <span className="is-red">
             <b>Q</b>
@@ -97,8 +102,8 @@ function HoldemPreview() {
         <span className="room-chip room-chip-three" />
       </div>
       <div className="room-preview-bottom">
-        <span>AI OPPONENT</span>
-        <span>虚拟筹码 · 逐手复盘</span>
+        <span>4 AI / 3 LEVELS</span>
+        <span>五人桌 · 决策评分</span>
       </div>
     </div>
   );

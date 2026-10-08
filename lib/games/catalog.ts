@@ -16,7 +16,8 @@ export const GAMES: readonly GameDefinition[] = [
   {
     id: 'holdem-lab',
     title: '德州扑克练习桌',
-    description: '与 AI 对手切磋，用虚拟筹码练习决策，逐手查看策略复盘。',
+    description:
+      '坐上五人桌，挑战四种 AI 风格；逐个选择查看模型评分、候选尺度与思路解析。',
     href: '/games/holdem-lab',
     category: '策略练习',
     controls: '鼠标或触控选择行动',

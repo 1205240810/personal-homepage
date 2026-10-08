@@ -645,3 +645,24 @@
     animation: none !important;
   }
 }
+/* Five-seat preview follows the playable table's circular seating order. */
+.room-opponent-cards.room-opponent-seat-1 {
+  left: 1%;
+  right: auto;
+  top: 80px;
+}
+.room-opponent-cards.room-opponent-seat-2 {
+  left: 20%;
+  right: auto;
+  top: 18px;
+}
+.room-opponent-cards.room-opponent-seat-3 {
+  left: auto;
+  right: 20%;
+  top: 18px;
+}
+.room-opponent-cards.room-opponent-seat-4 {
+  left: auto;
+  right: 1%;
+  top: 80px;
+}
