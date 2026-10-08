@@ -419,7 +419,9 @@ function TableSeat({
                       : '思考中…'
                     : latest
                       ? actionLabel(latest)
-                      : '等待发牌'}
+                      : state
+                        ? '等待行动'
+                        : '等待发牌'}
           </span>
           {state?.streetBets[seat] && !completed ? (
             <small>本轮 {state.streetBets[seat]}</small>
