@@ -1725,7 +1725,7 @@
     top: 42%;
   }
   .seat-count-6 .poker-center {
-    top: 50%;
+    top: 52%;
   }
   .seat-count-7 .poker-center {
     top: 52%;
@@ -1734,6 +1734,9 @@
   .seat-count-9 .poker-center {
     top: 57%;
   }
+  .seat-count-5 .poker-seat:not(.poker-seat-0) .poker-person-window,
+  .seat-count-6 .poker-seat:not(.poker-seat-0) .poker-person-window,
+  .seat-count-7 .poker-seat:not(.poker-seat-0) .poker-person-window,
   .seat-count-8 .poker-seat:not(.poker-seat-0) .poker-person-window,
   .seat-count-9 .poker-seat:not(.poker-seat-0) .poker-person-window {
     position: absolute;
@@ -1743,11 +1746,17 @@
     height: 38px;
     z-index: 4;
   }
+  .seat-count-5 .poker-seat:not(.poker-seat-0) .poker-seat-identity,
+  .seat-count-6 .poker-seat:not(.poker-seat-0) .poker-seat-identity,
+  .seat-count-7 .poker-seat:not(.poker-seat-0) .poker-seat-identity,
   .seat-count-8 .poker-seat:not(.poker-seat-0) .poker-seat-identity,
   .seat-count-9 .poker-seat:not(.poker-seat-0) .poker-seat-identity {
     min-height: 39px;
     padding-left: 42px;
   }
+  .seat-count-5 .poker-seat:not(.poker-seat-0) .poker-seat-identity small,
+  .seat-count-6 .poker-seat:not(.poker-seat-0) .poker-seat-identity small,
+  .seat-count-7 .poker-seat:not(.poker-seat-0) .poker-seat-identity small,
   .seat-count-8 .poker-seat:not(.poker-seat-0) .poker-seat-identity small,
   .seat-count-9 .poker-seat:not(.poker-seat-0) .poker-seat-identity small {
     font-size: 6px;
