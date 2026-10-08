@@ -8,16 +8,17 @@ import { CoachReview, type DecisionSnapshot } from './CoachReview';
 import { readSaved, save, EMPTY_STATS, emptySaved } from './storage';
 import './theme.css';
 export type RoundResult={round:number;mode:Mode;outcome:'win'|'loss'|'tie';reason:string;playerTotal:number;opponentTotal:number};
-export type BlackjackGameProps={onRoundEnd?:(result:RoundResult)=>void;onExit?:()=>void;persist?:boolean;className?:string;globalKeyboard?:boolean};
+export type BlackjackGameProps={onRoundEnd?:(result:RoundResult)=>void;onExit?:()=>void;persist?:boolean;className?:string;globalKeyboard?:boolean;onBusyChange?:(busy:boolean)=>void};
 const modeNames={classic:'经典 21 点',strategic:'策略庄家'};
 const messages={win:['漂亮，拿下一局。','YOU WIN'],loss:['这一局，让给对手。','DEALER WINS'],tie:['势均力敌。','A DRAW']};
-export function BlackjackGame({onRoundEnd,onExit,persist=true,className='',globalKeyboard=false}:BlackjackGameProps){
+export function BlackjackGame({onRoundEnd,onExit,persist=true,className='',globalKeyboard=false,onBusyChange}:BlackjackGameProps){
  const[saved,setSaved]=useState(()=>persist?readSaved():emptySaved());
  const[game,dispatch]=useReducer(gameReducer,saved.settings.mode,initialGame);
  const[paused,setPaused]=useState(false);const[rulesOpen,setRulesOpen]=useState(false);const[confirmReset,setConfirmReset]=useState(false);const[storageBlocked,setStorageBlocked]=useState(false);const[inputReady,setInputReady]=useState(false);const[decisions,setDecisions]=useState<DecisionSnapshot[]>([]);const[dealerNote,setDealerNote]=useState('');
  const completedRound=useRef(0);const actionLock=useRef(false);const callback=useRef(onRoundEnd);callback.current=onRoundEnd;
  const dialogTrigger=useRef<HTMLElement|null>(null);const audio=useRef<AudioContext|null>(null);const soundRef=useRef(saved.settings.sound);soundRef.current=saved.settings.sound;const rootRef=useRef<HTMLElement>(null);
  const active=!['ready','settled'].includes(game.phase),settled=game.phase==='settled';const playerValue=handValue(game.player),dealerValue=handValue(game.opponent);const stats=saved.stats[game.mode],totalPlayed=stats.wins+stats.losses+stats.ties;
+ useEffect(()=>{onBusyChange?.(active);},[active,onBusyChange]);
  const tone=useCallback((frequency=440)=>{if(!soundRef.current||!audio.current||audio.current.state!=='running')return;try{const ctx=audio.current,o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=frequency;g.gain.setValueAtTime(.035,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+.14);o.onended=()=>{o.disconnect();g.disconnect();};}catch{}},[]);
  const activateAudio=useCallback(()=>{if(!soundRef.current)return;try{audio.current??=new AudioContext();void audio.current.resume().catch(()=>{});}catch{}},[]);
  useEffect(()=>()=>{void audio.current?.close().catch(()=>{});audio.current=null;},[]);

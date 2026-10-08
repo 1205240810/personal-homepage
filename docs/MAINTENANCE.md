@@ -112,4 +112,4 @@ OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函
 
 `examples/forest-courtyard/` 保存独立适配的旧林间小院，入口见其 [README](../examples/forest-courtyard/README.md) 和 [学习指南](../examples/forest-courtyard/LEARNING_GUIDE.md)。它使用单独的 Vite 配置、依赖锁文件、教学文章和地图，不导入当前站点代码。根目录的 `example:forest`、`check:forest`、`build:forest` 只是便利命令；修改案例不会改变当前机甲场景。
 
-暗牌 21 在 `standalone/blackjack/src` 维护，避免直接修改宿主的 `generated` 目录。其独立测试与构建需在该目录运行；宿主的开发、检查、构建前会自动同步十个运行文件。改动求解器时先重新生成内联 Worker。详细步骤见 [暗牌 21 接入说明](BLACKJACK.md)。
+暗牌 21 在 `standalone/blackjack/src` 维护，避免直接修改宿主的 `generated` 目录。其独立测试与构建需在该目录运行；宿主的开发、检查、构建前会自动同步十七个运行文件。标准玩法的纯规则、教练与教程分别维护在 standardGame、standardSolver 和 StandardBlackjackGame；改动旧休闲求解器时先重新生成内联 Worker。详细步骤见 [暗牌 21 接入说明](BLACKJACK.md)。

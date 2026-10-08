@@ -10,6 +10,8 @@ const target = new URL(
 );
 const files = [
   'BlackjackGame.tsx',
+  'BlackjackLobby.tsx',
+  'StandardBlackjackGame.tsx',
   'CoachReview.tsx',
   'PlayingCard.tsx',
   'coachWorkerClient.ts',
@@ -19,6 +21,11 @@ const files = [
   'solver.ts',
   'storage.ts',
   'theme.css',
+  'lobby.css',
+  'standard-theme.css',
+  'standardTypes.ts',
+  'standardGame.ts',
+  'standardSolver.ts',
 ];
 const checkOnly = process.argv.includes('--check');
 const unknownArgs = process.argv.slice(2).filter((arg) => arg !== '--check');
@@ -37,6 +44,8 @@ for (const file of files) {
   const lintRules = {
     'BlackjackGame.tsx':
       'react/react-compiler, react-hooks/exhaustive-deps, jsx-a11y/prefer-tag-over-role, jsx-a11y/no-noninteractive-tabindex',
+    'StandardBlackjackGame.tsx':
+      'react/react-compiler, jsx-a11y/prefer-tag-over-role, jsx-a11y/no-noninteractive-tabindex',
     'CoachReview.tsx': 'jsx-a11y/prefer-tag-over-role',
     'PlayingCard.tsx': 'jsx-a11y/prefer-tag-over-role',
     'coachWorkerSource.ts': 'import/no-anonymous-default-export',

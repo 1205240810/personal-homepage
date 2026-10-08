@@ -1,3 +1,3 @@
 import { createRoot } from 'react-dom/client';
-import { BlackjackGame } from './BlackjackGame';
-createRoot(document.getElementById('root')!).render(<BlackjackGame globalKeyboard/>);
+import { BlackjackLobby } from './BlackjackLobby';
+createRoot(document.getElementById('root')!).render(<BlackjackLobby globalKeyboard/>);

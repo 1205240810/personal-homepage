@@ -13,7 +13,7 @@ const scripts=[...win.document.scripts];if(scripts.length!==1)throw Error('inval
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));const find=(text)=>[...win.document.querySelectorAll('button')].find(b=>b.textContent.trim().startsWith(text));
 async function wait(check,label){const end=Date.now()+10000;while(Date.now()<end){if(check())return;await sleep(30);}throw Error('timeout: '+label);}
 (async()=>{
- await wait(()=>find('开始对局'),'mount');win.document.querySelector('[role=switch]').click();find('开始对局').click();
+ await wait(()=>find('休闲对局'),'lobby');find('休闲对局').click();await wait(()=>find('开始对局'),'mount');win.document.querySelector('[role=switch]').click();find('开始对局').click();
  await wait(()=>find('停牌')&&!find('停牌').disabled,'player action');find('停牌').click();
  await wait(()=>find('复盘本局'),'settlement');find('复盘本局').click();
  await wait(()=>win.document.querySelector('.bj-coach-verdict'),'actual inline worker result');

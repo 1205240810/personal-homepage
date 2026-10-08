@@ -23,9 +23,9 @@ export function BlackjackRoom({
     let alive = true;
     // localStorage is read by the game initializer. Mount it after hydration so
     // saved modes/statistics never disagree with a server-rendered first frame.
-    void import('./generated/BlackjackGame').then(
+    void import('./generated/BlackjackLobby').then(
       (module) => {
-        if (alive) setGame(() => module.BlackjackGame);
+        if (alive) setGame(() => module.BlackjackLobby);
       },
       () => {
         if (alive) setFailed(true);
