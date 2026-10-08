@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { ProjectWorkbench } from './project-library';
 import { ArrowUpRight, Gamepad2, ScanLine } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
@@ -25,9 +24,10 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
           <a href="/about">
             <span className="b-nav-index b-mono">03</span>关于
           </a>
-          <Link href="/games">
+          {/* oxlint-disable-next-line nextjs/no-html-link-for-pages -- Game routes use stable full-document navigation. */}
+          <a href="/games">
             <span className="b-nav-index b-mono">04</span>游戏室
-          </Link>
+          </a>
           <a href="/explore" className="b-explore-nav">
             进入机甲 <ArrowUpRight size={14} />
           </a>
@@ -76,7 +76,8 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
           <ProjectWorkbench />
         </div>
         <aside className="b-sidebar" aria-label="休息与探索">
-          <Link href="/games" className="b-game-room">
+          {/* oxlint-disable-next-line nextjs/no-html-link-for-pages -- Game routes use stable full-document navigation. */}
+          <a href="/games" className="b-game-room">
             <div className="b-game-room-head">
               <span className="b-mono">THE ARCADE</span>
               <Gamepad2 size={23} strokeWidth={1.4} aria-hidden="true" />
@@ -94,7 +95,7 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
             <span className="b-game-room-enter">
               选一个游戏 <ArrowUpRight size={17} aria-hidden="true" />
             </span>
-          </Link>
+          </a>
           <a href="/explore" className="b-mode-link">
             <span className="b-mode-symbol">
               <ScanLine size={22} strokeWidth={1.2} />

@@ -1,3 +1,4 @@
+/* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation isolates game/Phaser lifecycles and avoids the current Vinext production prefetch error. */
 import {
   ArrowLeft,
   ArrowRight,
@@ -6,7 +7,6 @@ import {
   Layers3,
   ScanLine,
 } from 'lucide-react';
-import Link from 'next/link';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { GAMES, type GameDefinition } from '@/lib/games/catalog';
 import type { ReactNode } from 'react';
@@ -21,10 +21,10 @@ function GamesHeader({
 }) {
   return (
     <header className="games-header">
-      <Link className="games-brand" href="/" aria-label="徒手拆机甲首页">
+      <a className="games-brand" href="/" aria-label="徒手拆机甲首页">
         <span className="games-brand-mark" aria-hidden="true" />
         徒手拆机甲
-      </Link>
+      </a>
       <nav className="games-nav" aria-label="游戏室导航">
         <a href={fromExplore ? '/explore' : '/workbench'}>
           {fromExplore ? '返回机甲' : '返回工作台'}
@@ -164,11 +164,11 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
       </section>
       <div className="game-room-bottom">
         <p>不用注册，点击或轻触即可操作。离开时可以随时返回游戏室。</p>
-        <Link href="/explore">
+        <a href="/explore">
           <ScanLine size={17} strokeWidth={1.5} aria-hidden="true" />
           去机甲里走走
           <ArrowUpRight size={15} aria-hidden="true" />
-        </Link>
+        </a>
       </div>
       <GamesFooter />
     </main>
