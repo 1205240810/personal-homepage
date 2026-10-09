@@ -2,7 +2,8 @@ import { GameRoom } from '@/components/games/game-room';
 
 export const metadata = {
   title: '游戏室 · 徒手拆机甲',
-  description: '与 AI 对手练习德州扑克，也可以让灯阵信号归零。',
+  description:
+    '在游戏室练习德州扑克与标准二十一点，挑战数独、快艇骰子、五张梭哈和灯阵解谜。',
 };
 
 export default async function GamesPage({

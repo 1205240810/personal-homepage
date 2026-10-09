@@ -66,6 +66,7 @@ import {
   type ReviewPoint,
 } from '@/lib/games/holdem-strategy';
 import { HoldemWorkerClient } from '@/lib/games/holdem-worker-client';
+import holdemWorkerUrl from './holdem-worker.ts?worker&url';
 import { runCooperative } from '@/lib/games/cooperative-computation';
 import { HoldemLoungeMusic } from '@/lib/games/holdem-music';
 import {
@@ -194,10 +195,9 @@ function usePokerWorker() {
   const [fallback, setFallback] = useState(false);
   useEffect(() => {
     const instance = new HoldemWorkerClient<Job>({
-      createWorker: () =>
-        new Worker(new URL('./holdem-worker.ts', import.meta.url), {
-          type: 'module',
-        }),
+      // RSC transforms import.meta.url before the client bundle. Import the
+      // compiled asset URL explicitly so it never inherits a file: base URL.
+      createWorker: () => new Worker(holdemWorkerUrl, { type: 'module' }),
       computeFallback: (job, signal) =>
         job.type === 'bot'
           ? runCooperative(
@@ -2290,7 +2290,7 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
                 <RotateCcw size={15} />
                 重试 AI 行动
               </button>
-              {paused && <small>先继续练习，再重试。</small>}
+              {paused && <small>继续练习后会重新计算。</small>}
             </div>
           )}
           {fallback && (

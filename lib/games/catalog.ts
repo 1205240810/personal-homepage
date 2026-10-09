@@ -1,4 +1,10 @@
-export type GameId = 'holdem-lab' | 'blackjack' | 'signal-pulse';
+export type GameId =
+  | 'holdem-lab'
+  | 'blackjack'
+  | 'signal-pulse'
+  | 'sudoku'
+  | 'yahtzee'
+  | 'stud';
 
 export type GameDefinition = {
   id: GameId;
@@ -32,6 +38,36 @@ export const GAMES: readonly GameDefinition[] = [
     category: '牌桌推演',
     controls: '鼠标或触控；支持要牌、停牌、加倍、分牌与投降',
     estimatedDuration: '每局约 1 分钟',
+  },
+  {
+    id: 'sudoku',
+    title: '九间数独',
+    description:
+      '120 道唯一解题目，逐格找回秩序。保留自己的笔记，或让教练解释下一步推理。',
+    href: '/games/sudoku',
+    category: '逻辑推理',
+    controls: '点击格子与数字；方向键移动，1–9 填数，N 切换笔记',
+    estimatedDuration: '每题约 5–20 分钟',
+  },
+  {
+    id: 'yahtzee',
+    title: '快艇骰子',
+    description:
+      '五颗骰子，十三个分栏。决定保留哪些点数，与蓝调 AI 比一场取舍。',
+    href: '/games/yahtzee',
+    category: '骰子策略',
+    controls: '点击骰子保留，选择分栏后确认计分',
+    estimatedDuration: '每场约 8–15 分钟',
+  },
+  {
+    id: 'stud',
+    title: '绯夜五张梭哈',
+    description:
+      '一张暗牌，四张明牌。随着牌面展开选择下注，与夜莺 AI 完成十手练习。',
+    href: '/games/stud',
+    category: '牌桌推演',
+    controls: '鼠标或触控选择下注；C 过牌或跟注，F 弃牌',
+    estimatedDuration: '每手约 1–2 分钟',
   },
   {
     id: 'signal-pulse',

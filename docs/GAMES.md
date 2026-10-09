@@ -8,7 +8,10 @@
 | --------------------- | ------------------------------------------ |
 | `/games`              | 选择实际可玩的游戏                         |
 | `/games/holdem-lab`   | 2–9 人自定义练习室，逐步决策评分与教学复盘 |
-| `/games/blackjack`    | 暗牌 21，经典/策略庄家与赛后教练           |
+| `/games/blackjack`    | 标准筹码 21 点、新手教程及原有休闲模式     |
+| `/games/sudoku`       | 120 道数独、题库选题和逐步推理教练         |
+| `/games/yahtzee`      | 十三分栏快艇骰子、AI 对局及完整中途存档    |
+| `/games/stud`         | 双人五张梭哈、封顶下注和赛后权益分析       |
 | `/games/signal-pulse` | 十二关灯阵，支持选关、提示、撤回与重来     |
 | `/games?from=explore` | 从机甲街机角进入，主要返回入口为机甲       |
 
@@ -31,27 +34,30 @@ flowchart LR
   E -->|from=explore| C
 ```
 
-| 文件或目录                          | 职责                                       |
-| ----------------------------------- | ------------------------------------------ |
-| `lib/games/catalog.ts`              | 稳定 ID、路由与游戏目录文案                |
-| `app/games/page.tsx`                | 游戏室页面，读取来路参数                   |
-| `components/games/game-room.tsx`    | 目录展示与共享 `GamePageFrame`             |
-| `components/games/games.css`        | 导航、目录、页框、手机布局与减少动态效果   |
-| `lib/games/holdem-engine.ts`        | 发牌、盲注、合法行动、换街与底池结算       |
-| `lib/games/holdem-cards.ts`         | 牌型比较与蒙特卡洛权益估计                 |
-| `lib/games/holdem-strategy.ts`      | 本地 AI 行动与策略复盘                     |
-| `lib/games/holdem-replay.ts`        | 仅在整手结束后生成全桌回放，并校验本机归档 |
-| `components/games/holdem-worker.ts` | 将权益和复盘计算放到 Worker 中             |
-| `lib/games/holdem-music.ts`         | 原创编曲、音量与音源生命周期               |
-| `lib/games/holdem-voice.ts`         | 可选中文行动播报与自身语音队列清理         |
-| `public/assets/poker/portraits/`    | 九席原创透明人物素材                       |
-| `standalone/blackjack/src/`         | 暗牌 21 的单一维护源码、纯规则和教练       |
-| `scripts/sync-blackjack.mjs`        | 构建前同步独立游戏到宿主运行组件           |
-| `components/games/blackjack/`       | 客户端按需加载、宿主导航与生成源码         |
-| `lib/pulse-puzzle.ts`               | 灯阵关卡、按键翻转与最短解求解             |
-| `components/home/pulse-game.tsx`    | 两种入口共同复用的灯阵界面                 |
-| `lib/world/registry.ts`             | 机甲内街机节点、站位与家具定义             |
-| `lib/world/arcade-cabinet.ts`       | 跟随室内透视绘制的街机纹理                 |
+| 文件或目录                                  | 职责                                       |
+| ------------------------------------------- | ------------------------------------------ |
+| `lib/games/catalog.ts`                      | 稳定 ID、路由与游戏目录文案                |
+| `app/games/page.tsx`                        | 游戏室页面，读取来路参数                   |
+| `components/games/game-room.tsx`            | 目录展示与共享 `GamePageFrame`             |
+| `components/games/games.css`                | 导航、目录、页框、手机布局与减少动态效果   |
+| `lib/games/holdem-engine.ts`                | 发牌、盲注、合法行动、换街与底池结算       |
+| `lib/games/holdem-cards.ts`                 | 牌型比较与蒙特卡洛权益估计                 |
+| `lib/games/holdem-strategy.ts`              | 本地 AI 行动与策略复盘                     |
+| `lib/games/holdem-replay.ts`                | 仅在整手结束后生成全桌回放，并校验本机归档 |
+| `components/games/holdem-worker.ts`         | 将权益和复盘计算放到 Worker 中             |
+| `lib/games/holdem-music.ts`                 | 原创编曲、音量与音源生命周期               |
+| `lib/games/holdem-voice.ts`                 | 可选中文行动播报与自身语音队列清理         |
+| `public/assets/poker/portraits/`            | 九席原创透明人物素材                       |
+| `standalone/blackjack/src/`                 | 暗牌 21 的单一维护源码、纯规则和教练       |
+| `scripts/sync-blackjack.mjs`                | 构建前同步独立游戏到宿主运行组件           |
+| `components/games/blackjack/`               | 客户端按需加载、宿主导航与生成源码         |
+| `standalone/{sudoku,yahtzee,stud}/`         | 三款独立游戏的维护源码、测试与离线文件     |
+| `scripts/sync-standalone-games.mjs`         | 同步十八个运行文件，检查生成目录是否过期   |
+| `components/games/standalone-game-room.tsx` | 三款游戏的按需加载、来路导航和备案入口     |
+| `lib/pulse-puzzle.ts`                       | 灯阵关卡、按键翻转与最短解求解             |
+| `components/home/pulse-game.tsx`            | 两种入口共同复用的灯阵界面                 |
+| `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义             |
+| `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                 |
 
 目录只描述已经能打开的游戏，不依赖游戏内部状态。路由 ID 与中文名称分离；可以修改游戏标题和简介，而不随意改变分享地址。`GamePageFrame` 为普通游戏统一返回导航与 ICP 信息；扑克使用独立整屏布局，并保留相同的返回与备案入口。游戏组件负责自己的操作、提示、胜负和记录。
 
@@ -117,6 +123,8 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 6. 运行 `npm run check` 和目标构建：自托管 Node 使用 `npm run build:node`；Sites 使用 `npm run build`。源码推送与服务器发布是两件事，部署步骤继续遵循 [自有服务器部署](SELF-HOSTING.md)。
 
 已有街机角指向游戏室，添加第三款游戏不需要给角色控制核心新增分支，也不需要再放一个机甲地图物件。只有设计新的空间时才改 `SceneDefinition`、节点及地图导出。
+
+数独、快艇骰子与五张梭哈通过同一街机目录进入，分享地址分别稳定为 `sudoku`、`yahtzee`、`stud`。各自保持原有画面与本机存档键；宿主 hydration 后才读取本机记录，共用主站 React。细节及本次审阅见 [三款游戏接入说明](GAMES-TRIO.md)。
 
 ## 修改后重点验证
 

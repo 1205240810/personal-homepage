@@ -102,7 +102,7 @@ OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函
 
 ## 手机适配
 
-工作台的内容 DOM 顺序为文章、项目、游戏室与探索入口，桌面用 Grid 并排排版；手机先呈现文章。六个项目可按类型筛选，手机选择项目后先提供摘要和展开入口，再复用同一套交互预览。游戏室双卡在手机改为单列，牌桌与灯阵通过独立页面加载。主要触控控件至少 44px，输入字号 16px；正文代码固定 14px，避免 pre/code 重复缩小。修改项目卡片、游戏控制区或 5×5 灯阵时应检查窄屏溢出、操作按钮和焦点顺序。
+工作台的内容 DOM 顺序为文章、项目、游戏室与探索入口，桌面用 Grid 并排排版；手机先呈现文章。六个项目可按类型筛选，手机选择项目后先提供摘要和展开入口，再复用同一套交互预览。游戏室六款游戏在手机改为单列，各游戏通过独立页面按需加载。主要触控控件至少 44px，输入字号 16px；正文代码固定 14px，避免 pre/code 重复缩小。修改项目卡片、游戏控制区或 5×5 灯阵时应检查窄屏溢出、操作按钮和焦点顺序。
 
 文章抽屉直接子项不参与 Flex 收缩，关闭栏固定；手机主题筛选可展开，选中后收起。探索菜单和手动方向盘可折叠，点击物件自动寻路沿用原实现。触控布局同时考虑竖屏宽度、粗指针与短横屏，横屏保留可展开的方向盘。竖屏画布上下为导航与工具预留空间，地图继续 cover 与跟随人物，不修改地图坐标或碰撞；画布外由当前场景的暗化背景自然延伸。
 
@@ -113,3 +113,5 @@ OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函
 `examples/forest-courtyard/` 保存独立适配的旧林间小院，入口见其 [README](../examples/forest-courtyard/README.md) 和 [学习指南](../examples/forest-courtyard/LEARNING_GUIDE.md)。它使用单独的 Vite 配置、依赖锁文件、教学文章和地图，不导入当前站点代码。根目录的 `example:forest`、`check:forest`、`build:forest` 只是便利命令；修改案例不会改变当前机甲场景。
 
 暗牌 21 在 `standalone/blackjack/src` 维护，避免直接修改宿主的 `generated` 目录。其独立测试与构建需在该目录运行；宿主的开发、检查、构建前会自动同步十七个运行文件。标准玩法的纯规则、教练与教程分别维护在 standardGame、standardSolver 和 StandardBlackjackGame；改动旧休闲求解器时先重新生成内联 Worker。详细步骤见 [暗牌 21 接入说明](BLACKJACK.md)。
+
+九间数独、快艇骰子与绯夜五张梭哈分别在 `standalone/sudoku`、`standalone/yahtzee`、`standalone/stud` 维护。主站会自动同步十八个运行文件，生成目录不直接编辑。三者都有独立 Vite/Vitest 配置和锁文件；先在各目录安装依赖再运行根命令 `npm run check:trio`。修改骰子 AI 后重新生成 `worker-source.ts`，修改任一源码后更新对应便携 HTML；完整步骤见 [三款游戏接入说明](GAMES-TRIO.md)。
