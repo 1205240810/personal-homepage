@@ -4,7 +4,9 @@ import {
   clearSegment,
   traversable,
   findRoute,
+  slideMove,
 } from '../lib/world/navigation.ts';
+import { insidePolygon, canWalk } from '../lib/world/geometry.ts';
 import {
   BASE_TILES,
   initialCircuit,
@@ -186,4 +188,58 @@ test('OSPF 示例对应公开项目的四节点规划，参数变化后重新生
     [1, 2.5],
   ])
     assert.equal(addressPlan(lan, host), null);
+});
+
+test('撞到斜墙时沿墙滑行，不会穿墙，也不会卡死', () => {
+  // A 45° corridor: holding only “right” used to stop dead at its wall.
+  const corridor = [
+    [
+      [0, 40],
+      [40, 0],
+      [240, 200],
+      [200, 240],
+    ],
+  ];
+  let p = { x: 30, y: 40 };
+  for (let i = 0; i < 120; i++) {
+    p = slideMove(p, { x: 1.2, y: 0 }, corridor);
+    assert.ok(traversable(p, corridor), `滑出了走廊 ${JSON.stringify(p)}`);
+  }
+  assert.ok(p.x > 100 && p.y > 60, `应沿斜墙前进，实际 ${JSON.stringify(p)}`);
+  // Walking straight into a flat wall stays put instead of drifting sideways.
+  const room = [
+    [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [0, 100],
+    ],
+  ];
+  let q = { x: 50, y: 50 };
+  for (let i = 0; i < 200; i++) q = slideMove(q, { x: 0, y: -1.2 }, room);
+  assert.ok(q.y >= 9 && Math.abs(q.x - 50) < 1e-6, JSON.stringify(q));
+  // Holding D at the hub spawn now follows the isometric walkway.
+  const hub = getScene('hub');
+  let h = { x: 1065, y: 783 };
+  for (let i = 0; i < 90; i++)
+    h = slideMove(
+      h,
+      { x: (170 * 0.43) / 60, y: 0 },
+      hub.walkable,
+      hub.obstacles,
+    );
+  assert.ok(h.x - 1065 > 80, `栈道上按住 D 1.5 秒只走了 ${h.x - 1065}px`);
+});
+test('包围盒剔除后的可行走判定与逐个多边形判定一致', () => {
+  for (const scene of SCENES)
+    for (let i = 0; i < 400; i++) {
+      const p = {
+        x: (((i * 7919) % 1000) / 1000) * scene.width,
+        y: (((i * 104729) % 997) / 997) * scene.height,
+      };
+      const naive =
+        scene.walkable.some((a) => insidePolygon(p, a)) &&
+        !(scene.obstacles ?? []).some((a) => insidePolygon(p, a));
+      assert.equal(canWalk(p, scene.walkable, scene.obstacles), naive);
+    }
 });
