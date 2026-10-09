@@ -5,7 +5,8 @@ export type GameId =
   | 'sudoku'
   | 'yahtzee'
   | 'stud'
-  | 'circuit-repair';
+  | 'circuit-repair'
+  | 'mech-sweeper';
 
 export type GameDefinition = {
   id: GameId;
@@ -89,6 +90,17 @@ export const GAMES: readonly GameDefinition[] = [
     controls:
       '点击顺时针旋转，右键或 Shift + 点击逆时针；方向键移动，L 锁定线路块',
     estimatedDuration: '每张约 1–6 分钟',
+  },
+  {
+    id: 'mech-sweeper',
+    title: '机甲扫雷',
+    description:
+      '检修舱里藏着故障模块。读懂信号数字，插旗标出每一处故障；误触一下，就是短路。第一次扫描一定安全。',
+    href: '/games/mech-sweeper',
+    category: '推理排查',
+    controls:
+      '点击扫描，右键、长按或标记模式插旗，点满旗的数字一次扫开周围；方向键移动，F 插旗',
+    estimatedDuration: '每张约 1–8 分钟',
   },
 ] as const;
 

@@ -9,6 +9,7 @@ import {
   Layers3,
   ScanLine,
   Zap,
+  ScanSearch,
 } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { GAMES, type GameDefinition } from '@/lib/games/catalog';
@@ -309,6 +310,72 @@ function CircuitPreview() {
   );
 }
 
+/** Static diagnostic sketch: scanned signals, two flags and one live fault. */
+function SweeperPreview() {
+  // '' hidden, '0' open, digits = signal, 'F' flag.
+  const cells = [
+    '0',
+    '1',
+    'F',
+    '1',
+    '0',
+    '0',
+    '0',
+    '1',
+    '1',
+    '1',
+    '0',
+    '0',
+    '1',
+    '1',
+    '0',
+    '1',
+    '1',
+    '1',
+    'F',
+    '1',
+    '0',
+    '1',
+    '',
+    '',
+    '2',
+    '2',
+    '1',
+    '2',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+  ];
+  return (
+    <div className="room-sweeper-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>FAULT SCAN / 08</span>
+        <ScanSearch size={18} strokeWidth={1.4} />
+      </div>
+      <div className="room-sweeper-grid">
+        {cells.map((cell, index) => (
+          <span
+            key={index}
+            className={cell === '' ? '' : cell === 'F' ? 'is-flag' : 'is-open'}
+            data-n={cell}
+          >
+            {cell === 'F' ? '⚑' : cell === '0' ? '' : cell}
+          </span>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>3 LEVELS / DAILY</span>
+        <span>读信号，插旗，别短路</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -317,6 +384,7 @@ const previews = {
   yahtzee: DicePreview,
   stud: StudPreview,
   'circuit-repair': CircuitPreview,
+  'mech-sweeper': SweeperPreview,
 };
 
 export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
@@ -328,7 +396,9 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
           <Gamepad2 size={16} strokeWidth={1.5} aria-hidden="true" /> THE ARCADE
         </span>
         <h1>来一局，换换脑子。</h1>
-        <p>打牌、掷骰、接线路，或者安静解一道数独。选一个喜欢的，随时开始。</p>
+        <p>
+          打牌、掷骰、接线路、排查故障，或者安静解一道数独。选一个喜欢的，随时开始。
+        </p>
       </div>
       <section className="game-room-selection" aria-label="选择游戏">
         {GAMES.map((game, index) => {

@@ -448,7 +448,8 @@
 .room-sudoku-preview,
 .room-dice-preview,
 .room-stud-preview,
-.room-circuit-preview {
+.room-circuit-preview,
+.room-sweeper-preview {
   min-height: 240px;
   padding: 18px 21px 13px;
   border: 1px solid #263029;
@@ -797,7 +798,8 @@
   .room-sudoku-preview,
   .room-dice-preview,
   .room-stud-preview,
-  .room-circuit-preview {
+  .room-circuit-preview,
+  .room-sweeper-preview {
     min-height: 224px;
   }
   .room-pulse-grid {
@@ -876,7 +878,8 @@
   .room-sudoku-preview,
   .room-dice-preview,
   .room-stud-preview,
-  .room-circuit-preview {
+  .room-circuit-preview,
+  .room-sweeper-preview {
     padding: 13px;
   }
   .room-blackjack-hand {
@@ -982,6 +985,55 @@
 @media (max-width: 760px) {
   .room-circuit-grid {
     width: 124px;
+    margin: 8px auto;
+  }
+}
+.room-sweeper-preview {
+  color: #c9d1bf;
+  background: #26312b;
+  box-shadow:
+    inset 0 1px 6px #15231d66,
+    0 1px #eff1e8;
+}
+.room-sweeper-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  width: 138px;
+  margin: 12px auto;
+  padding: 4px;
+  background: #18261c;
+  border: 1px solid #56634a;
+  border-radius: 5px;
+}
+.room-sweeper-grid span {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 2px;
+  background: #4a5a44;
+  box-shadow: inset 0 -2px #1c281a;
+  font:
+    700 11px ui-monospace,
+    monospace;
+  line-height: 1;
+}
+.room-sweeper-grid .is-open {
+  background: #2b372a;
+  box-shadow: none;
+}
+.room-sweeper-grid [data-n='1'] {
+  color: #9cc1d6;
+}
+.room-sweeper-grid [data-n='2'] {
+  color: #a9cf8a;
+}
+.room-sweeper-grid .is-flag {
+  color: #f6d98f;
+}
+@media (max-width: 760px) {
+  .room-sweeper-grid {
+    width: 126px;
     margin: 8px auto;
   }
 }
