@@ -18,8 +18,8 @@ export function validGame(x:unknown):x is Game {
  if(!['betting','dealing','runout','complete'].includes(g.phase)||g.hand===0||all.length!==52||g.cards[0].length!==g.cards[1].length||g.cards[0].length!==g.street+1||g.street<1)return false;
  if(g.phase==='complete')return g.pot===0&&g.winner!==null&&(!g.revealed||g.cards[0].length===5);
  if(g.pot===0||g.winner!==null||g.revealed||g.startStacks.some((s,i)=>g.stacks[i]>s)||g.paid.some((p,i)=>p>g.startStacks[i]-g.stacks[i]))return false;
- if(g.phase==='dealing'&&(g.street===4||g.paid[0]!==g.paid[1]||!g.acted.every(Boolean)))return false;
- if(g.phase==='betting'&&g.acted[g.turn])return false;
+ if(g.phase==='dealing'&&(g.street===4||g.paid[0]!==g.paid[1]||!g.acted.every(Boolean)||g.stacks.some(s=>s===0)))return false;
+ if(g.phase==='betting'&&(g.acted[g.turn]||g.stacks.some(s=>s===0)))return false;
  if(g.phase==='runout'&&(g.street===4||g.paid[0]!==g.paid[1]||!g.stacks.some(s=>s===0)))return false;
  return Math.max(...g.paid)<=Math.min(g.paid[0]+g.stacks[0],g.paid[1]+g.stacks[1]);
 }

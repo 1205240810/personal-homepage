@@ -34,3 +34,45 @@ void test('机甲真实游戏厅节点绑定同一游戏室，返回入口保留
   );
   assert(!room.includes('/explore?scene='), '游戏室回程不能重置机甲出生点');
 });
+
+void test('独立游戏的宿主只同步运行源码，不带第二份 React 或独立挂载入口', () => {
+  for (const [id, component] of [
+    ['sudoku', 'SudokuGame'],
+    ['yahtzee', 'YahtzeeGame'],
+    ['stud', 'StudGame'],
+  ]) {
+    const runtime = readFileSync(
+      new URL(
+        `../components/games/${id}/generated/${component}.tsx`,
+        import.meta.url,
+      ),
+      'utf8',
+    );
+    assert(runtime.includes(`export function ${component}`));
+    assert(!runtime.includes('createRoot('));
+    assert(
+      !existsSync(
+        new URL(
+          `../components/games/${id}/generated/main.tsx`,
+          import.meta.url,
+        ),
+      ),
+    );
+    assert(
+      !existsSync(
+        new URL(
+          `../components/games/${id}/generated/package.json`,
+          import.meta.url,
+        ),
+      ),
+    );
+    assert(
+      !existsSync(
+        new URL(
+          `../components/games/${id}/generated/node_modules`,
+          import.meta.url,
+        ),
+      ),
+    );
+  }
+});

@@ -4,6 +4,8 @@ import {
   ArrowRight,
   ArrowUpRight,
   Gamepad2,
+  Grid3X3,
+  Dices,
   Layers3,
   ScanLine,
 } from 'lucide-react';
@@ -151,12 +153,131 @@ function BlackjackPreview() {
         </span>
       </div>
       <div className="room-preview-bottom">
-        <span>HIT / STAND</span>
-        <span>两种模式 · 赛后教练</span>
+        <span>S17 / 3:2</span>
+        <span>标准筹码 · 赛后教练</span>
       </div>
     </div>
   );
 }
+
+function SudokuPreview() {
+  const cells =
+    '530070000600195000098000060800060003400803001700020006060000280000419005000080079'
+      .split('')
+      .map(Number);
+  return (
+    <div className="room-sudoku-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>NINE ROOMS</span>
+        <Grid3X3 size={18} strokeWidth={1.4} />
+      </div>
+      <div className="room-sudoku-board">
+        {cells.map((digit, index) => (
+          <span key={index} className={index === 40 ? 'is-selected' : ''}>
+            {digit || (index === 40 ? <small>5</small> : '')}
+          </span>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>120 PUZZLES</span>
+        <span>一格一格，看见推理</span>
+      </div>
+    </div>
+  );
+}
+
+function DicePreview() {
+  const faces = [
+    [0, 2, 4, 6, 8],
+    [0, 2, 6, 8],
+    [0, 4, 8],
+    [0, 2, 6, 8],
+    [0, 2, 6, 8],
+  ];
+  return (
+    <div className="room-dice-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>THE BLUE HOUR</span>
+        <Dices size={18} strokeWidth={1.4} />
+      </div>
+      <div className="room-dice-tray">
+        {faces.map((pips, index) => (
+          <span
+            className={`room-die ${index === 1 || index > 2 ? 'is-held' : ''}`}
+            key={index}
+          >
+            {Array.from({ length: 9 }, (_, position) => (
+              <i
+                key={position}
+                className={pips.includes(position) ? 'is-pip' : ''}
+              />
+            ))}
+          </span>
+        ))}
+      </div>
+      <div className="room-dice-score">
+        <span>保留点数</span>
+        <span>选择分栏</span>
+        <span>与 AI 对弈</span>
+      </div>
+      <div className="room-preview-bottom">
+        <span>5 DICE / 13 TURNS</span>
+        <span>留住机会，也留住取舍</span>
+      </div>
+    </div>
+  );
+}
+
+function StudPreview() {
+  const cards = [
+    { rank: '?', suit: '' },
+    { rank: 'Q', suit: '♥' },
+    { rank: '7', suit: '♣' },
+    { rank: '2', suit: '♦' },
+    { rank: 'A', suit: '♠' },
+  ];
+  return (
+    <div className="room-stud-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>VELVET FIVE</span>
+        <Layers3 size={18} strokeWidth={1.4} />
+      </div>
+      <div className="room-stud-hand">
+        {cards.map((card, index) => (
+          <span
+            className={`${index === 0 ? 'is-hidden' : ''} ${index === 1 || index === 3 ? 'is-red' : ''}`}
+            key={card.rank}
+          >
+            <b>{card.rank}</b>
+            <i>{card.suit}</i>
+          </span>
+        ))}
+      </div>
+      <div className="room-stud-streets">
+        <span>01</span>
+        <i />
+        <span>02</span>
+        <i />
+        <span>03</span>
+        <i />
+        <span>04</span>
+      </div>
+      <div className="room-preview-bottom">
+        <span>ONE HIDDEN / FOUR OPEN</span>
+        <span>逐轮展开，回看选择</span>
+      </div>
+    </div>
+  );
+}
+
+const previews = {
+  'holdem-lab': HoldemPreview,
+  blackjack: BlackjackPreview,
+  'signal-pulse': PulsePreview,
+  sudoku: SudokuPreview,
+  yahtzee: DicePreview,
+  stud: StudPreview,
+};
 
 export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
   return (
@@ -167,40 +288,37 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
           <Gamepad2 size={16} strokeWidth={1.5} aria-hidden="true" /> THE ARCADE
         </span>
         <h1>来一局，换换脑子。</h1>
-        <p>打牌、推演，或者解一阵灯谜。选一个喜欢的，随时开始。</p>
+        <p>打牌、掷骰，或者安静解一道数独。选一个喜欢的，随时开始。</p>
       </div>
       <section className="game-room-selection" aria-label="选择游戏">
-        {GAMES.map((game, index) => (
-          <a
-            className={`room-game room-game-${game.id}`}
-            href={`${game.href}${fromExplore ? '?from=explore' : ''}`}
-            key={game.id}
-          >
-            <div className="room-game-preview">
-              {game.id === 'holdem-lab' ? (
-                <HoldemPreview />
-              ) : game.id === 'blackjack' ? (
-                <BlackjackPreview />
-              ) : (
-                <PulsePreview />
-              )}
-            </div>
-            <div className="room-game-copy">
-              <div className="room-game-meta">
-                <span>
-                  {String(index + 1).padStart(2, '0')} / {game.category}
-                </span>
-                <span>{game.estimatedDuration}</span>
+        {GAMES.map((game, index) => {
+          const Preview = previews[game.id];
+          return (
+            <a
+              className={`room-game room-game-${game.id}`}
+              href={`${game.href}${fromExplore ? '?from=explore' : ''}`}
+              key={game.id}
+            >
+              <div className="room-game-preview">
+                <Preview />
               </div>
-              <h2>{game.title}</h2>
-              <p>{game.description}</p>
-              <span className="room-game-play">
-                开始游戏{' '}
-                <ArrowRight size={18} strokeWidth={1.5} aria-hidden="true" />
-              </span>
-            </div>
-          </a>
-        ))}
+              <div className="room-game-copy">
+                <div className="room-game-meta">
+                  <span>
+                    {String(index + 1).padStart(2, '0')} / {game.category}
+                  </span>
+                  <span>{game.estimatedDuration}</span>
+                </div>
+                <h2>{game.title}</h2>
+                <p>{game.description}</p>
+                <span className="room-game-play">
+                  开始游戏{' '}
+                  <ArrowRight size={18} strokeWidth={1.5} aria-hidden="true" />
+                </span>
+              </div>
+            </a>
+          );
+        })}
       </section>
       <div className="game-room-bottom">
         <p>不用注册，点击或轻触即可操作。离开时可以随时返回游戏室。</p>

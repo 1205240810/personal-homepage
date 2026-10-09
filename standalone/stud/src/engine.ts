@@ -38,6 +38,7 @@ export function advance(state:Game,revision:number):Game{if(state.revision!==rev
 export function actionLabel(a:Action,call=0){return a.type==='raise'?`下注至 ${a.to}`:a.type==='call'?`跟注 ${call}`:a.type==='fold'?'弃牌':'过牌'}
 export function act(state:Game,seat:Seat,a:Action,revision=state.revision,review?:Review):Game{
  if(state.phase!=='betting'||state.turn!==seat||state.revision!==revision)return state;
+ if(!a||!['check','call','fold','raise'].includes(a.type))return state;
  const l=limits(state,seat);if(a.type==='check'&&l.call>0||a.type==='call'&&l.call===0)return state;
  if(a.type==='raise'&&(!Number.isInteger(a.to)||a.to<=l.current||a.to>l.max||(a.to<l.min&&a.to!==l.max)))return state;
  const g=structuredClone(state);g.revision++;const other=(1-seat)as Seat;g.logs.push(`${seat===0?'你':'对手'} · ${actionLabel(a,l.call)}`);if(review)g.reviews.push(review);

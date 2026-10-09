@@ -103,4 +103,11 @@ describe('input and storage edge cases',()=>{
  it('unavailable storage reports an honest warning without blocking play',()=>{
   vi.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw new Error('storage denied')});const {container}=render(<SudokuGame/>);expect(screen.getByText('浏览器阻止了保存，请勿关闭本页')).toBeDefined();const c=empty(container);fireEvent.click(c);fireEvent.click(screen.getByRole('button',{name:'填入 1'}));expect(c.textContent).toBe('1');
  });
+ it('held number and N keys do not repeatedly toggle pencil state, while held arrows still navigate',()=>{
+  const {container}=render(<SudokuGame persist={false}/>);const c=empty(container);fireEvent.click(c);fireEvent.keyDown(c,{key:'n'});fireEvent.keyDown(c,{key:'n',repeat:true});expect(screen.getByRole('button',{name:/笔记 开/}).getAttribute('aria-pressed')).toBe('true');
+  fireEvent.keyDown(c,{key:'3'});fireEvent.keyDown(c,{key:'3',repeat:true});expect(c.querySelector('.sg-notes')?.textContent).toBe('3');const i=Number(c.dataset.cell);fireEvent.keyDown(c,{key:'ArrowDown',repeat:true});expect(document.activeElement).toBe(container.querySelector(`[data-cell="${i+9}"]`));
+ });
+ it('preserves modifier-arrow browser shortcuts and exposes the host exit callback',()=>{
+  const onExit=vi.fn();const {container}=render(<SudokuGame persist={false} onExit={onExit}/>);const c=empty(container);fireEvent.click(c);c.focus();fireEvent.keyDown(c,{key:'ArrowDown',metaKey:true});expect(document.activeElement).toBe(c);fireEvent.click(screen.getByRole('button',{name:'退出'}));expect(onExit).toHaveBeenCalledTimes(1);
+ });
 });

@@ -440,6 +440,196 @@
   font-size: 12px;
   text-align: center;
 }
+.room-sudoku-preview,
+.room-dice-preview,
+.room-stud-preview {
+  min-height: 326px;
+  padding: 18px 21px 13px;
+  border: 1px solid #263029;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.room-sudoku-preview {
+  background: #f5f2e9;
+  color: #254d40;
+  border-color: #bcc4b6;
+}
+.room-sudoku-preview .room-preview-top,
+.room-sudoku-preview .room-preview-bottom {
+  color: #62766a;
+}
+.room-sudoku-board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  align-self: center;
+  width: 196px;
+  height: 196px;
+  border: 2px solid #416051;
+  margin: 14px 0;
+}
+.room-sudoku-board > span {
+  display: grid;
+  place-items: center;
+  font:
+    14px Georgia,
+    serif;
+  border-right: 1px solid #b2bead;
+  border-bottom: 1px solid #b2bead;
+}
+.room-sudoku-board > span:nth-child(9n) {
+  border-right: 0;
+}
+.room-sudoku-board > span:nth-child(n + 73) {
+  border-bottom: 0;
+}
+.room-sudoku-board > span:nth-child(9n + 3),
+.room-sudoku-board > span:nth-child(9n + 6) {
+  border-right: 2px solid #6a826f;
+}
+.room-sudoku-board > span:nth-child(n + 19):nth-child(-n + 27),
+.room-sudoku-board > span:nth-child(n + 46):nth-child(-n + 54) {
+  border-bottom: 2px solid #6a826f;
+}
+.room-sudoku-board .is-selected {
+  background: #dce7d3;
+  outline: 2px solid #527c61;
+  outline-offset: -2px;
+}
+.room-sudoku-board small {
+  font:
+    10px ui-monospace,
+    monospace;
+  color: #637960;
+}
+.room-dice-preview {
+  background: #172840;
+  border-color: #33435a;
+  color: #eadbc1;
+}
+.room-dice-preview .room-preview-top,
+.room-dice-preview .room-preview-bottom {
+  color: #aabaca;
+}
+.room-dice-tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 11px;
+  max-width: 245px;
+  align-self: center;
+  margin: 27px 0 16px;
+}
+.room-die {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 58px;
+  height: 58px;
+  padding: 10px;
+  border: 1px solid #d5d0c6;
+  border-radius: 7px;
+  background: #f4efe4;
+  box-shadow: 0 4px 0 #b8b1a1;
+  gap: 4px;
+}
+.room-die i {
+  border-radius: 50%;
+}
+.room-die .is-pip {
+  background: #243952;
+}
+.room-die.is-held {
+  outline: 2px solid #c1a574;
+  outline-offset: 3px;
+}
+.room-dice-score {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 11px;
+  color: #c6b18b;
+  padding-bottom: 26px;
+}
+.room-stud-preview {
+  background: radial-gradient(ellipse at 50% 70%, #49313d, #261b28);
+  color: #eedbbf;
+  border-color: #58414b;
+}
+.room-stud-preview .room-preview-top,
+.room-stud-preview .room-preview-bottom {
+  color: #c8b7b2;
+}
+.room-stud-hand {
+  display: flex;
+  justify-content: center;
+  margin: 48px 0 18px;
+  padding: 0 10px;
+}
+.room-stud-hand > span {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 57px;
+  height: 89px;
+  padding: 8px;
+  border: 1px solid #d7c6ae;
+  border-radius: 4px;
+  background: #f5eee2;
+  color: #302c2a;
+  box-shadow: 0 5px 10px #130d1470;
+  margin: 0 -7px;
+  transform: rotate(var(--card-angle));
+}
+.room-stud-hand > span:nth-child(1) {
+  --card-angle: -12deg;
+}
+.room-stud-hand > span:nth-child(2) {
+  --card-angle: -6deg;
+}
+.room-stud-hand > span:nth-child(3) {
+  --card-angle: 0deg;
+}
+.room-stud-hand > span:nth-child(4) {
+  --card-angle: 6deg;
+}
+.room-stud-hand > span:nth-child(5) {
+  --card-angle: 12deg;
+}
+.room-stud-hand b {
+  font:
+    21px Georgia,
+    serif;
+}
+.room-stud-hand i {
+  font:
+    normal 25px Georgia,
+    serif;
+  text-align: center;
+}
+.room-stud-hand .is-red {
+  color: #a64744;
+}
+.room-stud-hand .is-hidden {
+  background: repeating-linear-gradient(45deg, #382b3c 0 4px, #5d485c 4px 5px);
+  color: #e0cbaa;
+  border: 2px solid #c9b18f;
+}
+.room-stud-streets {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  color: #c1a477;
+  font:
+    10px ui-monospace,
+    monospace;
+  margin-bottom: 26px;
+}
+.room-stud-streets i {
+  width: 20px;
+  border-top: 1px solid #8d6c6966;
+}
 .room-game-copy {
   padding: 23px 27px 22px;
   flex: 1;
