@@ -202,3 +202,132 @@ void test('存储被禁用或配额已满不会抛错，不覆盖已有存档', 
   assert.equal(loadPulseProgress().status, 'unavailable');
   assert.equal(savePulseProgress(progress), 'unavailable');
 });
+
+// ---- 每日灯阵（lib/pulse-daily.ts）----
+import {
+  PULSE_DAILY_KEY,
+  PULSE_DAILY_SIZES,
+  boardAfter,
+  createDailySave,
+  dailyPuzzle,
+  loadDailySave,
+  localDate,
+  pressCell,
+  solveDaily,
+  starsFor,
+  storeDailySave,
+  validateDailySave,
+  withDailyResult,
+} from '../lib/pulse-daily.ts';
+
+void test('每日灯阵按日期与尺寸确定生成，可解且最短步数达到下限', () => {
+  const minPar = { 4: 4, 5: 6, 6: 8 } as const;
+  const start = new Date(2026, 0, 1);
+  for (let day = 0; day < 120; day++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + day);
+    const ds = localDate(date);
+    for (const size of PULSE_DAILY_SIZES) {
+      const p = dailyPuzzle(ds, size);
+      assert.deepEqual(dailyPuzzle(ds, size), p, '同一天同尺寸题目一致');
+      assert.equal(p.board.length, size * size);
+      const solution = solveDaily(p.board, size)!;
+      assert.equal(solution.length, p.par);
+      assert(p.par >= minPar[size], `${ds} ${size}×${size} 最短 ${p.par} 步`);
+      assert(boardAfter(p, solution).every((x) => x === 0));
+    }
+  }
+  assert.notDeepEqual(
+    dailyPuzzle('2026-10-09', 6).board,
+    dailyPuzzle('2026-10-10', 6).board,
+  );
+});
+
+void test('6×6 求解器与暴力最短解一致（小盘交叉验证），并处理不可解盘面', () => {
+  // 4×4 has a 4-dimensional null space: compare with the 32-bit level solver.
+  for (const level of PULSE_LEVELS.filter((l) => l.size === 4)) {
+    const board = Array.from({ length: 16 }, (_, i) => (level.board >> i) & 1);
+    const bits = solvePulse(level.board, 4)!;
+    let count = 0;
+    for (let i = 0; i < 16; i++) if (bits & (1 << i)) count++;
+    assert.equal(solveDaily(board, 4)!.length, count);
+  }
+  // A single lit corner on 4×4 is not solvable.
+  const lone = Array<number>(16).fill(0);
+  lone[0] = 1;
+  assert.equal(solveDaily(lone, 4), null);
+  // On 6×6 every press set is the unique solution of its board.
+  const presses = [0, 7, 14, 21, 28, 35, 5];
+  const board = presses.reduce(
+    (b, cell) => pressCell(b, cell, 6),
+    Array<number>(36).fill(0),
+  );
+  assert.deepEqual(
+    [...solveDaily(board, 6)!].sort((a, b) => a - b),
+    [...presses].sort((a, b) => a - b),
+  );
+});
+
+void test('星级：最短步数三星，小幅超出二星，其余一星', () => {
+  assert.equal(starsFor(6, 6), 3);
+  assert.equal(starsFor(8, 6), 2);
+  assert.equal(starsFor(9, 6), 1);
+  assert.equal(starsFor(13, 12), 2);
+  assert.equal(starsFor(16, 12), 2);
+  assert.equal(starsFor(17, 12), 1);
+});
+
+void test('每日存档：按尺寸保留进度，跨日只保留记录，非法数据拒绝，最佳记录不倒退', () => {
+  const store = memoryStorage();
+  const today = '2026-10-09';
+  assert.equal(loadDailySave(today, store).status, 'empty');
+  const p5 = dailyPuzzle(today, 5);
+  const p6 = dailyPuzzle(today, 6);
+  let save = createDailySave(today, 6);
+  save.boards[6] = { presses: [0, 1], hints: 1 };
+  const solution = solveDaily(p5.board, 5)!;
+  save = withDailyResult(save, p5, solution.length + 3, 0);
+  assert.equal(save.records[`${today}:5`].stars, 2);
+  save = withDailyResult(save, p5, solution.length, 2);
+  assert.deepEqual(save.records[`${today}:5`], {
+    moves: p5.par,
+    hints: 2,
+    stars: 3,
+  });
+  assert.equal(
+    withDailyResult(save, p5, solution.length + 1, 0),
+    save,
+    '更差成绩不覆盖',
+  );
+  assert(storeDailySave(save, store));
+  assert(store.values.has(PULSE_DAILY_KEY));
+  const again = loadDailySave(today, store);
+  assert.equal(again.status, 'saved');
+  assert.deepEqual(again.save, save);
+  // Next day: records kept, boards reset.
+  const tomorrow = loadDailySave('2026-10-10', store);
+  assert.deepEqual(tomorrow.save.boards[6], { presses: [], hints: 0 });
+  assert.deepEqual(tomorrow.save.records, save.records);
+  // Pressing after the board is cleared, or an out-of-range cell, is rejected.
+  const cleared = solveDaily(p6.board, 6)!;
+  const bad = structuredClone(save);
+  bad.boards[6] = { presses: [...cleared, 0], hints: 0 };
+  assert.equal(validateDailySave(bad, today), null);
+  bad.boards[6] = { presses: [36], hints: 0 };
+  assert.equal(validateDailySave(bad, today), null);
+  assert.equal(
+    validateDailySave(
+      { ...save, records: { 'x:5': { moves: 1, hints: 0, stars: 3 } } },
+      today,
+    ),
+    null,
+  );
+  store.values.set(PULSE_DAILY_KEY, '{');
+  assert.equal(loadDailySave(today, store).status, 'invalid');
+  const blocked = {
+    getItem: () => {
+      throw new Error('blocked');
+    },
+  };
+  assert.equal(loadDailySave(today, blocked).status, 'unavailable');
+});

@@ -8,6 +8,7 @@ import {
   pressPulse,
   solvePulse,
 } from '@/lib/pulse-puzzle';
+import { starsFor } from '@/lib/pulse-daily';
 import {
   createPulseProgress,
   loadPulseProgress,
@@ -188,7 +189,7 @@ function PulseGameSession({ ready }: { ready: boolean }) {
                   <ToggleGroupItem
                     value={String(i)}
                     key={item.id}
-                    aria-label={`第 ${i + 1} 关：${item.name}${results[item.id] ? '，已完成' : ''}`}
+                    aria-label={`第 ${i + 1} 关：${item.name}${results[item.id] ? `，已完成，${starsFor(results[item.id].moves, item.par)} 星` : ''}`}
                   >
                     <span>{String(i + 1).padStart(2, '0')}</span>
                     {results[item.id] && <Check size={10} aria-hidden="true" />}
@@ -329,7 +330,7 @@ function PulseGameSession({ ready }: { ready: boolean }) {
         </span>
         <span>
           {results[current.id]
-            ? `本关最佳 ${results[current.id].moves} 步`
+            ? `本关最佳 ${results[current.id].moves} 步 · ${'★'.repeat(starsFor(results[current.id].moves, current.par))}${'☆'.repeat(3 - starsFor(results[current.id].moves, current.par))}`
             : '随时可以选关'}
         </span>
       </div>
