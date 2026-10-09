@@ -164,7 +164,7 @@
   outline-offset: 1px;
   z-index: 1;
 }
-.circuit-cell svg {
+.circuit-cell > svg:not(.circuit-lock) {
   display: block;
   width: 100%;
   height: 100%;
