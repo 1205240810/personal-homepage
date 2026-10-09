@@ -11,8 +11,8 @@
 | `/games/blackjack`      | 标准筹码 21 点、新手教程及原有休闲模式       |
 | `/games/sudoku`         | 120 道数独、题库选题和逐步推理教练           |
 | `/games/yahtzee`        | 十三分栏快艇骰子、AI 对局及完整中途存档      |
-| `/games/stud`           | 双人五张梭哈、封顶下注和赛后权益分析         |
-| `/games/signal-pulse`   | 十二关灯阵，支持选关、提示、撤回与重来       |
+| `/games/stud`           | 双人五张梭哈、封顶下注和赛后逐步决策建议         |
+| `/games/signal-pulse`   | 三十关灯阵，支持选关、提示、撤回与重来       |
 | `/games/circuit-repair` | 旋转线路接通全部端点灯，四种尺寸与今日线路   |
 | `/games/mech-sweeper`   | 机甲主题扫雷，三档难度、今日检修与保险丝     |
 | `/games/fault-finder`   | 按传感器读数推断故障模块，答案唯一、今日排查 |
@@ -60,7 +60,7 @@ flowchart LR
 | `scripts/sync-blackjack.mjs`                | 构建前同步独立游戏到宿主运行组件                               |
 | `components/games/blackjack/`               | 客户端按需加载、宿主导航与生成源码                             |
 | `standalone/{sudoku,yahtzee,stud}/`         | 三款独立游戏的维护源码、测试与离线文件                         |
-| `scripts/sync-standalone-games.mjs`         | 同步十八个运行文件，检查生成目录是否过期                       |
+| `scripts/sync-standalone-games.mjs`         | 同步十九个运行文件，检查生成目录是否过期                       |
 | `components/games/standalone-game-room.tsx` | 三款游戏的按需加载、来路导航和备案入口                         |
 | `lib/pulse-puzzle.ts`                       | 灯阵关卡、按键翻转与最短解求解                                 |
 | `components/home/pulse-game.tsx`            | 两种入口共同复用的灯阵界面                                     |
@@ -125,7 +125,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 
 整屏舞台保留返回导航与备案入口，设置和复盘使用独立可收起面板。人物为统一风格的原创透明半身素材，筹码数量和本轮下注从实际状态生成；动效只解释发牌、下注和结算，遵守 `prefers-reduced-motion`。人物素材与提示词见 `docs/POKER-ART.md`。
 
-练习记录继续使用本机键 `tscjj:holdem-practice:v2`，新记录附加该手的桌况配置，旧五人桌记录按原值保留；旧单挑 v1 不会被覆盖或删除。设置使用 `tscjj:holdem-settings:v2`。记录保存累计手数、盈利手数、虚拟筹码净变化及最近八手的底牌、公共牌、玩家复盘和可选全桌回放。正在进行中的对局不存档，刷新后重新开局。记录和机甲位置存档独立，不上传至文章内容源，也不随 GitHub 同步；不同浏览器、设备或清理站点数据后，记录不共享。存储被禁止时仅在本次页面内保留。灯阵只记录本次页面内的完成情况与最佳步数，刷新重置。
+练习记录继续使用本机键 `tscjj:holdem-practice:v2`，新记录附加该手的桌况配置，旧五人桌记录按原值保留；旧单挑 v1 不会被覆盖或删除。设置使用 `tscjj:holdem-settings:v2`。记录保存累计手数、盈利手数、虚拟筹码净变化及最近八手的底牌、公共牌、玩家复盘和可选全桌回放。正在进行中的对局不存档，刷新后重新开局。记录和机甲位置存档独立，不上传至文章内容源，也不随 GitHub 同步；不同浏览器、设备或清理站点数据后，记录不共享。存储被禁止时仅在本次页面内保留。灯阵以 `signal-pulse:progress:v1` 保存关卡 ID、棋盘历史、提示次数与最佳记录；刷新后继续，清除网站数据才会移除。
 
 ## 新增一款游戏
 
@@ -144,7 +144,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 
 - 扑克规则：牌型顺序、A2345、七张牌取最佳五张、平分底池、筹码守恒、短码全下、合法最小加注与重新开放加注。
 - AI 与复盘：只使用行动者自己的底牌与当时公开信息；抽样排除已知牌；评分与不确定性分开；完成后全桌底牌不参与玩家评分；AI 诊断和实际行动原子关联；旧记录不补造诊断，文案不把启发式宣传为严格求解器。
-- 灯阵：十二关可解、最短步数可靠、撤回与重来正确、五阶灯阵在窄屏仍可操作。
+- 灯阵：三十关可解、最短步数可靠、撤回与重来正确、五阶灯阵在窄屏仍可操作。
 - 线路检修：同一编号重建同一张线路，开局不会已完成，沿提示必能修好；坏记录与不可用存储不阻止开局（`scripts/check-circuit-repair.ts`、`standalone/blackjack/qa/circuit-repair.check.tsx`）。
 - 机甲扫雷：同一编号重建同一张检修舱，扫描起点九宫格无故障，第一次扫描一定安全；连开只在旗数相符时触发，保险丝只挡一次短路；长按插旗后不会误扫（`scripts/check-mech-sweeper.ts`、`standalone/blackjack/qa/mech-sweeper.check.tsx`）。
 - 故障排查：每张题枚举全部故障组合，确认只有一个答案；去掉任意一个传感器都会出现第二个答案；跟着提示一定能解出且提示从不说错；同一帧连点不会互相覆盖（`scripts/check-fault-finder.ts`、`standalone/blackjack/qa/fault-finder.check.tsx`）。

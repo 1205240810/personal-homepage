@@ -20,7 +20,7 @@ const games = {
     'audio.ts',
     'styles.css',
   ],
-  stud: ['StudGame.tsx', 'engine.ts', 'save.ts', 'audio.ts', 'stud.css'],
+  stud: ['StudGame.tsx', 'engine.ts', 'strategy.ts', 'save.ts', 'audio.ts', 'stud.css'],
 };
 const checkOnly = process.argv.includes('--check');
 if (process.argv.slice(2).some((arg) => arg !== '--check')) {

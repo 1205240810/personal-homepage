@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { assetDailyCost, deliveryRoute } from '../lib/workbench-demos.ts';
 import { WORKBENCH_PROJECTS } from '../lib/workbench-projects.ts';
 import {
+  PULSE_CHAPTERS,
   PULSE_LEVELS,
   PULSE_MASKS,
   pressPulse,
@@ -80,21 +81,87 @@ test('灯阵边界无环绕，同一开关按两次还原，每关最短解有�
   assert.equal(solvePulse(-1), null);
 });
 
-test('十二关保持渐进难度，五阶边界及输入范围正确', () => {
-  assert.equal(PULSE_LEVELS.length, 12);
-  assert.equal(new Set(PULSE_LEVELS.map((level) => level.id)).size, 12);
+test('三十关保留原十二关，按真实最短步数递进且无旋转镜像重复', () => {
+  assert.equal(PULSE_LEVELS.length, 30);
+  assert.equal(new Set(PULSE_LEVELS.map((level) => level.id)).size, 30);
   assert.equal(
     new Set(PULSE_LEVELS.map((level) => `${level.size}:${level.board}`)).size,
-    12,
+    30,
   );
   assert.deepEqual(
-    PULSE_LEVELS.map((level) => level.par),
-    [1, 2, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9],
+    PULSE_LEVELS.slice(0, 12).map(({ id, chapter, size, board, par }) => [
+      id,
+      chapter,
+      size,
+      board,
+      par,
+    ]),
+    [
+      [1, 1, 4, 626, 1],
+      [2, 1, 4, 51219, 2],
+      [3, 1, 4, 19506, 2],
+      [4, 1, 4, 30455, 3],
+      [5, 2, 4, 19646, 3],
+      [6, 2, 4, 2791, 4],
+      [7, 2, 4, 60251, 5],
+      [8, 2, 4, 46509, 6],
+      [9, 3, 5, 31363571, 6],
+      [10, 3, 5, 22527937, 7],
+      [11, 3, 5, 30185830, 8],
+      [12, 3, 5, 27013362, 9],
+    ],
   );
   assert.deepEqual(
-    PULSE_LEVELS.map((level) => level.size),
-    [4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5],
+    PULSE_LEVELS.map((level) => level.id),
+    Array.from({ length: 30 }, (_, i) => i + 1),
   );
+  assert.deepEqual(
+    PULSE_CHAPTERS.map((chapter) => chapter.id),
+    [1, 2, 3, 4, 5, 6],
+  );
+  assert.deepEqual(
+    PULSE_CHAPTERS.map(
+      (chapter) =>
+        PULSE_LEVELS.filter((level) => level.chapter === chapter.id).length,
+    ),
+    [4, 4, 4, 6, 6, 6],
+  );
+  const canonical = (board: number, size: number) => {
+    const variants: number[] = [];
+    for (let mirror = 0; mirror < 2; mirror++) {
+      for (let turn = 0; turn < 4; turn++) {
+        let variant = 0;
+        for (let row = 0; row < size; row++) {
+          for (let col = 0; col < size; col++) {
+            if (!(board & (1 << (row * size + col)))) continue;
+            let r = row,
+              c = mirror ? size - 1 - col : col;
+            for (let t = 0; t < turn; t++) [r, c] = [c, size - 1 - r];
+            variant |= 1 << (r * size + c);
+          }
+        }
+        variants.push(variant);
+      }
+    }
+    return `${size}:${Math.min(...variants)}`;
+  };
+  assert.equal(
+    new Set(PULSE_LEVELS.map((level) => canonical(level.board, level.size)))
+      .size,
+    PULSE_LEVELS.length,
+  );
+  for (const [index, level] of PULSE_LEVELS.entries()) {
+    assert(level.size === 4 || level.size === 5);
+    assert(PULSE_CHAPTERS.some((chapter) => chapter.id === level.chapter));
+    if (index > 0) assert(level.par >= PULSE_LEVELS[index - 1].par);
+  }
+  assert.deepEqual(
+    PULSE_LEVELS.slice(12).map((level) => level.par),
+    [9, 9, 10, 10, 11, 11, 11, 12, 12, 12, 13, 13, 13, 13, 14, 14, 15, 15],
+  );
+});
+
+test('五阶边界及输入范围正确，不扩大手机灯格的棋盘规模', () => {
   assert.equal(pressPulse(0, 0, 5), 35);
   assert.equal(pressPulse(0, 4, 5), 536);
   assert.equal(solvePulse(0, 5), 0);
