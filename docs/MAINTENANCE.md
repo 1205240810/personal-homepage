@@ -86,7 +86,7 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 
 公开项目维护在 `content/data/projects.json`，保留源链接、描述核对日期和实际演示地址。
 
-当前主地图为 `public/art/mecha-isometric.png`，内舱为四张 `interior-*-hd.png`，头像为 `mecha-avatar.png`。开屏从 `lib/arrival-art.ts` 中的四张 `arrival-*.webp` 原画随机选择，服务端每次访问选定一张后传给页面，避免首屏闪换与加载全部图片。每幅图单独设置桌面/手机取景；保留原始分辨率，以 WebP 编码减轻加载。新增三张原始 PNG 保存在 `docs/design/originals/`，灰白机甲 `arrival-maintenance-hall.png` 仅作历史参考。原始提示词见 `docs/design/`。图像文件保留原始像素；家具前景在运行时按多边形裁取并按脚底深度叠放。旧三行内舱、courtyard / river / sideview 资源仅作历史参考，不在当前场景加载。
+当前主地图为 `public/art/mecha-isometric.webp`，内舱为四张 `interior-*-hd.webp`（原尺寸 1536×1024、质量 90，同名 `.png` 原图保留在 `public/art/` 仅作母版，运行时不加载）；头像为 192px 的 `mecha-avatar-192.webp`（原图 `mecha-avatar.png`）。更换原画后用 sharp 重新导出 WebP，`scripts/check-world.ts` 会检查场景只引用 WebP 且单张小于 800 KB。开屏从 `lib/arrival-art.ts` 中的四张 `arrival-*.webp` 原画随机选择，服务端每次访问选定一张后传给页面，避免首屏闪换与加载全部图片。每幅图单独设置桌面/手机取景；保留原始分辨率，以 WebP 编码减轻加载。新增三张原始 PNG 保存在 `docs/design/originals/`，灰白机甲 `arrival-maintenance-hall.png` 仅作历史参考。原始提示词见 `docs/design/`。图像文件保留原始像素；家具前景在运行时按多边形裁取并按脚底深度叠放。旧三行内舱、courtyard / river / sideview 资源仅作历史参考，不在当前场景加载。
 
 角色由 `jointed-player.ts` 的 Canvas 关节函数绘制，`player.ts` 一次生成四方向、每方向 16 帧行走与独立 idle 纹理。脚锚点为 (64,166)，画布 128×176。完整步幅为 128×playerScale 世界单位，与 engine 移动距离同步；改步幅必须同步两处，不能用帧率掩盖滑步。
 
