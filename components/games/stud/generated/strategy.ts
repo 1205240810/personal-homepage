@@ -3,6 +3,15 @@ import { actionLabel, compare, evaluate, rank, suit } from './engine';
 import type { Action, Card, Review, View } from './engine';
 
 type Difficulty = 'easy' | 'normal';
+export type Personality = 'balanced' | 'tight' | 'aggressive' | 'bluffer';
+export const PERSONALITIES: Record<Personality, { label: string; blurb: string }> = {
+  balanced: { label: '均衡', blurb: '按范围权益和稳健参照决策。' },
+  tight: { label: '保守', blurb: '更重视投入风险，少跟注、少加注。' },
+  aggressive: { label: '激进', blurb: '更爱主动加注，尺度更大。' },
+  bluffer: { label: '诈唬', blurb: '频繁试探，面对下注也会反加。' },
+};
+export const isPersonality = (x: unknown): x is Personality =>
+  typeof x === 'string' && Object.prototype.hasOwnProperty.call(PERSONALITIES, x);
 export interface RangeEntry {
   card: Card;
   weight: number;
@@ -429,6 +438,7 @@ export function decide(
   v: View,
   difficulty: Difficulty,
   rng: () => number = Math.random,
+  personality: Personality = 'balanced',
 ) {
   const model = calculate(v, difficulty, rng);
   let selected = model.best;
@@ -444,7 +454,22 @@ export function decide(
     if (nearby.length > 1)
       selected = nearby[Math.floor(roll(rng) * nearby.length)];
   }
+  // Styles choose from the same legal candidates and keep the model's early
+  // deep-stack ceiling. They do not alter range samples or the review reference.
+  const eligible = model.options.filter(
+    (o) => !model.deepEarly || o.action.type !== 'raise' || o.action.to <= model.ordinaryCeiling,
+  );
+  if (personality === 'tight' || personality === 'aggressive') {
+    const preference = (o: Candidate) => o.robust + (personality === 'tight'
+      ? -o.paid * 0.2
+      : o.action.type === 'raise' ? (v.pot + viewLimits(v).call) * 0.15 + o.paid * 0.1 : 0);
+    selected = [...eligible].sort((a, b) => preference(b) - preference(a) || a.paid - b.paid)[0];
+  } else if (personality === 'bluffer' && roll(rng) < (difficulty === 'easy' ? 0.38 : 0.24)) {
+    const raises = eligible.filter((o) => o.action.type === 'raise');
+    if (raises.length) selected = [...raises].sort((a, b) => b.robust - a.robust || a.paid - b.paid)[0];
+  }
   const review = makeReview(v, selected.action, model);
+  if (personality !== 'balanced') review.reason = `${PERSONALITIES[personality].label}风格选择；复盘仍保留同一模型的稳健参照。 ${review.reason}`;
   return {
     action: selected.action,
     equity: model.equity,
