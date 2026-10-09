@@ -160,6 +160,16 @@ describe('故障排查', () => {
     expect(cells()).toHaveLength(9);
   });
 
+  it('浏览器组合快捷键不修改模块标记或被游戏拦截', () => {
+    mount();
+    for (const modifier of ['metaKey', 'ctrlKey', 'altKey']) {
+      expect(
+        fireEvent.keyDown(cells()[0], { key: 'f', [modifier]: true }),
+      ).toBe(true);
+      expect(label(0)).toMatch(/未判断/);
+    }
+  });
+
   it('坏记录或存储不可用都不影响开局', () => {
     localStorage.setItem(FAULT_RECORDS_KEY, '{oops');
     mount();

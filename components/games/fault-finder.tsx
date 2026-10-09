@@ -347,6 +347,7 @@ function FaultSession({
   };
 
   const onKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
     const r = Math.floor(index / size);
     const c = index % size;
     const key = event.key.toLowerCase();
