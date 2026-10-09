@@ -1,5 +1,5 @@
 import { describe,it,expect } from 'vitest';
-import { act,advance,compare,decide,equity,evaluate,finished,initial,limits,shuffle,startHand,view,type Game } from './engine';
+import { act,advance,compare,decide,equity,evaluate,finished,initial,isPersonality,limits,PERSONALITIES,shuffle,startHand,view,type Game,type Personality } from './engine';
 const c=(r:number,s=0)=>s*13+r-2;
 const seeded=(seed:number)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
 function next(g:Game){while(g.phase==='dealing'||g.phase==='runout')g=advance(g,g.revision);return g}
@@ -20,4 +20,12 @@ describe('AI information boundary',()=>{
  it('contains no hole card or live deck, is invariant under private changes',()=>{const g=startHand(initial(),seeded(9));const altered=structuredClone(g);altered.cards[0][0]=51;altered.deck.reverse();expect(view(g,1)).toEqual(view(altered,1));expect(decide(view(g,1),'normal',seeded(18))).toEqual(decide(view(altered,1),'normal',seeded(18)))});
  it('calculates near-certain equity of unbeatable complete hand',()=>{const v=view(startHand(initial(),seeded(3)),1);v.own=[c(10),c(11),c(12),c(13),c(14)];v.exposed=[c(2,1),c(4,1),c(6,1),c(8,1)];expect(equity(v,200,seeded(1))).toBe(1)});
  it('shuffles a complete unmodified deck',()=>{expect([...shuffle(seeded(1))].sort((a,b)=>a-b)).toEqual(Array.from({length:52},(_,i)=>i))})
+});
+describe('AI personalities',()=>{
+ const spot=()=>{const v=view(startHand(initial(),seeded(5)),1);return v};
+ const tally=(p:Personality,facing:boolean)=>{const r=seeded(77);let raises=0,folds=0;for(let n=0;n<160;n++){const v=spot();if(facing){v.otherPaid=40;v.pot=90}const d=decide(v,'normal',r,p);if(d.action.type==='raise')raises++;if(d.action.type==='fold')folds++}return {raises,folds}};
+ it('balanced keeps the original decision exactly',()=>{const v=spot();expect(decide(v,'normal',seeded(4))).toEqual(decide(v,'normal',seeded(4),'balanced'))});
+ it('styles shift aggression and folding in the expected direction',()=>{const tight=tally('tight',true),aggressive=tally('aggressive',false),balanced=tally('balanced',false),bluffer=tally('bluffer',true),balancedFacing=tally('balanced',true);expect(tight.folds).toBeGreaterThanOrEqual(balancedFacing.folds);expect(aggressive.raises).toBeGreaterThan(balanced.raises);expect(bluffer.raises).toBeGreaterThan(balancedFacing.raises)});
+ it('every style respects the information boundary',()=>{const g=startHand(initial(),seeded(9));const altered=structuredClone(g);altered.cards[0][0]=51;altered.deck.reverse();for(const p of Object.keys(PERSONALITIES) as Personality[])expect(decide(view(g,1),'normal',seeded(18),p)).toEqual(decide(view(altered,1),'normal',seeded(18),p))});
+ it('validates stored personality names',()=>{expect(isPersonality('bluffer')).toBe(true);expect(isPersonality('toString')).toBe(false);expect(isPersonality(null)).toBe(false)});
 });
