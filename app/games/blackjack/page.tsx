@@ -1,3 +1,4 @@
+import { RecentGameMark } from '@/components/games/recent-games';
 import { BlackjackRoom } from '@/components/games/blackjack/blackjack-room';
 
 export const metadata = {
@@ -12,5 +13,10 @@ export default async function BlackjackPage({
   searchParams: Promise<{ from?: string }>;
 }) {
   const { from } = await searchParams;
-  return <BlackjackRoom fromExplore={from === 'explore'} />;
+  return (
+    <>
+      <RecentGameMark gameId="blackjack" />
+      <BlackjackRoom fromExplore={from === 'explore'} />
+    </>
+  );
 }

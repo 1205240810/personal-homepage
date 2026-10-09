@@ -10,8 +10,10 @@ import {
   ScanLine,
   Zap,
   ScanSearch,
+  CalendarDays,
 } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
+import { RecentGameMark, RecentGames } from '@/components/games/recent-games';
 import { GAMES, type GameDefinition } from '@/lib/games/catalog';
 import { PULSE_LEVELS } from '@/lib/pulse-puzzle';
 import type { ReactNode } from 'react';
@@ -388,6 +390,31 @@ const previews = {
   'mech-sweeper': SweeperPreview,
 };
 
+function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
+  const daily = GAMES.filter((game) => game.daily);
+  if (!daily.length) return null;
+  return (
+    <section className="room-daily" aria-labelledby="room-daily-title">
+      <h2 id="room-daily-title">
+        <CalendarDays size={15} strokeWidth={1.6} aria-hidden="true" />
+        今日挑战
+      </h2>
+      <p>按日期生成，每天零点换新题；和朋友比同一张。</p>
+      <ul>
+        {daily.map((game) => (
+          <li key={game.id}>
+            <a href={`${game.href}${fromExplore ? '?from=explore' : ''}`}>
+              <strong>{game.title}</strong>
+              <span>{game.daily}</span>
+              <ArrowRight size={16} strokeWidth={1.5} aria-hidden="true" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
   return (
     <main className="games-shell game-room">
@@ -400,6 +427,10 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
         <p>
           打牌、掷骰、接线路、排查故障，或者安静解一道数独。选一个喜欢的，随时开始。
         </p>
+      </div>
+      <div className="room-shortcuts">
+        <DailyChallenges fromExplore={fromExplore} />
+        <RecentGames fromExplore={fromExplore} />
       </div>
       <section className="game-room-selection" aria-label="选择游戏">
         {GAMES.map((game, index) => {
@@ -455,6 +486,7 @@ export function GamePageFrame({
 }) {
   return (
     <main className="games-shell game-page">
+      <RecentGameMark gameId={game.id} />
       <GamesHeader fromExplore={fromExplore} gamePage />
       <a
         className="games-breadcrumb"

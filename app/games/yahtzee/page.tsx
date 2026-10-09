@@ -1,3 +1,4 @@
+import { RecentGameMark } from '@/components/games/recent-games';
 import { StandaloneGameRoom } from '@/components/games/standalone-game-room';
 
 export const metadata = {
@@ -12,6 +13,9 @@ export default async function YahtzeePage({
 }) {
   const { from } = await searchParams;
   return (
-    <StandaloneGameRoom gameId="yahtzee" fromExplore={from === 'explore'} />
+    <>
+      <RecentGameMark gameId="yahtzee" />
+      <StandaloneGameRoom gameId="yahtzee" fromExplore={from === 'explore'} />
+    </>
   );
 }

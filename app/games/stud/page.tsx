@@ -1,3 +1,4 @@
+import { RecentGameMark } from '@/components/games/recent-games';
 import { StandaloneGameRoom } from '@/components/games/standalone-game-room';
 
 export const metadata = {
@@ -11,5 +12,10 @@ export default async function StudPage({
   searchParams: Promise<{ from?: string }>;
 }) {
   const { from } = await searchParams;
-  return <StandaloneGameRoom gameId="stud" fromExplore={from === 'explore'} />;
+  return (
+    <>
+      <RecentGameMark gameId="stud" />
+      <StandaloneGameRoom gameId="stud" fromExplore={from === 'explore'} />
+    </>
+  );
 }
