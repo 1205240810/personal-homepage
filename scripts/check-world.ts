@@ -85,6 +85,34 @@ test('电路初始未解，旋转能解，断开的出口不算完成', () => {
 });
 
 import { SCENES, getScene } from '../lib/world/registry.ts';
+import { createScenePrefetcher, sceneAssets } from '../lib/world/prefetch.ts';
+test('门前预取：每个房间的原画和地图只请求一次，失败后允许重试', async () => {
+  const urls: string[] = [];
+  let fail = true;
+  const prefetch = createScenePrefetcher((url) => {
+    urls.push(url);
+    if (fail && url.endsWith('.json'))
+      return Promise.reject(new Error('offline'));
+    return Promise.resolve();
+  });
+  const room = getScene('life');
+  prefetch(room);
+  prefetch(room);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(urls, sceneAssets(room));
+  fail = false;
+  prefetch(room);
+  assert.deepEqual(urls.slice(2), [`/maps/${room.id}.json`]);
+  for (const scene of SCENES)
+    for (const node of scene.nodes)
+      if (node.action.type === 'enter-scene')
+        assert.ok(
+          SCENES.some(
+            (s) => s.id === (node.action as { sceneId: string }).sceneId,
+          ),
+          `${node.id} 指向不存在的场景`,
+        );
+});
 test('机甲通道连续，舱室都可原路返回，公开内容不被游戏进度锁定', () => {
   const hub = getScene('hub');
   for (const scene of SCENES) {

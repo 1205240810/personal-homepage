@@ -5,6 +5,7 @@ import { traversable, clearSegment, findRoute } from './navigation';
 import { distance } from './geometry';
 import { getDiscovery } from './discoveries';
 import { makeArcadeTexture } from './arcade-cabinet';
+import { createScenePrefetcher } from './prefetch';
 import type {
   GameHandle,
   InteractionNode,
@@ -35,6 +36,7 @@ export function createWorld(
   let input = { x: 0, y: 0 },
     active: ArchiveScene | undefined,
     near: InteractionNode | null = null;
+  const prefetchScene = createScenePrefetcher();
   let transitionTimer: ReturnType<typeof setTimeout> | undefined,
     finishTransition: (() => void) | undefined;
   // The legacy exploration field is retained only for old save compatibility. It never gates content or travel.
@@ -650,6 +652,14 @@ export function createWorld(
         min = Infinity;
       def.nodes.forEach((n, i) => {
         const gap = distance(n, state.position);
+        // Warm the next room while the player is still a few steps from its door.
+        const door = n.action.type === 'enter-scene' ? n.action.sceneId : '';
+        if (
+          door &&
+          gap < (n.radius ?? 45) * 4 &&
+          SCENES.some((scene) => scene.id === door)
+        )
+          prefetchScene(getScene(door));
         if (gap < min && this.canInteract(n)) {
           candidate = n;
           min = gap;
