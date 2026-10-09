@@ -26,6 +26,9 @@ const files = [
   'standardTypes.ts',
   'standardGame.ts',
   'standardSolver.ts',
+  'hilo.ts',
+  'HiLoTrainer.tsx',
+  'hilo.css',
 ];
 const checkOnly = process.argv.includes('--check');
 const unknownArgs = process.argv.slice(2).filter((arg) => arg !== '--check');

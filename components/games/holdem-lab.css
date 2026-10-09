@@ -1563,6 +1563,8 @@
   }
   .poker-main {
     grid-template-rows: auto auto;
+    /* The page scrolls on phones; let the control deck stick to the viewport. */
+    overflow: visible;
   }
   .poker-arena {
     height: 630px;
@@ -1838,9 +1840,16 @@
     bottom: 18px;
     font-size: 7px;
   }
+  /* Keep 开始练习 / betting controls on screen while the tall table scrolls. */
   .poker-control-deck {
-    padding: 16px 16px 18px;
-    min-height: 110px;
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+    min-height: 0;
+    background: linear-gradient(#162a20f2, #13241cfa);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
   .poker-start,
   .poker-finish {
