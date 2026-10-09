@@ -8,6 +8,7 @@ import {
   Dices,
   Layers3,
   ScanLine,
+  Zap,
 } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { GAMES, type GameDefinition } from '@/lib/games/catalog';
@@ -270,6 +271,44 @@ function StudPreview() {
   );
 }
 
+/** Static 4×4 wiring sketch: a lit branch from the core and one dark, unturned tile. */
+function CircuitPreview() {
+  // Edge bits clockwise from the top (1 上, 2 右, 4 下, 8 左); 0 = core.
+  const tiles = [4, 4, 6, 8, 5, 3, 13, 4, 7, 14, 11, 9, 1, 3, 10, 1];
+  const dark = new Set([15]);
+  return (
+    <div className="room-circuit-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>WIRING / 07</span>
+        <Zap size={18} strokeWidth={1.4} />
+      </div>
+      <div className="room-circuit-grid">
+        {tiles.map((mask, index) => (
+          <svg
+            viewBox="0 0 100 100"
+            key={index}
+            className={dark.has(index) ? '' : 'is-on'}
+          >
+            {mask & 1 ? <line x1="50" y1="50" x2="50" y2="0" /> : null}
+            {mask & 2 ? <line x1="50" y1="50" x2="100" y2="50" /> : null}
+            {mask & 4 ? <line x1="50" y1="50" x2="50" y2="100" /> : null}
+            {mask & 8 ? <line x1="50" y1="50" x2="0" y2="50" /> : null}
+            {index === 5 ? (
+              <rect x="30" y="30" width="40" height="40" rx="7" />
+            ) : [0, 1, 3, 7, 12, 15].includes(index) ? (
+              <circle cx="50" cy="50" r="16" />
+            ) : null}
+          </svg>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>4–7 GRID / DAILY</span>
+        <span>转一转，接回每盏灯</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -277,6 +316,7 @@ const previews = {
   sudoku: SudokuPreview,
   yahtzee: DicePreview,
   stud: StudPreview,
+  'circuit-repair': CircuitPreview,
 };
 
 export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
@@ -288,7 +328,7 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
           <Gamepad2 size={16} strokeWidth={1.5} aria-hidden="true" /> THE ARCADE
         </span>
         <h1>来一局，换换脑子。</h1>
-        <p>打牌、掷骰，或者安静解一道数独。选一个喜欢的，随时开始。</p>
+        <p>打牌、掷骰、接线路，或者安静解一道数独。选一个喜欢的，随时开始。</p>
       </div>
       <section className="game-room-selection" aria-label="选择游戏">
         {GAMES.map((game, index) => {

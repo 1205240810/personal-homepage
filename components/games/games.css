@@ -447,7 +447,8 @@
 }
 .room-sudoku-preview,
 .room-dice-preview,
-.room-stud-preview {
+.room-stud-preview,
+.room-circuit-preview {
   min-height: 240px;
   padding: 18px 21px 13px;
   border: 1px solid #263029;
@@ -795,7 +796,8 @@
   .room-pulse-preview,
   .room-sudoku-preview,
   .room-dice-preview,
-  .room-stud-preview {
+  .room-stud-preview,
+  .room-circuit-preview {
     min-height: 224px;
   }
   .room-pulse-grid {
@@ -873,7 +875,8 @@
   .room-pulse-preview,
   .room-sudoku-preview,
   .room-dice-preview,
-  .room-stud-preview {
+  .room-stud-preview,
+  .room-circuit-preview {
     padding: 13px;
   }
   .room-blackjack-hand {
@@ -928,6 +931,58 @@
 @media (max-width: 360px) {
   .game-room-intro {
     padding: 16px 0 8px;
+  }
+}
+.room-circuit-preview {
+  color: #c9d1bf;
+  background: #26312b;
+  box-shadow:
+    inset 0 1px 6px #15231d66,
+    0 1px #eff1e8;
+}
+.room-circuit-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  width: 136px;
+  margin: 12px auto;
+  padding: 5px;
+  background: #18261c;
+  border: 1px solid #56634a;
+  border-radius: 5px;
+}
+.room-circuit-grid svg {
+  display: block;
+  aspect-ratio: 1;
+  width: 100%;
+  background: #2f3d2d;
+  border-radius: 3px;
+}
+.room-circuit-grid line {
+  stroke: #56664d;
+  stroke-width: 13;
+}
+.room-circuit-grid circle {
+  fill: #2a3628;
+  stroke: #6f7f62;
+  stroke-width: 6;
+}
+.room-circuit-grid rect {
+  fill: #c98b4a;
+  stroke: #f1d699;
+  stroke-width: 5;
+}
+.room-circuit-grid .is-on line {
+  stroke: #dcba78;
+}
+.room-circuit-grid .is-on circle {
+  fill: #f6d98f;
+  stroke: #fff2cb;
+}
+@media (max-width: 760px) {
+  .room-circuit-grid {
+    width: 124px;
+    margin: 8px auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {
