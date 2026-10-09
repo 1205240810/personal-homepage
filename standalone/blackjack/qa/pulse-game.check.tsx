@@ -11,6 +11,12 @@ import { renderToString } from 'react-dom/server';
 import { hydrateRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PulseGame } from '../../../components/home/pulse-game';
+import { PulseDaily } from '../../../components/home/pulse-daily';
+import {
+  PULSE_DAILY_KEY,
+  dailyPuzzle,
+  solveDaily,
+} from '../../../lib/pulse-daily';
 import {
   PULSE_CHAPTERS,
   PULSE_LEVELS,
@@ -352,5 +358,215 @@ describe('Signal Pulse browser-local sessions', () => {
       await act(async () => root.unmount());
       container.remove();
     }
+  });
+});
+
+describe('Signal Pulse daily challenge', () => {
+  const mountDaily = () =>
+    render(
+      <StrictMode>
+        <div className="signal-stage">
+          <PulseDaily />
+        </div>
+      </StrictMode>,
+    );
+  const dailyCells = () =>
+    within(
+      screen.getByRole('group', { name: /^今日 \d × \d 灯阵$/ }),
+    ).getAllByRole('button');
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 9, 12));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('plays daily boards beside all thirty fixed levels with independent progress and stars', () => {
+    const finalLevel = PULSE_LEVELS[29];
+    const fixedSave = JSON.stringify(createPulseProgress(finalLevel.id));
+    localStorage.setItem(PULSE_PROGRESS_KEY, fixedSave);
+    render(
+      <StrictMode>
+        <div className="signal-stage">
+          <PulseDaily />
+          <PulseGame />
+        </div>
+      </StrictMode>,
+    );
+    const daily = within(screen.getByRole('region', { name: '今日挑战' }));
+    const fixed = within(
+      screen.getByRole('region', { name: '休息一下，脉冲归零。' }),
+    );
+    expect(fixed.getByText(/已完成 0 \/ 30/)).toBeTruthy();
+    const dailyBoard = within(
+      daily.getByRole('group', { name: '今日 5 × 5 灯阵' }),
+    );
+    const puzzle = dailyPuzzle('2026-10-09', 5);
+    for (const cell of solveDaily(puzzle.board, 5)!)
+      fireEvent.click(dailyBoard.getAllByRole('button')[cell]);
+    expect(daily.getByText(/获得 3 星/)).toBeTruthy();
+    expect(localStorage.getItem(PULSE_PROGRESS_KEY)).toBe(fixedSave);
+    const dailySave = localStorage.getItem(PULSE_DAILY_KEY);
+
+    const fixedCells = within(
+      fixed.getByRole('group', { name: '5 × 5 灯阵' }),
+    ).getAllByRole('button');
+    const solution = solvePulse(finalLevel.board, finalLevel.size)!;
+    for (let cell = 0; cell < fixedCells.length; cell++)
+      if (solution & (1 << cell)) fireEvent.click(fixedCells[cell]);
+    expect(
+      fixed.getByRole('button', { name: /第 30 关：满庭归寂，已完成，3 星/ }),
+    ).toBeTruthy();
+    expect(readSaved().results[30]).toEqual({
+      moves: finalLevel.par,
+      hints: 0,
+    });
+    expect(localStorage.getItem(PULSE_DAILY_KEY)).toBe(dailySave);
+  });
+
+  it("solves today's 6 × 6 at par for three stars and keeps it after remount", () => {
+    const first = mountDaily();
+    fireEvent.click(screen.getByRole('button', { name: /^6 × 6/ }));
+    expect(dailyCells()).toHaveLength(36);
+    const puzzle = dailyPuzzle('2026-10-09', 6);
+    expect(
+      screen.getByText(`最短 ${puzzle.par} 步`, { exact: false }),
+    ).toBeTruthy();
+    for (const cell of solveDaily(puzzle.board, 6)!)
+      fireEvent.click(dailyCells()[cell]);
+    expect(screen.getByText(/获得 3 星/)).toBeTruthy();
+    expect(dailyCells().every((b) => (b as HTMLButtonElement).disabled)).toBe(
+      true,
+    );
+    const saved = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(saved.records['2026-10-09:6']).toEqual({
+      moves: puzzle.par,
+      hints: 0,
+      stars: 3,
+    });
+    first.unmount();
+    mountDaily();
+    expect(screen.getByLabelText('今日已获 3 / 9 星')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: '6 × 6，已获 3 星' }),
+    ).toBeTruthy();
+  });
+
+  it('keeps each size in progress separately, counts a hint once and rates extra moves lower', () => {
+    mountDaily();
+    fireEvent.click(screen.getByRole('button', { name: /^4 × 4/ }));
+    fireEvent.click(dailyCells()[0]);
+    fireEvent.click(dailyCells()[0]);
+    fireEvent.click(screen.getByRole('button', { name: /^5 × 5/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^4 × 4/ }));
+    expect(screen.getByText('02')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '今日灯阵提示' }));
+    fireEvent.click(screen.getByRole('button', { name: '今日灯阵提示' }));
+    expect(
+      dailyCells().filter((b) =>
+        /建议按这里/.test(b.getAttribute('aria-label')!),
+      ),
+    ).toHaveLength(1);
+    const puzzle = dailyPuzzle('2026-10-09', 4);
+    for (const cell of solveDaily(puzzle.board, 4)!)
+      fireEvent.click(dailyCells()[cell]);
+    const record = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!).records[
+      '2026-10-09:4'
+    ];
+    expect(record).toEqual({ moves: puzzle.par + 2, hints: 1, stars: 2 });
+    expect(screen.getByText(/获得 2 星.*用了 1 次提示/)).toBeTruthy();
+  });
+
+  it("keeps newer-day progress and both days' records when an overnight tab resumes", () => {
+    vi.setSystemTime(new Date(2026, 9, 9, 23, 59));
+    const oldTab = mountDaily();
+    const oldView = within(oldTab.container);
+    const oldCells = oldView.getAllByRole('button', {
+      name: /^第 \d 行第 \d 列/,
+    });
+    fireEvent.click(oldCells[0]);
+
+    vi.setSystemTime(new Date(2026, 9, 10, 12));
+    const newTab = mountDaily();
+    const newView = within(newTab.container);
+    const newCells = newView.getAllByRole('button', {
+      name: /^第 \d 行第 \d 列/,
+    });
+    const newPuzzle = dailyPuzzle('2026-10-10', 5);
+    for (const cell of solveDaily(newPuzzle.board, 5)!)
+      fireEvent.click(newCells[cell]);
+    fireEvent.click(newView.getByRole('button', { name: /^6 × 6/ }));
+    const newSix = newView.getAllByRole('button', {
+      name: /^第 \d 行第 \d 列/,
+    });
+    fireEvent.click(newSix[7]);
+    const before = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(before.records['2026-10-10:5']).toBeTruthy();
+
+    // The older session remains on its own puzzle, but must not erase today.
+    fireEvent.click(oldCells[0]);
+    const after = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(after).toEqual(before);
+    expect(oldView.getByText('DAILY · 2026-10-09')).toBeTruthy();
+    const oldPuzzle = dailyPuzzle('2026-10-09', 5);
+    for (const cell of solveDaily(oldPuzzle.board, 5)!)
+      fireEvent.click(oldCells[cell]);
+    const completed = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(completed.date).toBe('2026-10-10');
+    expect(completed.boards).toEqual(before.boards);
+    expect(completed.records['2026-10-10:5']).toEqual(
+      before.records['2026-10-10:5'],
+    );
+    expect(completed.records['2026-10-09:5'].moves).toBe(oldPuzzle.par + 2);
+
+    // The newer tab also reconciles the older tab's subsequently earned record.
+    fireEvent.click(newSix[8]);
+    expect(JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!).records).toEqual(
+      completed.records,
+    );
+  });
+
+  it("preserves other sizes' progress when two same-day tabs save", () => {
+    const first = mountDaily();
+    const second = mountDaily();
+    const firstView = within(first.container);
+    const secondView = within(second.container);
+    fireEvent.click(firstView.getByRole('button', { name: /^4 × 4/ }));
+    fireEvent.click(
+      firstView.getAllByRole('button', { name: /^第 \d 行第 \d 列/ })[0],
+    );
+    fireEvent.click(secondView.getByRole('button', { name: /^6 × 6/ }));
+    fireEvent.click(
+      secondView.getAllByRole('button', { name: /^第 \d 行第 \d 列/ })[7],
+    );
+    let saved = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(saved.boards[4].presses).toEqual([0]);
+    expect(saved.boards[6].presses).toEqual([7]);
+
+    fireEvent.click(firstView.getByRole('button', { name: /^5 × 5/ }));
+    fireEvent.click(
+      firstView.getAllByRole('button', { name: /^第 \d 行第 \d 列/ })[1],
+    );
+    saved = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(saved.boards[4].presses).toEqual([0]);
+    expect(saved.boards[5].presses).toEqual([1]);
+    expect(saved.boards[6].presses).toEqual([7]);
+    fireEvent.click(firstView.getByRole('button', { name: /^6 × 6/ }));
+    expect(firstView.getByText('01')).toBeTruthy();
+  });
+
+  it('ignores a tampered save and starts today fresh', () => {
+    localStorage.setItem(
+      PULSE_DAILY_KEY,
+      JSON.stringify({
+        version: 1,
+        date: '2026-10-09',
+        size: 6,
+        boards: { 4: { presses: [99], hints: 0 } },
+        records: {},
+      }),
+    );
+    mountDaily();
+    expect(screen.getByText(/旧存档无法读取/)).toBeTruthy();
+    expect(screen.getByText('00')).toBeTruthy();
   });
 });
