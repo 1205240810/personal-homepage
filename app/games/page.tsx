@@ -3,7 +3,7 @@ import { GameRoom } from '@/components/games/game-room';
 export const metadata = {
   title: '游戏室 · 徒手拆机甲',
   description:
-    '在游戏室练习德州扑克与标准二十一点，挑战数独、快艇骰子、五张梭哈和灯阵解谜。',
+    '在游戏室练习德州扑克与标准二十一点，挑战数独、快艇骰子、五张梭哈、灯阵、线路解谜与机甲扫雷。',
 };
 
 export default async function GamesPage({

@@ -1,10 +1,14 @@
+import { PULSE_LEVELS } from '../pulse-puzzle.ts';
+
 export type GameId =
   | 'holdem-lab'
   | 'blackjack'
   | 'signal-pulse'
   | 'sudoku'
   | 'yahtzee'
-  | 'stud';
+  | 'stud'
+  | 'circuit-repair'
+  | 'mech-sweeper';
 
 export type GameDefinition = {
   id: GameId;
@@ -63,7 +67,7 @@ export const GAMES: readonly GameDefinition[] = [
     id: 'stud',
     title: '绯夜五张梭哈',
     description:
-      '一张暗牌，四张明牌。随着牌面展开选择下注，与夜莺 AI 完成十手练习。',
+      '一暗四明，读牌也读下注。与夜莺 AI 练习十手，再从赛后建议里拆解自己的选择。',
     href: '/games/stud',
     category: '牌桌推演',
     controls: '鼠标或触控选择下注；C 过牌或跟注，F 弃牌',
@@ -72,11 +76,33 @@ export const GAMES: readonly GameDefinition[] = [
   {
     id: 'signal-pulse',
     title: '信号接力',
-    description: '点亮会传递，熄灭也会。利用相邻灯的连锁变化，让整个灯阵归零。',
+    description: `${PULSE_LEVELS.length} 道渐进灯阵。利用相邻灯的连锁变化，让整个灯阵归零，随时保存继续。`,
     href: '/games/signal-pulse',
     category: '灯阵逻辑',
     controls: '点击或轻触灯格，翻转自己与相邻灯',
     estimatedDuration: '适合短暂休息',
+  },
+  {
+    id: 'circuit-repair',
+    title: '线路检修',
+    description:
+      '机甲核心断了电。旋转每一块线路，让电流接通所有端点灯，且不留一个断头。每天一张今日线路。',
+    href: '/games/circuit-repair',
+    category: '旋转解谜',
+    controls:
+      '点击顺时针旋转，右键或 Shift + 点击逆时针；方向键移动，L 锁定线路块',
+    estimatedDuration: '每张约 1–6 分钟',
+  },
+  {
+    id: 'mech-sweeper',
+    title: '机甲扫雷',
+    description:
+      '检修舱里藏着故障模块。读懂信号数字，插旗标出每一处故障；误触一下，就是短路。第一次扫描一定安全。',
+    href: '/games/mech-sweeper',
+    category: '推理排查',
+    controls:
+      '点击扫描，右键、长按或标记模式插旗，点满旗的数字一次扫开周围；方向键移动，F 插旗',
+    estimatedDuration: '每张约 1–8 分钟',
   },
 ] as const;
 

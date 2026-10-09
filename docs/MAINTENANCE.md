@@ -72,7 +72,7 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 
 欢迎页保留工作台与机甲两个主入口，额外提供游戏室链接；工作台导航和侧栏均通向 `/games`。`lib/games/catalog.ts` 维护稳定游戏 ID、名称、说明、独立地址、分类、控制说明与预计游玩时长。新增游戏需完成独立页面与实际玩法，再加入目录，不显示未配置内容的假入口。具体模块边界与检查步骤见 [游戏室与扩展](GAMES.md)。
 
-当前独立游戏为 `/games/holdem-lab` 的德州扑克练习桌，以及 `/games/signal-pulse` 的信号接力。灯阵复用原有 `PulseGame` 与十二关数据，不复制一套规则。界面共享 `GamePageFrame` 与 `components/games/games.css`；独立灯阵适配样式为 `signal-pulse.css`。
+游戏室包含德州扑克、暗牌 21、九间数独、快艇骰子、绯夜五张梭哈、信号接力、线路检修与机甲扫雷。灯阵复用 `PulseGame` 与三十关数据，不复制一套规则。界面共享 `GamePageFrame` 与 `components/games/games.css`；独立灯阵适配样式为 `signal-pulse.css`。
 
 试作间的 `arcade-terminal` 是可达的街机角，执行 `open-arcade`。离开世界前先清空方向输入、暂停并保存人物位置，再打开 `/games?from=explore`。选择游戏时继续携带 `?from=explore`；返回游戏室保留该参数，「返回机甲」只跳转 `/explore`，不附加 scene 参数覆盖原存档。新增这种跨页面入口时，必须一起检查浏览器后退、手机触控与返回后的停步状态。
 
@@ -94,7 +94,7 @@ node scripts/inspect-cnblogs-backup.mjs /path/to/official-backup.db
 
 OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函数在 `lib/project-preview.ts`；相册样本在 `content/data/album-preview.json`，照片在 `public/art/album`。保留原始规则标签和分值，不把规则标签宣传成准确语义识别。地址规划真实本地计算，应用、下发及 Ping 明确为模拟回执。配送路径与日均成本的本地计算在 `lib/workbench-demos.ts`；网络仿真和创作流程的文字导览维护在 `lib/workbench-projects.ts`。
 
-灯阵定义在 `lib/pulse-puzzle.ts`，界面在 `components/home/pulse-game.tsx`。12 关分三阶段，前八关 4×4，后四关 5×5，最短步数依次为 1、2、2、3、3、4、5、6、6、7、8、9。新增关卡必须验证可解性与 `par` 最短步数，不能只凭视觉决定难度。`npm run check` 包含求解、边界和重复点击检查。提示、撤回与重来不影响内容访问；完成统计和最佳步数仅保存在当前页面内存，刷新重置。
+灯阵定义在 `lib/pulse-puzzle.ts`，界面在 `components/home/pulse-game.tsx`。30 关分六阶段，前八关 4×4，后续为 5×5；原十二关的稳定 ID、棋盘和最短步数保留，追加十八关，最短解逐步增加到十五步。新增关卡必须验证可解性与 `par` 最短步数，不能只凭视觉决定难度。`npm run check` 包含求解、边界和重复点击检查。提示、撤回与重来不影响内容访问；关卡、撤回历史、提示次数、完成统计及最佳步数自动保存在当前浏览器；扩关必须保持原 ID，以兼容旧存档。
 
 音乐音量保存在 `mecha-music-volume`，每次打开页面均由访客主动播放。更换曲目时同步来源和 THIRD_PARTY_NOTICES 授权记录。
 
@@ -102,7 +102,7 @@ OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函
 
 ## 手机适配
 
-工作台的内容 DOM 顺序为文章、项目、游戏室与探索入口，桌面用 Grid 并排排版；手机先呈现文章。六个项目可按类型筛选，手机选择项目后先提供摘要和展开入口，再复用同一套交互预览。游戏室六款游戏在手机改为单列，各游戏通过独立页面按需加载。主要触控控件至少 44px，输入字号 16px；正文代码固定 14px，避免 pre/code 重复缩小。修改项目卡片、游戏控制区或 5×5 灯阵时应检查窄屏溢出、操作按钮和焦点顺序。
+工作台的内容 DOM 顺序为文章、项目、游戏室与探索入口，桌面用 Grid 并排排版；手机先呈现文章。六个项目可按类型筛选，手机选择项目后先提供摘要和展开入口，再复用同一套交互预览。游戏室八款游戏在手机改为单列，各游戏通过独立页面按需加载。主要触控控件至少 44px，输入字号 16px；正文代码固定 14px，避免 pre/code 重复缩小。修改项目卡片、游戏控制区或 5×5 灯阵时应检查窄屏溢出、操作按钮和焦点顺序。
 
 文章抽屉直接子项不参与 Flex 收缩，关闭栏固定；手机主题筛选可展开，选中后收起。探索菜单和手动方向盘可折叠，点击物件自动寻路沿用原实现。触控布局同时考虑竖屏宽度、粗指针与短横屏，横屏保留可展开的方向盘。竖屏画布上下为导航与工具预留空间，地图继续 cover 与跟随人物，不修改地图坐标或碰撞；画布外由当前场景的暗化背景自然延伸。
 
@@ -114,4 +114,4 @@ OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函
 
 暗牌 21 在 `standalone/blackjack/src` 维护，避免直接修改宿主的 `generated` 目录。其独立测试与构建需在该目录运行；宿主的开发、检查、构建前会自动同步十七个运行文件。标准玩法的纯规则、教练与教程分别维护在 standardGame、standardSolver 和 StandardBlackjackGame；改动旧休闲求解器时先重新生成内联 Worker。详细步骤见 [暗牌 21 接入说明](BLACKJACK.md)。
 
-九间数独、快艇骰子与绯夜五张梭哈分别在 `standalone/sudoku`、`standalone/yahtzee`、`standalone/stud` 维护。主站会自动同步十八个运行文件，生成目录不直接编辑。三者都有独立 Vite/Vitest 配置和锁文件；先在各目录安装依赖再运行根命令 `npm run check:trio`。修改骰子 AI 后重新生成 `worker-source.ts`，修改任一源码后更新对应便携 HTML；完整步骤见 [三款游戏接入说明](GAMES-TRIO.md)。
+九间数独、快艇骰子与绯夜五张梭哈分别在 `standalone/sudoku`、`standalone/yahtzee`、`standalone/stud` 维护。主站会自动同步十九个运行文件，生成目录不直接编辑。三者都有独立 Vite/Vitest 配置和锁文件；先在各目录安装依赖再运行根命令 `npm run check:trio`。修改骰子 AI 后重新生成 `worker-source.ts`，修改任一源码后更新对应便携 HTML；完整步骤见 [三款游戏接入说明](GAMES-TRIO.md)。
