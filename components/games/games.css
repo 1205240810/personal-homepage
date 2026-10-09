@@ -111,7 +111,7 @@
   color: var(--games-muted);
 }
 .game-room-intro {
-  padding: 49px 0 36px;
+  padding: 28px 0 24px;
 }
 .game-room-intro h1 {
   font-size: clamp(33px, 4vw, 52px);
@@ -158,7 +158,7 @@
 .room-blackjack-preview,
 .room-holdem-preview,
 .room-pulse-preview {
-  min-height: 326px;
+  min-height: 232px;
   padding: 18px 21px 13px;
   border: 1px solid #263029;
   border-radius: 5px;
@@ -190,15 +190,15 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-top: 18px;
+  margin-top: 8px;
   color: #b3c2b5;
   font-size: 12px;
 }
 .room-blackjack-dealer i {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 45px;
+  width: 26px;
+  height: 32px;
   border: 2px solid #bdc9b0;
   border-radius: 3px;
   background: repeating-linear-gradient(45deg, #293d33 0 4px, #405947 4px 5px);
@@ -207,12 +207,12 @@
 .room-blackjack-hand {
   display: flex;
   justify-content: center;
-  height: 152px;
+  height: 102px;
   align-items: center;
 }
 .room-blackjack-hand > span {
-  width: 78px;
-  height: 105px;
+  width: 62px;
+  height: 84px;
   padding: 9px 12px;
   display: flex;
   flex-direction: column;
@@ -233,7 +233,7 @@
 .room-blackjack-hand i {
   font-style: normal;
   align-self: center;
-  font-size: 38px;
+  font-size: 29px;
   line-height: 1.2;
 }
 .room-blackjack-hand .is-red {
@@ -255,8 +255,10 @@
 .room-holdem-table {
   position: relative;
   height: 226px;
+  transform: scale(0.62);
+  transform-origin: center top;
   max-width: 440px;
-  margin: 5px auto;
+  margin: 5px auto -85px;
   isolation: isolate;
 }
 .room-table-rim {
@@ -405,8 +407,8 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 7px;
-  width: 178px;
-  margin: 25px auto 13px;
+  width: 140px;
+  margin: 14px auto 10px;
   padding: 7px;
   background: #18261c;
   border: 1px solid #56634a;
@@ -441,7 +443,7 @@
   text-align: center;
 }
 .room-game-copy {
-  padding: 23px 27px 22px;
+  padding: 17px 20px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -458,7 +460,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 .room-game h2 {
-  margin: 14px 0 8px;
+  margin: 9px 0 6px;
   font-size: 29px;
   font-weight: 560;
   letter-spacing: -0.035em;
@@ -475,7 +477,7 @@
   justify-content: space-between;
   align-items: center;
   min-height: 44px;
-  padding-top: 17px;
+  padding-top: 10px;
   margin-top: auto;
   color: var(--games-accent);
   font-size: 14px;
@@ -589,7 +591,7 @@
     padding: 0 22px 20px;
   }
   .game-room-intro {
-    padding: 34px 0 26px;
+    padding: 24px 0 20px;
   }
   .game-room-selection {
     grid-template-columns: minmax(0, 1fr);
@@ -598,13 +600,15 @@
   .room-blackjack-preview,
   .room-holdem-preview,
   .room-pulse-preview {
-    min-height: 316px;
+    min-height: 212px;
   }
   .room-holdem-table {
-    height: 216px;
+    height: 226px;
+    transform: scale(0.55);
+    margin-bottom: -100px;
   }
   .room-game-copy {
-    padding: 22px;
+    padding: 18px;
   }
   .game-room-bottom {
     flex-direction: column;
@@ -651,9 +655,13 @@
   .room-game-preview {
     padding: 10px;
   }
+  .room-blackjack-preview,
   .room-holdem-preview,
   .room-pulse-preview {
     padding: 13px;
+  }
+  .room-blackjack-hand {
+    height: 90px;
   }
   .room-game-copy {
     padding: 18px;

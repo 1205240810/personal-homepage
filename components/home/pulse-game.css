@@ -343,3 +343,53 @@
     width: 42px;
   }
 }
+
+:is(#workbench, .signal-stage) .pulse-resume {
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #bac8ad;
+  border-radius: 5px;
+  background: #f1f3e9;
+  color: #475c39;
+  font-size: 13px;
+  line-height: 1.6;
+}
+:is(#workbench, .signal-stage) .pulse-resume > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 6px;
+}
+:is(#workbench, .signal-stage) .pulse-resume button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  background: #dde5d2;
+  color: #3d4c37;
+}
+:is(#workbench, .signal-stage) .pulse-resume button:first-child {
+  background: #3d4c37;
+  color: #f4f1dd;
+}
+:is(#workbench, .signal-stage) .pulse-game button:focus-visible {
+  outline: 2px solid #8f552d;
+  outline-offset: 3px;
+}
+:is(#workbench, .signal-stage) .pulse-game .pulse-cell:focus-visible {
+  outline-color: #fff0bd;
+}
+:is(#workbench, .signal-stage) .pulse-storage {
+  display: block;
+  margin-top: 8px;
+  color: #657259;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+:is(#workbench, .signal-stage) .pulse-board {
+  min-inline-size: 0;
+}

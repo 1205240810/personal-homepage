@@ -30,3 +30,29 @@
  .sbj-app[data-phase='player'] .sbj-controls .sbj-status p,.sbj-app[data-phase='dealing'] .sbj-controls .sbj-status p,.sbj-app[data-phase='dealer'] .sbj-controls .sbj-status p{display:none}.sbj-play-area .sbj-status h2{font-size:14px;line-height:1.5;margin-bottom:0}.sbj-app[data-phase='insurance'] .sbj-status p{font-size:10px}.sbj-app .sbj-player-hand{scroll-margin-bottom:220px;scroll-margin-top:18px}.sbj-play-area .sbj-actions kbd{display:none}.sbj-play-area .sbj-actions>button{padding-right:10px}
 }
 @media(max-width:350px){.sbj-play-area .sbj-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.sbj-play-area .sbj-actions>button{min-height:60px;padding:9px 8px;font-size:12px!important}.sbj-play-area .sbj-actions>button small{font-size:8px}.sbj-play-area>.sbj-controls{padding-left:10px;padding-right:10px}}
+
+/* Secondary guidance stays one tap away without displacing the current hand. */
+.sbj-table-guide { margin: 4px 0 8px; border-bottom: 1px solid #d4ddbc25; }
+.sbj-table-guide summary { display: list-item; min-height: 44px; padding: 12px 2px; color: #d8dfca; cursor: pointer; font-size: 12px; }
+.sbj-table-guide summary span { float: right; margin-left: 12px; color: #a6bb9c; font-size: 11px; }
+.sbj-table-guide summary:focus-visible { outline: 3px solid #e9c991; outline-offset: 3px; }
+.sbj-table-guide .sbj-rule-strip { margin: 4px 0 12px; }
+.sbj-table-guide .sbj-intro { border: 0; margin-bottom: 0; padding-bottom: 12px; }
+.sbj-bankroll { margin-top: 12px; margin-bottom: 14px; }
+@media (max-width: 600px) {
+ .sbj-header { padding-bottom: 10px; }
+ .sbj-header-actions { margin-top: 10px; }
+ .sbj-bankroll { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin: 12px 0; }
+ .sbj-bankroll > div { padding-left: 8px; }
+ .sbj-bankroll > div:nth-child(3) { border-left: 1px solid #aabf922e; padding-left: 8px; }
+ .sbj-bankroll small { font-size: 9px; line-height: 1.5; min-height: 27px; margin-bottom: 3px; }
+ .sbj-bankroll strong, .sbj-bankroll b { font-size: clamp(15px,4.8vw,24px); overflow-wrap: anywhere; }
+ .sbj-table-guide summary { font-size: 11px; }
+ .sbj-table-guide summary span { font-size: 10px; }
+ .sbj-table { padding-top: 18px; padding-bottom: 15px; }
+ .sbj-dealer-cards { min-height: 104px; }
+ .sbj-dealer-cards .bj-card, .sbj-dealer-cards .bj-card-slot { width: 66px; height: 94px; }
+ .sbj-dealer-cards .bj-card-corner b { font-size: 19px; }
+ .sbj-dealer-cards .bj-card-art > span { font-size: 28px; }
+ .sbj-table-center { margin: 4px 0 9px; }
+}

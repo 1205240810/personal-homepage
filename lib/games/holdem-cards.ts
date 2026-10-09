@@ -1,3 +1,4 @@
+import { finishComputation } from './cooperative-computation.ts';
 /** A standard deck: rank = floor(card / 4) + 2, suit = card % 4. */
 export type Card = number;
 
@@ -228,6 +229,18 @@ export function sampleRangeWorlds(
   samples = 600,
   random: () => number = Math.random,
 ): EquityWorld[] {
+  return finishComputation(
+    sampleRangeWorldsSteps(hole, board, opponents, samples, random),
+  );
+}
+
+export function* sampleRangeWorldsSteps(
+  hole: readonly number[],
+  board: readonly number[],
+  opponents: readonly OpponentRange[],
+  samples = 600,
+  random: () => number = Math.random,
+): Generator<void, EquityWorld[]> {
   if (hole.length !== 2 || board.length > 5 || opponents.length > 8)
     throw new RangeError('权益模型需要两张底牌、至多五张公共牌及八个对手。');
   if (!Number.isSafeInteger(samples) || samples < 1)
@@ -267,8 +280,10 @@ export function sampleRangeWorlds(
   };
   const worlds: EquityWorld[] = [];
   for (let sample = 0; sample < samples; sample++) {
+    yield;
     let chosen: number[][] | null = null;
     for (let retry = 0; retry < 4096; retry++) {
+      if (retry && retry % 32 === 0) yield;
       const candidates = ranges.map((range) => [...pick(range)]);
       const all = candidates.flat();
       if (new Set(all).size === all.length) {
