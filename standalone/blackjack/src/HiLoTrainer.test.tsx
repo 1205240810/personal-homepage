@@ -54,8 +54,46 @@ describe('HiLoTrainer', () => {
     expect(screen.getByRole('status').textContent).toMatch(/差一点/);
     expect(screen.getByText(/牌靴剩余 94 张/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '继续这个牌靴' }));
-    act(() => { vi.advanceTimersByTime(500 * 11); });
+    expect(screen.getByText('本轮 0 / 10 张')).toBeTruthy();
+    expect(screen.getByText('继续上一轮牌靴，流水数继续累计。')).toBeTruthy();
+    // The previous round's final card must not be dealt again during the
+    // countdown to this round's first card.
+    expect(screen.queryByRole('img')).toBeNull();
+    act(() => { vi.advanceTimersByTime(499); });
+    expect(screen.queryByRole('img')).toBeNull();
+    act(() => { vi.advanceTimersByTime(1); });
+    expect(screen.getByRole('img')).toBeTruthy();
+    expect(screen.getByText('本轮 1 / 10 张')).toBeTruthy();
+    act(() => { vi.advanceTimersByTime(500 * 10); });
     expect(screen.getByText(/牌靴剩余 84 张/)).toBeTruthy();
+  });
+
+  it('discloses a required reshuffle and grades the new shoe from zero', () => {
+    render(<HiLoTrainer persist={false} />);
+    fireEvent.click(screen.getByRole('button', { name: '1 副' }));
+    fireEvent.click(screen.getByRole('button', { name: '手动翻牌' }));
+    fireEvent.click(screen.getByRole('button', { name: '30 张' }));
+    fireEvent.click(screen.getByRole('button', { name: /洗新牌靴/ }));
+    for (let round = 0; round < 2; round++) {
+      let count = 0;
+      for (let i = 0; i < 30; i++) {
+        const rank = screen.getByRole('img').getAttribute('aria-label')!.split(' ')[1];
+        count += hiLoValue(rank);
+        fireEvent.click(screen.getByRole('button', { name: i < 29 ? /下一张/ : /看完了/ }));
+      }
+      fireEvent.change(screen.getByLabelText(/流水数/), { target: { value: String(count) } });
+      fireEvent.click(screen.getByRole('button', { name: '确认' }));
+      expect(screen.getByRole('status').textContent).toMatch(/答对了/);
+      expect(screen.getByText(/牌靴剩余 22 张/)).toBeTruthy();
+      expect(screen.queryByRole('button', { name: '继续这个牌靴' })).toBeNull();
+      const reshuffle = screen.getByRole('button', { name: '洗新牌靴，流水数归零' });
+      if (round === 0) {
+        fireEvent.click(reshuffle);
+        expect(screen.getByText('新牌靴：流水数从 0 开始。')).toBeTruthy();
+        expect(screen.getByText('本轮 1 / 30 张')).toBeTruthy();
+        expect(screen.getByText(/牌靴剩余 51 张/)).toBeTruthy();
+      }
+    }
   });
 
   it('is an optional third tab in the lobby', () => {

@@ -39,9 +39,10 @@ export function HiLoTrainer({ persist = true }: { persist?: boolean }) {
   const shown = Math.min(dealt, roundEnd);
   const view: Phase = phase === 'dealing' && dealt > roundEnd ? 'answer' : phase;
   const seen = shoe.slice(0, shown);
-  const current = shown > 0 ? shoe[shown - 1] : undefined;
+  const current = shown > roundStart ? shoe[shown - 1] : undefined;
   const running = runningCount(seen);
   const remaining = shoe.length - shown;
+  const needsShuffle = remaining < size + 13;
 
   useEffect(() => {
     if (view !== 'dealing' || ms === 0) return;
@@ -67,7 +68,7 @@ export function HiLoTrainer({ persist = true }: { persist?: boolean }) {
     let s = shoe;
     let d = shown;
     // Reshuffle at a fresh start or when fewer than a round + ¼ deck remain.
-    if (fresh || shoe.length - dealt < size + 13) {
+    if (fresh || needsShuffle) {
       s = createShoe(decks);
       d = 0;
       setShoe(s);
@@ -122,6 +123,7 @@ export function HiLoTrainer({ persist = true }: { persist?: boolean }) {
             <span>本轮 {shown - roundStart} / {roundEnd - roundStart} 张</span>
             <span>牌靴剩余 {remaining} 张 · 约 {remainingDecksLabel(remaining)} 副</span>
           </div>
+          <p className="hilo-shoe-note">{roundStart === 0 ? '新牌靴：流水数从 0 开始。' : '继续上一轮牌靴，流水数继续累计。'}</p>
           <div className="hilo-card-stage" aria-live={ms === 0 ? 'polite' : 'off'}>
             {view === 'dealing' && current ? (
               <div className="hilo-current" key={current.id}>
@@ -159,7 +161,7 @@ export function HiLoTrainer({ persist = true }: { persist?: boolean }) {
               </ol>
               <p className="hilo-sub">本轮净变化 {tag(runningCount(roundCards))}，上一轮结束时为 {tag(running - runningCount(roundCards))}。</p>
               <div className="hilo-controls">
-                <button type="button" ref={next} className="hilo-primary" onClick={() => startRound(false)}>继续这个牌靴</button>
+                <button type="button" ref={next} className="hilo-primary" onClick={() => startRound(false)}>{needsShuffle ? '洗新牌靴，流水数归零' : '继续这个牌靴'}</button>
                 <button type="button" onClick={() => setPhase('setup')}>调整设置</button>
               </div>
             </div>
