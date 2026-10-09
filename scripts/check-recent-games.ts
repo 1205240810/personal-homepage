@@ -97,5 +97,5 @@ void test('相对日期按本地日历日计算', () => {
 
 void test('今日挑战只列出带每日题的游戏', () => {
   const daily = GAMES.filter((g) => g.daily).map((g) => g.id);
-  assert.deepEqual(daily, ['circuit-repair', 'mech-sweeper']);
+  assert.deepEqual(daily, ['circuit-repair', 'mech-sweeper', 'fault-finder']);
 });

@@ -6,7 +6,8 @@ export type GameId =
   | 'yahtzee'
   | 'stud'
   | 'circuit-repair'
-  | 'mech-sweeper';
+  | 'mech-sweeper'
+  | 'fault-finder';
 
 export type GameDefinition = {
   id: GameId;
@@ -105,6 +106,18 @@ export const GAMES: readonly GameDefinition[] = [
       '点击扫描，右键、长按或标记模式插旗，点满旗的数字一次扫开周围；方向键移动，F 插旗',
     estimatedDuration: '每张约 1–8 分钟',
     daily: '今日故障舱：每天一张，第一次扫描一定安全',
+  },
+  {
+    id: 'fault-finder',
+    title: '故障排查',
+    description:
+      '传感器只告诉你每条线路上有几个故障。交叉比对读数，推断出到底是哪几个模块坏了——答案唯一，不用猜。',
+    href: '/games/fault-finder',
+    category: '逻辑推理',
+    controls:
+      '点击模块在故障、正常、未判断之间切换；方向键移动，F 标故障，X 标正常',
+    estimatedDuration: '每张约 1–6 分钟',
+    daily: '今日排查：传感器读数推理，答案唯一',
   },
 ] as const;
 

@@ -16,6 +16,7 @@ export default defineConfig({
       'qa/circuit-repair.check.tsx',
       'qa/mech-sweeper.check.tsx',
       'qa/game-room.check.tsx',
+      'qa/fault-finder.check.tsx',
     ],
     server: { deps: { inline: true } },
     deps: {

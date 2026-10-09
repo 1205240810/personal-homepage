@@ -17,6 +17,7 @@ describe('game room shortcuts', () => {
     expect(links.map((a) => a.getAttribute('href'))).toEqual([
       '/games/circuit-repair?from=explore',
       '/games/mech-sweeper?from=explore',
+      '/games/fault-finder?from=explore',
     ]);
   });
 

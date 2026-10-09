@@ -11,6 +11,7 @@ import {
   Zap,
   ScanSearch,
   CalendarDays,
+  Stethoscope,
 } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { RecentGameMark, RecentGames } from '@/components/games/recent-games';
@@ -378,6 +379,67 @@ function SweeperPreview() {
   );
 }
 
+/** Static sketch: a 4 × 4 bay, sensor counts on the edges, two suspects. */
+function FaultPreview() {
+  // '!' marked fault, 'v' marked healthy, '' undecided.
+  const cells = [
+    'v',
+    '',
+    '!',
+    'v',
+    'v',
+    'v',
+    '',
+    '',
+    '',
+    '!',
+    'v',
+    '',
+    'v',
+    '',
+    '',
+    'v',
+  ];
+  const rows = ['1', '', '1', '0'];
+  const cols = ['0', '1', '1', ''];
+  return (
+    <div className="room-fault-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>SENSOR LOGIC / 03</span>
+        <Stethoscope size={18} strokeWidth={1.4} />
+      </div>
+      <div className="room-fault-bay">
+        <div className="room-fault-grid">
+          {cells.map((cell, index) => (
+            <span
+              key={index}
+              className={
+                cell === '!' ? 'is-fault' : cell === 'v' ? 'is-ok' : ''
+              }
+            >
+              {cell === '!' ? '!' : cell === 'v' ? '✓' : ''}
+            </span>
+          ))}
+        </div>
+        <div className="room-fault-rows">
+          {rows.map((n, i) => (
+            <i key={i}>{n}</i>
+          ))}
+        </div>
+        <div className="room-fault-cols">
+          {cols.map((n, i) => (
+            <i key={i}>{n}</i>
+          ))}
+        </div>
+      </div>
+      <div className="room-preview-bottom">
+        <span>UNIQUE ANSWER / DAILY</span>
+        <span>比对读数，锁定故障</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -387,6 +449,7 @@ const previews = {
   stud: StudPreview,
   'circuit-repair': CircuitPreview,
   'mech-sweeper': SweeperPreview,
+  'fault-finder': FaultPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
