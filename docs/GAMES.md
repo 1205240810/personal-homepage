@@ -21,6 +21,11 @@
 
 `?from=explore` 只记录来路，不包含用户资料或游戏成绩。选择游戏后继续保留此参数，返回游戏室时也保留；「返回机甲」统一打开 `/explore`，让世界读取已有本机存档，不使用 scene 参数重新指定场景。世界离开前停止输入并保存位置，返回后仍在原场景的街机旁；世界布局版本变化或存储不可用时按原有安全出生点恢复。
 
+游戏室顶部有两块快捷入口：
+
+- **今日挑战**：列出 `GAMES` 中设置了 `daily` 字段的游戏（目前是线路检修和机甲扫雷）。这类游戏按日期生成题目，同一天所有人拿到同一张。新增带每日题的游戏时，只需给目录项填写 `daily` 说明。
+- **最近玩过**：每个游戏页面挂载 `RecentGameMark`（`GamePageFrame` 已内置；德州、21 点和三款独立游戏在各自的 `page.tsx` 中挂载），在 `tscjj:games:recent:v1` 中保存最近 4 个游戏的 ID 和访问时间，不保存成绩或其他资料。游戏室在 hydration 之后才读取；存档损坏时丢弃无效项，首次访问不显示这一块。规则和存储由 `scripts/check-recent-games.ts` 验证，界面由 `qa/game-room.check.tsx` 验证。
+
 ## 模块边界
 
 ```mermaid
@@ -123,7 +128,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 
 1. 在 `app/games/<stable-id>/page.tsx` 建立独立可访问页面。交互组件放在 `components/games/`，复杂规则拆成 `lib/games/` 中的纯函数；只在访问对应页面时加载游戏。
 2. 页面读取 `searchParams` 中的 `from`，将 `from === 'explore'` 传给 `GamePageFrame` 的 `fromExplore` 参数。共享外壳接收 `game` 与 `children`，无需再复制导航和备案页脚。
-3. 完成可玩的规则、重开或返回流程，再扩展 `GameId` 并添加 `GAMES` 项。填写准确的 `id`、`title`、`description`、`href`、`category`、`controls`、`estimatedDuration`；需要专属预览时，在目录展示组件中补准确的示意，不能挪用另一款游戏的画面，也不要用假截图或未来功能填满目录。
+3. 完成可玩的规则、重开或返回流程，再扩展 `GameId` 并添加 `GAMES` 项。填写准确的 `id`、`title`、`description`、`href`、`category`、`controls`、`estimatedDuration`，有每日题时再填 `daily`；不使用 `GamePageFrame` 的页面要自行挂载 `RecentGameMark`；需要专属预览时，在目录展示组件中补准确的示意，不能挪用另一款游戏的画面，也不要用假截图或未来功能填满目录。
 4. 规则有必要时补纯函数验证。至少检查异常输入、可结束性和重新开始；有分数或记录时说明保存范围，并处理存储不可用。
 5. 检查桌面与手机：控件可点击、无横向溢出、键盘焦点清楚，减少动态效果生效。核对从游戏室选游戏、独立地址刷新、返回游戏室、返回机甲和浏览器后退。
 6. 运行 `npm run check` 和目标构建：自托管 Node 使用 `npm run build:node`；Sites 使用 `npm run build`。源码推送与服务器发布是两件事，部署步骤继续遵循 [自有服务器部署](SELF-HOSTING.md)。

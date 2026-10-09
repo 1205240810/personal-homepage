@@ -16,6 +16,8 @@ export type GameDefinition = {
   category: string;
   controls: string;
   estimatedDuration: string;
+  /** Set for games with a date-seeded puzzle; shown in the game room's「今日挑战」. */
+  daily?: string;
 };
 
 // Stable game IDs and routes keep homepage and world entrances independent
@@ -90,6 +92,7 @@ export const GAMES: readonly GameDefinition[] = [
     controls:
       '点击顺时针旋转，右键或 Shift + 点击逆时针；方向键移动，L 锁定线路块',
     estimatedDuration: '每张约 1–6 分钟',
+    daily: '今日线路：同一天、同尺寸，所有人拿到同一张',
   },
   {
     id: 'mech-sweeper',
@@ -101,6 +104,7 @@ export const GAMES: readonly GameDefinition[] = [
     controls:
       '点击扫描，右键、长按或标记模式插旗，点满旗的数字一次扫开周围；方向键移动，F 插旗',
     estimatedDuration: '每张约 1–8 分钟',
+    daily: '今日故障舱：每天一张，第一次扫描一定安全',
   },
 ] as const;
 
