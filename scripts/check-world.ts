@@ -1,6 +1,5 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import {
   clearSegment,
   traversable,
@@ -66,23 +65,6 @@ test('行走不能漏过狭缝或擦过家具顶点，路径必须绕行', () =>
     ]),
     null,
   );
-});
-import { joystickVector } from '../lib/world/joystick.ts';
-test('触控摇杆：死区静止，斜向等速，推到边缘满速且旋钮不出圈', () => {
-  assert.deepEqual(joystickVector(3, 2, 35).direction, { x: 0, y: 0 });
-  assert.deepEqual(joystickVector(0, 0, 35).direction, { x: 0, y: 0 });
-  const full = joystickVector(100, 0, 35);
-  assert.equal(full.direction.x, 1);
-  assert.equal(full.knob.x, 35);
-  const diagonal = joystickVector(40, -40, 35).direction;
-  assert.ok(Math.abs(Math.hypot(diagonal.x, diagonal.y) - 1) < 1e-9);
-  assert.ok(diagonal.x > 0.7 && diagonal.y < -0.7, '应支持斜向');
-  const half = joystickVector(0, 35 * 0.575, 35).direction;
-  assert.ok(Math.abs(half.y - 0.5) < 1e-9, '力度随距离线性增加');
-  const knob = joystickVector(-200, 90, 35).knob;
-  assert.ok(Math.hypot(knob.x, knob.y) <= 35 + 1e-9);
-  const source = readFileSync('components/world/world-shell.tsx', 'utf8');
-  assert.ok(source.includes('<VirtualJoystick'), '移动端应使用模拟摇杆');
 });
 test('电路初始未解，旋转能解，断开的出口不算完成', () => {
   const initial = initialCircuit();
@@ -181,6 +163,24 @@ void test('试作间街机具有实体碰撞，可从舱门接近并保留所有
   }
 });
 
+import { readFileSync } from 'node:fs';
+import { joystickVector } from '../lib/world/joystick.ts';
+test('触控摇杆：死区静止，斜向等速，推到边缘满速且旋钮不出圈', () => {
+  assert.deepEqual(joystickVector(3, 2, 35).direction, { x: 0, y: 0 });
+  assert.deepEqual(joystickVector(0, 0, 35).direction, { x: 0, y: 0 });
+  const full = joystickVector(100, 0, 35);
+  assert.equal(full.direction.x, 1);
+  assert.equal(full.knob.x, 35);
+  const diagonal = joystickVector(40, -40, 35).direction;
+  assert.ok(Math.abs(Math.hypot(diagonal.x, diagonal.y) - 1) < 1e-9);
+  assert.ok(diagonal.x > 0.7 && diagonal.y < -0.7, '应支持斜向');
+  const half = joystickVector(0, 35 * 0.575, 35).direction;
+  assert.ok(Math.abs(half.y - 0.5) < 1e-9, '力度随距离线性增加');
+  const knob = joystickVector(-200, 90, 35).knob;
+  assert.ok(Math.hypot(knob.x, knob.y) <= 35 + 1e-9);
+  const source = readFileSync('components/world/world-shell.tsx', 'utf8');
+  assert.ok(source.includes('<VirtualJoystick'), '移动端应使用模拟摇杆');
+});
 import { addressPlan } from '../lib/project-preview.ts';
 test('OSPF 示例对应公开项目的四节点规划，参数变化后重新生成全部地址', () => {
   const base = addressPlan(1, 20)!;
