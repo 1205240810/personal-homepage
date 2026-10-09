@@ -1,9 +1,10 @@
+import { finishComputation } from './cooperative-computation.ts';
 import {
   cardRank,
   cardSuit,
   cardLabel,
   rankHand,
-  sampleRangeWorlds,
+  sampleRangeWorldsSteps,
   equityFromWorlds,
   type EquityWorld,
   type OpponentRange,
@@ -352,31 +353,45 @@ export function buildOpponentRanges(
   >,
   styles: readonly BotStyle[] = DEFAULT_SEAT_STYLES,
 ): OpponentRange[] {
+  return finishComputation(buildOpponentRangesSteps(hole, decision, styles));
+}
+
+function* buildOpponentRangesSteps(
+  hole: readonly number[],
+  decision: Pick<
+    Decision,
+    'board' | 'button' | 'tableSize' | 'history' | 'activeSeats' | 'seat'
+  >,
+  styles: readonly BotStyle[] = DEFAULT_SEAT_STYLES,
+): Generator<void, OpponentRange[]> {
   const known = new Set([...hole, ...decision.board]);
   const remaining = Array.from({ length: 52 }, (_, card) => card).filter(
     (card) => !known.has(card),
   );
   const strengthCache = new Map<string, number>();
-  return decision.activeSeats
-    .filter((seat) => seat !== decision.seat)
-    .map((seat) => {
-      const combos: WeightedCombo[] = [];
-      for (let i = 0; i < remaining.length; i++)
-        for (let j = i + 1; j < remaining.length; j++) {
-          const cards: [number, number] = [remaining[i], remaining[j]];
-          combos.push({
+  const ranges: OpponentRange[] = [];
+  for (const seat of decision.activeSeats.filter(
+    (seat) => seat !== decision.seat,
+  )) {
+    const combos: WeightedCombo[] = [];
+    for (let i = 0; i < remaining.length; i++)
+      for (let j = i + 1; j < remaining.length; j++) {
+        const cards: [number, number] = [remaining[i], remaining[j]];
+        if (combos.length % 24 === 0) yield;
+        combos.push({
+          cards,
+          weight: rangeWeight(
             cards,
-            weight: rangeWeight(
-              cards,
-              decision,
-              seat as Seat,
-              styles[seat] ?? 'balanced',
-              strengthCache,
-            ),
-          });
-        }
-      return { seat, combos };
-    });
+            decision,
+            seat as Seat,
+            styles[seat] ?? 'balanced',
+            strengthCache,
+          ),
+        });
+      }
+    ranges.push({ seat, combos });
+  }
+  return ranges;
 }
 function snapshot(state: HoldemState, seat: Seat): Decision {
   const legal = legalActions(state);
@@ -747,9 +762,21 @@ export function decideBot(
   difficulty: AiDifficulty = 'standard',
   styles: BotStyle[] = DEFAULT_SEAT_STYLES,
 ) {
+  return finishComputation(
+    decideBotSteps(state, seat, style, difficulty, styles),
+  );
+}
+
+export function* decideBotSteps(
+  state: HoldemState,
+  seat: Seat,
+  style: BotStyle,
+  difficulty: AiDifficulty = 'standard',
+  styles: BotStyle[] = DEFAULT_SEAT_STYLES,
+) {
   const decision = snapshot(state, seat);
   const hole = state.holes[seat]; // Information firewall: only the acting player's cards.
-  const ranges = buildOpponentRanges(hole, decision, styles);
+  const ranges = yield* buildOpponentRangesSteps(hole, decision, styles);
   const seed = seedFor({
     hand: state.hand,
     seat,
@@ -758,7 +785,7 @@ export function decideBot(
     difficulty,
     style,
   });
-  const worlds = sampleRangeWorlds(
+  const worlds = yield* sampleRangeWorldsSteps(
     hole,
     decision.board,
     ranges,
@@ -784,7 +811,7 @@ export function decideBot(
     difficulty !== 'casual' &&
     (action.type === 'fold' || action.type === 'call')
   ) {
-    const callValues = candidateValues(
+    const callValues = yield* candidateValuesSteps(
       decision,
       { type: 'call' },
       worlds,
@@ -815,9 +842,18 @@ export function decideBot(
     ).values(),
   ];
   const featureCache = new Map<number, ModelHandFeatures>();
-  const diagnosticValues = diagnosticOptions.map((candidate) =>
-    candidateValues(decision, candidate, worlds, ranges, styles, featureCache),
-  );
+  const diagnosticValues: number[][] = [];
+  for (const candidate of diagnosticOptions)
+    diagnosticValues.push(
+      yield* candidateValuesSteps(
+        decision,
+        candidate,
+        worlds,
+        ranges,
+        styles,
+        featureCache,
+      ),
+    );
   const rationale = [...policy.rationale];
   if (override)
     rationale.push(
@@ -1417,14 +1453,14 @@ function payout(
   }
   return won;
 }
-function candidateValues(
+function* candidateValuesSteps(
   decision: Decision,
   action: PokerAction,
   worlds: readonly EquityWorld[],
   ranges: readonly OpponentRange[],
   styles: readonly BotStyle[],
   featureCache: Map<number, ModelHandFeatures> = new Map(),
-) {
+): Generator<void, number[]> {
   if (action.type === 'fold') return worlds.map(() => 0);
   const hero = decision.seat;
   const featuresFor = (hole: readonly number[]) => {
@@ -1438,21 +1474,24 @@ function candidateValues(
   };
   type DefensePlan = { threshold: number; partial: number };
   const defensePlans = new Map<Seat, DefensePlan>();
-  const defenseFloor = (
+  const defenseFloor = function* (
     range: OpponentRange,
     quality: number,
     multiple: number,
-  ) => {
+  ): Generator<void, number> {
     let plan = defensePlans.get(range.seat);
     if (!plan) {
       // A one-bet defense reference applied to the top of a public weighted
       // range. It is not a solved multiplayer equilibrium or actual hidden hand.
-      const entries = range.combos
-        .map((combo) => ({
+      const entries: { quality: number; weight: number }[] = [];
+      for (const combo of range.combos) {
+        if (entries.length % 24 === 0) yield;
+        entries.push({
           quality: featuresFor(combo.cards).quality,
           weight: combo.weight,
-        }))
-        .sort((a, b) => b.quality - a.quality);
+        });
+      }
+      entries.sort((a, b) => b.quality - a.quality);
       const target =
         entries.reduce((sum, entry) => sum + entry.weight, 0) / (1 + multiple);
       let above = 0;
@@ -1486,7 +1525,9 @@ function candidateValues(
       : action.type === 'call'
         ? decision.call
         : Math.min(decision.stack, Math.max(0, target - decision.streetBet));
-  return worlds.map((world) => {
+  const values: number[] = [];
+  for (const world of worlds) {
+    yield;
     const committed = [...decision.committed];
     committed[hero] += paid;
     const active = decision.folded.map((folded) => !folded);
@@ -1539,7 +1580,7 @@ function candidateValues(
       if ((sizingMultiple ?? 0) >= 2)
         probability = Math.max(
           probability,
-          defenseFloor(
+          yield* defenseFloor(
             range,
             featuresFor(world.holes[index + 1]).quality,
             sizingMultiple!,
@@ -1556,8 +1597,10 @@ function candidateValues(
       !liveOpponents.length ||
       decision.street === 'river' ||
       paid >= decision.stack
-    )
-      return gross - paid;
+    ) {
+      values.push(gross - paid);
+      continue;
+    }
     const returnedExcess = Math.max(
       0,
       committed[hero] -
@@ -1613,10 +1656,11 @@ function candidateValues(
       const heroWouldFold = sigmoid((0.65 - heroQuality) * 14);
       realization *= 1 - (1 - avoidReraise) * heroWouldFold;
     }
-    return (
-      returnedExcess + Math.max(0, gross - returnedExcess) * realization - paid
+    values.push(
+      returnedExcess + Math.max(0, gross - returnedExcess) * realization - paid,
     );
-  });
+  }
+  return values;
 }
 function mean(values: readonly number[]) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -1636,12 +1680,22 @@ export function reviewHand(
   random?: () => number,
   styles: BotStyle[] = DEFAULT_SEAT_STYLES,
 ): ReviewPoint[] {
+  return finishComputation(reviewHandSteps(state, samples, random, styles));
+}
+
+export function* reviewHandSteps(
+  state: HoldemState,
+  samples = 900,
+  random?: () => number,
+  styles: BotStyle[] = DEFAULT_SEAT_STYLES,
+): Generator<void, ReviewPoint[]> {
   const hole = state.holes[0]; // No opponent holes, final board, or deck is ever read.
   const bigBlind = state.bigBlind;
-  return state.actions.flatMap((decision, index) => {
-    if (decision.seat !== 0) return [];
-    const ranges = buildOpponentRanges(hole, decision, styles);
-    const worlds = sampleRangeWorlds(
+  const points: ReviewPoint[] = [];
+  for (const [index, decision] of state.actions.entries()) {
+    if (decision.seat !== 0) continue;
+    const ranges = yield* buildOpponentRangesSteps(hole, decision, styles);
+    const worlds = yield* sampleRangeWorldsSteps(
       hole,
       decision.board,
       ranges,
@@ -1658,9 +1712,18 @@ export function reviewHand(
     const estimate = equityFromWorlds(worlds);
     const options = candidates(decision, bigBlind);
     const featureCache = new Map<number, ModelHandFeatures>();
-    const values = options.map((action) =>
-      candidateValues(decision, action, worlds, ranges, styles, featureCache),
-    );
+    const values: number[][] = [];
+    for (const action of options)
+      values.push(
+        yield* candidateValuesSteps(
+          decision,
+          action,
+          worlds,
+          ranges,
+          styles,
+          featureCache,
+        ),
+      );
     const expected = values.map(mean);
     const bestIndex = expected.reduce(
       (best, value, candidate) => (value > expected[best] ? candidate : best),
@@ -1861,80 +1924,79 @@ export function reviewHand(
         }),
       )
       .sort((a, b) => b.evBB - a.evBB);
-    return [
-      {
-        index,
-        street: decision.street,
-        action: actionLabel(decision.action, decision.call),
-        equity: estimate.equity,
-        samples,
-        pot: decision.pot,
-        call: decision.call,
-        threshold,
-        title:
-          modelAllowance > baseModelAllowance
-            ? '极大尺度对模型假设敏感，优先稳健参照'
-            : !close
-              ? `优先比较 ${actionLabel(recommendation, decision.call)}`
-              : conservativeRecommendation
-                ? '候选估值接近，采用较稳健的选择'
-                : '这个选择接近模型首选',
-        advice: reasoning.join(' '),
-        principle:
-          'GTO 的核心是完整范围与对手响应的平衡。这里是公开范围的一轮响应 EV 近似，不是严格 GTO 求解、精确频率或完整多街最优解。',
-        board: [...decision.board],
-        score: score[actualIndex],
-        scoreSensitive: modelAllowance > baseModelAllowance,
-        scoreGapBB: round(scoreGaps[actualIndex] / bigBlind),
-        comparison: comparisons[actualIndex],
-        scoreReference: {
-          action: options[stableIndex],
-          label: actionLabel(options[stableIndex], decision.call),
-          evBB: round(expected[stableIndex] / bigBlind),
-        },
-        recommendation: {
-          action: recommendation,
-          label: actionLabel(recommendation, decision.call),
-          evBB: round(expected[recommendationIndex] / bigBlind),
-        },
-        alternatives,
-        regretBB: round(regret / bigBlind),
-        confidence: 'low' as const,
-        uncertaintyBB: round(uncertainty / bigBlind),
-        modelAllowanceBB: round(modelAllowance / bigBlind),
-        position,
-        opponents: ranges.length,
-        spr: round(spr),
-        rangeNotes,
-        explanations: teachingExplanation({
-          decision,
-          hole,
-          recommendation,
-          alternatives,
-          bigBlind,
-          equity: estimate.equity,
-          hand,
-          position,
-          spr,
-          close,
-          conservative: conservativeRecommendation,
-          sizingSensitive: modelAllowance > baseModelAllowance,
-        }),
-        model: '公开范围 · 一轮响应与风险折价 EV',
-        limitations: [
-          '范围与跟注概率由本地启发式估计，未求解均衡。',
-          '公开历史按位置、风格与动作类型修正范围，尚未拟合所有历史下注尺度；实际对手偏差仍会改变结论。',
-          '超池下注按当前公开加权范围强端设置保守的一轮防守参照；1 / (1 + 有效下注/底池) 是启发式，不是多人均衡防守频率。公共两对、三条与私人牌力分别处理。',
-          '非全下早期局面加入保守权益兑现及再加注暴露折价，但没有求解未来下注树；这些系数仍是启发式。',
-          '抽样误差仅是 95% 配对 Monte Carlo 容差；另设模型敏感性预留，不能把后者当作统计置信区间。',
-          '多人边池分别结算；无法以一个总权益直接代替所有边池权益。',
-          '所有候选共用相同样本；评分反映模型内差异，接近的动作不作硬性优劣判断。',
-          '数值分为 100 × exp(−普通稳定参照的原始 EV 损失 / max(0.5 BB, 25% 当前底池))，不扣除抽样误差或模型容差；这个比例是透明的训练启发式，未经专业策略拟合。极端尺度单独标记敏感，数值不作可靠评分。',
-          '稳健推荐另按候选 EV − 95% 抽样误差 − 各自模型预留选择近似且少投入的方案，因此可与数值最高分不同。模型基准预留为 max(0.2 BB, 12% 底池) × 街道系数（1.75 / 1.35 / 0.65 / 0.35），新增有效风险超出跟注后两倍底池的部分另留 3%；它仅用于可区分程度与推荐，不提高质量分。',
-        ],
+    points.push({
+      index,
+      street: decision.street,
+      action: actionLabel(decision.action, decision.call),
+      equity: estimate.equity,
+      samples,
+      pot: decision.pot,
+      call: decision.call,
+      threshold,
+      title:
+        modelAllowance > baseModelAllowance
+          ? '极大尺度对模型假设敏感，优先稳健参照'
+          : !close
+            ? `优先比较 ${actionLabel(recommendation, decision.call)}`
+            : conservativeRecommendation
+              ? '候选估值接近，采用较稳健的选择'
+              : '这个选择接近模型首选',
+      advice: reasoning.join(' '),
+      principle:
+        'GTO 的核心是完整范围与对手响应的平衡。这里是公开范围的一轮响应 EV 近似，不是严格 GTO 求解、精确频率或完整多街最优解。',
+      board: [...decision.board],
+      score: score[actualIndex],
+      scoreSensitive: modelAllowance > baseModelAllowance,
+      scoreGapBB: round(scoreGaps[actualIndex] / bigBlind),
+      comparison: comparisons[actualIndex],
+      scoreReference: {
+        action: options[stableIndex],
+        label: actionLabel(options[stableIndex], decision.call),
+        evBB: round(expected[stableIndex] / bigBlind),
       },
-    ];
-  });
+      recommendation: {
+        action: recommendation,
+        label: actionLabel(recommendation, decision.call),
+        evBB: round(expected[recommendationIndex] / bigBlind),
+      },
+      alternatives,
+      regretBB: round(regret / bigBlind),
+      confidence: 'low' as const,
+      uncertaintyBB: round(uncertainty / bigBlind),
+      modelAllowanceBB: round(modelAllowance / bigBlind),
+      position,
+      opponents: ranges.length,
+      spr: round(spr),
+      rangeNotes,
+      explanations: teachingExplanation({
+        decision,
+        hole,
+        recommendation,
+        alternatives,
+        bigBlind,
+        equity: estimate.equity,
+        hand,
+        position,
+        spr,
+        close,
+        conservative: conservativeRecommendation,
+        sizingSensitive: modelAllowance > baseModelAllowance,
+      }),
+      model: '公开范围 · 一轮响应与风险折价 EV',
+      limitations: [
+        '范围与跟注概率由本地启发式估计，未求解均衡。',
+        '公开历史按位置、风格与动作类型修正范围，尚未拟合所有历史下注尺度；实际对手偏差仍会改变结论。',
+        '超池下注按当前公开加权范围强端设置保守的一轮防守参照；1 / (1 + 有效下注/底池) 是启发式，不是多人均衡防守频率。公共两对、三条与私人牌力分别处理。',
+        '非全下早期局面加入保守权益兑现及再加注暴露折价，但没有求解未来下注树；这些系数仍是启发式。',
+        '抽样误差仅是 95% 配对 Monte Carlo 容差；另设模型敏感性预留，不能把后者当作统计置信区间。',
+        '多人边池分别结算；无法以一个总权益直接代替所有边池权益。',
+        '所有候选共用相同样本；评分反映模型内差异，接近的动作不作硬性优劣判断。',
+        '数值分为 100 × exp(−普通稳定参照的原始 EV 损失 / max(0.5 BB, 25% 当前底池))，不扣除抽样误差或模型容差；这个比例是透明的训练启发式，未经专业策略拟合。极端尺度单独标记敏感，数值不作可靠评分。',
+        '稳健推荐另按候选 EV − 95% 抽样误差 − 各自模型预留选择近似且少投入的方案，因此可与数值最高分不同。模型基准预留为 max(0.2 BB, 12% 底池) × 街道系数（1.75 / 1.35 / 0.65 / 0.35），新增有效风险超出跟注后两倍底池的部分另留 3%；它仅用于可区分程度与推荐，不提高质量分。',
+      ],
+    });
+  }
+  return points;
 }
 const round = (value: number) => Math.round(value * 100) / 100;
 const formatBB = (value: number) =>

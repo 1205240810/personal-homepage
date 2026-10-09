@@ -14,15 +14,17 @@
     "predev": "node scripts/sync-blackjack.mjs && node scripts/sync-standalone-games.mjs && CONTENT_PREVIEW=1 node scripts/compile-content.mjs",
     "prebuild": "node scripts/sync-blackjack.mjs && node scripts/sync-standalone-games.mjs && node scripts/compile-content.mjs && node --experimental-strip-types scripts/validate-world.ts",
     "build:preview": "CONTENT_PREVIEW=1 npm run build",
-    "build:node": "CONTENT_PREVIEW=0 DEPLOY_TARGET=node npm run build",
+    "build:node": "CONTENT_PREVIEW=0 DEPLOY_TARGET=node npm run build && node scripts/check-holdem-worker-build.mjs",
     "start:node": "HOST=127.0.0.1 node dist/standalone/server.js",
     "precheck": "node scripts/sync-blackjack.mjs && node scripts/sync-standalone-games.mjs && node scripts/compile-content.mjs",
-    "check": "node scripts/sync-blackjack.mjs --check && node scripts/sync-standalone-games.mjs --check && tsc --noEmit && node --experimental-strip-types scripts/validate-world.ts && node scripts/check-content.mjs && node --experimental-strip-types scripts/check-world.ts && node --experimental-strip-types scripts/check-workbench.ts && node --experimental-strip-types scripts/check-holdem-cards.ts && node --experimental-strip-types scripts/check-holdem-engine.ts && node --experimental-strip-types scripts/check-holdem-replay.ts && node --experimental-strip-types scripts/check-holdem-strategy.ts && node --experimental-strip-types scripts/check-games.ts",
+    "check": "node scripts/sync-blackjack.mjs --check && node scripts/sync-standalone-games.mjs --check && tsc --noEmit && node --experimental-strip-types scripts/validate-world.ts && node scripts/check-content.mjs && node --experimental-strip-types scripts/check-world.ts && node --experimental-strip-types scripts/check-workbench.ts && node --experimental-strip-types scripts/check-holdem-cards.ts && node --experimental-strip-types scripts/check-holdem-engine.ts && node --experimental-strip-types scripts/check-holdem-replay.ts && node --experimental-strip-types scripts/check-holdem-strategy.ts && node --experimental-strip-types scripts/check-games.ts && node --experimental-strip-types scripts/check-holdem-worker.ts && node --experimental-strip-types scripts/check-pulse-progress.ts && npm run check:blackjack && npm run check:pulse-ui",
     "maps": "node --experimental-strip-types scripts/generate-maps.ts",
     "example:forest": "npm --prefix examples/forest-courtyard run dev",
     "check:forest": "npm --prefix examples/forest-courtyard run check",
     "build:forest": "npm --prefix examples/forest-courtyard run build",
-    "check:trio": "npm --prefix standalone/sudoku test && npm --prefix standalone/yahtzee test && npm --prefix standalone/stud test"
+    "check:trio": "npm --prefix standalone/sudoku test && npm --prefix standalone/yahtzee test && npm --prefix standalone/stud test",
+    "check:blackjack": "npm --prefix standalone/blackjack run typecheck && npm --prefix standalone/blackjack test && node scripts/sync-blackjack.mjs --check",
+    "check:pulse-ui": "node standalone/blackjack/node_modules/vitest/vitest.mjs run --config standalone/blackjack/vitest.pulse.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

@@ -18,6 +18,21 @@ beforeEach(() => { vi.useFakeTimers(); localStorage.clear(); fixture.ranks = ['1
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('standard table controls and local training data', () => {
+  it('keeps secondary guidance collapsed while tutorial and play stay directly available', () => {
+    render(<StandardBlackjackGame persist={false}/>);
+    const summary = screen.getByText('桌规与入门提示');
+    const guide = summary.closest('details')!;
+    expect(guide.open).toBe(false);
+    expect(screen.getByRole('button', { name: /开始对局/ })).toBeTruthy();
+    fireEvent.click(summary);
+    expect(guide.open).toBe(true);
+    expect(guide.textContent).toContain('Blackjack 赔 3:2');
+    fireEvent.click(screen.getByRole('button', { name: '新手教程' }));
+    expect(screen.getByRole('dialog', { name: '新手教程' })).toBeTruthy();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('button', { name: /开始对局/ })).toBeTruthy();
+  });
   it('ignores the legacy record and only persists settled bankroll', async () => {
     localStorage.setItem('twenty-one:v2', JSON.stringify({ bankroll: 999999 }));
     const view = render(<StandardBlackjackGame/>);

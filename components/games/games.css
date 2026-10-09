@@ -111,7 +111,7 @@
   color: var(--games-muted);
 }
 .game-room-intro {
-  padding: 49px 0 36px;
+  padding: 28px 0 24px;
 }
 .game-room-intro h1 {
   font-size: clamp(33px, 4vw, 52px);
@@ -158,7 +158,7 @@
 .room-blackjack-preview,
 .room-holdem-preview,
 .room-pulse-preview {
-  min-height: 326px;
+  min-height: 240px;
   padding: 18px 21px 13px;
   border: 1px solid #263029;
   border-radius: 5px;
@@ -190,15 +190,15 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-top: 18px;
+  margin-top: 8px;
   color: #b3c2b5;
   font-size: 12px;
 }
 .room-blackjack-dealer i {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 45px;
+  width: 26px;
+  height: 32px;
   border: 2px solid #bdc9b0;
   border-radius: 3px;
   background: repeating-linear-gradient(45deg, #293d33 0 4px, #405947 4px 5px);
@@ -207,12 +207,12 @@
 .room-blackjack-hand {
   display: flex;
   justify-content: center;
-  height: 152px;
+  height: 102px;
   align-items: center;
 }
 .room-blackjack-hand > span {
-  width: 78px;
-  height: 105px;
+  width: 62px;
+  height: 84px;
   padding: 9px 12px;
   display: flex;
   flex-direction: column;
@@ -233,7 +233,7 @@
 .room-blackjack-hand i {
   font-style: normal;
   align-self: center;
-  font-size: 38px;
+  font-size: 29px;
   line-height: 1.2;
 }
 .room-blackjack-hand .is-red {
@@ -245,18 +245,23 @@
   }
 }
 .room-preview-top {
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   border-bottom: 1px solid #a1b09326;
 }
 .room-preview-bottom {
-  padding-top: 9px;
+  padding-top: 7px;
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
   border-top: 1px solid #a1b09326;
 }
 .room-holdem-table {
   position: relative;
   height: 226px;
+  transform: scale(0.62);
+  transform-origin: center top;
   max-width: 440px;
-  margin: 5px auto;
+  margin: 5px auto -85px;
   isolation: isolate;
 }
 .room-table-rim {
@@ -405,8 +410,8 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 7px;
-  width: 178px;
-  margin: 25px auto 13px;
+  width: 132px;
+  margin: 14px auto 10px;
   padding: 7px;
   background: #18261c;
   border: 1px solid #56634a;
@@ -443,7 +448,7 @@
 .room-sudoku-preview,
 .room-dice-preview,
 .room-stud-preview {
-  min-height: 326px;
+  min-height: 240px;
   padding: 18px 21px 13px;
   border: 1px solid #263029;
   border-radius: 5px;
@@ -464,16 +469,16 @@
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   align-self: center;
-  width: 196px;
-  height: 196px;
+  width: 146px;
+  height: 146px;
   border: 2px solid #416051;
-  margin: 14px 0;
+  margin: 6px 0;
 }
 .room-sudoku-board > span {
   display: grid;
   place-items: center;
   font:
-    14px Georgia,
+    11px Georgia,
     serif;
   border-right: 1px solid #b2bead;
   border-bottom: 1px solid #b2bead;
@@ -516,22 +521,22 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 11px;
-  max-width: 245px;
+  gap: 8px;
+  max-width: 190px;
   align-self: center;
-  margin: 27px 0 16px;
+  margin: 12px 0 9px;
 }
 .room-die {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  width: 58px;
-  height: 58px;
-  padding: 10px;
+  width: 44px;
+  height: 44px;
+  padding: 7px;
   border: 1px solid #d5d0c6;
   border-radius: 7px;
   background: #f4efe4;
   box-shadow: 0 4px 0 #b8b1a1;
-  gap: 4px;
+  gap: 3px;
 }
 .room-die i {
   border-radius: 50%;
@@ -549,7 +554,7 @@
   gap: 16px;
   font-size: 11px;
   color: #c6b18b;
-  padding-bottom: 26px;
+  padding-bottom: 12px;
 }
 .room-stud-preview {
   background: radial-gradient(ellipse at 50% 70%, #49313d, #261b28);
@@ -563,7 +568,7 @@
 .room-stud-hand {
   display: flex;
   justify-content: center;
-  margin: 48px 0 18px;
+  margin: 20px 0 12px;
   padding: 0 10px;
 }
 .room-stud-hand > span {
@@ -624,14 +629,14 @@
   font:
     10px ui-monospace,
     monospace;
-  margin-bottom: 26px;
+  margin-bottom: 14px;
 }
 .room-stud-streets i {
   width: 20px;
   border-top: 1px solid #8d6c6966;
 }
 .room-game-copy {
-  padding: 23px 27px 22px;
+  padding: 17px 20px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -648,7 +653,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 .room-game h2 {
-  margin: 14px 0 8px;
+  margin: 9px 0 6px;
   font-size: 29px;
   font-weight: 560;
   letter-spacing: -0.035em;
@@ -665,7 +670,7 @@
   justify-content: space-between;
   align-items: center;
   min-height: 44px;
-  padding-top: 17px;
+  padding-top: 10px;
   margin-top: auto;
   color: var(--games-accent);
   font-size: 14px;
@@ -779,7 +784,7 @@
     padding: 0 22px 20px;
   }
   .game-room-intro {
-    padding: 34px 0 26px;
+    padding: 24px 0 20px;
   }
   .game-room-selection {
     grid-template-columns: minmax(0, 1fr);
@@ -787,14 +792,36 @@
   }
   .room-blackjack-preview,
   .room-holdem-preview,
-  .room-pulse-preview {
-    min-height: 316px;
+  .room-pulse-preview,
+  .room-sudoku-preview,
+  .room-dice-preview,
+  .room-stud-preview {
+    min-height: 224px;
+  }
+  .room-pulse-grid {
+    width: 120px;
+    margin: 10px auto 6px;
+  }
+  .room-sudoku-board {
+    width: 128px;
+    height: 128px;
+  }
+  .room-sudoku-board > span {
+    font-size: 10px;
+  }
+  .room-stud-hand {
+    margin: 14px 0 10px;
+  }
+  .room-stud-streets {
+    margin-bottom: 10px;
   }
   .room-holdem-table {
-    height: 216px;
+    height: 226px;
+    transform: scale(0.55);
+    margin-bottom: -100px;
   }
   .room-game-copy {
-    padding: 22px;
+    padding: 18px;
   }
   .game-room-bottom {
     flex-direction: column;
@@ -841,9 +868,16 @@
   .room-game-preview {
     padding: 10px;
   }
+  .room-blackjack-preview,
   .room-holdem-preview,
-  .room-pulse-preview {
+  .room-pulse-preview,
+  .room-sudoku-preview,
+  .room-dice-preview,
+  .room-stud-preview {
     padding: 13px;
+  }
+  .room-blackjack-hand {
+    height: 90px;
   }
   .room-game-copy {
     padding: 18px;
@@ -889,6 +923,11 @@
     width: auto;
     flex: 1;
     gap: 12px;
+  }
+}
+@media (max-width: 360px) {
+  .game-room-intro {
+    padding: 16px 0 8px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
