@@ -4,7 +4,8 @@ export type GameId =
   | 'signal-pulse'
   | 'sudoku'
   | 'yahtzee'
-  | 'stud';
+  | 'stud'
+  | 'circuit-repair';
 
 export type GameDefinition = {
   id: GameId;
@@ -77,6 +78,17 @@ export const GAMES: readonly GameDefinition[] = [
     category: '灯阵逻辑',
     controls: '点击或轻触灯格，翻转自己与相邻灯',
     estimatedDuration: '适合短暂休息',
+  },
+  {
+    id: 'circuit-repair',
+    title: '线路检修',
+    description:
+      '机甲核心断了电。旋转每一块线路，让电流接通所有端点灯，且不留一个断头。每天一张今日线路。',
+    href: '/games/circuit-repair',
+    category: '旋转解谜',
+    controls:
+      '点击顺时针旋转，右键或 Shift + 点击逆时针；方向键移动，L 锁定线路块',
+    estimatedDuration: '每张约 1–6 分钟',
   },
 ] as const;
 

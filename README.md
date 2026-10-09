@@ -14,11 +14,12 @@
 - **有质感的入口**：四幅机甲开屏原画随机呈现，可选择直接进入工作台或探索世界，也能从次要入口进入游戏室。
 - **直接使用的工作台**：文章检索、栏目、个人档案和项目都有明确入口。六个项目按网络工程、数据与算法、效率工具分类；提供地址规划、相册筛选、配送路径、日均成本四种交互示例，以及两个源码流程导览。
 - **可选的机甲探索**：2.5D 外景连接航迹室、旧纸库和试作间，含轻量物件反馈、音乐和可选小游戏。阅读面板打开时暂停移动，关闭后继续探索。试作间的街机角连接游戏室，返回时恢复原场景与人物位置。
-- **独立游戏室**：`/games` 统一选择六款游戏，欢迎页、工作台导航及侧栏均有入口。德州扑克练习桌、暗牌 21、九间数独、快艇骰子、绯夜五张梭哈与信号接力都有独立分享地址；进入游戏才加载对应代码。
+- **独立游戏室**：`/games` 统一选择七款游戏，欢迎页、工作台导航及侧栏均有入口。德州扑克练习桌、暗牌 21、九间数独、快艇骰子、绯夜五张梭哈、信号接力与线路检修都有独立分享地址；进入游戏才加载对应代码。
 - **可定制的德州扑克练习室**：整屏牌桌支持 2–9 人，自定小盲、大盲和每席初始筹码，入门、标准与进阶难度从下一手生效。角色半身像、手边筹码、发牌和下注反馈表现当前桌况；可选背景音乐、音效与行动语音。每个选择都有 EV 对比、推荐尺度、具体理由、其他选择的取舍与下一步思考；普通尺度显示调整后的模型评分，估值敏感的巨大下注暂不评分，本机保存最近八手。整手结束后可切换全桌回放，查看各席底牌、按街行动线及 AI 实际执行的策略依据；全知回放不参与玩家的评分。复盘依据当时可见信息推断范围，比较有限抽样模型下的行动价值；不是严格 GTO 求解器，也不调用联网大模型。没有充值、提现或真钱交易。
 - **暗牌 21**：标准规则练习支持自定义虚拟筹码、加倍、分牌、晚投降、保险和新手教程，庄家严格执行 S17。赛后教练按当时可见信息比较行动收益并标明近似边界；保留原有两种休闲玩法，源码维护在 `standalone/blackjack`，见 [暗牌 21 说明](docs/BLACKJACK.md)。
 - **逻辑与骰子练习**：九间数独有 120 道唯一解题目、题库筛选、笔记与逐步推理教练；快艇骰子支持十三分栏、Joker 规则、两档 AI 与中途恢复。绯夜五张梭哈提供双人有效筹码封顶下注与赛后权益分析。三款游戏都有原创程序音频和独立本机存档，维护方法见 [三款游戏接入说明](docs/GAMES-TRIO.md)。
 - **渐进灯阵**：12 关分三个阶段，从 4×4 到 5×5；提供提示、撤回和重来；关卡进度、撤回历史与最佳步数保存在当前浏览器，刷新后可继续。清除浏览器数据会移除这些记录。
+- **线路检修**：旋转线路块，让机甲核心的电流接通所有端点灯且不留断头。题目由随机生成树保证有解，提供 4×4 到 7×7 四种尺寸、每天一张相同的「今日线路」，支持逆时针、锁定、撤回与逐步提示；各尺寸最佳用时与步数仅保存在当前浏览器。
 - **可维护的文章档案**：74 篇公开旧文已迁入，保留日期、标签和来源链接。教育、经历和荣誉由独立数据文件管理；未确认草稿仅在维护者本地保存。
 - **独立的私藏边界**：仓库保留访问控制代码，不包含私藏档案数据。Sites 版本需要本地密文、主人身份与独立密码配置；Node 部署关闭私藏接口，不影响普通文章。
 
@@ -67,22 +68,23 @@ npm run dev
 
 ## 页面与实现入口
 
-| 地址                       | 内容                   | 主要文件                                                 |
-| -------------------------- | ---------------------- | -------------------------------------------------------- |
-| `/`                        | 随机机甲引导页         | `app/page.tsx`、`lib/arrival-art.ts`                     |
-| `/workbench`               | 直接阅读与项目试用     | `components/home/project-library.tsx`                    |
-| `/archive`、`/posts/:slug` | 文章目录与独立正文     | `lib/content/source.ts`、`content/`                      |
-| `/projects`                | 项目列表与源链接       | `content/data/projects.json`                             |
-| `/about`                   | 简介、教育、经历与荣誉 | `content/data/profile.json`、`awards.json`               |
-| `/explore`                 | 机甲世界与舱室         | `lib/world/registry.ts`、`engine.ts`                     |
-| `/games`                   | 游戏室与游戏选择       | `lib/games/catalog.ts`、`components/games/game-room.tsx` |
-| `/games/holdem-lab`        | 德州扑克练习与复盘     | `lib/games/holdem-*.ts`、`components/games/`             |
-| `/games/blackjack`         | 标准 21 点与休闲对局   | `standalone/blackjack/`                                  |
-| `/games/sudoku`            | 九间数独与推理教练     | `standalone/sudoku/`                                     |
-| `/games/yahtzee`           | 快艇骰子与 AI 对局     | `standalone/yahtzee/`                                    |
-| `/games/stud`              | 双人五张梭哈与复盘     | `standalone/stud/`                                       |
-| `/games/signal-pulse`      | 十二关灯阵             | `lib/pulse-puzzle.ts`、`components/home/pulse-game.tsx`  |
-| `/vault`                   | 主人私藏入口           | `lib/private-vault/`、`app/api/vault/`                   |
+| 地址                       | 内容                   | 主要文件                                                             |
+| -------------------------- | ---------------------- | -------------------------------------------------------------------- |
+| `/`                        | 随机机甲引导页         | `app/page.tsx`、`lib/arrival-art.ts`                                 |
+| `/workbench`               | 直接阅读与项目试用     | `components/home/project-library.tsx`                                |
+| `/archive`、`/posts/:slug` | 文章目录与独立正文     | `lib/content/source.ts`、`content/`                                  |
+| `/projects`                | 项目列表与源链接       | `content/data/projects.json`                                         |
+| `/about`                   | 简介、教育、经历与荣誉 | `content/data/profile.json`、`awards.json`                           |
+| `/explore`                 | 机甲世界与舱室         | `lib/world/registry.ts`、`engine.ts`                                 |
+| `/games`                   | 游戏室与游戏选择       | `lib/games/catalog.ts`、`components/games/game-room.tsx`             |
+| `/games/holdem-lab`        | 德州扑克练习与复盘     | `lib/games/holdem-*.ts`、`components/games/`                         |
+| `/games/blackjack`         | 标准 21 点与休闲对局   | `standalone/blackjack/`                                              |
+| `/games/sudoku`            | 九间数独与推理教练     | `standalone/sudoku/`                                                 |
+| `/games/yahtzee`           | 快艇骰子与 AI 对局     | `standalone/yahtzee/`                                                |
+| `/games/stud`              | 双人五张梭哈与复盘     | `standalone/stud/`                                                   |
+| `/games/signal-pulse`      | 十二关灯阵             | `lib/pulse-puzzle.ts`、`components/home/pulse-game.tsx`              |
+| `/games/circuit-repair`    | 线路检修旋转解谜       | `lib/games/circuit-repair.ts`、`components/games/circuit-repair.tsx` |
+| `/vault`                   | 主人私藏入口           | `lib/private-vault/`、`app/api/vault/`                               |
 
 文章 ID、公开 slug 与地图坐标相互独立。移动或重画书架不会改变文章地址；新增文章自动进入对应栏目。
 

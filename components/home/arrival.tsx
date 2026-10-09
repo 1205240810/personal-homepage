@@ -12,12 +12,22 @@ export default function Arrival({ art }: { art: ArrivalArt }) {
   const [lightsOn, setLightsOn] = useState(false);
   const surface = useRef<HTMLElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    // Browsers restore this page from the back/forward cache with its last
+    // state: faded out, blurred and with pointer events disabled. Undo the
+    // exit transition so 返回 always lands on a usable welcome page.
+    const restore = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
       if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
+      timer.current = null;
+      setLeaving(false);
+    };
+    window.addEventListener('pageshow', restore);
+    return () => {
+      window.removeEventListener('pageshow', restore);
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
   function enter(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
       return;
@@ -109,7 +119,7 @@ export default function Arrival({ art }: { art: ArrivalArt }) {
           >
             <Gamepad2 size={19} strokeWidth={1.4} aria-hidden="true" />
             <span>
-              游戏室<small>德州扑克 · 灯阵谜题</small>
+              游戏室<small>牌桌 · 数独 · 解谜小游戏</small>
             </span>
             <ArrowUpRight size={18} strokeWidth={1.4} aria-hidden="true" />
           </a>
