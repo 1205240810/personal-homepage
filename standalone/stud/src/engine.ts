@@ -422,4 +422,4 @@ export function equity(
   }
   return wins / samples;
 }
-export { decide, analyzeDecision } from './strategy';
+export { decide, analyzeDecision, PERSONALITIES, isPersonality, type Personality } from './strategy';

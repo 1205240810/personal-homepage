@@ -34,6 +34,16 @@ describe('revision safeguards',()=>{
 
  it('restored runout deals exactly one original pair without repeating a payment',()=>{const g=startHand(initial([3,997]),()=>.4);resume(g);reactAct(()=>vi.advanceTimersByTime(650));expect(stored()).toEqual(advance(g,g.revision));expect(stored().pot).toBe(6)});
  it('new match from a paused restored game resets and can start immediately',()=>{saveGame(humanGame());render(<StudGame/>);fireEvent.click(screen.getByRole('button',{name:/新对局/}));fireEvent.click(screen.getByRole('button',{name:'确认新对局'}));const start=screen.getByRole('button',{name:/入席/});expect(start.hasAttribute('disabled')).toBe(false);fireEvent.click(start);expect(stored().hand).toBe(1);expect(stored().pot).toBe(10)});
+describe('round indicator and personality',()=>{
+ it('shows a readable round label and marks the current step',()=>{render(<StudGame persist={false}/>);expect(screen.getByText('等待发牌')).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:/入席/}));const steps=screen.getByRole('list',{name:'第 1 轮，共四轮'});expect(steps.querySelector('[aria-current="step"]')?.textContent).toBe('12 张');expect(screen.getByText(/轮下注/, {selector:'strong'}).textContent).toBe('第 1 / 4 轮下注')});
+ it('persists a chosen personality, shows it at the table and locks it mid-hand',()=>{const a=render(<StudGame/>);fireEvent.click(screen.getByRole('button',{name:'设置'}));const select=screen.getByRole('combobox',{name:/对手性格/}) as HTMLSelectElement;fireEvent.change(select,{target:{value:'bluffer'}});expect(localStorage.getItem('velvet-stud-v1-personality')).toBe('bluffer');fireEvent.click(screen.getByRole('button',{name:'关闭弹窗'}));expect(screen.getByText('AI · 诈唬')).toBeTruthy();a.unmount();render(<StudGame/>);expect(screen.getByText(/标准 AI · 诈唬/)).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:/入席/}));fireEvent.click(screen.getByRole('button',{name:'设置'}));expect((screen.getByRole('combobox',{name:/对手性格/}) as HTMLSelectElement).disabled).toBe(true)});
+ it('ignores an unknown stored personality',()=>{localStorage.setItem('velvet-stud-v1-personality','__proto__');render(<StudGame/>);expect(screen.getByText(/标准 AI · 均衡/)).toBeTruthy()});
+ it('retains detailed AI advice when using a saved personality',()=>{
+  let g=startHand(initial(),()=>.4);if(g.turn===0)g=act(g,0,{type:'check'});
+  localStorage.setItem('velvet-stud-v1-personality','aggressive');resume(g);reactAct(()=>vi.advanceTimersByTime(850));
+  const review=stored().reviews.at(-1)!;expect(review.seat).toBe(1);expect(review.reason).toContain('激进风格');expect(review.advice?.snapshot.own).toEqual(g.cards[1]);expect(review.advice?.alternatives.length).toBeGreaterThan(1);
+ });
+});
 
 describe('clear stakes and retrospective advice',()=>{
  it('shows a raise as this-click spending and the actual resulting balance',()=>{

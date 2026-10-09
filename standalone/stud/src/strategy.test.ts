@@ -4,6 +4,8 @@ import {
   advance,
   analyzeDecision,
   decide,
+  PERSONALITIES,
+  type Personality,
   initial,
   limits,
   startHand,
@@ -263,6 +265,7 @@ describe('legal incremental EV training advice', () => {
     );
   });
   it('maintains conservation, legality and finite reviews over AI-driven hands', () => {
+    for (const personality of Object.keys(PERSONALITIES) as Personality[])
     for (let seed = 1; seed <= 12; seed++) {
       let g: Game = startHand(initial(), seeded(seed));
       let steps = 0;
@@ -273,6 +276,7 @@ describe('legal incremental EV training advice', () => {
             view(g, g.turn),
             'normal',
             seeded(seed * 100 + steps),
+            personality,
           );
           g = act(g, g.turn, d.action, g.revision, d.review);
         }
@@ -283,6 +287,24 @@ describe('legal incremental EV training advice', () => {
       expect(g.reviews.every((r) => Number.isFinite(r.advice?.actualEV))).toBe(
         true,
       );
+    }
+  });
+  it('personality preferences preserve legal limits, range samples and the shared review reference', () => {
+    for (const mode of ['easy', 'normal'] as const)
+    for (let seed = 1; seed <= 12; seed++) {
+      const g = startHand(initial(), seeded(seed));
+      const v = view(g, g.turn);
+      const balanced = decide(v, mode, seeded(seed + 500));
+      for (const personality of Object.keys(PERSONALITIES) as Personality[]) {
+        const d = decide(v, mode, seeded(seed + 500), personality);
+        expect(legalDecision(v, d.action)).toBe(true);
+        expect(d.action.type).not.toBe('fold');
+        if (d.action.type === 'raise') expect(d.action.to).toBeLessThanOrEqual(Math.max(limits(g).min, limits(g).current + 2 * g.pot));
+        expect(d.equity).toBe(balanced.equity);
+        expect(d.review.advice!.recommended).toBe(balanced.review.advice!.recommended);
+        expect(d.review.advice!.alternatives).toEqual(balanced.review.advice!.alternatives);
+        expect(d.review.advice!.snapshot).toEqual(balanced.review.advice!.snapshot);
+      }
     }
   });
   it('rejects malformed cards and invalid RNG before they create unreliable advice', () => {
