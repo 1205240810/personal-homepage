@@ -294,17 +294,56 @@ export function loadDailySave(
   }
 }
 
+/**
+ * Save an immutable session update without discarding another tab's records.
+ * `previous` identifies which size's run changed; untouched runs use storage.
+ * An older-day session stays playable, but cannot replace newer-day boards.
+ * Returns the reconciled session, or null when browser storage is unavailable.
+ */
 export function storeDailySave(
   save: PulseDailySave,
-  storage?: Pick<Storage, 'setItem'>,
-) {
+  storage?: Pick<Storage, 'getItem' | 'setItem'>,
+  previous?: PulseDailySave,
+): PulseDailySave | null {
   try {
-    (storage ?? window.localStorage).setItem(
-      PULSE_DAILY_KEY,
-      JSON.stringify(save),
-    );
-    return true;
+    const target = storage ?? window.localStorage;
+    const raw = target.getItem(PULSE_DAILY_KEY);
+    let latest: PulseDailySave | null = null;
+    if (raw !== null && raw.length < 200_000) {
+      try {
+        const value: unknown = JSON.parse(raw);
+        if (plain(value) && typeof value.date === 'string')
+          latest = validateDailySave(value, value.date);
+      } catch {
+        // A corrupt save should not prevent a valid current session being saved.
+      }
+    }
+    const records = { ...save.records };
+    for (const [key, record] of Object.entries(latest?.records ?? {})) {
+      const best = records[key];
+      if (
+        !best ||
+        record.moves < best.moves ||
+        (record.moves === best.moves && record.hints < best.hints)
+      )
+        records[key] = record;
+    }
+    const keys = Object.keys(records).sort().reverse();
+    for (const old of keys.slice(MAX_RECORDS)) delete records[old];
+
+    let session = { ...save, records };
+    if (latest?.date === save.date && previous?.date === save.date) {
+      const boards = { ...latest.boards };
+      for (const size of PULSE_DAILY_SIZES)
+        if (save.boards[size] !== previous.boards[size])
+          boards[size] = save.boards[size];
+      session = { ...session, boards };
+    }
+    const persisted =
+      latest && latest.date > save.date ? { ...latest, records } : session;
+    target.setItem(PULSE_DAILY_KEY, JSON.stringify(persisted));
+    return session;
   } catch {
-    return false;
+    return null;
   }
 }

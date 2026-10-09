@@ -63,8 +63,9 @@ function PulseDailySession({ ready }: { ready: boolean }) {
   );
 
   const update = (next: PulseDailySave) => {
-    setSave(next);
-    setStorageOk(storeDailySave(next));
+    const stored = storeDailySave(next, undefined, save ?? undefined);
+    setSave(stored ?? next);
+    setStorageOk(stored !== null);
   };
   const setRun = (presses: number[], hints: number) => {
     if (!save || !current) return;

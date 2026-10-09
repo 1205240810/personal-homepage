@@ -331,3 +331,40 @@ void test('每日存档：按尺寸保留进度，跨日只保留记录，非法
   };
   assert.equal(loadDailySave(today, blocked).status, 'unavailable');
 });
+
+void test('每日存档合并各标签页最佳成绩，按步数再按提示数取优，损坏存档仍可重新保存', () => {
+  const store = memoryStorage();
+  const today = '2026-10-09';
+  const puzzle = dailyPuzzle(today, 5);
+  const initial = createDailySave(today);
+  const oldTab = withDailyResult(initial, puzzle, puzzle.par + 2, 0);
+  const improved = withDailyResult(initial, puzzle, puzzle.par, 2);
+  assert(storeDailySave(improved, store));
+  const reconciled = storeDailySave(oldTab, store)!;
+  assert.deepEqual(reconciled.records[`${today}:5`], {
+    moves: puzzle.par,
+    hints: 2,
+    stars: 3,
+  });
+  assert.deepEqual(
+    loadDailySave(today, store).save.records,
+    reconciled.records,
+  );
+  const fewerHints = withDailyResult(initial, puzzle, puzzle.par, 0);
+  assert(storeDailySave(fewerHints, store));
+  assert(storeDailySave(improved, store));
+  assert.equal(loadDailySave(today, store).save.records[`${today}:5`].hints, 0);
+
+  store.values.set(PULSE_DAILY_KEY, '{');
+  assert(storeDailySave(initial, store));
+  assert.equal(loadDailySave(today, store).status, 'saved');
+  assert.equal(
+    storeDailySave(initial, {
+      getItem: () => {
+        throw new Error('blocked');
+      },
+      setItem: () => {},
+    }),
+    null,
+  );
+});

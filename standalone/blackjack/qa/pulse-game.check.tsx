@@ -276,6 +276,84 @@ describe('Signal Pulse daily challenge', () => {
     expect(screen.getByText(/获得 2 星.*用了 1 次提示/)).toBeTruthy();
   });
 
+  it("keeps newer-day progress and both days' records when an overnight tab resumes", () => {
+    vi.setSystemTime(new Date(2026, 9, 9, 23, 59));
+    const oldTab = mountDaily();
+    const oldView = within(oldTab.container);
+    const oldCells = oldView.getAllByRole('button', {
+      name: /^第 \d 行第 \d 列/,
+    });
+    fireEvent.click(oldCells[0]);
+
+    vi.setSystemTime(new Date(2026, 9, 10, 12));
+    const newTab = mountDaily();
+    const newView = within(newTab.container);
+    const newCells = newView.getAllByRole('button', {
+      name: /^第 \d 行第 \d 列/,
+    });
+    const newPuzzle = dailyPuzzle('2026-10-10', 5);
+    for (const cell of solveDaily(newPuzzle.board, 5)!)
+      fireEvent.click(newCells[cell]);
+    fireEvent.click(newView.getByRole('button', { name: /^6 × 6/ }));
+    const newSix = newView.getAllByRole('button', {
+      name: /^第 \d 行第 \d 列/,
+    });
+    fireEvent.click(newSix[7]);
+    const before = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(before.records['2026-10-10:5']).toBeTruthy();
+
+    // The older session remains on its own puzzle, but must not erase today.
+    fireEvent.click(oldCells[0]);
+    const after = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(after).toEqual(before);
+    expect(oldView.getByText('DAILY · 2026-10-09')).toBeTruthy();
+    const oldPuzzle = dailyPuzzle('2026-10-09', 5);
+    for (const cell of solveDaily(oldPuzzle.board, 5)!)
+      fireEvent.click(oldCells[cell]);
+    const completed = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(completed.date).toBe('2026-10-10');
+    expect(completed.boards).toEqual(before.boards);
+    expect(completed.records['2026-10-10:5']).toEqual(
+      before.records['2026-10-10:5'],
+    );
+    expect(completed.records['2026-10-09:5'].moves).toBe(oldPuzzle.par + 2);
+
+    // The newer tab also reconciles the older tab's subsequently earned record.
+    fireEvent.click(newSix[8]);
+    expect(JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!).records).toEqual(
+      completed.records,
+    );
+  });
+
+  it("preserves other sizes' progress when two same-day tabs save", () => {
+    const first = mountDaily();
+    const second = mountDaily();
+    const firstView = within(first.container);
+    const secondView = within(second.container);
+    fireEvent.click(firstView.getByRole('button', { name: /^4 × 4/ }));
+    fireEvent.click(
+      firstView.getAllByRole('button', { name: /^第 \d 行第 \d 列/ })[0],
+    );
+    fireEvent.click(secondView.getByRole('button', { name: /^6 × 6/ }));
+    fireEvent.click(
+      secondView.getAllByRole('button', { name: /^第 \d 行第 \d 列/ })[7],
+    );
+    let saved = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(saved.boards[4].presses).toEqual([0]);
+    expect(saved.boards[6].presses).toEqual([7]);
+
+    fireEvent.click(firstView.getByRole('button', { name: /^5 × 5/ }));
+    fireEvent.click(
+      firstView.getAllByRole('button', { name: /^第 \d 行第 \d 列/ })[1],
+    );
+    saved = JSON.parse(localStorage.getItem(PULSE_DAILY_KEY)!);
+    expect(saved.boards[4].presses).toEqual([0]);
+    expect(saved.boards[5].presses).toEqual([1]);
+    expect(saved.boards[6].presses).toEqual([7]);
+    fireEvent.click(firstView.getByRole('button', { name: /^6 × 6/ }));
+    expect(firstView.getByText('01')).toBeTruthy();
+  });
+
   it('ignores a tampered save and starts today fresh', () => {
     localStorage.setItem(
       PULSE_DAILY_KEY,
