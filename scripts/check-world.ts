@@ -84,6 +84,27 @@ test('电路初始未解，旋转能解，断开的出口不算完成', () => {
   assert.deepEqual([...shuffledSignals()].sort(), [0, 0, 1, 1, 2, 2, 3, 3]);
 });
 
+import {
+  isFormField,
+  ownsKeyboard,
+  WORLD_SCROLL_KEYS,
+} from '../lib/world/keyboard.ts';
+test('键盘归属：按钮和表单保留自己的按键，画布和页面才由探索接管', () => {
+  const element = (matches: string[]) => ({
+    closest: (selector: string) =>
+      selector.split(',').some((s) => matches.includes(s.trim())) ? {} : null,
+  });
+  const button = element(['button']),
+    slider = element(['input', '[role="slider"]']),
+    canvas = element([]);
+  assert.equal(ownsKeyboard(button), false, '聚焦按钮时空格要能按下按钮');
+  assert.equal(ownsKeyboard(slider), false);
+  assert.equal(ownsKeyboard(canvas), true);
+  assert.equal(ownsKeyboard(null), true);
+  assert.equal(isFormField(slider), true, '调音量时方向键不能让人物走动');
+  assert.equal(isFormField(button), false, '聚焦按钮时仍可用 WASD 行走');
+  assert.ok(WORLD_SCROLL_KEYS.has('Space') && !WORLD_SCROLL_KEYS.has('KeyE'));
+});
 import { SCENES, getScene } from '../lib/world/registry.ts';
 test('机甲通道连续，舱室都可原路返回，公开内容不被游戏进度锁定', () => {
   const hub = getScene('hub');
