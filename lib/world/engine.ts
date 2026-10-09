@@ -2,10 +2,10 @@ import Phaser from 'phaser';
 import { makePlayerTextures, posePlayer } from './player';
 import { SCENES, getScene, ARCHIVE_GANTRY } from './registry';
 import { traversable, clearSegment, findRoute } from './navigation';
-import { createScenePrefetcher } from './prefetch';
 import { distance } from './geometry';
 import { getDiscovery } from './discoveries';
 import { makeArcadeTexture } from './arcade-cabinet';
+import { createScenePrefetcher } from './prefetch';
 import type {
   GameHandle,
   InteractionNode,
