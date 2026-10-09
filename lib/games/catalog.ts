@@ -8,7 +8,8 @@ export type GameId =
   | 'yahtzee'
   | 'stud'
   | 'circuit-repair'
-  | 'mech-sweeper';
+  | 'mech-sweeper'
+  | 'fault-finder';
 
 export type GameDefinition = {
   id: GameId;
@@ -77,8 +78,9 @@ export const GAMES: readonly GameDefinition[] = [
   },
   {
     id: 'signal-pulse',
+    daily: '今日灯阵：4×4 至 6×6，按最短步数挑战三星',
     title: '信号接力',
-    description: `${PULSE_LEVELS.length} 道渐进灯阵。利用相邻灯的连锁变化，让整个灯阵归零，随时保存继续。`,
+    description: `${PULSE_LEVELS.length} 道渐进灯阵与每日 4×4 至 6×6 挑战。利用相邻灯的连锁变化，让整个灯阵归零，随时保存继续。`,
     href: '/games/signal-pulse',
     category: '灯阵逻辑',
     controls: '点击或轻触灯格，翻转自己与相邻灯',
@@ -107,6 +109,18 @@ export const GAMES: readonly GameDefinition[] = [
       '点击扫描，右键、长按或标记模式插旗，点满旗的数字一次扫开周围；方向键移动，F 插旗',
     estimatedDuration: '每张约 1–8 分钟',
     daily: '今日故障舱：每天一张，第一次扫描一定安全',
+  },
+  {
+    id: 'fault-finder',
+    title: '故障排查',
+    description:
+      '传感器只告诉你每条线路上有几个故障。交叉比对读数，推断出到底是哪几个模块坏了——答案唯一，不用猜。',
+    href: '/games/fault-finder',
+    category: '逻辑推理',
+    controls:
+      '点击模块在故障、正常、未判断之间切换；方向键移动，F 标故障，X 标正常',
+    estimatedDuration: '每张约 1–6 分钟',
+    daily: '今日排查：传感器读数推理，答案唯一',
   },
 ] as const;
 

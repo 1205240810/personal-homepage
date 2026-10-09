@@ -1172,3 +1172,82 @@
     transition: none;
   }
 }
+
+/* 故障排查 preview: module bay with sensor readings on two edges. */
+.room-fault-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #263029;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #c9d1bf;
+  background: #26312b;
+  box-shadow:
+    inset 0 1px 6px #15231d66,
+    0 1px #eff1e8;
+}
+.room-fault-bay {
+  display: grid;
+  grid-template-columns: 112px 20px;
+  grid-template-rows: 112px 20px;
+  gap: 5px;
+  margin: 12px auto;
+}
+.room-fault-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+.room-fault-grid span {
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: #4a5a44;
+  box-shadow: inset 0 -2px #1c281a;
+  font:
+    700 11px ui-monospace,
+    monospace;
+  color: #3d4c37;
+}
+.room-fault-grid .is-fault {
+  background: #a34e2b;
+  color: #ffe9d6;
+}
+.room-fault-grid .is-ok {
+  background: #c9d1b6;
+}
+.room-fault-rows,
+.room-fault-cols {
+  display: grid;
+  gap: 3px;
+}
+.room-fault-cols {
+  grid-template-columns: repeat(4, 1fr);
+}
+.room-fault-rows i,
+.room-fault-cols i {
+  display: grid;
+  place-items: center;
+  font:
+    700 11px ui-monospace,
+    monospace;
+  font-style: normal;
+  color: #f0d79e;
+}
+.room-fault-rows i:not(:empty),
+.room-fault-cols i:not(:empty) {
+  border-radius: 50%;
+  border: 1px solid #5f6c4b;
+  background: #18261c;
+  width: 20px;
+  height: 20px;
+  place-self: center;
+}
+@media (max-width: 520px) {
+  .room-fault-preview {
+    padding: 13px;
+    min-height: 224px;
+  }
+}
