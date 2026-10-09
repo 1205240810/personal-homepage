@@ -17,8 +17,8 @@
 - **独立游戏室**：`/games` 统一选择八款游戏，欢迎页、工作台导航及侧栏均有入口。德州扑克练习桌、暗牌 21、九间数独、快艇骰子、绯夜五张梭哈、信号接力、线路检修与机甲扫雷都有独立分享地址；进入游戏才加载对应代码。
 - **可定制的德州扑克练习室**：整屏牌桌支持 2–9 人，自定小盲、大盲和每席初始筹码，入门、标准与进阶难度从下一手生效。角色半身像、手边筹码、发牌和下注反馈表现当前桌况；可选背景音乐、音效与行动语音。每个选择都有 EV 对比、推荐尺度、具体理由、其他选择的取舍与下一步思考；普通尺度显示调整后的模型评分，估值敏感的巨大下注暂不评分，本机保存最近八手。整手结束后可切换全桌回放，查看各席底牌、按街行动线及 AI 实际执行的策略依据；全知回放不参与玩家的评分。复盘依据当时可见信息推断范围，比较有限抽样模型下的行动价值；不是严格 GTO 求解器，也不调用联网大模型。没有充值、提现或真钱交易。
 - **暗牌 21**：标准规则练习支持自定义虚拟筹码、加倍、分牌、晚投降、保险和新手教程，庄家严格执行 S17。赛后教练按当时可见信息比较行动收益并标明近似边界；保留原有两种休闲玩法，源码维护在 `standalone/blackjack`，见 [暗牌 21 说明](docs/BLACKJACK.md)。
-- **逻辑与骰子练习**：九间数独有 120 道唯一解题目、题库筛选、笔记与逐步推理教练；快艇骰子支持十三分栏、Joker 规则、两档 AI 与中途恢复。绯夜五张梭哈提供双人有效筹码封顶下注与赛后权益分析。三款游戏都有原创程序音频和独立本机存档，维护方法见 [三款游戏接入说明](docs/GAMES-TRIO.md)。
-- **渐进灯阵**：12 关分三个阶段，从 4×4 到 5×5；提供提示、撤回和重来；关卡进度、撤回历史与最佳步数保存在当前浏览器，刷新后可继续。清除浏览器数据会移除这些记录。
+- **逻辑与骰子练习**：九间数独有 120 道唯一解题目、题库筛选、笔记与逐步推理教练；快艇骰子支持十三分栏、Joker 规则、两档 AI 与中途恢复。绯夜五张梭哈提供双人有效筹码封顶下注、清晰的筹码流水、原创背景音乐与赛后逐步决策建议。三款游戏都有原创程序音频和独立本机存档，维护方法见 [三款游戏接入说明](docs/GAMES-TRIO.md)。
+- **渐进灯阵**：30 关分六个阶段，从 4×4 到 5×5，最短解从 1 步递进到 15 步；提供提示、撤回和重来；关卡进度、撤回历史与最佳步数保存在当前浏览器，刷新后可继续。清除浏览器数据会移除这些记录。
 - **线路检修**：旋转线路块，让机甲核心的电流接通所有端点灯且不留断头。题目由随机生成树保证有解，提供 4×4 到 7×7 四种尺寸、每天一张相同的「今日线路」，支持逆时针、锁定、撤回与逐步提示；各尺寸最佳用时与步数仅保存在当前浏览器。
 - **机甲扫雷**：在检修舱里读信号数字、插旗标出故障模块，误触即短路。见习 / 技师 / 总工三档难度，每天一张「今日检修」，带虚线框的扫描起点必然连片展开，任何格子的第一次扫描都安全；见习附送一根保险丝吸收一次短路。支持右键、触控长按或标记模式插旗，点满旗的数字一次扫开周围；各难度最佳用时与通关次数仅保存在当前浏览器。
 - **可维护的文章档案**：74 篇公开旧文已迁入，保留日期、标签和来源链接。教育、经历和荣誉由独立数据文件管理；未确认草稿仅在维护者本地保存。
@@ -40,8 +40,9 @@ npm run dev
 访问终端显示的本地地址，默认是 `http://localhost:3000/`。开发模式自动编译文章目录；维护者本地若有 `content/drafts/*.md`，会额外显示标记为草稿的内容，工作台精选仍只展示正式文章。公开克隆不含这四篇待核对草稿，也不需要私藏室配置即可阅读和探索。
 
 ```sh
-npm --prefix standalone/blackjack ci  # 完整检查需要独立牌桌的测试依赖
-npm run check          # 编译内容、类型检查、世界/文章/项目/游戏及 21 点回归
+npm --prefix standalone/blackjack ci
+npm --prefix standalone/stud ci  # 完整检查需要独立牌桌的测试依赖
+npm run check          # 编译内容、类型检查、世界/文章/项目/游戏、21 点与梭哈回归
 npm run build          # Sites / Cloudflare 正式构建，仅含已发布文章
 npm run build:preview  # 私有审阅构建，可包含本地草稿
 npm run build:node     # 独立 Node 服务端构建，仅含已发布文章
@@ -51,7 +52,7 @@ npm run maps           # 场景配置变更后，同步 Tiled 地图
 
 灯阵组件回归复用 `standalone/blackjack` 锁定的 Vitest、jsdom 与 Testing Library，可单独执行 `npm run check:pulse-ui`；测试不连接外部服务。
 
-首次克隆并安装根目录和 `standalone/blackjack` 依赖后即可运行 `check`；其前置脚本会生成被 Git 忽略的文章索引。`build:preview` 只用于私有审阅。`noindex` 不是访问控制，网站访问范围由托管设置决定。
+首次克隆并安装根目录、`standalone/blackjack` 与 `standalone/stud` 依赖后即可运行 `check`；其前置脚本会生成被 Git 忽略的文章索引。`build:preview` 只用于私有审阅。`noindex` 不是访问控制，网站访问范围由托管设置决定。
 
 `build:node` 输出 `dist/standalone/`，可通过 `PORT` 环境变量修改运行端口。服务器部署应在前方配置反向代理，并用进程服务管理启动与重启；具体目录、配置、验证与回滚步骤见 [自有服务器部署](docs/SELF-HOSTING.md)。`npm start` 仍是原 Sites 流程使用的 Wrangler 开发命令，不是 Node 生产服务命令；两种构建目标应分别构建、分别发布。
 
@@ -83,7 +84,7 @@ npm run dev
 | `/games/sudoku`            | 九间数独与推理教练     | `standalone/sudoku/`                                                 |
 | `/games/yahtzee`           | 快艇骰子与 AI 对局     | `standalone/yahtzee/`                                                |
 | `/games/stud`              | 双人五张梭哈与复盘     | `standalone/stud/`                                                   |
-| `/games/signal-pulse`      | 十二关灯阵             | `lib/pulse-puzzle.ts`、`components/home/pulse-game.tsx`              |
+| `/games/signal-pulse`      | 三十关灯阵             | `lib/pulse-puzzle.ts`、`components/home/pulse-game.tsx`              |
 | `/games/circuit-repair`    | 线路检修旋转解谜       | `lib/games/circuit-repair.ts`、`components/games/circuit-repair.tsx` |
 | `/games/mech-sweeper`      | 机甲扫雷               | `lib/games/mech-sweeper.ts`、`components/games/mech-sweeper.tsx`     |
 | `/vault`                   | 主人私藏入口           | `lib/private-vault/`、`app/api/vault/`                               |
@@ -143,3 +144,5 @@ examples/forest-courtyard/    早期林间小院的独立学习案例
 ## 来源与许可
 
 参考项目、依赖与 Kevin MacLeod 的背景音乐署名见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。博客原文保留来源链接。第三方组件和音乐遵循各自许可证；这不等于仓库内全部原创代码、美术及文章已获统一开源授权。
+
+本次梭哈与三十关灯阵的改动和验证见 [更新记录](docs/STUD-PULSE-UPDATE.md)。

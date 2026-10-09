@@ -56,3 +56,5 @@
  .sbj-dealer-cards .bj-card-art > span { font-size: 28px; }
  .sbj-table-center { margin: 4px 0 9px; }
 }
+/* Mobile: in-hand phases were already sticky; keep 开始对局 / 下一局 reachable too, without scrolling past the table. */
+@media(max-width:700px){.sbj-app[data-phase='ready'] .sbj-play-area>.sbj-controls,.sbj-app[data-phase='settled'] .sbj-play-area>.sbj-controls{position:sticky;bottom:0;z-index:12;margin-top:18px;background:#183022f5;border-radius:15px 15px 0 0;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px #06150b80;backdrop-filter:blur(12px)}.sbj-app[data-phase='ready'] .sbj-controls .sbj-status p,.sbj-app[data-phase='settled'] .sbj-controls .sbj-status p{font-size:10px;line-height:1.6;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.sbj-app[data-phase='ready'] .sbj-play-area .sbj-actions,.sbj-app[data-phase='settled'] .sbj-play-area .sbj-actions{margin-top:10px}}

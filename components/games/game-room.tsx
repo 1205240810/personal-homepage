@@ -15,6 +15,7 @@ import {
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { RecentGameMark, RecentGames } from '@/components/games/recent-games';
 import { GAMES, type GameDefinition } from '@/lib/games/catalog';
+import { PULSE_LEVELS } from '@/lib/pulse-puzzle';
 import type { ReactNode } from 'react';
 import './games.css';
 
@@ -120,7 +121,7 @@ function PulsePreview() {
   return (
     <div className="room-pulse-preview" aria-hidden="true">
       <div className="room-preview-top">
-        <span>SIGNAL / 02</span>
+        <span>SIGNAL / {PULSE_LEVELS.length} LEVELS</span>
         <Gamepad2 size={18} strokeWidth={1.4} />
       </div>
       <div className="room-pulse-grid">

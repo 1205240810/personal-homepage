@@ -93,8 +93,57 @@ void test('所有关卡的有效通关及重来存档均可恢复，重来保留
   }
   assert.equal(
     Object.keys(loadPulseProgress(storage).progress!.results).length,
-    12,
+    30,
   );
+});
+
+void test('原十二关 v1 存档原样恢复，追加第十三关后保留所有旧历史成绩', () => {
+  const storage = memoryStorage();
+  const legacy = solveLevel(12);
+  legacy.results = Object.fromEntries(
+    PULSE_LEVELS.slice(0, 12).map((level) => [
+      level.id,
+      { moves: level.par, hints: level.id % 3 },
+    ]),
+  );
+  // The current solved attempt used no hints; an older equally fast record must
+  // not claim more hints than that attempt.
+  legacy.results[12].hints = 0;
+  const raw = JSON.stringify(legacy);
+  assert.equal(PULSE_PROGRESS_KEY, 'signal-pulse:progress:v1');
+  storage.setItem(PULSE_PROGRESS_KEY, raw);
+  const restored = loadPulseProgress(storage);
+  assert.deepEqual(restored.progress, legacy);
+  assert.equal(
+    storage.getItem(PULSE_PROGRESS_KEY),
+    raw,
+    '读取不会迁移或重写旧存档',
+  );
+  const next = { ...createPulseProgress(13), results: legacy.results };
+  assert.equal(savePulseProgress(next, storage), 'saved');
+  assert.deepEqual(loadPulseProgress(storage).progress, next);
+  assert.deepEqual(next.results, legacy.results);
+  const final = solveLevel(30);
+  final.results = { ...next.results, ...final.results };
+  assert.equal(savePulseProgress(final, storage), 'saved');
+  assert.deepEqual(loadPulseProgress(storage).progress, final);
+});
+
+void test('新增十八关的提示和撤回存档仍按同一合法历史校验', () => {
+  const storage = memoryStorage();
+  for (const level of PULSE_LEVELS.slice(12)) {
+    const progress = createPulseProgress(level.id);
+    progress.history.push(pressPulse(level.board, 0, level.size));
+    const solution = solvePulse(progress.history.at(-1)!, level.size)!;
+    progress.hint = 31 - Math.clz32(solution & -solution);
+    progress.hintsUsed = 1;
+    assert.equal(savePulseProgress(progress, storage), 'saved');
+    assert.deepEqual(loadPulseProgress(storage).progress, progress);
+    progress.history.pop();
+    progress.hint = null;
+    assert.equal(savePulseProgress(progress, storage), 'saved');
+    assert.deepEqual(loadPulseProgress(storage).progress, progress);
+  }
 });
 
 void test('损坏、未知版本、越界、伪造历史与不可信键不会成为有效存档', () => {
@@ -131,7 +180,7 @@ void test('损坏、未知版本、越界、伪造历史与不可信键不会成
     { ...original, hintsUsed: Infinity },
     { ...original, hintsUsed: 1.5 },
     { ...original, results: [] },
-    { ...original, results: { 13: { moves: 1, hints: 0 } } },
+    { ...original, results: { 31: { moves: 1, hints: 0 } } },
     { ...original, results: { '01': { moves: 1, hints: 0 } } },
     { ...original, results: { 1: { moves: 0, hints: 0 } } },
     { ...original, results: { 1: { moves: 1.5, hints: 0 } } },

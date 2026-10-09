@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { BlackjackGame, type BlackjackGameProps } from './BlackjackGame';
 import { StandardBlackjackGame } from './StandardBlackjackGame';
+import { HiLoTrainer } from './HiLoTrainer';
 import './lobby.css';
 
 export function BlackjackLobby(props: BlackjackGameProps) {
-  const [mode, setMode] = useState<'standard' | 'casual'>('standard');
+  const [mode, setMode] = useState<'standard' | 'casual' | 'hilo'>('standard');
   const [busy, setBusy] = useState(false);
   return <div className="bj-lobby">
     <nav className="bj-lobby-nav" aria-label="选择 21 点玩法">
@@ -17,11 +18,16 @@ export function BlackjackLobby(props: BlackjackGameProps) {
         <button aria-pressed={mode === 'casual'} disabled={busy} onClick={() => setMode('casual')}>
           休闲对局<span>经典积分 / 策略庄家</span>
         </button>
+        <button aria-pressed={mode === 'hilo'} disabled={busy} onClick={() => setMode('hilo')}>
+          记牌练习<span>Hi-Lo 流水数（可选）</span>
+        </button>
       </div>
-      <p>{busy ? '本局结束后可切换玩法' : '两种玩法的记录分别保存'}</p>
+      <p>{busy ? '本局结束后可切换玩法' : '各玩法的记录分别保存'}</p>
     </nav>
     {mode === 'standard'
       ? <StandardBlackjackGame onExit={props.onExit} persist={props.persist} className={props.className} onBusyChange={setBusy} />
-      : <BlackjackGame {...props} onBusyChange={setBusy} />}
+      : mode === 'hilo'
+        ? <HiLoTrainer persist={props.persist} />
+        : <BlackjackGame {...props} onBusyChange={setBusy} />}
   </div>;
 }

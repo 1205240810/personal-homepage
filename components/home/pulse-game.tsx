@@ -61,6 +61,9 @@ function PulseGameSession({ ready }: { ready: boolean }) {
   const won = board === 0;
   const completed = Object.keys(results).length;
   const chapter = PULSE_CHAPTERS.find((c) => c.id === current.chapter)!;
+  const chapterLevels = PULSE_LEVELS.filter(
+    (item) => item.chapter === current.chapter,
+  );
 
   const updateProgress = (next: PulseProgress) => {
     setProgress(next);
@@ -81,7 +84,13 @@ function PulseGameSession({ ready }: { ready: boolean }) {
     setInvalidSave(false);
   };
   const start = (next: number) => {
-    if (!ready || next < 0 || next >= PULSE_LEVELS.length) return;
+    if (
+      !ready ||
+      !Number.isInteger(next) ||
+      next < 0 ||
+      next >= PULSE_LEVELS.length
+    )
+      return;
     updateProgress({
       ...createPulseProgress(PULSE_LEVELS[next].id),
       results,
@@ -165,13 +174,28 @@ function PulseGameSession({ ready }: { ready: boolean }) {
           aria-label="选择灯阵阶段"
           className="pulse-chapters"
         >
-          {PULSE_CHAPTERS.map((item, i) => (
-            <ToggleGroupItem value={String(item.id)} key={item.id}>
-              <span>{['入门', '进阶', '挑战'][i]}</span>
-              <small>{item.id === 3 ? '5 × 5' : '4 × 4'}</small>
-            </ToggleGroupItem>
-          ))}
+          {PULSE_CHAPTERS.map((item) => {
+            const levels = PULSE_LEVELS.filter(
+              (level) => level.chapter === item.id,
+            );
+            const first = levels[0];
+            const last = levels[levels.length - 1];
+            return (
+              <ToggleGroupItem
+                value={String(item.id)}
+                key={item.id}
+                aria-label={`${item.name}，第 ${first.id} 至 ${last.id} 关，${first.size} × ${first.size}`}
+              >
+                <span>{item.label}</span>
+                <small>
+                  {String(first.id).padStart(2, '0')}–
+                  {String(last.id).padStart(2, '0')}
+                </small>
+              </ToggleGroupItem>
+            );
+          })}
         </ToggleGroup>
+        <p className="pulse-chapter-description">{chapter.description}</p>
         <div className="pulse-topline">
           <ToggleGroup
             disabled={!ready}
@@ -181,6 +205,7 @@ function PulseGameSession({ ready }: { ready: boolean }) {
             }}
             aria-label="选择灯阵关卡"
             className="pulse-levels"
+            data-count={chapterLevels.length}
           >
             {PULSE_LEVELS.map(
               (item, i) =>
@@ -234,7 +259,7 @@ function PulseGameSession({ ready }: { ready: boolean }) {
             <>
               <Check size={15} />
               {completed === PULSE_LEVELS.length
-                ? '十二关完成，所有脉冲都归零了。'
+                ? `${PULSE_LEVELS.length} 关完成，所有脉冲都归零了。`
                 : moves === current.par
                   ? `${moves} 步，达成最短解${hintsUsed ? '。' : '，没有使用提示。'}`
                   : `${moves} 步完成，还能挑战 ${current.par} 步解法。`}
