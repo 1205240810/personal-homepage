@@ -12,7 +12,7 @@
 | `/games/sudoku`         | 120 道数独、题库选题和逐步推理教练           |
 | `/games/yahtzee`        | 十三分栏快艇骰子、AI 对局及完整中途存档      |
 | `/games/stud`           | 双人五张梭哈、封顶下注和赛后逐步决策建议         |
-| `/games/signal-pulse`   | 三十关灯阵，支持选关、提示、撤回与重来       |
+| `/games/signal-pulse`   | 三十关与每日 4×4 至 6×6 灯阵、最短步数与星级       |
 | `/games/circuit-repair` | 旋转线路接通全部端点灯，四种尺寸与今日线路   |
 | `/games/mech-sweeper`   | 机甲主题扫雷，三档难度、今日检修与保险丝     |
 | `/games/fault-finder`   | 按传感器读数推断故障模块，答案唯一、今日排查 |
@@ -24,7 +24,7 @@
 
 游戏室顶部有两块快捷入口：
 
-- **今日挑战**：列出 `GAMES` 中设置了 `daily` 字段的游戏（目前是线路检修、机甲扫雷和故障排查）。这类游戏按日期生成题目，同一天所有人拿到同一张。新增带每日题的游戏时，只需给目录项填写 `daily` 说明。
+- **今日挑战**：列出 `GAMES` 中设置了 `daily` 字段的游戏（目前是信号接力、线路检修、机甲扫雷和故障排查）。这类游戏按日期生成题目，同一天所有人拿到同一张。新增带每日题的游戏时，只需给目录项填写 `daily` 说明。
 - **最近玩过**：每个游戏页面挂载 `RecentGameMark`（`GamePageFrame` 已内置；德州、21 点和三款独立游戏在各自的 `page.tsx` 中挂载），在 `tscjj:games:recent:v1` 中保存最近 4 个游戏的 ID 和访问时间，不保存成绩或其他资料。游戏室在 hydration 之后才读取；存档损坏时丢弃无效项，首次访问不显示这一块。规则和存储由 `scripts/check-recent-games.ts` 验证，界面由 `qa/game-room.check.tsx` 验证。
 
 ## 模块边界
@@ -63,6 +63,8 @@ flowchart LR
 | `scripts/sync-standalone-games.mjs`         | 同步十九个运行文件，检查生成目录是否过期                       |
 | `components/games/standalone-game-room.tsx` | 三款游戏的按需加载、来路导航和备案入口                         |
 | `lib/pulse-puzzle.ts`                       | 灯阵关卡、按键翻转与最短解求解                                 |
+| `lib/pulse-daily.ts`                        | 每日灯阵生成、最短解、星级与分尺寸进度                         |
+| `components/home/pulse-daily.tsx`           | 每日灯阵界面与本机进度恢复                                     |
 | `components/home/pulse-game.tsx`            | 两种入口共同复用的灯阵界面                                     |
 | `lib/games/circuit-repair.ts`               | 线路检修的生成树出题、通电判定、提示与本机最佳记录             |
 | `components/games/circuit-repair.tsx`       | 线路检修界面：旋转、锁定、撤回、计时与键盘操作                 |

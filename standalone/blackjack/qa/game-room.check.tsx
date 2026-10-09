@@ -15,6 +15,7 @@ describe('game room shortcuts', () => {
     const daily = screen.getByRole('region', { name: '今日挑战' });
     const links = within(daily).getAllByRole('link');
     expect(links.map((a) => a.getAttribute('href'))).toEqual([
+      '/games/signal-pulse?from=explore',
       '/games/circuit-repair?from=explore',
       '/games/mech-sweeper?from=explore',
       '/games/fault-finder?from=explore',

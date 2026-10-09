@@ -78,8 +78,9 @@ export const GAMES: readonly GameDefinition[] = [
   },
   {
     id: 'signal-pulse',
+    daily: '今日灯阵：4×4 至 6×6，按最短步数挑战三星',
     title: '信号接力',
-    description: `${PULSE_LEVELS.length} 道渐进灯阵。利用相邻灯的连锁变化，让整个灯阵归零，随时保存继续。`,
+    description: `${PULSE_LEVELS.length} 道渐进灯阵与每日 4×4 至 6×6 挑战。利用相邻灯的连锁变化，让整个灯阵归零，随时保存继续。`,
     href: '/games/signal-pulse',
     category: '灯阵逻辑',
     controls: '点击或轻触灯格，翻转自己与相邻灯',
