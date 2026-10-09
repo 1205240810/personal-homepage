@@ -115,4 +115,22 @@ describe('input and storage edge cases',()=>{
 describe('staged coach and first-entry clock',()=>{
  it('coach reveals direction, then target, then the answer, and starts over for the next step',()=>{const {container}=render(<SudokuGame persist={false}/>);expect(screen.getByText('先看方向。')).toBeDefined();expect(container.querySelector('.sg-hint-unit')).not.toBeNull();expect(container.querySelector('.sg-hint-target')).toBeNull();expect(screen.queryByRole('button',{name:/应用这一步/})).toBeNull();fireEvent.click(screen.getByRole('button',{name:/再提示一点/}));expect(container.querySelector('.sg-hint-target')).not.toBeNull();expect(screen.queryByRole('button',{name:/应用这一步/})).toBeNull();fireEvent.click(screen.getByRole('button',{name:/看完整推理/}));fireEvent.click(screen.getByRole('button',{name:/应用这一步/}));expect(screen.getByText('先看方向。')).toBeDefined();expect(container.querySelector('.sg-hint-target')).toBeNull()});
  it('the clock waits for the first entry',()=>{vi.useFakeTimers();const {container}=render(<SudokuGame persist={false}/>);act(()=>{vi.advanceTimersByTime(5000)});expect(screen.getByLabelText('已用时间').textContent).toMatch(/^0+:00$/);const c=empty(container);fireEvent.click(c);fireEvent.click(screen.getByRole('button',{name:'填入 1'}));act(()=>{vi.advanceTimersByTime(3000)});expect(screen.getByLabelText('已用时间').textContent).toMatch(/0:03$/)});
+ it.each(['entry','note','undo'])('resumes after %s before the first timer tick',mode=>{
+  vi.useFakeTimers();const view=render(<SudokuGame/>);fireEvent.click(empty(view.container));
+  if(mode==='note')fireEvent.click(screen.getByRole('button',{name:/笔记 关/}));
+  fireEvent.click(screen.getByRole('button',{name:'填入 1'}));
+  if(mode==='undo')fireEvent.click(screen.getByRole('button',{name:/撤销/}));
+  expect(screen.getByLabelText('已用时间').textContent).toBe('00:00');view.unmount();render(<SudokuGame/>);
+  act(()=>{vi.advanceTimersByTime(3000)});expect(screen.getByLabelText('已用时间').textContent).toBe('00:03');
+ });
+ it('keeps an untouched restored board clock stopped',()=>{
+  vi.useFakeTimers();const view=render(<SudokuGame/>);view.unmount();render(<SudokuGame/>);
+  act(()=>{vi.advanceTimersByTime(3000)});expect(screen.getByLabelText('已用时间').textContent).toBe('00:00');
+ });
+ it('waits for a new entry after changing puzzles',()=>{
+  vi.useFakeTimers();const {container}=render(<SudokuGame/>);fireEvent.click(empty(container));fireEvent.click(screen.getByRole('button',{name:'填入 1'}));
+  act(()=>{vi.advanceTimersByTime(2000)});fireEvent.click(screen.getByRole('button',{name:/开启新一局/}));
+  fireEvent.change(screen.getByRole('combobox',{name:'练习难度'}),{target:{value:'hard'}});fireEvent.click(screen.getByRole('button',{name:'开始这道题'}));fireEvent.click(screen.getByRole('button',{name:'确认换题'}));
+  act(()=>{vi.advanceTimersByTime(3000)});expect(screen.getByLabelText('已用时间').textContent).toBe('00:00');
+ });
 });
