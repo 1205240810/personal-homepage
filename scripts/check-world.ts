@@ -187,18 +187,18 @@ test('OSPF 示例对应公开项目的四节点规划，参数变化后重新生
   ])
     assert.equal(addressPlan(lan, host), null);
 });
-import { statSync, readFileSync } from 'node:fs';
+import fs from 'node:fs';
 test('场景原画以 WebP 分发，单张不超过 800 KB，原始 PNG 仍保留', () => {
   for (const scene of SCENES) {
     assert.match(scene.art, /\.webp$/, `${scene.id} 应使用 WebP 原画`);
-    const size = statSync(`public${scene.art}`).size;
+    const size = fs.statSync(`public${scene.art}`).size;
     assert.ok(size < 800_000, `${scene.art} 体积 ${size} 过大`);
-    statSync(`public${scene.art.replace(/\.webp$/, '.png')}`);
+    fs.statSync(`public${scene.art.replace(/\.webp$/, '.png')}`);
   }
-  const portrait = readFileSync('components/world/start-screen.tsx', 'utf8');
+  const portrait = fs.readFileSync('components/world/start-screen.tsx', 'utf8');
   assert.ok(
     !portrait.includes('mecha-avatar.png'),
     '46px 头像不应加载 1.6 MB 原图',
   );
-  assert.ok(statSync('public/art/mecha-avatar-192.webp').size < 40_000);
+  assert.ok(fs.statSync('public/art/mecha-avatar-192.webp').size < 40_000);
 });
