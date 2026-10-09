@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 import { makePlayerTextures, posePlayer } from './player';
+import { isFormField, ownsKeyboard, WORLD_SCROLL_KEYS } from './keyboard';
 import { SCENES, getScene, ARCHIVE_GANTRY } from './registry';
 import { traversable, clearSegment, findRoute } from './navigation';
 import { distance } from './geometry';
 import { getDiscovery } from './discoveries';
 import { makeArcadeTexture } from './arcade-cabinet';
-import { isFormField, ownsKeyboard, WORLD_SCROLL_KEYS } from './keyboard';
 import type {
   GameHandle,
   InteractionNode,
