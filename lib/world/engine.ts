@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { makePlayerTextures, posePlayer } from './player';
 import { SCENES, getScene, ARCHIVE_GANTRY } from './registry';
-import { traversable, clearSegment, findRoute } from './navigation';
+import { traversable, clearSegment, findRoute, slideMove } from './navigation';
 import { distance } from './geometry';
 import { getDiscovery } from './discoveries';
 import { makeArcadeTexture } from './arcade-cabinet';
@@ -598,18 +598,15 @@ export function createWorld(
         sx = target.x - state.position.x;
         sy = target.y - state.position.y;
       }
-      const next = { x: state.position.x + sx, y: state.position.y + sy };
-      if (clearSegment(previous, next, def.walkable, def.obstacles))
-        state.position = next;
-      else {
-        const horizontal = { x: previous.x + sx, y: previous.y },
-          vertical = { x: previous.x, y: previous.y + sy };
-        if (clearSegment(previous, horizontal, def.walkable, def.obstacles))
-          state.position = horizontal;
-        else if (clearSegment(previous, vertical, def.walkable, def.obstacles))
-          state.position = vertical;
-        else this.velocity = { x: 0, y: 0 };
-      }
+      // Blocked steps turn along the wall instead of stopping on diagonal walkways.
+      const next = slideMove(
+        previous,
+        { x: sx, y: sy },
+        def.walkable,
+        def.obstacles,
+      );
+      if (next === previous) this.velocity = { x: 0, y: 0 };
+      else state.position = next;
       const moved = distance(previous, state.position),
         walking = moved > 0.015;
       if (walking) {
