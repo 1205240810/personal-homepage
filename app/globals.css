@@ -3210,7 +3210,7 @@ kbd {
   min-height: 360px;
 }
 .world-art {
-  background: #202e35 url('/art/mecha-isometric.png') center/cover;
+  background: #202e35 url('/art/mecha-isometric.webp') center/cover;
   filter: none;
 }
 .world-vignette {
