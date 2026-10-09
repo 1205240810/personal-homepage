@@ -22,10 +22,4 @@
 
 ## 检查
 
-用 TypeScript 编译器执行：
-
-tsc audio.ts --outDir test-build --module commonjs --target ES2020 --lib ES2020,DOM --strict --skipLibCheck
-
-node --test audio.test.cjs
-
-六项模拟音频上下文测试覆盖原创乐谱长度与循环时长、默认关闭、实例隔离、页面切换与主动暂停、调度防积压和资源释放、不支持或被拒绝的音频上下文。模拟测试验证控制逻辑，并不代替真机音质检查。
+在本目录执行 `npm run typecheck` 与 `npm test`。`src/audio.test.ts` 覆盖手势授权、单实例调度、防积压、隐藏与主动暂停、资源释放及设备异常；`src/ui-audio.test.tsx` 检查桌边开关、音量、暂停与弹窗配合。模拟测试验证控制逻辑，并不代替真机音质检查。

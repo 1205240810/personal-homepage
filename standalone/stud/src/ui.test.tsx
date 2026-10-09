@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { cleanup,fireEvent,render,screen,act as reactAct } from '@testing-library/react';
+import { cleanup,fireEvent,render,screen,within,act as reactAct } from '@testing-library/react';
 import { afterEach,beforeEach,describe,it,expect,vi } from 'vitest';
 import { StudGame } from './StudGame';
 beforeEach(()=>{localStorage.clear();Object.defineProperty(document,'hidden',{configurable:true,value:false});vi.useFakeTimers()});afterEach(()=>{cleanup();vi.useRealTimers()});
@@ -13,7 +13,7 @@ describe('interaction lifecycle',()=>{
  it('cleans timers on unmount and supports isolated instances',()=>{const a=render(<><StudGame persist={false}/><StudGame persist={false}/></>);expect(screen.getAllByRole('button',{name:/入席/})).toHaveLength(2);fireEvent.click(screen.getAllByRole('button',{name:/入席/})[0]);a.unmount();reactAct(()=>vi.advanceTimersByTime(20000));expect(vi.getTimerCount()).toBe(0)})
 });
 
-import {initial,startHand,act,advance,limits, type Game} from './engine';
+import {initial,startHand,act,advance,limits,analyzeDecision,view, type Game} from './engine';
 import {SAVE_KEY,saveGame} from './save';
 function humanGame(){let g=startHand(initial(),()=>.4);if(g.turn===1)g=act(g,1,{type:'check'});return g}
 function resume(g:Game){saveGame(g);render(<StudGame/>);fireEvent.click(screen.getByRole('button',{name:/继续对局/}))}
@@ -34,3 +34,24 @@ describe('revision safeguards',()=>{
 
  it('restored runout deals exactly one original pair without repeating a payment',()=>{const g=startHand(initial([3,997]),()=>.4);resume(g);reactAct(()=>vi.advanceTimersByTime(650));expect(stored()).toEqual(advance(g,g.revision));expect(stored().pot).toBe(6)});
  it('new match from a paused restored game resets and can start immediately',()=>{saveGame(humanGame());render(<StudGame/>);fireEvent.click(screen.getByRole('button',{name:/新对局/}));fireEvent.click(screen.getByRole('button',{name:'确认新对局'}));const start=screen.getByRole('button',{name:/入席/});expect(start.hasAttribute('disabled')).toBe(false);fireEvent.click(start);expect(stored().hand).toBe(1);expect(stored().pot).toBe(10)});
+
+describe('clear stakes and retrospective advice',()=>{
+ it('shows a raise as this-click spending and the actual resulting balance',()=>{
+  let g=startHand(initial(),()=>.4);if(g.turn===0)g=act(g,0,{type:'check'});g=act(g,1,{type:'raise',to:20});resume(g);
+  expect(within(screen.getByLabelText('你的筹码')).getByText('495')).toBeTruthy();expect(within(screen.getByLabelText('夜莺筹码')).getByText('475')).toBeTruthy();
+  const range=screen.getByRole('slider',{name:'本轮下注总额'});expect(range.getAttribute('min')).toBe('40');expect(range.getAttribute('max')).toBe('495');
+  fireEvent.change(range,{target:{value:'70'}});const preview=screen.getByLabelText('本次下注预览');expect(within(preview).getByText('70')).toBeTruthy();expect(within(preview).getByText('425')).toBeTruthy();expect(screen.getByText(/若对手跟注，底池将为 150/)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button',{name:/确认下注至 70/}));expect(stored().stacks[0]).toBe(425);expect(stored().paid[0]).toBe(70);expect(stored().pot).toBe(100);expect(screen.queryByLabelText('赛后复盘建议')).toBeNull();
+ });
+ it('explains the only legal short effective all-in instead of an impossible minimum',()=>{
+  let g=startHand(initial([12,988]),()=>.4);if(g.turn===1)g=act(g,1,{type:'check'});resume(g);
+  const range=screen.getByRole('slider',{name:'本轮下注总额'});expect(range.getAttribute('min')).toBe('7');expect(range.getAttribute('max')).toBe('7');expect(screen.getByText(/只能有效全下至 7/)).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:/有效全下至 7/}));expect(screen.getByRole('dialog').textContent).toContain('本次投入 7');expect(stored().stacks[0]).toBe(7);
+ });
+ it('shows player advice only after settlement and keeps folded AI hole-card analysis hidden',()=>{
+  let g=startHand(initial(),()=>.4);if(g.turn===0)g=act(g,0,{type:'check'});const raise={type:'raise',to:20} as const;g=act(g,1,raise,g.revision,analyzeDecision(view(g,1),raise,'normal',()=>.47));const fold={type:'fold'} as const;g=act(g,0,fold,g.revision,analyzeDecision(view(g,0),fold,'normal',()=>.47));expect(g.revealed).toBe(false);saveGame(g);render(<StudGame/>);
+  expect(screen.queryByLabelText('赛后复盘建议')).toBeNull();fireEvent.click(screen.getByRole('button',{name:/查看赛后复盘建议/}));const panel=screen.getByLabelText('赛后复盘建议');expect(within(panel).getByText('建议考虑')).toBeTruthy();expect(within(panel).getByText('当时你的牌')).toBeTruthy();expect(within(panel).getByText('当时对手明牌')).toBeTruthy();expect(within(panel).getByText('下一步记住')).toBeTruthy();expect(within(panel).queryByText('当时 AI 自己的牌')).toBeNull();expect(within(panel).getByText(/对手暗牌保持隐藏/)).toBeTruthy();expect(within(panel).getAllByText('估计权益').length).toBe(1);
+ });
+ it('retains old settled reviews without inventing missing candidates or snapshots',()=>{
+  const g=humanGame(),fold={type:'fold'} as const;const settled=act(g,0,fold,g.revision,{seat:0,street:g.street,action:'弃牌',equity:.4,odds:0,reason:'旧判断记录'});saveGame(settled);render(<StudGame/>);fireEvent.click(screen.getByRole('button',{name:/查看赛后复盘建议/}));expect(screen.getByText(/旧记录：当时仅保存行动与权益/)).toBeTruthy();expect(screen.getByText('旧判断记录')).toBeTruthy();expect(screen.queryByText('建议考虑')).toBeNull();
+ });
+});

@@ -1,3 +1,5 @@
+import { PULSE_LEVELS } from '../pulse-puzzle.ts';
+
 export type GameId =
   | 'holdem-lab'
   | 'blackjack'
@@ -65,7 +67,7 @@ export const GAMES: readonly GameDefinition[] = [
     id: 'stud',
     title: '绯夜五张梭哈',
     description:
-      '一张暗牌，四张明牌。随着牌面展开选择下注，与夜莺 AI 完成十手练习。',
+      '一暗四明，读牌也读下注。与夜莺 AI 练习十手，再从赛后建议里拆解自己的选择。',
     href: '/games/stud',
     category: '牌桌推演',
     controls: '鼠标或触控选择下注；C 过牌或跟注，F 弃牌',
@@ -74,7 +76,7 @@ export const GAMES: readonly GameDefinition[] = [
   {
     id: 'signal-pulse',
     title: '信号接力',
-    description: '点亮会传递，熄灭也会。利用相邻灯的连锁变化，让整个灯阵归零。',
+    description: `${PULSE_LEVELS.length} 道渐进灯阵。利用相邻灯的连锁变化，让整个灯阵归零，随时保存继续。`,
     href: '/games/signal-pulse',
     category: '灯阵逻辑',
     controls: '点击或轻触灯格，翻转自己与相邻灯',

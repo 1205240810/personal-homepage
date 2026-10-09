@@ -393,3 +393,34 @@
 :is(#workbench, .signal-stage) .pulse-board {
   min-inline-size: 0;
 }
+
+:is(#workbench, .signal-stage) .pulse-chapters {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding-bottom: 12px;
+  margin-bottom: 10px;
+}
+:is(#workbench, .signal-stage) .pulse-chapters button {
+  min-width: 0;
+  min-height: 56px;
+}
+:is(#workbench, .signal-stage) .pulse-chapters button small {
+  font-size: 12px;
+  white-space: nowrap;
+}
+:is(#workbench, .signal-stage) .pulse-chapter-description {
+  margin: 0 0 14px;
+  color: #657259;
+  font-size: 12px;
+  line-height: 1.7;
+}
+:is(#workbench, .signal-stage) .pulse-levels[data-count='6'] {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  gap: 6px;
+}
+:is(#workbench, .signal-stage) .pulse-levels[data-count='6'] button {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+}

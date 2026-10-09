@@ -36,8 +36,8 @@ export const AUDIO_SCORES: Record<AudioTheme, Score> = {
   },
   stud: {
     bpm: 72,
-    chords: [[57,60,64],[53,57,60],[50,53,57],[52,56,59],[57,60,64],[53,57,60],[50,53,57],[52,56,59],
-      [53,57,60],[55,59,62],[57,60,64],[52,56,59],[50,53,57],[52,56,59],[57,60,64],[57,60,64]],
+    chords: [[57,60,64,67],[53,57,60,64],[50,53,57,60],[52,56,59,62],[57,60,64,67],[53,57,60,64],[50,53,57,60],[52,56,59,62],
+      [53,57,60,64],[55,59,62,65],[57,60,64,67],[52,56,59,62],[50,53,57,60],[52,56,59,62],[57,60,64,67],[57,60,64,67]],
     bass: [33,41,38,40,33,41,38,40,41,43,33,40,38,40,33,33],
     melody: [[64,R,60,59],[60,R,57,R],[62,R,60,57],[59,56,R,R],[64,67,64,R],[60,R,64,60],[62,60,57,R],[59,R,56,R],
       [60,64,R,65],[62,R,59,R],[60,R,64,67],[64,59,R,56],[57,R,62,60],[59,56,59,R],[60,R,57,R],[64,R,R,R]],
@@ -84,7 +84,7 @@ export function createAudio(theme: AudioTheme): GameAudio {
   }
   function tone(note: number, at: number, duration: number, amplitude: number, kind: Voice['kind'], waveform: OscillatorType = 'sine') {
     if (!context || disposed || voices.size >= 96) return;
-    let osc: OscillatorNode | null = null, gain: GainNode | null = null;
+    let osc: OscillatorNode | null = null, gain: GainNode | null = null, voice: Voice | null = null;
     try {
       osc = context.createOscillator(); gain = context.createGain();
       osc.type = waveform; osc.frequency.value = hz(note);
@@ -92,10 +92,12 @@ export function createAudio(theme: AudioTheme): GameAudio {
       gain.gain.linearRampToValueAtTime(amplitude, at + Math.min(0.11, duration * 0.2));
       gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
       osc.connect(gain); gain.connect(kind === 'music' ? musicBus! : sfxBus!);
-      const voice: Voice = { osc, gain, kind }; voices.add(voice);
-      osc.onended = () => { voice.osc.disconnect(); voice.gain.disconnect(); voices.delete(voice); };
+      voice = { osc, gain, kind }; voices.add(voice);
+      const playingVoice = voice;
+      osc.onended = () => { try { playingVoice.osc.disconnect(); playingVoice.gain.disconnect(); } catch { /* Device loss remains silent. */ } finally { voices.delete(playingVoice); } };
       osc.start(at); osc.stop(at + duration + 0.02);
     } catch {
+      if (voice) voices.delete(voice);
       try { osc?.disconnect(); gain?.disconnect(); } catch { /* Silent fallback. */ }
     }
   }
@@ -108,12 +110,13 @@ export function createAudio(theme: AudioTheme): GameAudio {
     while (nextBeat < context.currentTime + 0.18 && scheduled++ < 4) {
       const bar = Math.floor(beat / 4) % 16, position = beat % 4;
       if (position === 0) {
-        for (const note of score.chords[bar]) tone(note, nextBeat, seconds * 3.85, 0.036, 'music');
+        // Stud's seventh voicings and quiet triangle partials soften the lounge color.
+        for (const note of score.chords[bar]) tone(note, nextBeat, seconds * 3.85, theme === 'stud' ? 0.026 : 0.036, 'music', theme === 'stud' ? 'triangle' : 'sine');
         tone(score.bass[bar], nextBeat, seconds * 2.7, 0.075, 'music');
       }
       const note = score.melody[bar][position];
       if (note !== null) {
-        tone(note, nextBeat, seconds * 1.45, 0.095, 'music');
+        tone(note, nextBeat, seconds * 1.45, theme === 'stud' ? 0.077 : 0.095, 'music');
         // Quiet octave partial supplies a softened bell color without sharp attacks.
         tone(note + 12, nextBeat, seconds * 0.75, 0.007, 'music');
       }
