@@ -2,9 +2,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
-  ArrowUp,
-  ArrowDown,
-  ArrowRight,
   ArrowUpRight,
   BookOpen,
   Layers3,
@@ -22,6 +19,7 @@ import {
   CollapsibleContent,
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
+import { VirtualJoystick } from '@/components/world/virtual-joystick';
 import {
   Popover,
   PopoverTrigger,
@@ -452,48 +450,9 @@ export default function WorldShell({
           )}
           {compact && showPad && !panel && !help && !menuOpen && (
             <div className="mobile-controls" aria-label="触控方向控制">
-              <div className="dpad">
-                {[
-                  { icon: ArrowUp, x: 0, y: -1, c: 'up', label: '向上移动' },
-                  {
-                    icon: ArrowLeft,
-                    x: -1,
-                    y: 0,
-                    c: 'left',
-                    label: '向左移动',
-                  },
-                  { icon: ArrowDown, x: 0, y: 1, c: 'down', label: '向下移动' },
-
-                  {
-                    icon: ArrowRight,
-                    x: 1,
-                    y: 0,
-                    c: 'right',
-                    label: '向右移动',
-                  },
-                ].map((d) => (
-                  <button
-                    className={d.c}
-                    key={d.c}
-                    aria-label={d.label}
-                    onPointerDown={(e) => {
-                      e.currentTarget.setPointerCapture(e.pointerId);
-                      game.current?.setDirection({ x: d.x, y: d.y });
-                    }}
-                    onPointerUp={() =>
-                      game.current?.setDirection({ x: 0, y: 0 })
-                    }
-                    onPointerCancel={() =>
-                      game.current?.setDirection({ x: 0, y: 0 })
-                    }
-                    onLostPointerCapture={() =>
-                      game.current?.setDirection({ x: 0, y: 0 })
-                    }
-                  >
-                    <d.icon size={18} />
-                  </button>
-                ))}
-              </div>
+              <VirtualJoystick
+                onChange={(v) => game.current?.setDirection(v)}
+              />
               <button
                 className="touch-interact"
                 onClick={interact}
@@ -541,7 +500,7 @@ export default function WorldShell({
               <kbd>M</kbd> 机甲拆解图
             </p>
             <p className="touch-help">
-              打开下方方向控制可手动行走。点「拆解图」查看完整机甲并选择目的地。
+              打开下方摇杆可手动行走，可斜向移动，推得越远走得越快。点「拆解图」查看完整机甲并选择目的地。
             </p>
             <p>也可以从上方直接阅读内容。</p>
           </PopoverContent>

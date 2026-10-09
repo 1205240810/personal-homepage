@@ -193,7 +193,44 @@
   display: none;
 }
 .world-shell.is-compact.has-direction-pad .interaction-prompt {
-  bottom: calc(200px + env(safe-area-inset-bottom));
+  bottom: calc(214px + env(safe-area-inset-bottom));
+}
+/* Analog stick: one finger, any direction, distance sets speed. */
+.world-shell.is-compact .joystick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  border: 1px solid #b9c4ab88;
+  background:
+    radial-gradient(circle, #f4f2e722 0 38%, transparent 39%), #263038b8;
+  box-shadow: inset 0 0 0 6px #f4f2e714;
+}
+.world-shell.is-compact .joystick-knob {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #f4f2e7ef;
+  border: 1px solid #b9c4ab;
+  box-shadow: 0 2px 8px #0006;
+  transition: transform 0.12s ease-out;
+  pointer-events: none;
+}
+.world-shell.is-compact .joystick[data-active] .joystick-knob {
+  background: #e8b978;
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .world-shell.is-compact .joystick-knob {
+    transition: none;
+  }
 }
 .world-shell.is-compact .mobile-controls {
   display: flex;
@@ -206,7 +243,6 @@
   justify-content: space-between;
   pointer-events: none;
 }
-.world-shell.is-compact .dpad button,
 .world-shell.is-compact .touch-interact {
   display: grid;
   place-items: center;
@@ -226,7 +262,6 @@
 .world-shell.is-compact .touch-interact:disabled {
   opacity: 0.4;
 }
-.world-shell.is-compact .dpad button:active,
 .world-shell.is-compact .pad-toggle[aria-pressed='true'] {
   background: #e8b978;
   color: #273633;
