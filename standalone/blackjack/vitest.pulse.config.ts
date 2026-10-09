@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    include: ['qa/pulse-game.check.tsx'],
+    include: ['qa/pulse-game.check.tsx', 'qa/circuit-repair.check.tsx'],
     server: { deps: { inline: true } },
     deps: {
       optimizer: {

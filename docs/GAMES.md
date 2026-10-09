@@ -4,16 +4,17 @@
 
 ## 入口与页面
 
-| 地址                  | 功能                                       |
-| --------------------- | ------------------------------------------ |
-| `/games`              | 选择实际可玩的游戏                         |
-| `/games/holdem-lab`   | 2–9 人自定义练习室，逐步决策评分与教学复盘 |
-| `/games/blackjack`    | 标准筹码 21 点、新手教程及原有休闲模式     |
-| `/games/sudoku`       | 120 道数独、题库选题和逐步推理教练         |
-| `/games/yahtzee`      | 十三分栏快艇骰子、AI 对局及完整中途存档    |
-| `/games/stud`         | 双人五张梭哈、封顶下注和赛后权益分析       |
-| `/games/signal-pulse` | 十二关灯阵，支持选关、提示、撤回与重来     |
-| `/games?from=explore` | 从机甲街机角进入，主要返回入口为机甲       |
+| 地址                    | 功能                                       |
+| ----------------------- | ------------------------------------------ |
+| `/games`                | 选择实际可玩的游戏                         |
+| `/games/holdem-lab`     | 2–9 人自定义练习室，逐步决策评分与教学复盘 |
+| `/games/blackjack`      | 标准筹码 21 点、新手教程及原有休闲模式     |
+| `/games/sudoku`         | 120 道数独、题库选题和逐步推理教练         |
+| `/games/yahtzee`        | 十三分栏快艇骰子、AI 对局及完整中途存档    |
+| `/games/stud`           | 双人五张梭哈、封顶下注和赛后权益分析       |
+| `/games/signal-pulse`   | 十二关灯阵，支持选关、提示、撤回与重来     |
+| `/games/circuit-repair` | 旋转线路接通全部端点灯，四种尺寸与今日线路 |
+| `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲       |
 
 欢迎页的游戏室链接作为次要入口，保留工作台和进入机甲的选择。工作台通过主导航和侧栏通向游戏室。机甲内部的试作间设有可交互街机角；直接访问游戏页面时不需要先启动 Phaser 世界。
 
@@ -34,30 +35,32 @@ flowchart LR
   E -->|from=explore| C
 ```
 
-| 文件或目录                                  | 职责                                       |
-| ------------------------------------------- | ------------------------------------------ |
-| `lib/games/catalog.ts`                      | 稳定 ID、路由与游戏目录文案                |
-| `app/games/page.tsx`                        | 游戏室页面，读取来路参数                   |
-| `components/games/game-room.tsx`            | 目录展示与共享 `GamePageFrame`             |
-| `components/games/games.css`                | 导航、目录、页框、手机布局与减少动态效果   |
-| `lib/games/holdem-engine.ts`                | 发牌、盲注、合法行动、换街与底池结算       |
-| `lib/games/holdem-cards.ts`                 | 牌型比较与蒙特卡洛权益估计                 |
-| `lib/games/holdem-strategy.ts`              | 本地 AI 行动与策略复盘                     |
-| `lib/games/holdem-replay.ts`                | 仅在整手结束后生成全桌回放，并校验本机归档 |
-| `components/games/holdem-worker.ts`         | 将权益和复盘计算放到 Worker 中             |
-| `lib/games/holdem-music.ts`                 | 原创编曲、音量与音源生命周期               |
-| `lib/games/holdem-voice.ts`                 | 可选中文行动播报与自身语音队列清理         |
-| `public/assets/poker/portraits/`            | 九席原创透明人物素材                       |
-| `standalone/blackjack/src/`                 | 暗牌 21 的单一维护源码、纯规则和教练       |
-| `scripts/sync-blackjack.mjs`                | 构建前同步独立游戏到宿主运行组件           |
-| `components/games/blackjack/`               | 客户端按需加载、宿主导航与生成源码         |
-| `standalone/{sudoku,yahtzee,stud}/`         | 三款独立游戏的维护源码、测试与离线文件     |
-| `scripts/sync-standalone-games.mjs`         | 同步十八个运行文件，检查生成目录是否过期   |
-| `components/games/standalone-game-room.tsx` | 三款游戏的按需加载、来路导航和备案入口     |
-| `lib/pulse-puzzle.ts`                       | 灯阵关卡、按键翻转与最短解求解             |
-| `components/home/pulse-game.tsx`            | 两种入口共同复用的灯阵界面                 |
-| `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义             |
-| `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                 |
+| 文件或目录                                  | 职责                                               |
+| ------------------------------------------- | -------------------------------------------------- |
+| `lib/games/catalog.ts`                      | 稳定 ID、路由与游戏目录文案                        |
+| `app/games/page.tsx`                        | 游戏室页面，读取来路参数                           |
+| `components/games/game-room.tsx`            | 目录展示与共享 `GamePageFrame`                     |
+| `components/games/games.css`                | 导航、目录、页框、手机布局与减少动态效果           |
+| `lib/games/holdem-engine.ts`                | 发牌、盲注、合法行动、换街与底池结算               |
+| `lib/games/holdem-cards.ts`                 | 牌型比较与蒙特卡洛权益估计                         |
+| `lib/games/holdem-strategy.ts`              | 本地 AI 行动与策略复盘                             |
+| `lib/games/holdem-replay.ts`                | 仅在整手结束后生成全桌回放，并校验本机归档         |
+| `components/games/holdem-worker.ts`         | 将权益和复盘计算放到 Worker 中                     |
+| `lib/games/holdem-music.ts`                 | 原创编曲、音量与音源生命周期                       |
+| `lib/games/holdem-voice.ts`                 | 可选中文行动播报与自身语音队列清理                 |
+| `public/assets/poker/portraits/`            | 九席原创透明人物素材                               |
+| `standalone/blackjack/src/`                 | 暗牌 21 的单一维护源码、纯规则和教练               |
+| `scripts/sync-blackjack.mjs`                | 构建前同步独立游戏到宿主运行组件                   |
+| `components/games/blackjack/`               | 客户端按需加载、宿主导航与生成源码                 |
+| `standalone/{sudoku,yahtzee,stud}/`         | 三款独立游戏的维护源码、测试与离线文件             |
+| `scripts/sync-standalone-games.mjs`         | 同步十八个运行文件，检查生成目录是否过期           |
+| `components/games/standalone-game-room.tsx` | 三款游戏的按需加载、来路导航和备案入口             |
+| `lib/pulse-puzzle.ts`                       | 灯阵关卡、按键翻转与最短解求解                     |
+| `components/home/pulse-game.tsx`            | 两种入口共同复用的灯阵界面                         |
+| `lib/games/circuit-repair.ts`               | 线路检修的生成树出题、通电判定、提示与本机最佳记录 |
+| `components/games/circuit-repair.tsx`       | 线路检修界面：旋转、锁定、撤回、计时与键盘操作     |
+| `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义                     |
+| `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                         |
 
 目录只描述已经能打开的游戏，不依赖游戏内部状态。路由 ID 与中文名称分离；可以修改游戏标题和简介，而不随意改变分享地址。`GamePageFrame` 为普通游戏统一返回导航与 ICP 信息；扑克使用独立整屏布局，并保留相同的返回与备案入口。游戏组件负责自己的操作、提示、胜负和记录。
 
@@ -131,6 +134,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 - 扑克规则：牌型顺序、A2345、七张牌取最佳五张、平分底池、筹码守恒、短码全下、合法最小加注与重新开放加注。
 - AI 与复盘：只使用行动者自己的底牌与当时公开信息；抽样排除已知牌；评分与不确定性分开；完成后全桌底牌不参与玩家评分；AI 诊断和实际行动原子关联；旧记录不补造诊断，文案不把启发式宣传为严格求解器。
 - 灯阵：十二关可解、最短步数可靠、撤回与重来正确、五阶灯阵在窄屏仍可操作。
+- 线路检修：同一编号重建同一张线路，开局不会已完成，沿提示必能修好；坏记录与不可用存储不阻止开局（`scripts/check-circuit-repair.ts`、`standalone/blackjack/qa/circuit-repair.check.tsx`）。
 - 往返：从街机离开时停步，带来路参数选择游戏，返回原位；浏览器后退恢复页面时不冻结输入。
 - 存储：只记录需要的本机结果，坏记录和不可用存储不会阻止开局；页面分享地址不携带个人记录。
 
