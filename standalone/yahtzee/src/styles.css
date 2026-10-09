@@ -853,3 +853,86 @@
   grid-column: 1/-1;
   margin: 4px 0 8px;
 }
+/* Quick score picker under the dice (phones / touch screens only). */
+.yd-game .yd-quick {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #d4b57a44;
+  border-radius: 6px;
+  background: #ffffff06;
+}
+.yd-game .yd-quick-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.yd-game .yd-quick-head span {
+  color: var(--yd-brass);
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.yd-game .yd-quick-head small {
+  color: #a6b6c4;
+  font-size: 10px;
+}
+.yd-game .yd-quick-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 6px;
+}
+.yd-game .yd-quick-list button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid #d4b57a55;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--yd-paper);
+  font-size: 12px;
+}
+.yd-game .yd-quick-list button b {
+  color: var(--yd-brass);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.yd-game .yd-quick-list button.zero {
+  opacity: 0.6;
+}
+.yd-game .yd-quick-list button.selected {
+  background: var(--yd-brass);
+  color: var(--yd-navy);
+  opacity: 1;
+}
+.yd-game .yd-quick-list button.selected b {
+  color: var(--yd-navy);
+}
+.yd-game .yd-quick-confirm {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+.yd-game .yd-quick-confirm button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 5px;
+  border: 1px solid #d4b57a88;
+  background: transparent;
+  color: var(--yd-paper);
+}
+.yd-game .yd-quick-confirm button:last-child {
+  background: var(--yd-brass);
+  color: var(--yd-navy);
+  font-weight: 600;
+}
+/* Touch screens have no space bar to press: hide the keyboard hint. */
+@media (hover: none), (pointer: coarse) {
+  .yd-game .yd-roll span {
+    display: none;
+  }
+}

@@ -34,7 +34,7 @@ sudo install -d -o mecha -g mecha /srv/personal-homepage /srv/personal-homepage/
 
 以下命令在服务器 Bash 中分段执行。将提交占位符替换为已审核的完整 SHA；每个版本使用新目录，已有版本不在原地重建：
 
-根目录的 `npm run check` 现在包含 21 点回归和灯阵组件测试，使用 `standalone/blackjack` 锁定的测试依赖。全新源码目录需先分别安装根目录与该独立游戏的依赖，再执行检查和构建；只运行根目录的 `npm ci` 不足以完成检查。
+根目录的 `npm run check` 包含 21 点、梭哈和灯阵组件回归，使用 `standalone/blackjack` 与 `standalone/stud` 锁定的测试依赖。全新源码目录需先安装根目录及这两款独立游戏的依赖，再执行检查和构建；只运行根目录的 `npm ci` 不足以完成检查。
 
 ```bash
 mecha_revision='填写审核过的完整提交 SHA'
@@ -46,13 +46,14 @@ sudo -u mecha git clone --no-checkout https://github.com/1205240810/personal-hom
 sudo -u mecha git -C "$mecha_build" checkout --detach "$mecha_revision"
 sudo -u mecha env PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin npm --prefix "$mecha_build" ci
 sudo -u mecha env PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin npm --prefix "$mecha_build/standalone/blackjack" ci
+sudo -u mecha env PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin npm --prefix "$mecha_build/standalone/stud" ci
 sudo -u mecha env PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin npm --prefix "$mecha_build" run check
 sudo -u mecha env PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin npm --prefix "$mecha_build" run build:node
 ```
 
 ### 在腾讯控制台执行长任务
 
-控制台“执行命令”的默认超时为 60 秒，安装依赖和构建应交给后台任务。源码准备好后，可用下面的单次任务替代上面四条 npm 命令；不要同时重复构建：
+控制台“执行命令”的默认超时为 60 秒，安装依赖和构建应交给后台任务。源码准备好后，可用下面的单次任务替代上面五条 npm 命令；不要同时重复构建：
 
 ```bash
 mecha_build_unit="personal-homepage-build-$mecha_short"
@@ -61,7 +62,7 @@ sudo systemd-run --no-block --unit="$mecha_build_unit" --uid=mecha --gid=mecha \
   --setenv=PATH=/opt/node-v24.21.0-linux-x64/bin:/usr/bin:/bin \
   --property=Type=oneshot --property=TimeoutStartSec=15min \
   --property=StandardOutput=journal --property=StandardError=journal \
-  /bin/bash -c 'npm ci && npm --prefix standalone/blackjack ci && npm run check && npm run build:node'
+  /bin/bash -c 'npm ci && npm --prefix standalone/blackjack ci && npm --prefix standalone/stud ci && npm run check && npm run build:node'
 sudo journalctl -u "$mecha_build_unit" -n 100 --no-pager
 ```
 
@@ -93,7 +94,7 @@ sudo tar -xzf "$mecha_archive" --strip-components=1 --no-same-owner -C "$mecha_b
 sudo chown -R mecha:mecha "$mecha_build"
 ```
 
-这一步替代 `git clone` 和 `git checkout`，随后仍在服务器的源码目录依次执行 `npm ci`、`npm --prefix standalone/blackjack ci`、`npm run check`、`npm run build:node`，可使用上述后台任务。源码包没有 `.git`，发布记录应同时保留完整提交 SHA 与源码包校验值。
+这一步替代 `git clone` 和 `git checkout`，随后仍在服务器的源码目录依次执行 `npm ci`、`npm --prefix standalone/blackjack ci`、`npm --prefix standalone/stud ci`、`npm run check`、`npm run build:node`，可使用上述后台任务。源码包没有 `.git`，发布记录应同时保留完整提交 SHA 与源码包校验值。
 
 ### 整理与验证发布产物
 

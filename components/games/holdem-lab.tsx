@@ -1428,6 +1428,23 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
   const completed = state?.street === 'complete';
   const humanTurn = state?.toAct === 0 && !paused;
   const legal = state ? legalActions(state) : null;
+  const handNumber = state?.hand;
+  const scrolledHand = useRef<number | null>(null);
+  useEffect(() => {
+    // On phones the control deck sticks to the bottom of the viewport. When
+    // your first decision of a hand arrives (and the betting deck has grown),
+    // scroll to the page end so your seat sits above the deck, not beneath it.
+    if (!humanTurn || handNumber === undefined) return;
+    if (scrolledHand.current === handNumber) return;
+    scrolledHand.current = handNumber;
+    if (!window.matchMedia('(max-width: 700px)').matches) return;
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+  }, [humanTurn, handNumber]);
   const raiseTo = legal
     ? raiseChoice?.turn === state
       ? Math.min(

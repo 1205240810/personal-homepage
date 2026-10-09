@@ -17,7 +17,12 @@ import {
   dailyPuzzle,
   solveDaily,
 } from '../../../lib/pulse-daily';
-import { PULSE_LEVELS, pressPulse } from '../../../lib/pulse-puzzle';
+import {
+  PULSE_CHAPTERS,
+  PULSE_LEVELS,
+  pressPulse,
+  solvePulse,
+} from '../../../lib/pulse-puzzle';
 import {
   createPulseProgress,
   PULSE_PROGRESS_KEY,
@@ -37,6 +42,29 @@ function boardValue() {
 }
 function readSaved() {
   return JSON.parse(localStorage.getItem(PULSE_PROGRESS_KEY)!);
+}
+function solvedProgress(levelId: number) {
+  const level = PULSE_LEVELS.find((item) => item.id === levelId)!;
+  const progress = createPulseProgress(levelId);
+  const solution = solvePulse(level.board, level.size)!;
+  for (let cell = 0; cell < level.size * level.size; cell++) {
+    if (solution & (1 << cell))
+      progress.history.push(
+        pressPulse(progress.history.at(-1)!, cell, level.size),
+      );
+  }
+  progress.results[levelId] = { moves: level.par, hints: 0 };
+  return progress;
+}
+
+function finishBoard() {
+  const saved = readSaved();
+  const level = PULSE_LEVELS.find((item) => item.id === saved.levelId)!;
+  const solution = solvePulse(boardValue(), level.size)!;
+  const cells = boardButtons();
+  for (let cell = 0; cell < level.size * level.size; cell++) {
+    if (solution & (1 << cell)) fireEvent.click(cells[cell]);
+  }
 }
 function mountGame(entrance: 'home' | 'room' = 'home') {
   return render(
@@ -105,7 +133,7 @@ describe('Signal Pulse browser-local sessions', () => {
     first.unmount();
 
     mountGame();
-    expect(screen.getByText(/已完成 1 \/ 12/)).toBeTruthy();
+    expect(screen.getByText(/已完成 1 \/ 30/)).toBeTruthy();
     expect(
       screen.getByRole('button', { name: /第 1 关：一点微光，已完成/ }),
     ).toBeTruthy();
@@ -133,6 +161,135 @@ describe('Signal Pulse browser-local sessions', () => {
     fireEvent.click(next);
     expect(boardValue()).toBe(PULSE_LEVELS[1].board);
     expect(readSaved().results[1]).toEqual({ moves: 1, hints: 0 });
+  });
+
+  it('renders all six data-driven chapters and lets the new six-level chapters select, hint and undo', () => {
+    mountGame('room');
+    const chapters = screen.getByRole('group', { name: '选择灯阵阶段' });
+    expect(within(chapters).getAllByRole('button')).toHaveLength(6);
+    for (const chapter of PULSE_CHAPTERS.slice(3)) {
+      const levels = PULSE_LEVELS.filter(
+        (level) => level.chapter === chapter.id,
+      );
+      const chapterButton = within(chapters).getByRole('button', {
+        name: new RegExp(`^${chapter.name}，`),
+      });
+      expect(chapterButton.textContent).toContain(chapter.label);
+      expect(chapterButton.textContent).toContain(
+        `${levels[0].id}–${levels.at(-1)!.id}`,
+      );
+      fireEvent.click(chapterButton);
+      expect(readSaved().levelId).toBe(levels[0].id);
+      const choices = screen.getByRole('group', { name: '选择灯阵关卡' });
+      expect(within(choices).getAllByRole('button')).toHaveLength(6);
+      expect(choices.getAttribute('data-count')).toBe('6');
+      fireEvent.click(
+        within(choices).getByRole('button', {
+          name: new RegExp(`第 ${levels.at(-1)!.id} 关：`),
+        }),
+      );
+      const initial = boardValue();
+      fireEvent.click(boardButtons()[0]);
+      fireEvent.click(screen.getByRole('button', { name: '提示' }));
+      expect(boardButtons()[readSaved().hint].className).toContain('is-hint');
+      fireEvent.click(screen.getByRole('button', { name: '撤回灯阵上一步' }));
+      expect(boardValue()).toBe(initial);
+      expect(readSaved().history).toEqual([initial]);
+      expect(readSaved().hintsUsed).toBe(1);
+    }
+  });
+
+  it('continues the original twelve-level completion save directly into level thirteen', () => {
+    const legacy = solvedProgress(12);
+    legacy.results = Object.fromEntries(
+      PULSE_LEVELS.slice(0, 12).map((level) => [
+        level.id,
+        { moves: level.par, hints: 0 },
+      ]),
+    );
+    const raw = JSON.stringify(legacy);
+    localStorage.setItem(PULSE_PROGRESS_KEY, raw);
+    mountGame('home');
+    expect(localStorage.getItem(PULSE_PROGRESS_KEY)).toBe(raw);
+    expect(screen.getByText(/已完成 12 \/ 30/)).toBeTruthy();
+    expect(screen.queryByText(/30 关完成/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '继续游戏' }));
+    const next = screen.getByRole('button', { name: '进入下一阶段' });
+    expect(document.activeElement).toBe(next);
+    fireEvent.click(next);
+    expect(readSaved().levelId).toBe(13);
+    expect(readSaved().results).toEqual(legacy.results);
+    expect(boardValue()).toBe(PULSE_LEVELS[12].board);
+    expect(document.activeElement).toBe(boardButtons()[0]);
+  });
+
+  it.each(PULSE_LEVELS)(
+    'plays level $id to its exact par and continues to a playable next board',
+    (level) => {
+      localStorage.setItem(
+        PULSE_PROGRESS_KEY,
+        JSON.stringify(createPulseProgress(level.id)),
+      );
+      mountGame('room');
+      expect(boardValue()).toBe(level.board);
+      expect(boardButtons()).toHaveLength(level.size * level.size);
+      fireEvent.click(screen.getByRole('button', { name: '提示' }));
+      expect(boardButtons()[readSaved().hint].className).toContain('is-hint');
+      finishBoard();
+      expect(boardValue()).toBe(0);
+      expect(readSaved().results[level.id]).toEqual({
+        moves: level.par,
+        hints: 1,
+      });
+      expect(
+        boardButtons().every((cell) => (cell as HTMLButtonElement).disabled),
+      ).toBe(true);
+      const next = screen.getByRole('button', {
+        name: /^(下一关|进入下一阶段|去试试未完成的关卡)$/,
+      });
+      expect(document.activeElement).toBe(next);
+      fireEvent.click(next);
+      const nextLevel = PULSE_LEVELS[level.id === 30 ? 0 : level.id];
+      expect(readSaved().levelId).toBe(nextLevel.id);
+      expect(boardValue()).toBe(nextLevel.board);
+      expect(document.activeElement).toBe(boardButtons()[0]);
+      expect(readSaved().results[level.id]).toEqual({
+        moves: level.par,
+        hints: 1,
+      });
+    },
+  );
+
+  it('finishes all thirty levels without an invalid next entrance and preserves the final result after remount', () => {
+    const progress = createPulseProgress(30);
+    progress.results = Object.fromEntries(
+      PULSE_LEVELS.slice(0, -1).map((level) => [
+        level.id,
+        { moves: level.par, hints: 0 },
+      ]),
+    );
+    localStorage.setItem(PULSE_PROGRESS_KEY, JSON.stringify(progress));
+    const first = mountGame();
+    finishBoard();
+    expect(screen.getByText('30 关完成，所有脉冲都归零了。')).toBeTruthy();
+    expect(screen.getByText(/已完成 30 \/ 30/)).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: /下一关|下一阶段|未完成的关卡/ }),
+    ).toBeNull();
+    expect(Object.keys(readSaved().results)).toHaveLength(30);
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: /重置当前灯阵/ }),
+    );
+    first.unmount();
+    mountGame('room');
+    expect(screen.getByText(/已恢复第 30 关的通关记录/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '继续游戏' }));
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: /重置当前灯阵/ }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /重置当前灯阵/ }));
+    expect(boardValue()).toBe(PULSE_LEVELS.at(-1)!.board);
+    expect(Object.keys(readSaved().results)).toHaveLength(30);
   });
 
   it('handles a throwing localStorage getter without blocking gameplay', () => {
@@ -222,6 +379,49 @@ describe('Signal Pulse daily challenge', () => {
     vi.setSystemTime(new Date(2026, 9, 9, 12));
   });
   afterEach(() => vi.useRealTimers());
+
+  it('plays daily boards beside all thirty fixed levels with independent progress and stars', () => {
+    const finalLevel = PULSE_LEVELS[29];
+    const fixedSave = JSON.stringify(createPulseProgress(finalLevel.id));
+    localStorage.setItem(PULSE_PROGRESS_KEY, fixedSave);
+    render(
+      <StrictMode>
+        <div className="signal-stage">
+          <PulseDaily />
+          <PulseGame />
+        </div>
+      </StrictMode>,
+    );
+    const daily = within(screen.getByRole('region', { name: '今日挑战' }));
+    const fixed = within(
+      screen.getByRole('region', { name: '休息一下，脉冲归零。' }),
+    );
+    expect(fixed.getByText(/已完成 0 \/ 30/)).toBeTruthy();
+    const dailyBoard = within(
+      daily.getByRole('group', { name: '今日 5 × 5 灯阵' }),
+    );
+    const puzzle = dailyPuzzle('2026-10-09', 5);
+    for (const cell of solveDaily(puzzle.board, 5)!)
+      fireEvent.click(dailyBoard.getAllByRole('button')[cell]);
+    expect(daily.getByText(/获得 3 星/)).toBeTruthy();
+    expect(localStorage.getItem(PULSE_PROGRESS_KEY)).toBe(fixedSave);
+    const dailySave = localStorage.getItem(PULSE_DAILY_KEY);
+
+    const fixedCells = within(
+      fixed.getByRole('group', { name: '5 × 5 灯阵' }),
+    ).getAllByRole('button');
+    const solution = solvePulse(finalLevel.board, finalLevel.size)!;
+    for (let cell = 0; cell < fixedCells.length; cell++)
+      if (solution & (1 << cell)) fireEvent.click(fixedCells[cell]);
+    expect(
+      fixed.getByRole('button', { name: /第 30 关：满庭归寂，已完成，3 星/ }),
+    ).toBeTruthy();
+    expect(readSaved().results[30]).toEqual({
+      moves: finalLevel.par,
+      hints: 0,
+    });
+    expect(localStorage.getItem(PULSE_DAILY_KEY)).toBe(dailySave);
+  });
 
   it("solves today's 6 × 6 at par for three stars and keeps it after remount", () => {
     const first = mountDaily();

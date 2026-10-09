@@ -9,7 +9,8 @@
 .bj-lobby-nav > p { margin: 0; font-size: 11px; color: #9eaf9d; }
 @media (max-width: 640px) {
   .bj-lobby-nav { padding: 10px 14px 0; display: block; }
-  .bj-lobby-tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  .bj-lobby-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bj-lobby-tabs button { font-size: 12px; }
   .bj-lobby-tabs button { padding: 10px 12px; }
   .bj-lobby-nav > p { padding: 9px 4px 0; font-size: 10px; }
 }
