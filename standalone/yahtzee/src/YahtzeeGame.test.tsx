@@ -235,3 +235,41 @@ describe('interaction safety', () => {
     expect(JSON.parse(localStorage.getItem(STORAGE)!).cards).toEqual([{}, {}]);
   });
 });
+describe('mobile quick score picker', () => {
+  const stubMedia = (matches: boolean) =>
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+  afterEach(() => vi.unstubAllGlobals());
+  it('lists projected points under the dice, highest first, and scores after confirmation', () => {
+    stubMedia(true);
+    render(<YahtzeeGame persist={false} />);
+    expect(screen.queryByRole('region', { name: '快速记分' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /掷出骰子/ }));
+    tick(400);
+    const panel = screen.getByRole('region', { name: '快速记分' });
+    const chips = [...panel.querySelectorAll('.yd-quick-list button')];
+    expect(chips.length).toBeGreaterThan(0);
+    const points = chips.map((b) => Number(b.querySelector('b')!.textContent));
+    expect(points).toEqual([...points].sort((a, b) => b - a));
+    expect(points[0]).toBeGreaterThan(0);
+    fireEvent.click(chips[0]);
+    expect(chips[0].getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getAllByText('0 / 13 栏').length).toBe(2);
+    fireEvent.click(screen.getByRole('button', { name: /^确认：/ }));
+    expect(screen.getByText('1 / 13 栏')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: '快速记分' })).toBeNull();
+  });
+  it('stays out of the way on desktop layouts', () => {
+    stubMedia(false);
+    render(<YahtzeeGame persist={false} />);
+    fireEvent.click(screen.getByRole('button', { name: /掷出骰子/ }));
+    tick(400);
+    expect(screen.queryByRole('region', { name: '快速记分' })).toBeNull();
+  });
+});

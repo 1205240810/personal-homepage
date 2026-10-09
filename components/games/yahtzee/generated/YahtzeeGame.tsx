@@ -1,5 +1,11 @@
 // Synced from standalone/yahtzee/src by scripts/sync-standalone-games.mjs. Edit the standalone source.
-import { useEffect, useId, useRef, useState } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import {
   bonusFor,
   categories,
@@ -21,6 +27,18 @@ import {
 import { createAudio } from './audio';
 import { requestHold, type HoldDecision } from './ai';
 import './styles.css';
+// Phones and touch screens get a compact score picker right under the dice, so
+// players do not have to scroll down to the score card after every roll.
+const QUICK_QUERY = '(max-width: 690px), (pointer: coarse)';
+const subscribeQuick = (notify: () => void) => {
+  if (typeof window === 'undefined' || !window.matchMedia) return () => {};
+  const mq = window.matchMedia(QUICK_QUERY);
+  mq.addEventListener?.('change', notify);
+  return () => mq.removeEventListener?.('change', notify);
+};
+const quickSnapshot = () =>
+  typeof window !== 'undefined' && !!window.matchMedia?.(QUICK_QUERY).matches;
+const quickServerSnapshot = () => false;
 export type YahtzeeGameProps = {
   onExit?: () => void;
   onComplete?: (result: {
@@ -89,6 +107,11 @@ export function YahtzeeGame({
   const ref = useRef(state);
   ref.current = state;
   const [selected, setSelected] = useState<Category | null>(null);
+  const quick = useSyncExternalStore(
+    subscribeQuick,
+    quickSnapshot,
+    quickServerSnapshot,
+  );
   const [resumedNotice, setResumedNotice] = useState(false),
     [fastAI, setFastAI] = useState(false);
   const [paused, setPaused] = useState(false),
@@ -414,6 +437,9 @@ export function YahtzeeGame({
     pScore = total(card, state.bonus[0]),
     aScore = total(state.cards[1], state.bonus[1]),
     round = Math.min(13, Object.keys(state.cards[1]).length + 1);
+  const quickOptions = categories
+    .filter((c) => available[c] !== undefined)
+    .sort((x, y) => available[y]! - available[x]!);
   return (
     <main
       ref={root}
@@ -564,6 +590,41 @@ export function YahtzeeGame({
                             : `重掷 ${state.held.filter((h) => !h).length} 枚`}
               <span>SPACE</span>
             </button>
+            {quick && active && state.rolls > 0 && quickOptions.length > 0 && (
+              <section className="yd-quick" aria-label="快速记分">
+                <div className="yd-quick-head">
+                  <span>快速记分</span>
+                  <small>按得分排序 · 先选再确认</small>
+                </div>
+                <div className="yd-quick-list">
+                  {quickOptions.map((c) => (
+                    <button
+                      key={c}
+                      aria-pressed={selected === c}
+                      aria-label={`快速记分：${labels[c]} ${available[c]} 分`}
+                      className={`${available[c] === 0 ? 'zero' : ''} ${selected === c ? 'selected' : ''}`}
+                      disabled={paused || rolling || Boolean(dialog)}
+                      onClick={() => pick(c)}
+                    >
+                      <span>{labels[c]}</span>
+                      <b>{available[c]}</b>
+                    </button>
+                  ))}
+                </div>
+                {selected && available[selected] !== undefined && (
+                  <div className="yd-quick-confirm">
+                    <button onClick={() => setSelected(null)}>取消</button>
+                    <button
+                      disabled={paused || rolling || Boolean(dialog)}
+                      onClick={() => commitScore(selected)}
+                    >
+                      确认：{labels[selected]} {available[selected]} 分
+                      {bonusFor(state.dice, card) > 0 ? ' +100' : ''}
+                    </button>
+                  </div>
+                )}
+              </section>
+            )}
             <div className="yd-ai-note" role="status">
               <span>蓝调的手记</span>
               <p>{state.lastAI}</p>
