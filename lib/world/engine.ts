@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { makePlayerTextures, posePlayer } from './player';
+import { isFormField, ownsKeyboard, WORLD_SCROLL_KEYS } from './keyboard';
 import { SCENES, getScene, ARCHIVE_GANTRY } from './registry';
 import { traversable, clearSegment, findRoute } from './navigation';
 import { distance } from './geometry';
@@ -247,14 +248,20 @@ export function createWorld(
           if (this.hoveredNodeId === n.id) this.hoveredNodeId = null;
         });
       });
+      // No Phaser capture: keyGuard below only claims keys the page would not use.
       this.keys = this.input.keyboard!.addKeys(
         'W,A,S,D,UP,DOWN,LEFT,RIGHT,E,SPACE,SHIFT',
+        false,
       ) as Record<string, Phaser.Input.Keyboard.Key>;
       this.input.keyboard!.on('keydown-E', (e: KeyboardEvent) => {
-        if (!e.repeat && near) perform(near);
+        if (!e.repeat && near && !isFormField(e.target)) perform(near);
       });
-      this.input.keyboard!.on('keydown-SPACE', () => {
-        if (transitioning) finishTransition?.();
+      // Enter on the focused canvas (or page) also interacts; on a button it stays the button's.
+      this.input.keyboard!.on('keydown-ENTER', (e: KeyboardEvent) => {
+        if (!e.repeat && near && ownsKeyboard(e.target)) perform(near);
+      });
+      this.input.keyboard!.on('keydown-SPACE', (e: KeyboardEvent) => {
+        if (transitioning && ownsKeyboard(e.target)) finishTransition?.();
       });
       this.input.on(
         'pointerdown',
@@ -350,7 +357,6 @@ export function createWorld(
         this.input.keyboard.resetKeys();
         this.input.keyboard.clearCaptures();
         this.input.keyboard.enabled = !paused;
-        if (!paused) this.input.keyboard.addCapture('UP,DOWN,LEFT,RIGHT,SPACE');
       }
     }
     createSpatialLayers(key: string, frame?: number) {
@@ -543,14 +549,18 @@ export function createWorld(
       const def = getScene(state.sceneId),
         dt = Math.min(delta, 40) / 1000,
         previous = { ...state.position };
+      // Typing in a field or nudging a slider must not walk the pilot.
+      const keys = isFormField(document.activeElement) ? 0 : 1;
       let dx =
         input.x +
-        (this.keys.D.isDown || this.keys.RIGHT.isDown ? 1 : 0) -
-        (this.keys.A.isDown || this.keys.LEFT.isDown ? 1 : 0);
+        keys *
+          ((this.keys.D.isDown || this.keys.RIGHT.isDown ? 1 : 0) -
+            (this.keys.A.isDown || this.keys.LEFT.isDown ? 1 : 0));
       let dy =
         input.y +
-        (this.keys.S.isDown || this.keys.DOWN.isDown ? 1 : 0) -
-        (this.keys.W.isDown || this.keys.UP.isDown ? 1 : 0);
+        keys *
+          ((this.keys.S.isDown || this.keys.DOWN.isDown ? 1 : 0) -
+            (this.keys.W.isDown || this.keys.UP.isDown ? 1 : 0));
       if (dx || dy) {
         this.route = [];
         this.targetNode = undefined;
@@ -777,6 +787,11 @@ export function createWorld(
     input = { x: 0, y: 0 };
     save();
   };
+  // Stop arrows/Space from scrolling only while the world owns the key.
+  const keyGuard = (e: KeyboardEvent) => {
+    if (paused || destroyed || !WORLD_SCROLL_KEYS.has(e.code)) return;
+    if (ownsKeyboard(e.target)) e.preventDefault();
+  };
   const visibility = () => {
     if (document.hidden) blur();
   };
@@ -785,6 +800,7 @@ export function createWorld(
     if (reduced) finishTransition?.();
   };
   window.addEventListener('blur', blur);
+  window.addEventListener('keydown', keyGuard);
   document.addEventListener('visibilitychange', visibility);
   motion.addEventListener('change', changeMotion);
   return {
@@ -793,6 +809,7 @@ export function createWorld(
       if (transitionTimer) clearTimeout(transitionTimer);
       save();
       window.removeEventListener('blur', blur);
+      window.removeEventListener('keydown', keyGuard);
       document.removeEventListener('visibilitychange', visibility);
       motion.removeEventListener('change', changeMotion);
       game.destroy(true);

@@ -325,7 +325,7 @@ export default function WorldShell({
         ref={mount}
         className={`game-mount ${ready ? 'is-ready' : ''}`}
         role="application"
-        aria-label="用方向键或 WASD 移动，E 与附近物件互动，M 打开机甲拆解图。也可点击目录直接阅读。"
+        aria-label="用方向键或 WASD 移动，E 或回车与附近物件互动，M 打开机甲拆解图。也可点击目录直接阅读。"
         tabIndex={0}
       />
       <div className="world-vignette" />
@@ -414,6 +414,11 @@ export default function WorldShell({
                 : getScene(scene.returnTo.sceneId).title}
             </button>
           )}
+          <output className="sr-only" aria-live="polite">
+            {ready && !loadingScene && near && !panel
+              ? `附近：${near.label}，按 E 或回车互动`
+              : ''}
+          </output>
           {ready && !loadingScene && !leavingArcade && near && !panel && (
             <button className="interaction-prompt" onClick={interact}>
               <kbd>E</kbd>
@@ -534,7 +539,7 @@ export default function WorldShell({
             <p className="keyboard-help">
               <kbd>WASD</kbd> / 方向键移动
               <br />
-              <kbd>E</kbd> 与附近物件互动
+              <kbd>E</kbd> / <kbd>Enter</kbd> 与附近物件互动
               <br />
               <kbd>Shift</kbd> 快走
               <br />
