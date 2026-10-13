@@ -140,6 +140,102 @@ test('电路初始未解，旋转能解，断开的出口不算完成', () => {
 });
 
 import { SCENES, getScene } from '../lib/world/registry.ts';
+import { createScenePrefetcher, sceneAssets } from '../lib/world/prefetch.ts';
+test('门前预取：每个房间的原画和地图只请求一次，失败后允许重试', async () => {
+  const urls: string[] = [];
+  let fail = true,
+    clock = 0;
+  const prefetch = createScenePrefetcher(
+    (url) => {
+      urls.push(url);
+      if (fail && url.endsWith('.json'))
+        return Promise.reject(new Error('offline'));
+      return Promise.resolve();
+    },
+    () => clock,
+  );
+  const room = getScene('life');
+  prefetch(room);
+  prefetch(room);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(urls, sceneAssets(room));
+  fail = false;
+  clock = 5_000;
+  prefetch(room);
+  assert.deepEqual(urls.slice(2), [`/maps/${room.id}.json`]);
+  for (const scene of SCENES)
+    for (const node of scene.nodes)
+      if (node.action.type === 'enter-scene')
+        assert.ok(
+          SCENES.some(
+            (s) => s.id === (node.action as { sceneId: string }).sceneId,
+          ),
+          `${node.id} 指向不存在的场景`,
+        );
+});
+test('断网时逐帧接近舱门不会反复预取，冷却后仍可恢复', async () => {
+  let clock = 0,
+    calls = 0,
+    offline = true;
+  const prefetch = createScenePrefetcher(
+    async () => {
+      calls++;
+      if (offline) throw new Error('offline');
+    },
+    () => clock,
+  );
+  const room = getScene('life');
+  for (let frame = 0; frame < 60; frame++) {
+    clock = (frame * 1_000) / 60;
+    prefetch(room);
+    await Promise.resolve();
+  }
+  assert.equal(calls, 2, '一秒内60帧只应尝试原画和地图各一次');
+  clock = 10_000;
+  offline = false;
+  prefetch(room);
+  await Promise.resolve();
+  assert.equal(calls, 4, '网络恢复后继续预热');
+  clock = 60_000;
+  prefetch(room);
+  assert.equal(calls, 4, '已成功的资源不重复预热');
+});
+test('HTTP 错误和响应体中断都会冷却后重试', async (t) => {
+  let clock = 0,
+    calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    calls++;
+    if (calls <= 2) return new Response(null, { status: 503 });
+    if (calls <= 4)
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.error(new Error('connection lost'));
+          },
+        }),
+      );
+    return new Response('complete');
+  });
+  const prefetch = createScenePrefetcher(undefined, () => clock),
+    room = getScene('life'),
+    settle = () => new Promise((resolve) => setImmediate(resolve));
+  prefetch(room);
+  await settle();
+  clock = 1_000;
+  prefetch(room);
+  assert.equal(calls, 2);
+  clock = 10_000;
+  prefetch(room);
+  await settle();
+  assert.equal(calls, 4);
+  clock = 20_000;
+  prefetch(room);
+  await settle();
+  assert.equal(calls, 6);
+  clock = 60_000;
+  prefetch(room);
+  assert.equal(calls, 6);
+});
 test('机甲通道连续，舱室都可原路返回，公开内容不被游戏进度锁定', () => {
   const hub = getScene('hub');
   for (const scene of SCENES) {
