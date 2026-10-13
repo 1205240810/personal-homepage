@@ -352,7 +352,7 @@ export function chooseGoMove(
   const deadline = now() + cfg.timeMs;
   let n = 0;
   const amaf = new Uint8Array(s.board.length);
-  while (n < cfg.playouts && (n & 31 || now() < deadline)) {
+  while (n < cfg.playouts && now() < deadline) {
     n++;
     const path: Node[] = [root];
     let node = root;

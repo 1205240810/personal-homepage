@@ -25,18 +25,20 @@ import {
 import {
   GO_LEVELS,
   chooseGoMove,
-  guessDead,
   type GoAiResult,
   type GoLevel,
 } from '@/lib/games/go-ai';
 import {
   GO_PROBLEMS,
+  correctMoves,
   playerWinning,
   setup,
   whiteReply,
   type ProblemSetup,
 } from '@/lib/games/go-problems';
 import { useLocalRecords } from './kit';
+// Vite provides the default URL export for this worker asset.
+// oxlint-disable-next-line import/default
 import goWorkerUrl from './go-worker.ts?worker&url';
 import './kit.css';
 import './go.css';
@@ -46,45 +48,83 @@ const NAME: Record<Player, string> = { 1: '黑', 2: '白' };
 const wire = (s: GoState) => ({ ...s, board: Array.from(s.board) });
 
 function useGoAi() {
-  const worker = useRef<Worker | null>(null);
-  const waiting = useRef(new Map<number, (r: unknown) => void>());
-  const seq = useRef(0);
+  const requests = useRef(new Set<() => void>());
+  const [compatibility, setCompatibility] = useState(false);
   useEffect(() => {
-    if (typeof Worker === 'undefined') return;
-    let w: Worker;
-    try {
-      w = new Worker(goWorkerUrl, { type: 'module' });
-    } catch {
-      return;
-    }
-    const pending = waiting.current;
-    w.onmessage = (e: MessageEvent<{ id: number; result?: unknown }>) => {
-      pending.get(e.data.id)?.(e.data.result ?? null);
-      pending.delete(e.data.id);
-    };
-    worker.current = w;
+    const pending = requests.current;
     return () => {
-      w.terminate();
-      worker.current = null;
-      pending.clear();
+      for (const cancel of pending) cancel();
     };
   }, []);
-  function send<T>(msg: object, fallback: () => T) {
-    return new Promise<T>((resolve) => {
-      const id = ++seq.current;
-      if (worker.current) {
-        waiting.current.set(id, resolve as (r: unknown) => void);
-        worker.current.postMessage({ id, ...msg });
-      } else setTimeout(() => resolve(fallback()), 0);
+  function send<T>(msg: object, fallback: () => T | null, timeoutMs: number) {
+    let worker: Worker | null = null;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
+    let finish: (result: T | null) => void = () => {};
+    const cancel = () => finish(null);
+    const pending = requests.current;
+    const promise = new Promise<T | null>((resolve) => {
+      let done = false;
+      finish = (result) => {
+        if (done) return;
+        done = true;
+        worker?.terminate();
+        clearTimeout(timer);
+        clearTimeout(watchdog);
+        pending.delete(cancel);
+        resolve(result);
+      };
+      const local = () => {
+        if (done) return;
+        clearTimeout(watchdog);
+        clearTimeout(timer);
+        setCompatibility(true);
+        worker?.terminate();
+        worker = null;
+        timer = setTimeout(() => {
+          try {
+            finish(fallback());
+          } catch {
+            finish(null);
+          }
+        }, 0);
+      };
+      pending.add(cancel);
+      try {
+        worker = new Worker(goWorkerUrl, { type: 'module' });
+        worker.onmessage = (
+          e: MessageEvent<{ result?: T; error?: string }>,
+        ) => {
+          if (done) return;
+          if (e.data.error) local();
+          else {
+            setCompatibility(false);
+            finish(e.data.result ?? null);
+          }
+        };
+        worker.onerror = (event) => {
+          event.preventDefault();
+          local();
+        };
+        worker.onmessageerror = local;
+        worker.postMessage({ id: 1, ...msg });
+        watchdog = setTimeout(local, timeoutMs);
+      } catch {
+        local();
+      }
     });
+    return { promise, cancel };
   }
   return {
+    compatibility,
     move: (s: GoState, komi: number, level: GoLevel) =>
-      send<GoAiResult>({ type: 'move', state: wire(s), komi, level }, () =>
-        chooseGoMove(s, komi, level),
+      send<GoAiResult & { fallback?: true }>(
+        { type: 'move', state: wire(s), komi, level },
+        () => ({ ...chooseGoMove(s, komi, 1), fallback: true }),
+        GO_LEVELS[level].timeMs + 5000,
       ),
     dead: (s: GoState) =>
-      send<number[]>({ type: 'dead', state: wire(s) }, () => guessDead(s, 150)),
+      send<number[]>({ type: 'dead', state: wire(s) }, () => null, 5000),
   };
 }
 
@@ -101,12 +141,14 @@ export function GoGame() {
   const [mode, setMode] = useState<Mode>({ kind: 'game' });
   const [size, setSize] = useState<GoSize>(9);
   const [level, setLevel] = useState<GoLevel>(2);
+  const [matchLevel, setMatchLevel] = useState<GoLevel>(2);
   const [human, setHuman] = useState<Player>(BLACK);
   const [handicap, setHandicap] = useState(0);
   const [history, setHistory] = useState<GoState[]>(() => [newGame(9)]);
   const [komi, setKomi] = useState(7.5);
   const [phase, setPhase] = useState<Phase>('play');
   const [dead, setDead] = useState<Set<number>>(() => new Set());
+  const [estimating, setEstimating] = useState(false);
   const [result, setResult] = useState('');
   const [message, setMessage] = useState('');
   const [focus, setFocus] = useState(40);
@@ -126,21 +168,40 @@ export function GoGame() {
   const su: ProblemSetup | null = problem ? setup(problem) : null;
   const aiToMove =
     mode.kind === 'game' && phase === 'play' && state.toPlay !== human;
-  const gameKey = `${n}-${level}`;
+  const gameKey = `${n}-${matchLevel}`;
 
-  function startScoring(s: GoState) {
+  function startScoring() {
     setPhase('scoring');
-    setMessage('双方虚手，进入数子。正在估计死子……点任意一块棋可切换死/活。');
-    void aiRef.current.dead(s).then((d) => {
-      setDead(new Set(d ?? []));
-      setMessage(
-        '已自动标记可能的死子（打叉）。点一块棋切换死/活，确认后结算。',
-      );
-    });
+    setEstimating(true);
+    setMessage('双方虚手，进入数子。正在估计死子……');
   }
 
+  useEffect(() => {
+    if (phase !== 'scoring') return;
+    let cancelled = false;
+    const request = aiRef.current.dead(state);
+    void request.promise.then((d) => {
+      if (cancelled) return;
+      setDead(new Set(d ?? []));
+      setEstimating(false);
+      setMessage(
+        d
+          ? '已自动标记可能的死子（淡化显示）。点一块棋切换死/活，确认后结算。'
+          : '死子估计暂不可用。请点棋块手动标记死子，再确认结算。',
+      );
+    });
+    return () => {
+      cancelled = true;
+      request.cancel();
+    };
+  }, [phase, state]);
+
   function newMatch(as: Player = human, sz: GoSize = size, hc = handicap) {
+    hc = Math.min(hc, sz === 9 ? 5 : 9);
     const g = newGame(sz, hc);
+    setHandicap(hc);
+    setMatchLevel(level);
+    setProblemState('solving');
     setMode({ kind: 'game' });
     setHistory([g]);
     setHuman(as);
@@ -174,7 +235,8 @@ export function GoGame() {
 
   function humanPlay(p: number) {
     if (phase === 'scoring') {
-      if (state.board[p] !== EMPTY) setDead(toggleDead(state, dead, p));
+      if (!estimating && state.board[p] !== EMPTY)
+        setDead(toggleDead(state, dead, p));
       return;
     }
     if (phase !== 'play') return;
@@ -247,9 +309,17 @@ export function GoGame() {
   }
 
   function hint() {
-    if (!problem) return;
-    const m = lineMove(state.moves.length);
-    if (m === undefined || m < 0) return;
+    if (!problem || !su) return;
+    const options = correctMoves(
+      { ...su, depth: Math.max(2, su.depth - state.moves.length) },
+      state,
+    );
+    const preferred = lineMove(state.moves.length);
+    const m =
+      preferred !== undefined && options.includes(preferred)
+        ? preferred
+        : options[0];
+    if (m === undefined) return;
     setFocus(m);
     boardRef.current
       ?.querySelector<HTMLButtonElement>(`[data-pt="${m}"]`)
@@ -258,11 +328,11 @@ export function GoGame() {
   }
 
   function undo() {
-    if (history.length < 2) return;
+    if (history.length < 2 || phase === 'over') return;
     let k = history.length - 1;
-    if (mode.kind === 'game')
-      // Back to the latest earlier position where it is the human's turn.
-      while (k > 1 && history[k - 1].toPlay !== human) k--;
+    // Undo the opponent's reply as well, including in problem mode.
+    const player = mode.kind === 'game' ? human : BLACK;
+    while (k > 1 && history[k - 1].toPlay !== player) k--;
     setHistory(history.slice(0, k));
     setPhase('play');
     setDead(new Set());
@@ -278,7 +348,7 @@ export function GoGame() {
     if (!r.ok) return;
     setHistory([...history, r.state]);
     setAnnounce('你虚手');
-    if (r.state.passes >= 2) startScoring(r.state);
+    if (r.state.passes >= 2) startScoring();
   }
   function resign() {
     if (phase !== 'play' || mode.kind !== 'game') return;
@@ -287,6 +357,7 @@ export function GoGame() {
     saveRecords(recordGoGame(records, gameKey, false));
   }
   function confirmScore() {
+    if (phase !== 'scoring' || estimating) return;
     const sc = score(state, komi, dead);
     const won = sc.winner === human;
     setPhase('over');
@@ -296,13 +367,12 @@ export function GoGame() {
     saveRecords(recordGoGame(records, gameKey, won));
   }
 
-  // AI move (runs in the worker). Latest values are read through a ref so the
-  // effect only re-runs when it becomes the AI's turn or a move is added.
-  const moveCount = state.moves.length;
+  // Bind each request to this position. Restarting at the same move count must
+  // cancel the previous worker as well as ignore its eventual response.
   const latest = useRef({
     state,
     komi,
-    level,
+    level: matchLevel,
     records,
     gameKey,
     startScoring,
@@ -312,7 +382,7 @@ export function GoGame() {
     latest.current = {
       state,
       komi,
-      level,
+      level: matchLevel,
       records,
       gameKey,
       startScoring,
@@ -323,9 +393,15 @@ export function GoGame() {
     if (!aiToMove) return;
     let cancelled = false;
     const l = latest.current;
-    void aiRef.current.move(l.state, l.komi, l.level).then((r) => {
-      if (cancelled || !r) return;
+    const request = aiRef.current.move(l.state, l.komi, l.level);
+    void request.promise.then((r) => {
+      if (cancelled) return;
+      if (!r) {
+        setMessage('AI 暂不可用，请重新开局。');
+        return;
+      }
       const now = latest.current;
+      if (r.fallback) setMatchLevel(1);
       if (r.move === -2) {
         setPhase('over');
         setResult('AI 认输，你赢了！');
@@ -333,18 +409,19 @@ export function GoGame() {
         setAnnounce('AI 认输');
         return;
       }
-      const res = play(now.state, r.move);
+      const res = play(l.state, r.move);
       if (!res.ok) return;
       setHistory((h) => [...h, res.state]);
       setAnnounce(
         `AI 下 ${coordName(res.state.size, r.move)}，胜率估计 ${Math.round(r.winrate * 100)}%`,
       );
-      if (res.state.passes >= 2) now.startScoring(res.state);
+      if (res.state.passes >= 2) now.startScoring();
     });
     return () => {
       cancelled = true;
+      request.cancel();
     };
-  }, [aiToMove, moveCount]);
+  }, [aiToMove, state]);
 
   const live =
     phase === 'scoring' || phase === 'over' ? score(state, komi, dead) : null;
@@ -353,6 +430,7 @@ export function GoGame() {
   const regionSet = new Set(su?.region ?? []);
 
   function onKey(e: KeyboardEvent<HTMLButtonElement>, p: number) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const d: Record<string, number> = {
       ArrowUp: -n,
       ArrowDown: n,
@@ -399,7 +477,7 @@ export function GoGame() {
             GO ·{' '}
             {problem
               ? `死活题 · ${problem.name}`
-              : `${n} 路 · ${GO_LEVELS[level].name} · 执${NAME[human]}`}
+              : `${n} 路 · ${GO_LEVELS[matchLevel].name} · 执${NAME[human]}`}
           </p>
           <h2>围棋</h2>
         </div>
@@ -426,7 +504,11 @@ export function GoGame() {
           <select
             aria-label="棋盘"
             value={size}
-            onChange={(e) => setSize(Number(e.target.value) as GoSize)}
+            onChange={(e) => {
+              const value = Number(e.target.value) as GoSize;
+              setSize(value);
+              if (value === 9) setHandicap((h) => Math.min(h, 5));
+            }}
           >
             {GO_SIZES.map((s) => (
               <option key={s} value={s}>
@@ -435,7 +517,7 @@ export function GoGame() {
             ))}
           </select>
           <select
-            aria-label="难度"
+            aria-label="难度（下局生效）"
             value={level}
             onChange={(e) => setLevel(Number(e.target.value) as GoLevel)}
           >
@@ -497,7 +579,7 @@ export function GoGame() {
         <button
           type="button"
           onClick={undo}
-          disabled={history.length < 2 || aiToMove}
+          disabled={history.length < 2 || aiToMove || phase === 'over'}
         >
           <Undo2 size={15} aria-hidden="true" /> 悔棋
         </button>
@@ -520,7 +602,12 @@ export function GoGame() {
             </button>
           </>
         ) : phase === 'scoring' ? (
-          <button type="button" className="kit-primary" onClick={confirmScore}>
+          <button
+            type="button"
+            className="kit-primary"
+            onClick={confirmScore}
+            disabled={estimating}
+          >
             确认结算
           </button>
         ) : (
@@ -539,6 +626,11 @@ export function GoGame() {
         )}
       </div>
       {message && <p className="kit-brief">{message}</p>}
+      {ai.compatibility && (
+        <p className="kit-help">
+          后台计算暂不可用，已切换入门强度兼容计算；数子时请手工标记死子。
+        </p>
+      )}
       {live && (
         <p className="kit-help">
           当前数子：黑 {live.black} · 白 {live.white}（含贴目 {komi}）
@@ -601,8 +693,8 @@ export function GoGame() {
         })}
       </fieldset>
       <p className="kit-help">
-        点交叉点落子；键盘用方向键移动、回车落子。中国规则数子（子 +
-        围住的空），提子、禁止自杀、劫（不能立即提回）。
+        棋盘、难度和让子在重新开局后生效。点交叉点落子；键盘用方向键移动、回车落子。中国规则数子（子
+        + 围住的空），提子、禁止自杀、劫（不能立即提回）。
         双方连续虚手后进入数子：AI 先估计死子，你可以点棋块修改再确认。AI
         用蒙特卡洛树搜索在后台线程思考，9 路最强，13/19 路明显变弱。
       </p>
