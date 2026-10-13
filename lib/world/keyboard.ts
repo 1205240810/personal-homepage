@@ -25,3 +25,17 @@ export const ownsKeyboard = (target: unknown) => {
   const element = asTarget(target);
   return !element?.closest || !element.closest(INTERACTIVE);
 };
+
+/** Keep browser and assistive-technology shortcuts available; Shift still sprints. */
+export const shouldCaptureWorldKey = (event: {
+  code: string;
+  target: unknown;
+  altKey?: boolean;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+}) =>
+  !event.altKey &&
+  !event.ctrlKey &&
+  !event.metaKey &&
+  WORLD_SCROLL_KEYS.has(event.code) &&
+  ownsKeyboard(event.target);

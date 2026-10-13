@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { makePlayerTextures, posePlayer } from './player';
-import { isFormField, ownsKeyboard, WORLD_SCROLL_KEYS } from './keyboard';
+import { isFormField, ownsKeyboard, shouldCaptureWorldKey } from './keyboard';
 import { SCENES, getScene, ARCHIVE_GANTRY } from './registry';
 import { traversable, clearSegment, findRoute } from './navigation';
 import { distance } from './geometry';
@@ -789,8 +789,7 @@ export function createWorld(
   };
   // Stop arrows/Space from scrolling only while the world owns the key.
   const keyGuard = (e: KeyboardEvent) => {
-    if (paused || destroyed || !WORLD_SCROLL_KEYS.has(e.code)) return;
-    if (ownsKeyboard(e.target)) e.preventDefault();
+    if (!paused && !destroyed && shouldCaptureWorldKey(e)) e.preventDefault();
   };
   const visibility = () => {
     if (document.hidden) blur();
