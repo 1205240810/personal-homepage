@@ -617,6 +617,26 @@ function HashiPreview() {
   );
 }
 
+function MazePreview() {
+  return (
+    <div className="room-maze-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>MAZE / WILSON</span>
+        <span>00:24.6</span>
+      </div>
+      <svg className="room-maze-svg" viewBox="0 0 6 6">
+        <path d="M0 0H6V6H0Z M1 0V2H3 M2 1H5V3 M0 3H2V5 M1 4H1 M3 2V5H5 M4 4V6 M5 3H6 M2 5H3" />
+        <polyline className="trail" points="0.5,0.5 0.5,2.5 2.5,2.5 2.5,4.5" />
+        <circle cx="2.5" cy="4.5" r="0.3" />
+      </svg>
+      <div className="room-preview-bottom">
+        <span>4 ALGORITHMS / DAILY</span>
+        <span>看它长出来，再冲出去</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -633,6 +653,7 @@ const previews = {
   laser: LaserPreview,
   flow: FlowPreview,
   hashi: HashiPreview,
+  maze: MazePreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {

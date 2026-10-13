@@ -15,7 +15,8 @@ export type GameId =
   | 'sand'
   | 'laser'
   | 'flow'
-  | 'hashi';
+  | 'hashi'
+  | 'maze';
 
 export type GameDefinition = {
   id: GameId;
@@ -192,6 +193,17 @@ export const GAMES: readonly GameDefinition[] = [
     controls: '先后点两座岛架桥，或从岛上滑动；方向键在该方向加桥',
     estimatedDuration: '每题约 2–8 分钟',
     daily: '今日数桥：9×9，唯一解',
+  },
+  {
+    id: 'maze',
+    title: '迷宫竞速',
+    description:
+      '四种算法现场生成迷宫（可以看着它一格格长出来），然后从左上角冲到右下角。Shift 一路跑到岔路口，手机上滑动即可；每天一张今日迷宫，记录最快用时。',
+    href: '/games/maze',
+    category: '反应竞速',
+    controls: '方向键或 WASD 移动，Shift 快跑到岔路；手机滑动',
+    estimatedDuration: '每局约 20 秒–3 分钟',
+    daily: '今日迷宫：16×16，算法每天轮换',
   },
 ] as const;
 

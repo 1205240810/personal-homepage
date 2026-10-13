@@ -22,6 +22,7 @@
 | `/games/laser`          | 光线反射：镜子与分光镜、手工 + 随机关卡、星级、今日光路     |
 | `/games/flow`           | 连线解谜：同色连线铺满棋盘，5–9 尺寸、今日连线、最快用时    |
 | `/games/hashi`          | 数桥（Hashiwokakero）：唯一解生成、三档尺寸、提示、今日数桥 |
+| `/games/maze`           | 迷宫竞速：四种生成算法与生成动画、键盘/滑动、计时与今日迷宫 |
 | `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲                        |
 
 欢迎页的游戏室链接作为次要入口，保留工作台和进入机甲的选择。工作台通过主导航和侧栏通向游戏室。机甲内部的试作间设有可交互街机角；直接访问游戏页面时不需要先启动 Phaser 世界。
@@ -90,6 +91,8 @@ flowchart LR
 | `components/games/flow.tsx`                 | 连线界面：拖拽与触控画线、SVG 连线、键盘画线、计时与提示                                       |
 | `lib/games/hashi.ts`                        | 数桥规则、可见岛对与交叉、穷举求解器（数到第二个解即停）、唯一解出题、提示与本机记录           |
 | `components/games/hashi.tsx`                | 数桥界面：SVG 桥、点选/滑动架桥、键盘方向架桥、计时与提示                                      |
+| `lib/games/maze.ts`                         | 迷宫生成（递归回溯、Prim、Kruskal、Wilson）记录为分步挖墙、移动与快跑、BFS 最短路、本机记录    |
+| `components/games/maze.tsx`                 | 迷宫界面：canvas 绘制与生成动画、键盘/滑动/方向键、计时、看答案                                |
 | `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义                                                                 |
 | `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                                                                     |
 
@@ -174,6 +177,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 - 光线反射：镜子四向与分光、墙与循环、手工关卡参考解可解且空盘不解、三档各 60 个随机关卡可解且每块必要、今日光路全年可解、道具上限、提示、星级与记录（`scripts/check-laser.ts`、`standalone/blackjack/qa/laser.check.tsx`）。
 - 连线解谜：哈密顿路径覆盖全盘、5–9 各 40 个种子参考解铺满且端点不相邻、画线回退与剪断、端点阻挡、缺格与重叠判定、今日连线全年可解、记录校验（`scripts/check-flow.ts`、`standalone/blackjack/qa/flow.check.tsx`）。
 - 数桥：交叉判定、求解器对已知唯一/多解/无解小题计数正确、三档各 25 个种子解唯一且参考解合规、今日数桥连续 60 天可解、循环与禁止交叉、记录校验（`scripts/check-hashi.ts`、`standalone/blackjack/qa/hashi.check.tsx`）。
+- 迷宫：四种算法×三档×10 个种子都是完美迷宫（连通无环）、分步生成、移动与快跑停在岔路、最短路合法、今日迷宫全年完美且算法轮换、记录校验（`scripts/check-maze.ts`、`standalone/blackjack/qa/maze.check.tsx`）。
 - 往返：从街机离开时停步，带来路参数选择游戏，返回原位；浏览器后退恢复页面时不冻结输入。
 - 存储：只记录需要的本机结果，坏记录和不可用存储不会阻止开局；页面分享地址不携带个人记录。
 
