@@ -33,7 +33,7 @@ export function WorldAtlas({
       </header>
       <div className="mecha-atlas-image">
         <img
-          src="/art/mecha-isometric.png"
+          src="/art/mecha-isometric.webp"
           alt="完整机甲的斜俯视图：头部航迹室、旧纸库和右手试作间，由环形栈道连接。"
         />
         {DISTRICTS.map((d, i) => (

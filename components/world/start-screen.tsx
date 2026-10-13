@@ -71,7 +71,7 @@ export function WalkerPortrait() {
   return (
     <img
       className="mecha-portrait"
-      src="/art/mecha-avatar.png"
+      src="/art/mecha-avatar-192.webp"
       alt="小机甲"
       width="46"
       height="46"
