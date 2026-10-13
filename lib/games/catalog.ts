@@ -14,7 +14,8 @@ export type GameId =
   | 'langton'
   | 'sand'
   | 'laser'
-  | 'flow';
+  | 'flow'
+  | 'hashi';
 
 export type GameDefinition = {
   id: GameId;
@@ -180,6 +181,17 @@ export const GAMES: readonly GameDefinition[] = [
     controls: '从圆点按住拖到同色圆点；方向键移动，回车开始/结束画线',
     estimatedDuration: '每题约 1–5 分钟',
     daily: '今日连线：7×7，保证能铺满',
+  },
+  {
+    id: 'hashi',
+    title: '数桥',
+    description:
+      '在岛与岛之间架桥：岛上的数字就是它的桥数，桥只走横竖、不能交叉、两岛之间最多两座，最后所有岛连成一片。每题都由求解器确认唯一解。',
+    href: '/games/hashi',
+    category: '逻辑解谜',
+    controls: '先后点两座岛架桥，或从岛上滑动；方向键在该方向加桥',
+    estimatedDuration: '每题约 2–8 分钟',
+    daily: '今日数桥：9×9，唯一解',
   },
 ] as const;
 

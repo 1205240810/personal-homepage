@@ -569,6 +569,54 @@ function FlowPreview() {
   );
 }
 
+function HashiPreview() {
+  return (
+    <div className="room-hashi-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>HASHI / 7×7</span>
+        <span>UNIQUE</span>
+      </div>
+      <svg className="room-hashi-svg" viewBox="0 0 5 4">
+        <line x1="0.5" y1="0.5" x2="3.5" y2="0.5" />
+        <line
+          x1="0.5"
+          y1="0.42"
+          x2="0.5"
+          y2="3.5"
+          transform="translate(-0.08 0)"
+        />
+        <line
+          x1="0.5"
+          y1="0.5"
+          x2="0.5"
+          y2="3.5"
+          transform="translate(0.08 0)"
+        />
+        <line x1="3.5" y1="0.5" x2="3.5" y2="2.5" />
+        <line x1="0.5" y1="3.5" x2="4.5" y2="3.5" />
+        {[
+          [0.5, 0.5, 3],
+          [3.5, 0.5, 2],
+          [0.5, 3.5, 3],
+          [3.5, 2.5, 1],
+          [4.5, 3.5, 1],
+        ].map(([x, y, n]) => (
+          <g key={`${x}-${y}`}>
+            <circle cx={x} cy={y} r="0.3" />
+            <text x={x} y={y + 0.11}>
+              {n}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <div className="room-preview-bottom">
+        <span>BRIDGES / DAILY</span>
+        <span>架桥连岛，不许交叉</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -584,6 +632,7 @@ const previews = {
   sand: SandPreview,
   laser: LaserPreview,
   flow: FlowPreview,
+  hashi: HashiPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
