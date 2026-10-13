@@ -632,6 +632,15 @@ html[data-theme='tech'] .room-sand-preview {
 html[data-theme='tech'] .room-sand-grid .is-s {
     background: #0f1f2e
 }
+html[data-theme='tech'] .room-laser-preview {
+    border: 1px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-laser-svg polyline {
+    stroke: #3ddcff
+}
+html[data-theme='tech'] .room-laser-svg circle {
+    fill: #3ddcff
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid rgb(61 220 255 / 0.45);

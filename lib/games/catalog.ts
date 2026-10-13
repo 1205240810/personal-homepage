@@ -12,7 +12,8 @@ export type GameId =
   | 'fault-finder'
   | 'life'
   | 'langton'
-  | 'sand';
+  | 'sand'
+  | 'laser';
 
 export type GameDefinition = {
   id: GameId;
@@ -156,6 +157,17 @@ export const GAMES: readonly GameDefinition[] = [
     category: '沙盒模拟',
     controls: '按住拖动撒元素；1–7 选元素，[ ] 调笔刷，空格暂停',
     estimatedDuration: '随玩随停',
+  },
+  {
+    id: 'laser',
+    title: '光线反射',
+    description:
+      '摆镜子、放分光镜，让一束激光点亮所有目标。6 道手工关卡，加上保证有解的随机关卡和今日光路，按用块数评星。',
+    href: '/games/laser',
+    category: '逻辑解谜',
+    controls: '点格子放镜子、再点旋转，右键移除；方向键移动，回车放置',
+    estimatedDuration: '每关约 1–5 分钟',
+    daily: '今日光路：8×8 随机关卡，保证有解',
   },
 ] as const;
 
