@@ -16,7 +16,8 @@ export type GameId =
   | 'laser'
   | 'flow'
   | 'hashi'
-  | 'maze';
+  | 'maze'
+  | 'rulewords';
 
 export type GameDefinition = {
   id: GameId;
@@ -204,6 +205,16 @@ export const GAMES: readonly GameDefinition[] = [
     controls: '方向键或 WASD 移动，Shift 快跑到岔路；手机滑动',
     estimatedDuration: '每局约 20 秒–3 分钟',
     daily: '今日迷宫：16×16，算法每天轮换',
+  },
+  {
+    id: 'rulewords',
+    title: '改写规则',
+    description:
+      '规则就写在地上：推动字块拼出「机甲 是 你」「旗 是 赢」「水 是 沉」……拆掉一条规则，墙就不再挡路。12 个由浅入深的原创关卡，支持撤销与重来。',
+    href: '/games/rulewords',
+    category: '逻辑解谜',
+    controls: '方向键/WASD 移动推字，Z 撤销，R 重来；手机滑动',
+    estimatedDuration: '每关约 1–10 分钟',
   },
 ] as const;
 

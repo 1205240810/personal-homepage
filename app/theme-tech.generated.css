@@ -656,6 +656,19 @@ html[data-theme='tech'] .room-maze-preview {
 html[data-theme='tech'] .room-maze-svg circle {
     fill: #3ddcff
 }
+html[data-theme='tech'] .room-rw-preview {
+    border: 1px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-rw-rules span {
+    border: 2px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-rw-rules .is {
+    border-color: rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-rw-rules .prop {
+    color: #dce8f4;
+    background: #0a1520
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid rgb(61 220 255 / 0.45);

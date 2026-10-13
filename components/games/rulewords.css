@@ -1,0 +1,111 @@
+.rw-board {
+  position: relative;
+  width: min(100%, calc(var(--w) * 56px));
+  aspect-ratio: var(--w) / var(--h);
+  margin: 0 auto;
+  border: 1px solid var(--games-rule, #cfd3c9);
+  border-radius: 6px;
+  background:
+    linear-gradient(var(--games-rule, #cfd3c9) 1px, transparent 1px) 0 0 /
+      calc(100% / var(--w)) calc(100% / var(--h)),
+    linear-gradient(90deg, var(--games-rule, #cfd3c9) 1px, transparent 1px) 0 0
+      / calc(100% / var(--w)) calc(100% / var(--h)),
+    var(--games-paper, #f6f5f1);
+  overflow: hidden;
+  touch-action: none;
+  container-type: inline-size;
+}
+.rw-board:focus-visible {
+  outline: 2px solid var(--games-accent, #6f7f2e);
+  outline-offset: 3px;
+}
+.rw-board > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% / var(--w));
+  height: calc(100% / var(--h));
+  display: grid;
+  place-items: center;
+  transition: transform 110ms ease-out;
+  font-size: calc(55cqi / var(--w));
+  line-height: 1;
+  user-select: none;
+}
+.rw-board.is-still > span {
+  transition: none;
+}
+.rw-word {
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  scale: 0.86;
+  font-weight: 800;
+  font-size: calc(36cqi / var(--w)) !important;
+  color: #8a8f86;
+  background: var(--games-paper, #f6f5f1);
+  z-index: 2;
+}
+.rw-word.is-on {
+  color: var(--games-ink, #282d29);
+}
+.rw-word.is-is.is-on {
+  color: var(--games-accent, #6f7f2e);
+}
+.rw-word:is(.is-you, .is-win, .is-stop, .is-push, .is-sink, .is-hot).is-on {
+  color: #fff;
+  background: var(--games-ink, #282d29);
+  border-color: var(--games-ink, #282d29);
+}
+.rw-thing.is-bot {
+  color: #c2410c;
+  z-index: 3;
+}
+.rw-thing.is-wall {
+  background: var(--games-ink, #282d29);
+  opacity: 0.82;
+}
+.rw-thing.is-rock {
+  color: #8b6f47;
+}
+.rw-thing.is-flag {
+  color: #ca8a04;
+}
+.rw-thing.is-water {
+  color: #2563eb;
+  background: rgb(37 99 235 / 0.18);
+}
+.rw-thing.is-lava {
+  color: #dc2626;
+  background: rgb(220 38 38 / 0.2);
+}
+.rw-thing.is-gear {
+  color: #57534e;
+}
+.rw-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+.rw-rules ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rw-rules li {
+  padding: 1px 8px;
+  border: 1px solid var(--games-rule, #cfd3c9);
+  border-radius: 999px;
+}
+html[data-theme='tech'] .rw-thing.is-bot {
+  color: #ffb454;
+}
+html[data-theme='tech']
+  .rw-word:is(.is-you, .is-win, .is-stop, .is-push, .is-sink, .is-hot).is-on {
+  color: #0b0f0c;
+}
