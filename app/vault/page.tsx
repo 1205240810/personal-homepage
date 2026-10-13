@@ -1,3 +1,4 @@
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import { PrivateVault } from '@/components/world/private-vault';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -11,6 +12,7 @@ export default function VaultPage() {
       <header className="reading-header">
         <a href="/explore?scene=undergraduate">← 回到旧纸库</a>
         <a href="/workbench">工作台</a>
+        <ThemeSwitcher />
       </header>
       <PrivateVault />
     </main>

@@ -1,4 +1,5 @@
 'use client';
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
@@ -392,6 +393,7 @@ export default function WorldShell({
             <a className="direct-home-link" href="/workbench">
               返回工作台 ↗
             </a>
+            <ThemeSwitcher />
             <MusicControl reading={!!panel} />
           </nav>
         </CollapsibleContent>

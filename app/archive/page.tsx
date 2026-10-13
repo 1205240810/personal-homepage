@@ -1,3 +1,4 @@
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import { contentSource, isPrivatePreview } from '@/lib/content/source';
 import { CHAPTERS } from '@/lib/world/registry';
 import { IcpFilingLink } from '@/components/icp-filing-link';
@@ -9,6 +10,7 @@ export default async function Archive() {
       <header className="reading-header">
         <a href="/workbench">← 返回工作台</a>
         <a href="/about">关于</a>
+        <ThemeSwitcher />
       </header>
       <span className="eyebrow">THE ARCHIVE</span>
       <h1>

@@ -1,4 +1,5 @@
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation isolates game/Phaser lifecycles and avoids the current Vinext production prefetch error. */
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import {
   ArrowLeft,
   ArrowRight,
@@ -47,6 +48,7 @@ function GamesHeader({
           {fromExplore ? '工作台' : '进入机甲'}{' '}
           <ArrowUpRight size={14} aria-hidden="true" />
         </a>
+        <ThemeSwitcher />
       </nav>
     </header>
   );
