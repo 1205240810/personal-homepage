@@ -1,0 +1,242 @@
+/* ==========================================================================
+   Theme infrastructure
+   - `html[data-theme]` is set by THEME_BOOT_SCRIPT (lib/theme.ts) before paint.
+   - Default theme = the original look; nothing below changes it except the
+     neutral switcher control.
+   - 「科技」theme = dark base, cyan accents, faint grid + scanlines, mono HUD
+     labels and glow on focus/hover. Pages keep their own local tokens
+     (--b-*, --games-*, --arcade-*); this file remaps them, so new UI that
+     uses those tokens follows the theme automatically.
+   ========================================================================== */
+
+/* ---- Switcher (both themes) ------------------------------------------- */
+.theme-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  opacity: 0.82;
+  white-space: nowrap;
+  transition:
+    opacity 0.2s,
+    background-color 0.2s,
+    box-shadow 0.2s,
+    color 0.2s;
+}
+.theme-switcher:hover {
+  opacity: 1;
+}
+.theme-switcher[aria-pressed='true'] {
+  opacity: 1;
+}
+.reading-header {
+  gap: 18px;
+}
+.reading-header > a:first-child {
+  margin-right: auto;
+}
+@media (max-width: 520px) {
+  .theme-switcher {
+    min-height: 30px;
+    padding: 4px 8px;
+  }
+}
+
+/* ---- Tech tokens -------------------------------------------------------- */
+html[data-theme='tech'] {
+  --tech-bg: #060c13;
+  --tech-surface: #0a1520;
+  --tech-surface-2: #0f1f2e;
+  --tech-ink: #dce8f4;
+  --tech-muted: #93a8bc;
+  --tech-accent: #3ddcff;
+  --tech-accent-2: #7cf2c4;
+  --tech-warn: #ffb44d;
+  --tech-rule: rgb(61 220 255 / 0.2);
+  --tech-rule-strong: rgb(61 220 255 / 0.45);
+  --tech-glow:
+    0 0 0 1px rgb(61 220 255 / 0.55), 0 0 18px rgb(61 220 255 / 0.28);
+  --tech-mono:
+    'JetBrains Mono', 'SFMono-Regular', 'Cascadia Code', Consolas,
+    'Liberation Mono', monospace;
+  --tech-grid:
+    linear-gradient(rgb(61 220 255 / 0.045) 1px, transparent 1px) 0 0 / 32px
+      32px,
+    linear-gradient(90deg, rgb(61 220 255 / 0.045) 1px, transparent 1px) 0 0 /
+      32px 32px,
+    radial-gradient(
+        120% 80% at 50% -10%,
+        rgb(61 220 255 / 0.1),
+        transparent 60%
+      )
+      0 0 / 100% 100%;
+
+  /* shadcn / global tokens */
+  --background: var(--tech-bg);
+  --foreground: var(--tech-ink);
+  --popover: var(--tech-surface-2);
+  --primary: #1aa6c9;
+  --muted: var(--tech-surface-2);
+  --muted-foreground: var(--tech-muted);
+  --border: var(--tech-rule);
+  color-scheme: dark;
+  background: var(--tech-bg);
+}
+html[data-theme='tech'] body {
+  background: var(--tech-grid), var(--tech-bg);
+  background-attachment: fixed;
+  color: var(--tech-ink);
+}
+/* Faint CRT scanlines over everything; never intercepts input. */
+html[data-theme='tech'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.018) 0 1px,
+    transparent 1px 3px
+  );
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme='tech'] body::before {
+    content: '';
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: -20vh;
+    height: 20vh;
+    z-index: 2147483000;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(61 220 255 / 0.035),
+      transparent
+    );
+    animation: tech-sweep 9s linear infinite;
+  }
+}
+@keyframes tech-sweep {
+  to {
+    transform: translateY(140vh);
+  }
+}
+html[data-theme='tech'] ::selection {
+  background: rgb(61 220 255 / 0.3);
+  color: #fff;
+}
+html[data-theme='tech']
+  :is(a, button, [tabindex], input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--tech-accent);
+  outline-offset: 3px;
+  box-shadow: 0 0 14px rgb(61 220 255 / 0.45);
+}
+html[data-theme='tech'] .theme-switcher {
+  color: var(--tech-accent);
+  border-color: var(--tech-rule-strong);
+  background: rgb(61 220 255 / 0.1);
+  font-family: var(--tech-mono);
+  box-shadow: 0 0 12px rgb(61 220 255 / 0.25);
+}
+html[data-theme='tech'] .theme-switcher:hover {
+  box-shadow: var(--tech-glow);
+}
+
+/* ---- Shared HUD helpers ------------------------------------------------- */
+html[data-theme='tech'] :is(h1, h2, h3) {
+  text-shadow: 0 0 22px rgb(61 220 255 / 0.18);
+}
+html[data-theme='tech']
+  :is(.b-mono, .eyebrow, .b-index, .arrival-index, time, kbd, code) {
+  font-family: var(--tech-mono);
+}
+
+/* ---- Workbench (/workbench) -------------------------------------------- */
+html[data-theme='tech'] #workbench {
+  --b-paper: var(--tech-bg);
+  --b-ink: var(--tech-ink);
+  --b-muted: var(--tech-muted);
+  --b-rule: var(--tech-rule);
+  --b-orange: var(--tech-accent);
+  --b-screen: var(--tech-surface);
+  background: transparent;
+}
+
+/* ---- Game room + framed games (/games, /games/*) ------------------------ */
+html[data-theme='tech'] .games-shell {
+  --games-paper: var(--tech-bg);
+  --games-ink: var(--tech-ink);
+  --games-muted: var(--tech-muted);
+  --games-rule: var(--tech-rule);
+  --games-accent: var(--tech-accent);
+  background: transparent;
+}
+html[data-theme='tech']
+  :is(.standalone-room, .standalone-room-yahtzee, .standalone-room-stud) {
+  --arcade-bg: var(--tech-bg);
+  --arcade-ink: var(--tech-ink);
+  --arcade-muted: var(--tech-muted);
+  --arcade-rule: var(--tech-rule);
+  background: var(--tech-grid), var(--tech-bg);
+}
+
+/* ---- Reading pages (/archive, /posts, /about, /projects, /vault) -------- */
+html[data-theme='tech'] .reading-page {
+  color: var(--tech-ink);
+}
+html[data-theme='tech'] .reading-header {
+  color: var(--tech-ink);
+}
+html[data-theme='tech'] .reading-header a:hover {
+  color: var(--tech-accent);
+}
+
+/* ---- Explore overlay chrome (/explore) --------------------------------- */
+html[data-theme='tech'] .world-header nav {
+  background: rgb(10 21 32 / 0.88);
+  border-color: var(--tech-rule-strong);
+  box-shadow: 0 0 22px rgb(61 220 255 / 0.12);
+}
+html[data-theme='tech'] .world-header .nav-button,
+html[data-theme='tech'] .world-header .direct-home-link {
+  color: var(--tech-ink);
+}
+html[data-theme='tech'] .world-header .direct-home-link {
+  color: var(--tech-accent);
+}
+
+/* Sudoku states carry game meaning; a generic colour remap cannot flatten them. */
+html[data-theme='tech'] .sg .sg-primary {
+  background: var(--tech-accent);
+  color: var(--tech-bg);
+}
+html[data-theme='tech'] .sg .sg-primary:hover:not(:disabled) {
+  background: var(--tech-accent-2);
+  color: var(--tech-bg);
+}
+html[data-theme='tech'] .sg .sg-peer {
+  background: #132737;
+}
+html[data-theme='tech'] .sg .sg-hint-unit {
+  background: #1a3040;
+}
+html[data-theme='tech'] .sg .sg-conflict {
+  background: #391f27 !important;
+  color: #ffb0a3 !important;
+}
+html[data-theme='tech'] .sg .sg-error-tag {
+  background: #391f27;
+  color: #ffb0a3;
+}

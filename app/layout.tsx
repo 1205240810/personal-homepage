@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import 'katex/dist/katex.min.css';
+import './theme-tech.generated.css';
+import './theme-tech.css';
+import { THEME_BOOT_SCRIPT } from '@/lib/theme';
 export const metadata: Metadata = {
   title: '徒手拆机甲 · 作品、文章与探索',
   description:
@@ -19,7 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
+    // The boot script sets data-theme before hydration; only <html> may differ.
+    <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   );

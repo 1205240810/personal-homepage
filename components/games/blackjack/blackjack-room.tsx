@@ -1,4 +1,5 @@
 'use client';
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation releases game audio, timers and Worker ownership. */
 import { useEffect, useState, type ComponentType } from 'react';
@@ -51,6 +52,7 @@ export function BlackjackRoom({
             {fromExplore ? '返回机甲' : '工作台'}
             <ArrowUpRight size={14} aria-hidden="true" />
           </a>
+          <ThemeSwitcher />
         </nav>
       </header>
       {Game ? (

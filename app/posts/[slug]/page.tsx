@@ -1,3 +1,4 @@
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { contentSource } from '@/lib/content/source';
@@ -25,6 +26,7 @@ export default async function Post({
       <header className="reading-header">
         <a href="/workbench">← 返回工作台</a>
         <a href="/archive">全部记录</a>
+        <ThemeSwitcher />
       </header>
       <ArticleView article={d.article} />
     </main>

@@ -1,4 +1,5 @@
 'use client';
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import { ProjectWorkbench } from './project-library';
 import { ArrowUpRight, Gamepad2, ScanLine } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
@@ -31,6 +32,7 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
           <a href="/explore" className="b-explore-nav">
             进入机甲 <ArrowUpRight size={14} />
           </a>
+          <ThemeSwitcher />
         </nav>
       </header>
       <div className="b-intro">
