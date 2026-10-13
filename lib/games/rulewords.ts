@@ -233,14 +233,21 @@ export function step(src: Board, d: Dir): Outcome {
   const yous = b.objs
     .map((o, k) => [o, k] as const)
     .filter(([o]) => has(r, o, 'you'));
-  const done = new Set<number>();
+  let done = new Set<number>();
   let moved = false;
   // Move objects furthest along the direction first so a group of YOUs advances together.
   const [dx, dy] = DELTA[d];
   yous.sort(([a], [c]) => (c.x - a.x) * dx + (c.y - a.y) * dy);
   for (const [, k] of yous) {
     if (done.has(k)) continue;
-    if (tryMove(b, r, k, d, done)) moved = true;
+    // A blocked stacked object must roll back every push in this attempt.
+    const candidate = cloneBoard(b);
+    const nextDone = new Set(done);
+    if (tryMove(candidate, r, k, d, nextDone)) {
+      b.objs = candidate.objs;
+      done = nextDone;
+      moved = true;
+    }
   }
   const res = resolve(b);
   const r2 = readRules(res.board);

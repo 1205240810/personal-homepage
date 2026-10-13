@@ -100,3 +100,12 @@ void test('本机记录：取最少步数并拒绝坏数据', () => {
   saveRulewordsRecords(r, s);
   assert.equal(loadRulewordsRecords(s).best.start, 6);
 });
+
+void test('叠在挡路物上的可推动物不能在推动失败时偷偷移动', () => {
+  const b = parseBoard(['B=Y..', 'R=P..', 'W=S..', 'brw..']);
+  const wall = b.objs.find((o) => o.thing === 'wall')!;
+  wall.x = 1; // A wall can become STOP again after another object overlaps it.
+  const result = step(b, 'R');
+  assert.equal(result.moved, false);
+  assert.equal(boardKey(result.board), boardKey(b));
+});

@@ -39,7 +39,6 @@
   box-sizing: border-box;
   border: 2px solid currentColor;
   border-radius: 4px;
-  scale: 0.86;
   font-weight: 800;
   font-size: calc(36cqi / var(--w)) !important;
   color: #8a8f86;

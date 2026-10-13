@@ -254,7 +254,9 @@ export function RuleWords() {
                 ? `rw-word is-${o.word}${rules.lines.length && isActive(board, o) ? ' is-on' : ''}`
                 : `rw-thing is-${o.thing}`
             }
-            style={{ transform: `translate(${o.x * 100}%, ${o.y * 100}%)` }}
+            style={{
+              transform: `translate(${o.x * 100}%, ${o.y * 100}%)${o.word ? ' scale(0.86)' : ''}`,
+            }}
             title={describe(o)}
           >
             {o.word ? WORD_NAMES[o.word] : THING_GLYPH[o.thing!]}
