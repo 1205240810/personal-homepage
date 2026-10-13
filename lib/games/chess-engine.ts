@@ -1,5 +1,5 @@
 /**
- * 轻量 0x88 搜索引擎：只用于 AI 思考（伪合法走法 + 走后自检将军），
+ * 轻量 0x88 搜索引擎：只用于 AI 思考（伪合法走法 + 走后自检将军 + Zobrist 哈希），
  * 规则判定与记谱仍由 chess.js 负责。比直接用 chess.js 搜索快两个数量级。
  */
 // Pieces: 1 P, 2 N, 3 B, 4 R, 5 Q, 6 K; white positive, black negative.
@@ -81,6 +81,39 @@ const PST_W: Int16Array[] = PST_RAW.map((t) => {
 const mirror = (s: number) => ((7 - (s >> 4)) << 4) | (s & 7);
 
 export const MATE = 100000;
+const PHASE = [0, 0, 1, 1, 2, 4, 0];
+const MG_VALUE = [0, 82, 337, 365, 477, 1025, 0];
+const EG_VALUE = [0, 94, 281, 297, 512, 936, 0];
+const PASSED_MG = [0, 5, 10, 15, 30, 55, 90, 0];
+const PASSED_EG = [0, 10, 20, 35, 60, 100, 160, 0];
+const MOB_MG = [0, 0, 4, 5, 2, 1, 0];
+const MOB_EG = [0, 0, 4, 5, 4, 2, 0];
+const MOB_BASE = [0, 0, 4, 6, 6, 12, 0];
+// Endgame pawn table: reward advancement.
+const EG_PAWN = new Int16Array(128);
+for (let s = 0; s < 128; s++)
+  if (!(s & 0x88)) EG_PAWN[s] = [0, 90, 55, 32, 15, 5, 0, 0][s >> 4];
+
+// Zobrist keys as two 32-bit halves (no BigInt in the hot path).
+function zrand(seed: number) {
+  let x = seed >>> 0 || 1;
+  return () => {
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
+    return x | 0;
+  };
+}
+const zr = zrand(0x9e3779b9);
+// index: (piece + 6) * 128 + square, piece in -6..6
+const Z_PIECE_LO = new Int32Array(13 * 128).map(() => zr());
+const Z_PIECE_HI = new Int32Array(13 * 128).map(() => zr());
+const Z_SIDE_LO = zr();
+const Z_SIDE_HI = zr();
+const Z_CASTLE_LO = new Int32Array(16).map(() => zr());
+const Z_CASTLE_HI = new Int32Array(16).map(() => zr());
+const Z_EP_LO = new Int32Array(8).map(() => zr());
+const Z_EP_HI = new Int32Array(8).map(() => zr());
 
 export class Engine {
   b = new Int8Array(128);
@@ -91,6 +124,10 @@ export class Engine {
   kings = [0, 0]; // [white, black]
   private hist: number[] = [];
   nodes = 0;
+  hlo = 0;
+  hhi = 0;
+  /** Hash keys of earlier positions (for repetition detection), lo/hi interleaved. */
+  keys: number[] = [];
 
   constructor(fen: string) {
     const [pos, side, castle, ep, half] = fen.split(' ');
@@ -120,6 +157,71 @@ export class Engine {
         ? ((8 - Number(ep[1])) << 4) | (ep.charCodeAt(0) - 97)
         : -1;
     this.half = Number(half) || 0;
+    this.rehash();
+  }
+
+  rehash() {
+    let lo = 0,
+      hi = 0;
+    for (let s = 0; s < 128; s++) {
+      if (s & 0x88 || !this.b[s]) continue;
+      lo ^= Z_PIECE_LO[(this.b[s] + 6) * 128 + s];
+      hi ^= Z_PIECE_HI[(this.b[s] + 6) * 128 + s];
+    }
+    if (this.side === -1) {
+      lo ^= Z_SIDE_LO;
+      hi ^= Z_SIDE_HI;
+    }
+    lo ^= Z_CASTLE_LO[this.castle];
+    hi ^= Z_CASTLE_HI[this.castle];
+    if (this.ep >= 0) {
+      lo ^= Z_EP_LO[this.ep & 7];
+      hi ^= Z_EP_HI[this.ep & 7];
+    }
+    this.hlo = lo;
+    this.hhi = hi;
+  }
+  private zp(p: number, s: number) {
+    this.hlo ^= Z_PIECE_LO[(p + 6) * 128 + s];
+    this.hhi ^= Z_PIECE_HI[(p + 6) * 128 + s];
+  }
+  private zstate() {
+    this.hlo ^= Z_CASTLE_LO[this.castle];
+    this.hhi ^= Z_CASTLE_HI[this.castle];
+    if (this.ep >= 0) {
+      this.hlo ^= Z_EP_LO[this.ep & 7];
+      this.hhi ^= Z_EP_HI[this.ep & 7];
+    }
+  }
+  /** Pass the move (null-move pruning). */
+  makeNull() {
+    this.keys.push(this.hlo, this.hhi);
+    this.hist.push(0, 0, -1, this.castle, this.ep, this.half);
+    this.zstate();
+    this.ep = -1;
+    this.zstate();
+    this.side = -this.side;
+    this.hlo ^= Z_SIDE_LO;
+    this.hhi ^= Z_SIDE_HI;
+    this.half++;
+  }
+  unmakeNull() {
+    const h = this.hist;
+    this.half = h.pop()!;
+    this.ep = h.pop()!;
+    this.castle = h.pop()!;
+    h.length -= 3;
+    this.side = -this.side;
+    this.hhi = this.keys.pop()!;
+    this.hlo = this.keys.pop()!;
+  }
+  /** Has the current position occurred before since the last irreversible move? */
+  repeated() {
+    const k = this.keys;
+    const stop = Math.max(0, k.length - this.half * 2);
+    for (let i = k.length - 4; i >= stop; i -= 4)
+      if (k[i] === this.hlo && k[i + 1] === this.hhi) return true;
+    return false;
   }
 
   attacked(s: number, by: number): boolean {
@@ -263,24 +365,35 @@ export class Engine {
     const me = this.side;
     let captured = b[to];
     let capSq = to;
+    this.keys.push(this.hlo, this.hhi);
     if (flag === 1) {
       capSq = to + (me === 1 ? 16 : -16);
       captured = b[capSq];
       b[capSq] = 0;
     }
     this.hist.push(m, captured, capSq, this.castle, this.ep, this.half);
-    b[to] = promo ? promo * me : piece;
+    this.zstate();
+    if (captured) this.zp(captured, capSq);
+    this.zp(piece, from);
+    const placed = promo ? promo * me : piece;
+    this.zp(placed, to);
+    b[to] = placed;
     b[from] = 0;
     if (flag === 2) {
       const [rf, rt] = to > from ? [from + 3, from + 1] : [from - 4, from - 1];
+      this.zp(b[rf], rf);
+      this.zp(b[rf], rt);
       b[rt] = b[rf];
       b[rf] = 0;
     }
     if (piece * me === K) this.kings[me === 1 ? 0 : 1] = to;
     this.castle &= CASTLE_MASK[from] & CASTLE_MASK[to];
     this.ep = flag === 3 ? (from + to) >> 1 : -1;
+    this.zstate();
     this.half = captured || piece * me === P ? 0 : this.half + 1;
     this.side = -me;
+    this.hlo ^= Z_SIDE_LO;
+    this.hhi ^= Z_SIDE_HI;
     if (this.attacked(this.kings[me === 1 ? 0 : 1], -me)) {
       this.unmake();
       return false;
@@ -314,22 +427,39 @@ export class Engine {
     this.castle = castle;
     this.ep = ep;
     this.half = half;
+    this.hhi = this.keys.pop()!;
+    this.hlo = this.keys.pop()!;
   }
 
-  evaluate(): number {
-    const b = this.b;
-    let score = 0;
-    let heavy = 0;
+  /** Non-pawn, non-king material of a side (for null-move safety and phase). */
+  pieceMaterial(side: number) {
+    let v = 0;
     for (let s = 0; s < 128; s++) {
       if (s & 0x88) {
         s += 7;
         continue;
       }
-      const p = b[s];
-      if (p && Math.abs(p) !== P && Math.abs(p) !== K)
-        heavy += VALUE[Math.abs(p)];
+      const p = this.b[s] * side;
+      if (p > P && p < K) v += VALUE[p];
     }
-    const endgame = heavy <= 1600;
+    return v;
+  }
+
+  /**
+   * Tapered evaluation (middlegame ↔ endgame by remaining material): material, PST,
+   * pawn structure (doubled / isolated / passed), mobility, bishop pair, rook on open
+   * file, king pawn shield, and mop-up knowledge for lone-king endings (KQK, KRK…).
+   * Returned from the side to move's point of view.
+   */
+  evaluate(): number {
+    const b = this.b;
+    let mg = 0;
+    let eg = 0;
+    let phase = 0;
+    const pawnFiles = [new Int8Array(8), new Int8Array(8)]; // [white, black] counts per file
+    const bishops = [0, 0];
+    const nonPawn = [0, 0];
+    const pawns = [0, 0];
     for (let s = 0; s < 128; s++) {
       if (s & 0x88) {
         s += 7;
@@ -337,24 +467,144 @@ export class Engine {
       }
       const p = b[s];
       if (!p) continue;
-      const t = Math.abs(p);
-      const table = t === K && endgame ? 7 : t;
-      if (p > 0) score += VALUE[t] + PST_W[table][s];
-      else score -= VALUE[t] + PST_W[table][mirror(s)];
+      const t = p > 0 ? p : -p;
+      const w = p > 0 ? 0 : 1;
+      if (t === P) {
+        pawnFiles[w][s & 7]++;
+        pawns[w]++;
+      } else if (t !== K) nonPawn[w] += VALUE[t];
+      if (t === B) bishops[w]++;
+      phase += PHASE[t];
     }
-    if (endgame && Math.abs(score) > 300) {
-      // Mop-up: drive the weaker king to the edge, bring ours closer.
-      const [wk, bk] = this.kings;
-      const loser = score > 0 ? bk : wk;
-      const lr = loser >> 4,
-        lf = loser & 7;
-      const centre = Math.max(3 - lr, lr - 4) + Math.max(3 - lf, lf - 4);
+    for (let s = 0; s < 128; s++) {
+      if (s & 0x88) {
+        s += 7;
+        continue;
+      }
+      const p = b[s];
+      if (!p) continue;
+      const t = p > 0 ? p : -p;
+      const sign = p > 0 ? 1 : -1;
+      const sq = p > 0 ? s : mirror(s);
+      const w = p > 0 ? 0 : 1;
+      let m = MG_VALUE[t] + PST_W[t][sq];
+      let e =
+        EG_VALUE[t] +
+        (t === K ? PST_W[7][sq] : t === P ? EG_PAWN[sq] : PST_W[t][sq]);
+      if (t === P) {
+        const f = s & 7;
+        const rank = sq >> 4; // 0 = 8th rank from own view
+        if (pawnFiles[w][f] > 1) {
+          m -= 12;
+          e -= 20;
+        }
+        if (
+          (f === 0 || !pawnFiles[w][f - 1]) &&
+          (f === 7 || !pawnFiles[w][f + 1])
+        ) {
+          m -= 10;
+          e -= 15;
+        }
+        if (this.passed(s, sign)) {
+          const adv = 7 - rank; // 1..6
+          m += PASSED_MG[adv];
+          e += PASSED_EG[adv];
+        }
+      } else if (t === N || t === B || t === R || t === Q) {
+        const mob = this.mobility(s, t);
+        m += MOB_MG[t] * (mob - MOB_BASE[t]);
+        e += MOB_EG[t] * (mob - MOB_BASE[t]);
+        if (t === R) {
+          const f = s & 7;
+          if (!pawnFiles[0][f] && !pawnFiles[1][f]) m += 20;
+          else if (!pawnFiles[w][f]) m += 10;
+        }
+      } else if (t === K) {
+        m += this.shield(s, sign);
+      }
+      mg += sign * m;
+      eg += sign * e;
+    }
+    if (bishops[0] >= 2) {
+      mg += 30;
+      eg += 50;
+    }
+    if (bishops[1] >= 2) {
+      mg -= 30;
+      eg -= 50;
+    }
+    const ph = Math.min(phase, 24);
+    let score = (mg * ph + eg * (24 - ph)) / 24;
+    // Lone king: drive it to the edge/corner and bring our king close (KQK, KRK, KBBK…).
+    for (const [strong, weak] of [
+      [0, 1],
+      [1, 0],
+    ]) {
+      if (pawns[weak] || nonPawn[weak] || nonPawn[strong] < VALUE[R]) continue;
+      const lk = this.kings[weak];
+      const sk = this.kings[strong];
+      const lr = lk >> 4,
+        lf = lk & 7;
+      const edge = Math.max(3 - lr, lr - 4) + Math.max(3 - lf, lf - 4);
       const dist =
-        Math.abs((wk >> 4) - (bk >> 4)) + Math.abs((wk & 7) - (bk & 7));
-      const mop = 10 * centre + 4 * (14 - dist);
-      score += score > 0 ? mop : -mop;
+        Math.abs((lk >> 4) - (sk >> 4)) + Math.abs((lk & 7) - (sk & 7));
+      const bonus = 600 + 40 * edge + 25 * (14 - dist);
+      score += strong === 0 ? bonus : -bonus;
     }
-    return score * this.side;
+    // Insufficient material → draw-ish.
+    if (
+      !pawns[0] &&
+      !pawns[1] &&
+      nonPawn[0] <= VALUE[B] &&
+      nonPawn[1] <= VALUE[B]
+    )
+      score = 0;
+    return Math.round(score) * this.side;
+  }
+  private passed(s: number, sign: number) {
+    const f = s & 7;
+    const dir = sign === 1 ? -16 : 16;
+    for (let t = s + dir; !(t & 0x88); t += dir)
+      for (const df of [-1, 0, 1]) {
+        const q = t + df;
+        if (df && ((q & 7) !== f + df || q & 0x88)) continue;
+        if (this.b[q] === -sign * P) return false;
+      }
+    return true;
+  }
+  private mobility(s: number, t: number) {
+    const b = this.b;
+    let n = 0;
+    if (t === N) {
+      for (const d of KNIGHT) {
+        const q = s + d;
+        if (!(q & 0x88) && b[q] * b[s] <= 0) n++;
+      }
+      return n;
+    }
+    const dirs = t === B ? BISHOP : t === R ? ROOK : KING;
+    for (const d of dirs)
+      for (let q = s + d; !(q & 0x88); q += d) {
+        if (b[q] * b[s] > 0) break;
+        n++;
+        if (b[q]) break;
+      }
+    return n;
+  }
+  private shield(k: number, sign: number) {
+    // Pawns directly in front of a castled-ish king.
+    const f = k & 7;
+    if (f >= 3 && f <= 4) return -15;
+    const fwd = sign === 1 ? -16 : 16;
+    let v = 0;
+    for (const df of [-1, 0, 1]) {
+      const q = k + fwd + df;
+      if (q & 0x88) continue;
+      if (this.b[q] === sign * P) v += 12;
+      else if (!((q + fwd) & 0x88) && this.b[q + fwd] === sign * P) v += 6;
+      else v -= 10;
+    }
+    return v;
   }
 
   moveKey(m: number) {

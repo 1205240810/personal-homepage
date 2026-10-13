@@ -4,11 +4,14 @@ import { Chess } from 'chess.js';
 import { Engine } from '../lib/games/chess-engine.ts';
 import {
   CHESS_LEVELS,
+  analyse,
   chooseMove,
+  isMateScore,
   evaluate,
   mateKeys,
 } from '../lib/games/chess-ai.ts';
 import {
+  ALL_PUZZLES,
   CHESS_PUZZLES,
   START_FEN,
   emptyChessRecords,
@@ -72,6 +75,78 @@ void test('残局题：主线合法、以将死结束；关键着法集合与穷
   }
 });
 
+/** Score for the side to move at a fixed depth with an empty hash table (deterministic). */
+const fixedScore = (fen: string, depth: number) => {
+  const c = new Chess(fen);
+  if (c.isCheckmate()) return -100000;
+  if (c.isDraw()) return 0;
+  // Pawn races need real depth; tiny endgames search it quickly.
+  const small = fen.split(' ')[0].replace(/[^a-zA-Z]/g, '').length <= 4;
+  return analyse(fen, 1e9, small ? depth + 8 : depth, true)!.score;
+};
+
+void test('新残局题：杀题关键着法与穷举一致，主线以将死结束', () => {
+  const data = ALL_PUZZLES.filter((p) => p.kind === 'mate');
+  assert.ok(data.length >= 20, `杀题数量 ${data.length}`);
+  for (const p of data) {
+    assert.deepEqual(
+      [...mateKeys(p.fen, p.n)].sort(),
+      [...p.keys].sort(),
+      p.id,
+    );
+    assert.ok(replay(p.fen, p.line).isCheckmate(), `${p.id} 主线没有将死`);
+    assert.ok(p.explain.length > 20, `${p.id} 缺解析`);
+  }
+});
+
+void test('新残局题：每个错着的反击都成立（杀题穷举，得子题引擎复核）', () => {
+  let n = 0;
+  for (const p of ALL_PUZZLES.filter((x) => x.kind !== 'play')) {
+    assert.ok(p.wrong.length >= 2, `${p.id} 错着太少`);
+    for (const w of p.wrong) {
+      assert.ok(!p.keys.includes(w.san), `${p.id} ${w.san} 其实是正解`);
+      assert.ok(w.why.length > 10, `${p.id} ${w.san} 缺说明`);
+      const c = replay(p.fen, [w.san]);
+      if (!w.reply) {
+        assert.ok(c.isGameOver(), `${p.id} ${w.san} 没有反击着`);
+        continue;
+      }
+      c.move(w.reply);
+      n++;
+      if (p.kind === 'mate') {
+        // After the refutation the attacker has no mate within the remaining moves.
+        assert.equal(
+          p.n > 1 ? mateKeys(c.fen(), p.n - 1).length : c.isCheckmate() ? 1 : 0,
+          0,
+          `${p.id} ${w.san} ${w.reply} 之后仍有杀`,
+        );
+      } else {
+        // The attacker, to move again, is clearly worse off than after the key move.
+        const v = fixedScore(c.fen(), 4);
+        const best = -fixedScore(replay(p.fen, [p.line[0]]).fen(), 5);
+        assert.ok(
+          v <= best - 100,
+          `${p.id} ${w.san} ${w.reply}：${v} vs 正解 ${best}`,
+        );
+      }
+    }
+  }
+  assert.ok(n >= 150, `反击着数量 ${n}`);
+});
+
+void test('新残局题：得子题正解在固定深度下确实赢得子力', () => {
+  for (const p of ALL_PUZZLES.filter((x) => x.kind === 'win')) {
+    const after = replay(p.fen, [p.line[0]]).fen();
+    assert.ok(-fixedScore(after, 5) >= p.minGain - 60, `${p.id} 正解评估不足`);
+  }
+});
+
+void test('分析可复现：清空置换表后同深度结果一致', () => {
+  const fen =
+    'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3';
+  assert.deepEqual(analyse(fen, 1e9, 5, true), analyse(fen, 1e9, 5, true));
+});
+
 void test('练习残局：局面合法、白方先走且有子力优势', () => {
   for (const p of CHESS_PUZZLES.filter((x) => x.kind === 'play')) {
     const c = new Chess(p.fen);
@@ -100,7 +175,7 @@ void test('AI：会抓住一步杀，也会避免送后', () => {
   // A deadline that has already passed still returns a legal move.
   const quick = chooseMove(START_FEN, 5, fixed, clock);
   assert.ok(quick && new Chess(START_FEN).moves().includes(quick.san));
-  assert.equal(Object.keys(CHESS_LEVELS).length, 5);
+  assert.equal(Object.keys(CHESS_LEVELS).length, 10);
 });
 
 void test('AI：低难度有随机性，高难度确定', () => {

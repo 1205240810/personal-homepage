@@ -1,6 +1,13 @@
 'use client';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { ArrowUpDown, Flag, Lightbulb, RotateCcw, Undo2 } from 'lucide-react';
+import {
+  ArrowUpDown,
+  BookOpen,
+  Flag,
+  Lightbulb,
+  RotateCcw,
+  Undo2,
+} from 'lucide-react';
 import type { Square } from 'chess.js';
 import {
   CHESS_LEVELS,
@@ -10,7 +17,7 @@ import {
   type ChessLevel,
 } from '@/lib/games/chess-ai';
 import {
-  CHESS_PUZZLES,
+  ALL_PUZZLES,
   CHESS_RECORDS_KEY,
   PIECE_NAMES,
   START_FEN,
@@ -19,6 +26,7 @@ import {
   recordGame,
   recordPuzzle,
   replay,
+  replayFens,
   validateChessRecords,
   type Color,
 } from '@/lib/games/chess';
@@ -42,7 +50,7 @@ const GLYPH: Record<string, string> = {
 const COLOR_NAME: Record<Color, string> = { w: '白', b: '黑' };
 
 /** One search owns one worker so leaving a position also stops its CPU work. */
-function askChessAi(fen: string, level: ChessLevel) {
+function askChessAi(fen: string, level: ChessLevel, history: string[] = []) {
   let worker: Worker | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let finish: (result: AiResult | null) => void = () => {};
@@ -56,7 +64,15 @@ function askChessAi(fen: string, level: ChessLevel) {
       // Keep this compatibility path short enough to leave the controls responsive.
       timer = setTimeout(() => {
         try {
-          finish(chooseMove(fen, Math.min(level, 2) as ChessLevel));
+          finish(
+            chooseMove(
+              fen,
+              Math.min(level, 2) as ChessLevel,
+              Math.random,
+              Date.now,
+              history,
+            ),
+          );
         } catch {
           finish(null);
         }
@@ -73,7 +89,7 @@ function askChessAi(fen: string, level: ChessLevel) {
       };
       worker.onmessageerror = () => finish(null);
       timer = setTimeout(() => finish(null), CHESS_LEVELS[level].timeMs + 5000);
-      worker.postMessage({ id: 1, fen, level });
+      worker.postMessage({ id: 1, fen, level, history });
     } catch {
       finish(null);
     }
@@ -103,28 +119,42 @@ export function ChessGame() {
   const [message, setMessage] = useState('');
   const [announce, setAnnounce] = useState('');
   const [resigned, setResigned] = useState(false);
+  const [solved, setSolved] = useState(false);
+  const [showExplain, setShowExplain] = useState(false);
+  /** Explanation of the last refuted wrong move (cleared by undo). */
+  const [refuted, setRefuted] = useState('');
   const token = useRef(0);
   const counted = useRef(false);
   const boardRef = useRef<HTMLFieldSetElement>(null);
 
   const game = replay(startFen, moves);
   const end = gameEnd(game);
-  const puzzle = mode.kind === 'puzzle' ? CHESS_PUZZLES[mode.index] : null;
+  const puzzle = mode.kind === 'puzzle' ? ALL_PUZZLES[mode.index] : null;
   const turn = game.turn() as Color;
   const aiTurn =
-    !end.over && !resigned && turn !== player && !(puzzle?.kind === 'mate');
+    !end.over &&
+    !resigned &&
+    turn !== player &&
+    (!puzzle || puzzle.kind === 'play');
   const thinking = aiTurn && !aiError;
   const history = game.history({ verbose: true });
   const last = history[history.length - 1];
-  const puzzleSolved = !!puzzle && end.over && end.winner === player;
+  const puzzleSolved =
+    !!puzzle &&
+    (puzzle.kind === 'play' ? end.over && end.winner === player : solved);
 
   const fen = game.fen();
-  const aiLevel: ChessLevel = puzzle ? 4 : level;
+  const aiLevel: ChessLevel = puzzle ? 7 : level;
+  const fenHistory = replayFens(startFen, moves);
+  const fenHistoryRef = useRef(fenHistory);
+  useEffect(() => {
+    fenHistoryRef.current = fenHistory;
+  });
   useEffect(() => {
     if (!aiTurn) return;
     const my = ++token.current;
     let cancelled = false;
-    const request = askChessAi(fen, aiLevel);
+    const request = askChessAi(fen, aiLevel, fenHistoryRef.current);
     void request.promise.then((r) => {
       if (cancelled || token.current !== my) return;
       if (!r) {
@@ -176,6 +206,9 @@ export function ChessGame() {
     setSelected(null);
     setPromo(null);
     setResigned(false);
+    setSolved(false);
+    setShowExplain(false);
+    setRefuted('');
     setMessage('');
   }
   function newGame(as: Color) {
@@ -185,9 +218,16 @@ export function ChessGame() {
     );
   }
   function openPuzzle(i: number) {
-    const p = CHESS_PUZZLES[i];
-    reset({ kind: 'puzzle', index: i }, p.fen, 'w');
-    setMessage(p.kind === 'mate' ? `白先，${p.n} 步杀。${p.note}` : p.note);
+    const p = ALL_PUZZLES[i];
+    const side = p.fen.split(' ')[1] as Color;
+    reset({ kind: 'puzzle', index: i }, p.fen, side);
+    setMessage(
+      p.kind === 'mate'
+        ? `${COLOR_NAME[side]}先，${p.n} 步杀。${p.note}`
+        : p.kind === 'win'
+          ? `${COLOR_NAME[side]}先，找出赢得子力的一手。${p.note}`
+          : p.note,
+    );
     setAnnounce(`残局：${p.name}`);
   }
 
@@ -200,30 +240,64 @@ export function ChessGame() {
     } catch {
       return false;
     }
-    if (puzzle?.kind === 'mate') {
+    if (puzzle && puzzle.kind !== 'play') {
+      if (solved) return false;
       const ply = moves.length;
-      const expected = puzzle.line[ply];
       const ok =
-        mv.san === expected ||
+        mv.san === puzzle.line[ply] ||
         c.isCheckmate() ||
-        (ply === 0 && puzzle.keys.includes(mv.san));
+        (ply === 0 && puzzle.keys.includes(mv.san)) ||
+        (puzzle.kind === 'mate' &&
+          ply > 0 &&
+          mateKeys(replay(startFen, moves).fen(), puzzle.n - ply / 2).includes(
+            mv.san,
+          ));
+      setSelected(null);
       if (!ok) {
-        setMessage(`${mv.san} 不能强制将死，再想想。`);
-        setAnnounce(`${mv.san} 不对`);
-        setSelected(null);
+        // Play the refutation on the board so the reason is visible.
+        const w = ply === 0 ? puzzle.wrong.find((x) => x.san === mv.san) : null;
+        if (w) {
+          setMoves(w.reply ? [...moves, mv.san, w.reply] : [...moves, mv.san]);
+          setRefuted(`${mv.san}？${w.why}`);
+          setMessage(`${mv.san} 不是正解。悔棋后再想想，或者看解析。`);
+          setAnnounce(`${mv.san} 不对，对方 ${w.reply}`);
+          return true;
+        }
+        const my = ++token.current;
+        const after = [...moves, mv.san];
+        setMoves(after);
+        setMessage(`${mv.san} 不是正解，对手在想怎么反击…`);
+        if (!c.isGameOver())
+          void askChessAi(c.fen(), 7).promise.then((r) => {
+            if (token.current !== my || !r) return;
+            setMoves([...after, r.san]);
+            setRefuted(
+              `${mv.san}？对方 ${r.san} 应对之后，${puzzle.kind === 'mate' ? `已经没有 ${puzzle.n} 步内的强制将杀` : '你赢不到子力'}了。`,
+            );
+            setMessage(`${mv.san} 不是正解。悔棋后再想想，或者看解析。`);
+            setAnnounce(`${mv.san} 不对，对方 ${r.san}`);
+          });
         return true;
       }
       const next = [...moves, mv.san];
-      if (!c.isCheckmate()) {
+      const done = c.isCheckmate() || (puzzle.kind === 'win' && ply === 0);
+      if (done) {
+        // Show the defender's best reply for tactic puzzles.
+        if (puzzle.kind === 'win' && puzzle.line[1]) next.push(puzzle.line[1]);
+        setSolved(true);
+        setShowExplain(true);
+        setMessage(
+          c.isCheckmate() ? '将死！' : `正解！主线：${puzzle.line.join(' ')}`,
+        );
+      } else {
         // Defender's reply: the main line if it still applies, else the first legal move.
         const reply = puzzle.line[ply + 1];
         const legal = c.moves();
         const r = legal.includes(reply) ? reply : legal[0];
         next.push(r);
         setMessage(`好棋！对方应 ${r}，继续。`);
-      } else setMessage('将死！');
+      }
       setMoves(next);
-      setSelected(null);
       return true;
     }
     setMoves([...moves, mv.san]);
@@ -270,12 +344,16 @@ export function ChessGame() {
     n -= 1;
     if (replay(startFen, moves.slice(0, n)).turn() !== player && n > 0) n -= 1;
     setMoves(moves.slice(0, n));
+    setRefuted('');
     setMessage('');
   }
 
   function hint() {
-    if (!puzzle || puzzle.kind !== 'mate') return;
-    const keys = mateKeys(fen, puzzle.n - moves.length / 2);
+    if (!puzzle || puzzle.kind === 'play' || refuted || solved) return;
+    const keys =
+      puzzle.kind === 'win'
+        ? puzzle.keys
+        : mateKeys(fen, puzzle.n - moves.length / 2);
     const want = keys.includes(puzzle.line[moves.length])
       ? puzzle.line[moves.length]
       : keys[0];
@@ -366,7 +444,7 @@ export function ChessGame() {
           }
         >
           <option value="">对局模式</option>
-          {CHESS_PUZZLES.map((p, i) => (
+          {ALL_PUZZLES.map((p, i) => (
             <option key={p.id} value={i}>
               残局：{p.name}
               {records.puzzles.includes(p.id) ? ' ✓' : ''}
@@ -432,9 +510,18 @@ export function ChessGame() {
         <button type="button" onClick={() => setFlipped(!flipped)}>
           <ArrowUpDown size={15} aria-hidden="true" /> 翻转
         </button>
-        {puzzle?.kind === 'mate' && !end.over && (
-          <button type="button" onClick={hint}>
+        {puzzle && puzzle.kind !== 'play' && !solved && (
+          <button type="button" onClick={hint} disabled={!!refuted}>
             <Lightbulb size={15} aria-hidden="true" /> 提示
+          </button>
+        )}
+        {puzzle && (
+          <button
+            type="button"
+            aria-expanded={showExplain}
+            onClick={() => setShowExplain(!showExplain)}
+          >
+            <BookOpen size={15} aria-hidden="true" /> 解析
           </button>
         )}
         {puzzle ? (
@@ -459,6 +546,27 @@ export function ChessGame() {
       </div>
       {message && (
         <p className={puzzleSolved ? 'kit-ok' : 'kit-brief'}>{message}</p>
+      )}
+      {refuted && (
+        <p className="chess-refute" role="status">
+          <strong>为什么不行：</strong>
+          {refuted}
+        </p>
+      )}
+      {puzzle && showExplain && (
+        <div className="chess-explain">
+          <p>
+            <strong>解析：</strong>
+            {puzzle.explain}
+          </p>
+          {puzzle.line.length > 0 && (
+            <p>
+              主线：{puzzle.line.join(' ')}
+              {puzzle.keys.length > 1 &&
+                `（同样正确的首着：${puzzle.keys.filter((k) => k !== puzzle.line[0]).join('、')}）`}
+            </p>
+          )}
+        </div>
       )}
       <div className="chess-layout">
         <fieldset

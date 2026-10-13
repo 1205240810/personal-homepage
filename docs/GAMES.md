@@ -25,7 +25,7 @@
 | `/games/maze`           | 迷宫竞速：四种生成算法与生成动画、键盘/滑动、计时与今日迷宫                 |
 | `/games/rulewords`      | 改写规则：推字块组成「名词 是 属性」规则的原创解谜，12 关，撤销/重来        |
 | `/games/timeloop`       | 时间回溯：录像重演的过去的自己、压力板与正/反向门，10 关，撤销/重来         |
-| `/games/chess`          | 国际象棋：完整规则、五档 Web Worker AI、悔棋/翻转/棋谱、残局模式            |
+| `/games/chess`          | 国际象棋：完整规则、十档 Web Worker AI、悔棋/翻转/棋谱、28 道带解析与错着反击的残局            |
 | `/games/go`             | 围棋：三种棋盘、劫与禁着、数子与死子标记、四档 MCTS Worker AI、让子、死活题 |
 | `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲                                        |
 
@@ -192,7 +192,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 - 迷宫：四种算法×三档×10 个种子都是完美迷宫（连通无环）、分步生成、移动与快跑停在岔路、最短路合法、今日迷宫全年完美且算法轮换、记录校验（`scripts/check-maze.ts`、`standalone/blackjack/qa/maze.check.tsx`）。
 - 规则改写：12 关参考解逐关回放必在最后一步获胜、规则横竖解析与变身、推动链/挡/沉/烫、步进不改原状态、记录校验（`scripts/check-rulewords.ts`、`standalone/blackjack/qa/rulewords.check.tsx`）。
 - 时间回溯：10 关参考解逐关回放到达出口且不超限、每关单独一轮到不了出口、多轮关去掉第一个过去的自己即不可解、门与反向门、录像重演与卡住、记录校验（`scripts/check-timeloop.ts`、`standalone/blackjack/qa/timeloop.check.tsx`）。
-- 国际象棋：易位/过路兵/升变、五种终局判定、9 道杀局主线以将死结束且关键着法与穷举一致、练习残局合法、AI 抓一步杀与躲吃后、低难度随机、引擎 perft 四个标准局面、记录校验（`scripts/check-chess.ts`、`standalone/blackjack/qa/chess.check.tsx`）。
+- 国际象棋：易位/过路兵/升变、五种终局判定、所有杀题主线以将死结束且关键着法与穷举一致、每个错着的反击经穷举（杀题）或固定深度引擎（得子题）复核、得子题正解确实得子、清空置换表后分析可复现、练习残局合法、AI 抓一步杀与躲吃后、低难度随机、引擎 perft 四个标准局面、记录校验。题库由 `scripts/gen-chess-puzzles.ts` 从 `scripts/chess-puzzle-spec.ts` 生成；`scripts/bench/chess-match.ts` 做新旧引擎与相邻难度自对弈（`scripts/check-chess.ts`、`standalone/blackjack/qa/chess.check.tsx`）。
 - 围棋：提子与禁止自杀、劫、数子/贴目/死子切换、让子摆放、7 道题正解与穷举一致且主线回放成立、每个错着都有反击、AI 开局与合法着法、死子估计、记录校验（`scripts/check-go.ts`、`standalone/blackjack/qa/go.check.tsx`）。
 - 往返：从街机离开时停步，带来路参数选择游戏，返回原位；浏览器后退恢复页面时不冻结输入。
 - 存储：只记录需要的本机结果，坏记录和不可用存储不会阻止开局；页面分享地址不携带个人记录。
