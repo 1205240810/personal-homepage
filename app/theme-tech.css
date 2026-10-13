@@ -256,22 +256,14 @@ html[data-theme='tech'] .sg .sg-error-tag {
 /* HUD corner brackets, drawn as background so they never shift layout. */
 html[data-theme='tech'] {
   --tech-hud:
-    linear-gradient(var(--tech-accent), var(--tech-accent)) top left / 14px 1px
-      no-repeat,
-    linear-gradient(var(--tech-accent), var(--tech-accent)) top left / 1px 14px
-      no-repeat,
-    linear-gradient(var(--tech-accent), var(--tech-accent)) top right / 14px 1px
-      no-repeat,
-    linear-gradient(var(--tech-accent), var(--tech-accent)) top right / 1px 14px
-      no-repeat,
-    linear-gradient(var(--tech-accent), var(--tech-accent)) bottom left / 14px
-      1px no-repeat,
-    linear-gradient(var(--tech-accent), var(--tech-accent)) bottom left / 1px
-      14px no-repeat,
-    linear-gradient(var(--tech-accent), var(--tech-accent)) bottom right / 14px
-      1px no-repeat,
-    linear-gradient(var(--tech-accent), var(--tech-accent)) bottom right / 1px
-      14px no-repeat;
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent));
 }
 html[data-theme='tech']
   :is(
@@ -285,6 +277,19 @@ html[data-theme='tech']
   ) {
   /* Page rules use the background shorthand with higher specificity. */
   background-image: var(--tech-hud) !important;
+  background-position:
+    top left,
+    top left,
+    top right,
+    top right,
+    bottom left,
+    bottom left,
+    bottom right,
+    bottom right !important;
+  background-size:
+    14px 1px,
+    1px 14px !important;
+  background-repeat: no-repeat !important;
   transition:
     box-shadow 0.2s,
     border-color 0.2s,
@@ -411,6 +416,21 @@ html[data-theme='tech'] .sweeper-cell[data-n='1'] {
 }
 html[data-theme='tech'] .sweeper-cell[data-n='2'] {
   color: #7cf2c4;
+}
+/* Preserve the failure states above the generic closed/open module colours. */
+html[data-theme='tech'] .sweeper-cell.is-fault {
+  background: #3b2d25;
+}
+html[data-theme='tech'] .sweeper-cell.is-blown {
+  background: #5b3a26;
+  color: #ffd2a8;
+}
+html[data-theme='tech'] .sweeper-cell.is-boom {
+  background: #c4512f;
+}
+html[data-theme='tech'] .sweeper-cell.is-wrong {
+  background: #3a3a3a;
+  color: #b0b0b0;
 }
 
 /* Felt-green game previews recede so the HUD reads first. */
