@@ -1423,3 +1423,33 @@
   text-anchor: middle;
   font-weight: 700;
 }
+
+.room-maze-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #263029;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #c9d1bf;
+  background: #1f2a24;
+}
+.room-maze-svg {
+  width: 130px;
+  margin: 12px auto;
+}
+.room-maze-svg path {
+  fill: none;
+  stroke: #c9d1bf;
+  stroke-width: 0.12;
+}
+.room-maze-svg .trail {
+  fill: none;
+  stroke: #c8e07a;
+  stroke-width: 0.25;
+  opacity: 0.6;
+}
+.room-maze-svg circle {
+  fill: #f97316;
+}

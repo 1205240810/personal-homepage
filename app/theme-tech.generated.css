@@ -650,6 +650,12 @@ html[data-theme='tech'] .room-hashi-preview {
 html[data-theme='tech'] .room-hashi-svg circle {
     fill: #dce8f4
 }
+html[data-theme='tech'] .room-maze-preview {
+    border: 1px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-maze-svg circle {
+    fill: #3ddcff
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid rgb(61 220 255 / 0.45);
