@@ -5,19 +5,26 @@ export const sceneAssets = (scene: { id: string; art: string }) => [
 ];
 /**
  * Fire-and-forget HTTP warm-up for the room behind a door the player is
- * approaching. Each URL is requested once per page; failures are ignored
- * because Phaser's own loader will retry and report errors on entry.
+ * approaching. Successful URLs are warmed once per world instance. Failed
+ * requests wait before another attempt so the per-frame caller cannot flood
+ * the network while offline. Phaser still loads and reports errors on entry.
  */
 export function createScenePrefetcher(
-  load: (url: string) => Promise<unknown> = (url) =>
-    fetch(url, { credentials: 'same-origin' }),
+  load: (url: string) => Promise<unknown> = async (url) => {
+    const response = await fetch(url, { credentials: 'same-origin' });
+    if (!response.ok)
+      throw new Error(`Asset prefetch failed: ${response.status}`);
+    // Wait for the whole response, including failures while reading its body.
+    await response.arrayBuffer();
+  },
+  now: () => number = () => performance.now(),
 ) {
-  const requested = new Set<string>();
+  const nextAttemptAt = new Map<string, number>();
   return (scene: { id: string; art: string }) => {
     for (const url of sceneAssets(scene)) {
-      if (requested.has(url)) continue;
-      requested.add(url);
-      load(url).catch(() => requested.delete(url));
+      if (now() < (nextAttemptAt.get(url) ?? -Infinity)) continue;
+      nextAttemptAt.set(url, Infinity);
+      load(url).catch(() => nextAttemptAt.set(url, now() + 5_000));
     }
   };
 }
