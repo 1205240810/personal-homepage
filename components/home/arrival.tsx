@@ -1,4 +1,5 @@
 'use client';
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, ArrowRight, Gamepad2, SunMedium } from 'lucide-react';
 import { MusicControl } from '@/components/world/music-control';
@@ -65,6 +66,7 @@ export default function Arrival({ art }: { art: ArrivalArt }) {
           徒手拆机甲<span>个人档案馆</span>
         </span>
         <div className="arrival-controls">
+          <ThemeSwitcher />
           <button
             className="arrival-light-switch"
             aria-label={lightsOn ? '关闭检修灯' : '打开检修灯'}

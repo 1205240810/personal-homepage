@@ -1,4 +1,5 @@
 'use client';
+import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full navigation releases each game's audio, listeners and AI calculations. */
 import { useEffect, useState, type ComponentType } from 'react';
@@ -81,6 +82,7 @@ export function StandaloneGameRoom({
             {fromExplore ? '返回机甲' : '工作台'}
             <ArrowUpRight size={14} aria-hidden="true" />
           </a>
+          <ThemeSwitcher />
         </nav>
       </header>
       {Game ? (
