@@ -1,6 +1,7 @@
 .flow-board {
   position: relative;
   display: grid;
+  grid-auto-rows: minmax(0, 1fr);
   width: min(100%, 540px);
   aspect-ratio: 1;
   margin: 0 auto;
