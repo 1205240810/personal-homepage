@@ -17,7 +17,8 @@ export type GameId =
   | 'flow'
   | 'hashi'
   | 'maze'
-  | 'rulewords';
+  | 'rulewords'
+  | 'timeloop';
 
 export type GameDefinition = {
   id: GameId;
@@ -215,6 +216,16 @@ export const GAMES: readonly GameDefinition[] = [
     category: '逻辑解谜',
     controls: '方向键/WASD 移动推字，Z 撤销，R 重来；手机滑动',
     estimatedDuration: '每关约 1–10 分钟',
+  },
+  {
+    id: 'timeloop',
+    title: '时间回溯',
+    description:
+      '每一轮的操作都会被录下来。回溯之后，过去的你们按录像重演：一个踩住压力板，一个去开下一扇门，现在的你从中间穿过去。10 个手工关卡，支持撤销与重来。',
+    href: '/games/timeloop',
+    category: '逻辑解谜',
+    controls: '方向键/WASD 移动，空格等待，T 回溯，Z 撤销；手机滑动',
+    estimatedDuration: '每关约 1–8 分钟',
   },
 ] as const;
 

@@ -660,6 +660,28 @@ function RuleWordsPreview() {
   );
 }
 
+function TimeLoopPreview() {
+  return (
+    <div className="room-tl-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>TIME LOOP</span>
+        <span>LOOP 3/3</span>
+      </div>
+      <div className="room-tl-row">
+        <i className="ghost">1</i>
+        <i className="ghost">2</i>
+        <i className="door" />
+        <i className="me">你</i>
+        <i className="exit">出</i>
+      </div>
+      <div className="room-preview-bottom">
+        <span>RECORD / REPLAY</span>
+        <span>和过去的自己合作</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -678,6 +700,7 @@ const previews = {
   hashi: HashiPreview,
   maze: MazePreview,
   rulewords: RuleWordsPreview,
+  timeloop: TimeLoopPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {

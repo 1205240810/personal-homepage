@@ -669,6 +669,15 @@ html[data-theme='tech'] .room-rw-rules .prop {
     color: #dce8f4;
     background: #0a1520
 }
+html[data-theme='tech'] .room-tl-preview {
+    border: 1px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-tl-row .ghost {
+    border: 2px dashed rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-tl-row .door {
+    border: 3px dashed rgb(61 220 255 / 0.45)
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid rgb(61 220 255 / 0.45);

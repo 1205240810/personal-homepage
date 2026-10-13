@@ -24,6 +24,7 @@
 | `/games/hashi`          | 数桥（Hashiwokakero）：唯一解生成、三档尺寸、提示、今日数桥          |
 | `/games/maze`           | 迷宫竞速：四种生成算法与生成动画、键盘/滑动、计时与今日迷宫          |
 | `/games/rulewords`      | 改写规则：推字块组成「名词 是 属性」规则的原创解谜，12 关，撤销/重来 |
+| `/games/timeloop`       | 时间回溯：录像重演的过去的自己、压力板与正/反向门，10 关，撤销/重来  |
 | `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲                                 |
 
 欢迎页的游戏室链接作为次要入口，保留工作台和进入机甲的选择。工作台通过主导航和侧栏通向游戏室。机甲内部的试作间设有可交互街机角；直接访问游戏页面时不需要先启动 Phaser 世界。
@@ -96,6 +97,8 @@ flowchart LR
 | `components/games/maze.tsx`                 | 迷宫界面：canvas 绘制与生成动画、键盘/滑动/方向键、计时、看答案                                             |
 | `lib/games/rulewords.ts`                    | 规则改写引擎：横竖规则解析、推/挡/沉/烫/你/赢、名词变身、撤销所需的不可变步进、BFS 求解器、关卡与最短参考解 |
 | `components/games/rulewords.tsx`            | 规则改写界面：字块与物体的 DOM 网格、平滑移动（减少动态时关闭）、键盘/滑动/方向键、当前规则列表             |
+| `lib/games/timeloop.ts`                     | 时间回溯引擎：地图解析、压力板/门/反向门、多轮录像同步模拟、卡住检测、单轮 BFS 可达性、本机记录             |
+| `components/games/timeloop.tsx`             | 时间回溯界面：网格棋盘、过去的自己与时间条、回溯/撤销/重来、键盘/滑动/方向键                                |
 | `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义                                                                              |
 | `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                                                                                  |
 
@@ -182,6 +185,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 - 数桥：交叉判定、求解器对已知唯一/多解/无解小题计数正确、三档各 25 个种子解唯一且参考解合规、今日数桥连续 60 天可解、循环与禁止交叉、记录校验（`scripts/check-hashi.ts`、`standalone/blackjack/qa/hashi.check.tsx`）。
 - 迷宫：四种算法×三档×10 个种子都是完美迷宫（连通无环）、分步生成、移动与快跑停在岔路、最短路合法、今日迷宫全年完美且算法轮换、记录校验（`scripts/check-maze.ts`、`standalone/blackjack/qa/maze.check.tsx`）。
 - 规则改写：12 关参考解逐关回放必在最后一步获胜、规则横竖解析与变身、推动链/挡/沉/烫、步进不改原状态、记录校验（`scripts/check-rulewords.ts`、`standalone/blackjack/qa/rulewords.check.tsx`）。
+- 时间回溯：10 关参考解逐关回放到达出口且不超限、每关单独一轮到不了出口、多轮关去掉第一个过去的自己即不可解、门与反向门、录像重演与卡住、记录校验（`scripts/check-timeloop.ts`、`standalone/blackjack/qa/timeloop.check.tsx`）。
 - 往返：从街机离开时停步，带来路参数选择游戏，返回原位；浏览器后退恢复页面时不冻结输入。
 - 存储：只记录需要的本机结果，坏记录和不可用存储不会阻止开局；页面分享地址不携带个人记录。
 
