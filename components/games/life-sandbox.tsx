@@ -250,11 +250,12 @@ export function LifeSandbox() {
   const [result, setResult] = useState<ChallengeResult | null>(null);
   const [saveNote, setSaveNote] = useState('');
   const [seedCount, setSeedCount] = useState(0);
+  // Keep the selected daily challenge stable until the player starts it again.
+  const [today, setToday] = useState(todayParts);
 
   const speedIndex = speedPick ?? (reduced ? 1 : 4);
   const speed = SPEEDS[speedIndex];
-  const today = ready ? todayParts() : null;
-  const daily = today ? dailyChallenge(today) : null;
+  const daily = ready ? dailyChallenge(today) : null;
   const challenge: Challenge | null =
     mode !== 'challenge'
       ? null
@@ -262,7 +263,7 @@ export function LifeSandbox() {
         ? daily
         : (CHALLENGES.find((c) => c.id === challengeId) ?? CHALLENGES[0]);
   const effectiveWrap = mode === 'challenge' ? false : wrap;
-  const dailyDone = !!today && records.daily.includes(dailyKey(today));
+  const dailyDone = ready && records.daily.includes(dailyKey(today));
   const editable = mode === 'sandbox' || counts.generation === 0;
 
   function sim(): Sim {
@@ -572,6 +573,7 @@ export function LifeSandbox() {
     setRunning(false);
     setResult(null);
     setSaveNote('');
+    if (id === 'daily') setToday(todayParts());
     if (id) setChallengeId(id);
     if (next !== mode) {
       simRef.current = makeSim(next);
@@ -610,6 +612,7 @@ export function LifeSandbox() {
     if (!canEdit(x, y)) return;
     const i = y * s.board.width + x;
     if (x < 0 || y < 0 || x >= s.board.width || y >= s.board.height) return;
+    if (s.board.cells[i] !== (value ? 1 : 0)) setResult(null);
     s.board.cells[i] = value ? 1 : 0;
     s.dirty = true;
   }
@@ -619,6 +622,7 @@ export function LifeSandbox() {
       setAnnounce('挑战进行中不能改种子，先回到第 0 代');
       return;
     }
+    setResult(null);
     const rows = getPattern(patternId).rows;
     let blocked = 0;
     for (const [dx, dy] of patternCells(rows, turns)) {
