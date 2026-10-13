@@ -94,8 +94,9 @@ export type Sim = {
 
 /**
  * Simulate the current loop: past loops replay their recordings while the
- * present self plays `current`. Each tick past selves move first, then doors
- * update, then the present self moves, then doors update again.
+ * present self plays `current`. Each tick selves move from oldest to newest,
+ * updating doors after each one.
+ * A recording therefore keeps the same door timing when it becomes a past self.
  */
 export function simulate(m: Map2, loops: string[], current: string): Sim {
   const past = loops.map(() => ({ ...m.start }));
@@ -115,6 +116,7 @@ export function simulate(m: Map2, loops: string[], current: string): Sim {
           p.y += dy;
         }
       }
+      open = pressed(m, [...past, me]);
     });
     open = pressed(m, [...past, me]);
     const [dx, dy] = MOVE_DELTA[current[t] as Move];

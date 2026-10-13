@@ -83,3 +83,12 @@ void test('本机记录：先比轮数再比步数', () => {
   saveTimeloopRecords(r, s);
   assert.deepEqual(loadTimeloopRecords(s).best.door, { loops: 2, moves: 25 });
 });
+
+void test('同一拍开门的录像在下一轮仍能重演', () => {
+  const m = parseMap(['S.AE', '.a..']);
+  const recorded = simulate(m, ['DR'], 'RR');
+  assert.deepEqual(recorded.me, { x: 2, y: 0 });
+  const replayed = simulate(m, ['DR', 'RR'], 'WW');
+  assert.deepEqual(replayed.past[1], recorded.me);
+  assert.deepEqual(replayed.stuck, []);
+});
