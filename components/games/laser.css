@@ -1,0 +1,106 @@
+.laser {
+  --laser-beam: #e11d48;
+  --laser-piece: var(--games-accent, #6f7f2e);
+}
+html[data-theme='tech'] .laser {
+  --laser-beam: #ff4d8d;
+}
+.laser-levels button {
+  flex-direction: column;
+  gap: 0;
+  min-width: 52px;
+}
+.laser-levels small {
+  font-size: 0.7rem;
+  color: var(--games-accent, #6f7f2e);
+}
+.laser-board {
+  position: relative;
+  width: min(100%, 560px);
+  margin: 0 auto;
+  border: 1px solid var(--games-rule, #cfd3c9);
+  border-radius: 6px;
+  background-color: var(--games-paper, #f6f5f1);
+  overflow: hidden;
+}
+.laser-svg,
+.laser-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.laser-svg {
+  pointer-events: none;
+}
+.laser-grid {
+  display: grid;
+}
+.kit .laser-grid button {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 0.5px var(--games-rule, #cfd3c9);
+}
+.kit .laser-grid button:hover {
+  background: color-mix(in srgb, var(--games-accent, #6f7f2e) 10%, transparent);
+}
+.laser-wall {
+  fill: var(--games-muted, #626b61);
+  opacity: 0.75;
+}
+.laser-source {
+  fill: var(--laser-beam);
+}
+.laser-target {
+  fill: none;
+  stroke: var(--games-ink, #282d29);
+  stroke-width: 0.07;
+}
+.laser-target.is-hit {
+  fill: var(--laser-beam);
+  stroke: var(--laser-beam);
+  filter: drop-shadow(0 0 0.15px var(--laser-beam));
+}
+.laser-piece line {
+  stroke: var(--games-ink, #282d29);
+  stroke-width: 0.12;
+  stroke-linecap: round;
+}
+.laser-piece.is-mine line {
+  stroke: var(--laser-piece);
+}
+.laser-piece rect {
+  fill: color-mix(in srgb, var(--laser-piece) 15%, transparent);
+  stroke: var(--laser-piece);
+  stroke-width: 0.04;
+  stroke-dasharray: 0.08 0.06;
+}
+.laser-piece.is-locked line {
+  stroke-dasharray: 0.2 0.08;
+}
+.laser-beam {
+  stroke: var(--laser-beam);
+  stroke-width: 0.08;
+  stroke-linecap: round;
+  opacity: 0.85;
+  animation: laser-pulse 1.4s ease-in-out infinite;
+}
+@keyframes laser-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+.laser-done button {
+  margin-left: 10px;
+}
+.laser-icon {
+  font-weight: 700;
+}
+@media (prefers-reduced-motion: reduce) {
+  .laser-beam {
+    animation: none;
+  }
+}

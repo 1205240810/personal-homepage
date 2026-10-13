@@ -525,6 +525,29 @@ function SandPreview() {
   );
 }
 
+function LaserPreview() {
+  return (
+    <div className="room-laser-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>BEAM / 3 TARGETS</span>
+        <span>★★☆</span>
+      </div>
+      <svg className="room-laser-svg" viewBox="0 0 6 4">
+        <polyline points="0.5,3.5 3.5,3.5 3.5,0.5 5.5,0.5" />
+        <line className="m" x1="3.2" y1="3.8" x2="3.8" y2="3.2" />
+        <line className="m" x1="3.2" y1="0.2" x2="3.8" y2="0.8" />
+        <circle cx="2" cy="3.5" r="0.22" />
+        <circle cx="3.5" cy="2" r="0.22" />
+        <circle cx="5" cy="0.5" r="0.22" />
+      </svg>
+      <div className="room-preview-bottom">
+        <span>MIRRORS / SPLITTERS</span>
+        <span>让光点亮每个目标</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -538,6 +561,7 @@ const previews = {
   life: LifePreview,
   langton: LangtonPreview,
   sand: SandPreview,
+  laser: LaserPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {

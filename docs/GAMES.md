@@ -4,22 +4,23 @@
 
 ## 入口与页面
 
-| 地址                    | 功能                                               |
-| ----------------------- | -------------------------------------------------- |
-| `/games`                | 选择实际可玩的游戏                                 |
-| `/games/holdem-lab`     | 2–9 人自定义练习室，逐步决策评分与教学复盘         |
-| `/games/blackjack`      | 标准筹码 21 点、新手教程及原有休闲模式             |
-| `/games/sudoku`         | 120 道数独、题库选题和逐步推理教练                 |
-| `/games/yahtzee`        | 十三分栏快艇骰子、AI 对局及完整中途存档            |
-| `/games/stud`           | 双人五张梭哈、封顶下注和赛后逐步决策建议           |
-| `/games/signal-pulse`   | 三十关与每日 4×4 至 6×6 灯阵、最短步数与星级       |
-| `/games/circuit-repair` | 旋转线路接通全部端点灯，四种尺寸与今日线路         |
-| `/games/mech-sweeper`   | 机甲主题扫雷，三档难度、今日检修与保险丝           |
-| `/games/fault-finder`   | 按传感器读数推断故障模块，答案唯一、今日排查       |
-| `/games/life`           | 康威生命游戏沙盒：画格、图案库、构造挑战与今日引线 |
-| `/games/langton`        | 朗顿蚂蚁：多蚂蚁、自定义转向规则、高速路检测       |
-| `/games/sand`           | 落沙模拟：沙、水、墙、火、植物、油、烟的相互作用   |
-| `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲               |
+| 地址                    | 功能                                                    |
+| ----------------------- | ------------------------------------------------------- |
+| `/games`                | 选择实际可玩的游戏                                      |
+| `/games/holdem-lab`     | 2–9 人自定义练习室，逐步决策评分与教学复盘              |
+| `/games/blackjack`      | 标准筹码 21 点、新手教程及原有休闲模式                  |
+| `/games/sudoku`         | 120 道数独、题库选题和逐步推理教练                      |
+| `/games/yahtzee`        | 十三分栏快艇骰子、AI 对局及完整中途存档                 |
+| `/games/stud`           | 双人五张梭哈、封顶下注和赛后逐步决策建议                |
+| `/games/signal-pulse`   | 三十关与每日 4×4 至 6×6 灯阵、最短步数与星级            |
+| `/games/circuit-repair` | 旋转线路接通全部端点灯，四种尺寸与今日线路              |
+| `/games/mech-sweeper`   | 机甲主题扫雷，三档难度、今日检修与保险丝                |
+| `/games/fault-finder`   | 按传感器读数推断故障模块，答案唯一、今日排查            |
+| `/games/life`           | 康威生命游戏沙盒：画格、图案库、构造挑战与今日引线      |
+| `/games/langton`        | 朗顿蚂蚁：多蚂蚁、自定义转向规则、高速路检测            |
+| `/games/sand`           | 落沙模拟：沙、水、墙、火、植物、油、烟的相互作用        |
+| `/games/laser`          | 光线反射：镜子与分光镜、手工 + 随机关卡、星级、今日光路 |
+| `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲                    |
 
 欢迎页的游戏室链接作为次要入口，保留工作台和进入机甲的选择。工作台通过主导航和侧栏通向游戏室。机甲内部的试作间设有可交互街机角；直接访问游戏页面时不需要先启动 Phaser 世界。
 
@@ -45,44 +46,46 @@ flowchart LR
   E -->|from=explore| C
 ```
 
-| 文件或目录                                  | 职责                                                                     |
-| ------------------------------------------- | ------------------------------------------------------------------------ |
-| `lib/games/catalog.ts`                      | 稳定 ID、路由与游戏目录文案                                              |
-| `app/games/page.tsx`                        | 游戏室页面，读取来路参数                                                 |
-| `components/games/game-room.tsx`            | 目录展示与共享 `GamePageFrame`                                           |
-| `components/games/games.css`                | 导航、目录、页框、手机布局与减少动态效果                                 |
-| `lib/games/holdem-engine.ts`                | 发牌、盲注、合法行动、换街与底池结算                                     |
-| `lib/games/holdem-cards.ts`                 | 牌型比较与蒙特卡洛权益估计                                               |
-| `lib/games/holdem-strategy.ts`              | 本地 AI 行动与策略复盘                                                   |
-| `lib/games/holdem-replay.ts`                | 仅在整手结束后生成全桌回放，并校验本机归档                               |
-| `components/games/holdem-worker.ts`         | 将权益和复盘计算放到 Worker 中                                           |
-| `lib/games/holdem-music.ts`                 | 原创编曲、音量与音源生命周期                                             |
-| `lib/games/holdem-voice.ts`                 | 可选中文行动播报与自身语音队列清理                                       |
-| `public/assets/poker/portraits/`            | 九席原创透明人物素材                                                     |
-| `standalone/blackjack/src/`                 | 暗牌 21 的单一维护源码、纯规则和教练                                     |
-| `scripts/sync-blackjack.mjs`                | 构建前同步独立游戏到宿主运行组件                                         |
-| `components/games/blackjack/`               | 客户端按需加载、宿主导航与生成源码                                       |
-| `standalone/{sudoku,yahtzee,stud}/`         | 三款独立游戏的维护源码、测试与离线文件                                   |
-| `scripts/sync-standalone-games.mjs`         | 同步十九个运行文件，检查生成目录是否过期                                 |
-| `components/games/standalone-game-room.tsx` | 三款游戏的按需加载、来路导航和备案入口                                   |
-| `lib/pulse-puzzle.ts`                       | 灯阵关卡、按键翻转与最短解求解                                           |
-| `lib/pulse-daily.ts`                        | 每日灯阵生成、最短解、星级与分尺寸进度                                   |
-| `components/home/pulse-daily.tsx`           | 每日灯阵界面与本机进度恢复                                               |
-| `components/home/pulse-game.tsx`            | 两种入口共同复用的灯阵界面                                               |
-| `lib/games/circuit-repair.ts`               | 线路检修的生成树出题、通电判定、提示与本机最佳记录                       |
-| `components/games/circuit-repair.tsx`       | 线路检修界面：旋转、锁定、撤回、计时与键盘操作                           |
-| `lib/games/mech-sweeper.ts`                 | 机甲扫雷的出题、首扫安全、展开与连开、保险丝和本机记录                   |
-| `components/games/mech-sweeper.tsx`         | 机甲扫雷界面：扫描、右键/长按/标记模式插旗、计时与键盘操作               |
-| `lib/games/fault-finder.ts`                 | 故障排查的出题（唯一解、极小传感器面板）、提示、诊断与本机记录           |
-| `components/games/fault-finder.tsx`         | 故障排查界面：标记、传感器高亮、提交诊断、计时与键盘操作                 |
-| `lib/games/life.ts`                         | 生命游戏规则（B3/S23、环面）、图案库与旋转、挑战判定、今日引线与本机记录 |
-| `components/games/life-sandbox.tsx`         | 生命游戏界面：canvas 棋盘、拖画/盖章、缩放平移、播放控制、挑战与键盘操作 |
-| `lib/games/langton.ts`                      | 朗顿蚂蚁规则（多状态转向、环面）、高速路检测、预设与本机记录             |
-| `components/games/langton.tsx`              | 朗顿蚂蚁界面：ImageData 渲染、缩放平移、调速与规则编辑                   |
-| `lib/games/sand.ts`                         | 落沙规则（密度下沉、液体流动、燃烧、植物生长、烟）、笔刷与场景存档       |
-| `components/games/sand.tsx`                 | 落沙界面：ImageData 渲染、按住连续撒料、键盘画笔、存档读档               |
-| `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义                                           |
-| `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                                               |
+| 文件或目录                                  | 职责                                                                                           |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `lib/games/catalog.ts`                      | 稳定 ID、路由与游戏目录文案                                                                    |
+| `app/games/page.tsx`                        | 游戏室页面，读取来路参数                                                                       |
+| `components/games/game-room.tsx`            | 目录展示与共享 `GamePageFrame`                                                                 |
+| `components/games/games.css`                | 导航、目录、页框、手机布局与减少动态效果                                                       |
+| `lib/games/holdem-engine.ts`                | 发牌、盲注、合法行动、换街与底池结算                                                           |
+| `lib/games/holdem-cards.ts`                 | 牌型比较与蒙特卡洛权益估计                                                                     |
+| `lib/games/holdem-strategy.ts`              | 本地 AI 行动与策略复盘                                                                         |
+| `lib/games/holdem-replay.ts`                | 仅在整手结束后生成全桌回放，并校验本机归档                                                     |
+| `components/games/holdem-worker.ts`         | 将权益和复盘计算放到 Worker 中                                                                 |
+| `lib/games/holdem-music.ts`                 | 原创编曲、音量与音源生命周期                                                                   |
+| `lib/games/holdem-voice.ts`                 | 可选中文行动播报与自身语音队列清理                                                             |
+| `public/assets/poker/portraits/`            | 九席原创透明人物素材                                                                           |
+| `standalone/blackjack/src/`                 | 暗牌 21 的单一维护源码、纯规则和教练                                                           |
+| `scripts/sync-blackjack.mjs`                | 构建前同步独立游戏到宿主运行组件                                                               |
+| `components/games/blackjack/`               | 客户端按需加载、宿主导航与生成源码                                                             |
+| `standalone/{sudoku,yahtzee,stud}/`         | 三款独立游戏的维护源码、测试与离线文件                                                         |
+| `scripts/sync-standalone-games.mjs`         | 同步十九个运行文件，检查生成目录是否过期                                                       |
+| `components/games/standalone-game-room.tsx` | 三款游戏的按需加载、来路导航和备案入口                                                         |
+| `lib/pulse-puzzle.ts`                       | 灯阵关卡、按键翻转与最短解求解                                                                 |
+| `lib/pulse-daily.ts`                        | 每日灯阵生成、最短解、星级与分尺寸进度                                                         |
+| `components/home/pulse-daily.tsx`           | 每日灯阵界面与本机进度恢复                                                                     |
+| `components/home/pulse-game.tsx`            | 两种入口共同复用的灯阵界面                                                                     |
+| `lib/games/circuit-repair.ts`               | 线路检修的生成树出题、通电判定、提示与本机最佳记录                                             |
+| `components/games/circuit-repair.tsx`       | 线路检修界面：旋转、锁定、撤回、计时与键盘操作                                                 |
+| `lib/games/mech-sweeper.ts`                 | 机甲扫雷的出题、首扫安全、展开与连开、保险丝和本机记录                                         |
+| `components/games/mech-sweeper.tsx`         | 机甲扫雷界面：扫描、右键/长按/标记模式插旗、计时与键盘操作                                     |
+| `lib/games/fault-finder.ts`                 | 故障排查的出题（唯一解、极小传感器面板）、提示、诊断与本机记录                                 |
+| `components/games/fault-finder.tsx`         | 故障排查界面：标记、传感器高亮、提交诊断、计时与键盘操作                                       |
+| `lib/games/life.ts`                         | 生命游戏规则（B3/S23、环面）、图案库与旋转、挑战判定、今日引线与本机记录                       |
+| `components/games/life-sandbox.tsx`         | 生命游戏界面：canvas 棋盘、拖画/盖章、缩放平移、播放控制、挑战与键盘操作                       |
+| `lib/games/langton.ts`                      | 朗顿蚂蚁规则（多状态转向、环面）、高速路检测、预设与本机记录                                   |
+| `components/games/langton.tsx`              | 朗顿蚂蚁界面：ImageData 渲染、缩放平移、调速与规则编辑                                         |
+| `lib/games/sand.ts`                         | 落沙规则（密度下沉、液体流动、燃烧、植物生长、烟）、笔刷与场景存档                             |
+| `components/games/sand.tsx`                 | 落沙界面：ImageData 渲染、按住连续撒料、键盘画笔、存档读档                                     |
+| `lib/games/laser.ts`                        | 光路追踪（镜子、分光镜、墙、循环截断）、手工关卡、由参考解反推的随机关卡、提示、星级与本机记录 |
+| `components/games/laser.tsx`                | 光线反射界面：SVG 光路、按钮格子、工具切换、提示与评星                                         |
+| `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义                                                                 |
+| `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                                                                     |
 
 目录只描述已经能打开的游戏，不依赖游戏内部状态。路由 ID 与中文名称分离；可以修改游戏标题和简介，而不随意改变分享地址。`GamePageFrame` 为普通游戏统一返回导航与 ICP 信息；扑克使用独立整屏布局，并保留相同的返回与备案入口。游戏组件负责自己的操作、提示、胜负和记录。
 
@@ -162,6 +165,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 - 生命游戏：规则与环面边界、已知振荡器/飞船周期、图案旋转、每道挑战都有已知解法且错误有原因、今日引线一年 366 天都可解、记录校验、大棋盘性能（`scripts/check-life.ts`、`standalone/blackjack/qa/life.check.tsx`）。
 - 朗顿蚂蚁：第一步与环面、经典 RL 约 1 万步出现周期 104 高速路、多蚂蚁上限、记录校验、百万步性能（`scripts/check-langton.ts`、`standalone/blackjack/qa/langton.check.tsx`）。
 - 落沙：沙落底不悬空并堆坡、水摊平且守恒、沙沉水底油浮水面、火烧光植物后熄灭、水灭火、植物吸水、存档往返、240×160 性能（`scripts/check-sand.ts`、`standalone/blackjack/qa/sand.check.tsx`）。
+- 光线反射：镜子四向与分光、墙与循环、手工关卡参考解可解且空盘不解、三档各 60 个随机关卡可解且每块必要、今日光路全年可解、道具上限、提示、星级与记录（`scripts/check-laser.ts`、`standalone/blackjack/qa/laser.check.tsx`）。
 - 往返：从街机离开时停步，带来路参数选择游戏，返回原位；浏览器后退恢复页面时不冻结输入。
 - 存储：只记录需要的本机结果，坏记录和不可用存储不会阻止开局；页面分享地址不携带个人记录。
 
