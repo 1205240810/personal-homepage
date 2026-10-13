@@ -106,5 +106,6 @@ void test('今日挑战只列出带每日题的游戏', () => {
     'laser',
     'flow',
     'hashi',
+    'maze',
   ]);
 });
