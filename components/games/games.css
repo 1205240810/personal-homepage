@@ -1251,3 +1251,34 @@
     min-height: 224px;
   }
 }
+
+.room-life-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #263029;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #c9d1bf;
+  background: #1f2a24;
+  box-shadow:
+    inset 0 1px 6px #15231d66,
+    0 1px #eff1e8;
+}
+.room-life-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 14px);
+  gap: 2px;
+  margin: 12px auto;
+}
+.room-life-grid span {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background: #2c3a32;
+}
+.room-life-grid span.is-live {
+  background: #c8e07a;
+  box-shadow: 0 0 6px #c8e07a88;
+}

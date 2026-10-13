@@ -443,6 +443,28 @@ function FaultPreview() {
   );
 }
 
+function LifePreview() {
+  // A glider beside a blinker on a small grid.
+  const live = new Set([2, 13, 21, 22, 23, 36, 37, 38]);
+  return (
+    <div className="room-life-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>B3/S23 / GEN 042</span>
+        <span>POP 08</span>
+      </div>
+      <div className="room-life-grid">
+        {Array.from({ length: 48 }, (_, i) => (
+          <span key={i} className={live.has(i) ? 'is-live' : ''} />
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>SANDBOX / DAILY</span>
+        <span>画几个格子，看它活</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -453,6 +475,7 @@ const previews = {
   'circuit-repair': CircuitPreview,
   'mech-sweeper': SweeperPreview,
   'fault-finder': FaultPreview,
+  life: LifePreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {

@@ -19,6 +19,7 @@ describe('game room shortcuts', () => {
       '/games/circuit-repair?from=explore',
       '/games/mech-sweeper?from=explore',
       '/games/fault-finder?from=explore',
+      '/games/life?from=explore',
     ]);
   });
 
