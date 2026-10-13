@@ -548,6 +548,27 @@ function LaserPreview() {
   );
 }
 
+function FlowPreview() {
+  return (
+    <div className="room-flow-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>FLOW / 5×5</span>
+        <span>3/4</span>
+      </div>
+      <svg className="room-flow-svg" viewBox="0 0 5 5">
+        <polyline stroke="#e6194b" points="0.5,0.5 3.5,0.5 3.5,1.5" />
+        <polyline stroke="#3cb44b" points="0.5,1.5 0.5,4.5 2.5,4.5" />
+        <polyline stroke="#4363d8" points="4.5,0.5 4.5,4.5 3.5,4.5" />
+        <polyline stroke="#f58231" points="1.5,1.5 2.5,1.5 2.5,3.5" />
+      </svg>
+      <div className="room-preview-bottom">
+        <span>FILL EVERY CELL</span>
+        <span>同色相连，铺满棋盘</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -562,6 +583,7 @@ const previews = {
   langton: LangtonPreview,
   sand: SandPreview,
   laser: LaserPreview,
+  flow: FlowPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
