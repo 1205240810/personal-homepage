@@ -9,7 +9,8 @@ export type GameId =
   | 'stud'
   | 'circuit-repair'
   | 'mech-sweeper'
-  | 'fault-finder';
+  | 'fault-finder'
+  | 'life';
 
 export type GameDefinition = {
   id: GameId;
@@ -121,6 +122,18 @@ export const GAMES: readonly GameDefinition[] = [
       '点击模块在故障、正常、未判断之间切换；方向键移动，F 标故障，X 标正常',
     estimatedDuration: '每张约 1–6 分钟',
     daily: '今日排查：传感器读数推理，答案唯一',
+  },
+  {
+    id: 'life',
+    title: '生命游戏沙盒',
+    description:
+      '康威生命游戏：随手画细胞、盖上滑翔机枪，看它们自己繁衍。还有五道构造挑战：用最少的细胞撑过百代、造振荡器、放飞船。',
+    href: '/games/life',
+    category: '沙盒模拟',
+    controls:
+      '点击拖动画细胞，滚轮或双指缩放；空格播放，N 单步，方向键加回车逐格编辑',
+    estimatedDuration: '随玩随停，每道挑战约 2–10 分钟',
+    daily: '今日引线：限定格数，让图案撑过指定代数',
   },
 ] as const;
 

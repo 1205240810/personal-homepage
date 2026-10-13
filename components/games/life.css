@@ -1,0 +1,225 @@
+/* 生命游戏沙盒 — follows --games-* tokens so the 科技 theme remaps it. */
+.life-stage {
+  --life-bg: var(--games-paper, #f6f5f1);
+  --life-cell: var(--games-ink, #282d29);
+  --life-grid: color-mix(in srgb, var(--games-rule, #cfd3c9) 55%, transparent);
+  --life-zone: var(--games-accent, #6f7f2e);
+  --life-ghost: var(--games-accent, #6f7f2e);
+  --life-cursor: #c2410c;
+  max-width: 1080px;
+  margin: 0 auto;
+  color: var(--games-ink, #282d29);
+}
+html[data-theme='tech'] .life-stage {
+  --life-cell: var(--games-accent);
+  --life-cursor: #ffb454;
+}
+.life-root {
+  display: grid;
+  gap: 12px;
+}
+.life-root button {
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--games-rule, #cfd3c9);
+  border-radius: 6px;
+  background: transparent;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.life-root button:hover:not(:disabled) {
+  border-color: var(--games-accent, #6f7f2e);
+}
+.life-root button[aria-pressed='true'],
+.life-root .life-primary {
+  border-color: var(--games-accent, #6f7f2e);
+  background: color-mix(in srgb, var(--games-accent, #6f7f2e) 16%, transparent);
+}
+.life-root button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.life-root :focus-visible {
+  outline: 2px solid var(--games-accent, #6f7f2e);
+  outline-offset: 2px;
+}
+.life-mono,
+.life-stats strong,
+.life-kicker {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.life-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.life-heading h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+.life-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--games-muted, #626b61);
+}
+.life-modes,
+.life-toolbar,
+.life-tools,
+.life-brief-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.life-speed,
+.life-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+.life-speed input {
+  width: 110px;
+  accent-color: var(--games-accent, #6f7f2e);
+}
+.life-stats {
+  display: flex;
+  gap: 18px;
+  font-size: 0.9rem;
+  color: var(--games-muted, #626b61);
+}
+.life-stats strong {
+  color: var(--games-ink, #282d29);
+  font-size: 1.05rem;
+}
+.life-board {
+  position: relative;
+}
+.life-canvas {
+  display: block;
+  width: 100%;
+  height: clamp(300px, 62vh, 640px);
+  border: 1px solid var(--games-rule, #cfd3c9);
+  border-radius: 6px;
+  touch-action: none;
+  cursor: crosshair;
+  background: var(--life-bg);
+}
+.life-canvas.is-pan {
+  cursor: grab;
+}
+.life-zoom {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 6px;
+}
+.life-zoom button {
+  background: var(--life-bg);
+  padding: 6px 8px;
+}
+.life-challenges {
+  display: grid;
+  gap: 10px;
+}
+.life-challenge-list,
+.life-patterns {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.life-challenge-list button,
+.life-patterns button {
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 2px;
+}
+.life-challenge-list small,
+.life-patterns small {
+  color: var(--games-muted, #626b61);
+  font-size: 0.75rem;
+}
+.life-brief {
+  padding: 10px 14px;
+  border-left: 3px solid var(--games-accent, #6f7f2e);
+  background: color-mix(in srgb, var(--games-accent, #6f7f2e) 7%, transparent);
+}
+.life-brief p {
+  margin: 0 0 6px;
+}
+.life-ok {
+  color: #15803d;
+}
+.life-bad {
+  color: #b91c1c;
+}
+html[data-theme='tech'] .life-ok {
+  color: #5ef2a0;
+}
+html[data-theme='tech'] .life-bad {
+  color: #ff7a7a;
+}
+.life-library-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.life-library-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.life-library-head .life-mono {
+  flex: 1;
+  color: var(--games-muted, #626b61);
+  font-size: 0.85rem;
+}
+.life-help {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--games-muted, #626b61);
+}
+.life-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .life-canvas {
+    height: auto;
+    aspect-ratio: 1;
+    max-height: 70vh;
+  }
+  .life-challenge-list,
+  .life-patterns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .life-root button {
+    transition: none;
+  }
+}
+.life-root fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}

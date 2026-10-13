@@ -11,12 +11,15 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Bound concurrent DOM suites as the game collection grows.
+    maxWorkers: 2,
     include: [
       'qa/pulse-game.check.tsx',
       'qa/circuit-repair.check.tsx',
       'qa/mech-sweeper.check.tsx',
       'qa/game-room.check.tsx',
       'qa/fault-finder.check.tsx',
+      'qa/life.check.tsx',
       'qa/theme-switcher.check.tsx',
     ],
     server: { deps: { inline: true } },

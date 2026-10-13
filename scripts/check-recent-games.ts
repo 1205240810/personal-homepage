@@ -102,5 +102,6 @@ void test('今日挑战只列出带每日题的游戏', () => {
     'circuit-repair',
     'mech-sweeper',
     'fault-finder',
+    'life',
   ]);
 });
