@@ -682,6 +682,47 @@ function TimeLoopPreview() {
   );
 }
 
+function ChessPreview() {
+  return (
+    <div className="room-chess-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>CHESS / ALPHA-BETA</span>
+        <span>Qb8+!</span>
+      </div>
+      <div className="room-chess-board">
+        {Array.from({ length: 16 }, (_, i) => (
+          <i key={i} className={(i + Math.floor(i / 4)) % 2 ? 'd' : ''}>
+            {
+              [
+                '♜',
+                '',
+                '',
+                '♚',
+                '',
+                '♟',
+                '',
+                '',
+                '',
+                '',
+                '♛',
+                '',
+                '♔',
+                '',
+                '',
+                '♖',
+              ][i]
+            }
+          </i>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>5 LEVELS / 11 ENDGAMES</span>
+        <span>后台线程思考</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -701,6 +742,7 @@ const previews = {
   maze: MazePreview,
   rulewords: RuleWordsPreview,
   timeloop: TimeLoopPreview,
+  chess: ChessPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
