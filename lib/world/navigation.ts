@@ -1,4 +1,4 @@
-import { canWalk, distance } from './geometry.ts';
+import { bounds, canWalk, distance } from './geometry.ts';
 import type { Point } from './types';
 export function corridor(points: number[][], width: number) {
   const regions: number[][][] = [];
@@ -70,7 +70,14 @@ export function clearSegment(
     const x = a.x + ox,
       y = a.y + oy,
       cuts = [0, 1];
-    for (const polygon of [...areas, ...obstacles])
+    const minX = Math.min(x, x + dx),
+      maxX = Math.max(x, x + dx),
+      minY = Math.min(y, y + dy),
+      maxY = Math.max(y, y + dy);
+    for (const polygon of [...areas, ...obstacles]) {
+      // Edges of a polygon whose bounds miss the segment cannot cut it.
+      const [left, top, right, bottom] = bounds(polygon);
+      if (right < minX || left > maxX || bottom < minY || top > maxY) continue;
       for (let i = 0; i < polygon.length; i++) {
         const [px, py] = polygon[i],
           [qx, qy] = polygon[(i + 1) % polygon.length],
@@ -82,6 +89,7 @@ export function clearSegment(
           u = ((px - x) * dy - (py - y) * dx) / cross;
         if (t > 0 && t < 1 && u >= -1e-9 && u <= 1 + 1e-9) cuts.push(t);
       }
+    }
     cuts.sort((u, v) => u - v);
     for (const t of cuts)
       if (!canWalk({ x: x + dx * t, y: y + dy * t }, areas, obstacles))
@@ -206,4 +214,35 @@ export function findRoute(
     }
   }
   return null;
+}
+const SLIDE_ANGLES = [15, 30, 45, 60].map((deg) => (deg * Math.PI) / 180);
+/**
+ * Move by one frame step. When the straight step is blocked, the step is turned
+ * up to 60° toward either side (scaled by cos θ) so walking into an isometric
+ * wall slides along it instead of stopping dead. Falls back to pure axis moves.
+ * Every candidate passes clearSegment, so sliding can never cut through a gap.
+ */
+export function slideMove(
+  from: Point,
+  step: Point,
+  areas: number[][][],
+  obstacles: number[][][] = [],
+): Point {
+  const to = (x: number, y: number) => ({ x: from.x + x, y: from.y + y });
+  const straight = to(step.x, step.y);
+  if (clearSegment(from, straight, areas, obstacles)) return straight;
+  if (Math.hypot(step.x, step.y) < 1e-6) return from;
+  for (const angle of SLIDE_ANGLES) {
+    const c = Math.cos(angle),
+      s = Math.sin(angle);
+    for (const side of [1, -1]) {
+      const x = (step.x * c - step.y * s * side) * c,
+        y = (step.x * s * side + step.y * c) * c,
+        next = to(x, y);
+      if (clearSegment(from, next, areas, obstacles)) return next;
+    }
+  }
+  for (const next of [to(step.x, 0), to(0, step.y)])
+    if (clearSegment(from, next, areas, obstacles)) return next;
+  return from;
 }
