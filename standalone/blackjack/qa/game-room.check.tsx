@@ -21,6 +21,7 @@ describe('game room shortcuts', () => {
       '/games/fault-finder?from=explore',
       '/games/life?from=explore',
       '/games/laser?from=explore',
+      '/games/flow?from=explore',
     ]);
   });
 

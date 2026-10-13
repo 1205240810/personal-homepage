@@ -641,6 +641,9 @@ html[data-theme='tech'] .room-laser-svg polyline {
 html[data-theme='tech'] .room-laser-svg circle {
     fill: #3ddcff
 }
+html[data-theme='tech'] .room-flow-preview {
+    border: 1px solid rgb(61 220 255 / 0.45)
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid rgb(61 220 255 / 0.45);
