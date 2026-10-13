@@ -139,6 +139,48 @@ test('电路初始未解，旋转能解，断开的出口不算完成', () => {
   assert.deepEqual([...shuffledSignals()].sort(), [0, 0, 1, 1, 2, 2, 3, 3]);
 });
 
+import {
+  isFormField,
+  ownsKeyboard,
+  WORLD_SCROLL_KEYS,
+  shouldCaptureWorldKey,
+} from '../lib/world/keyboard.ts';
+test('键盘归属：按钮和表单保留自己的按键，画布和页面才由探索接管', () => {
+  const element = (matches: string[]) => ({
+    closest: (selector: string) =>
+      selector.split(',').some((s) => matches.includes(s.trim())) ? {} : null,
+  });
+  const button = element(['button']),
+    slider = element(['input', '[role="slider"]']),
+    canvas = element([]);
+  assert.equal(ownsKeyboard(button), false, '聚焦按钮时空格要能按下按钮');
+  assert.equal(ownsKeyboard(slider), false);
+  assert.equal(ownsKeyboard(canvas), true);
+  assert.equal(ownsKeyboard(null), true);
+  assert.equal(isFormField(slider), true, '调音量时方向键不能让人物走动');
+  assert.equal(isFormField(button), false, '聚焦按钮时仍可用 WASD 行走');
+  assert.ok(WORLD_SCROLL_KEYS.has('Space') && !WORLD_SCROLL_KEYS.has('KeyE'));
+});
+test('探索键盘保留浏览器和读屏组合键，但 Shift 方向键仍可快走', () => {
+  const canvas = { closest: () => null };
+  for (const code of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space']) {
+    assert.equal(shouldCaptureWorldKey({ code, target: canvas }), true);
+    const sprint = { code, target: canvas, shiftKey: true };
+    assert.equal(shouldCaptureWorldKey(sprint), true);
+    for (const modifier of ['altKey', 'ctrlKey', 'metaKey'])
+      assert.equal(
+        shouldCaptureWorldKey({ code, target: canvas, [modifier]: true }),
+        false,
+        `${modifier}+${code} 必须留给浏览器或辅助技术`,
+      );
+  }
+  assert.equal(shouldCaptureWorldKey({ code: 'KeyE', target: canvas }), false);
+  assert.equal(
+    shouldCaptureWorldKey({ code: 'Space', target: { closest: () => ({}) } }),
+    false,
+    '聚焦控件时仍须保留其默认键盘操作',
+  );
+});
 import { SCENES, getScene } from '../lib/world/registry.ts';
 import { createScenePrefetcher, sceneAssets } from '../lib/world/prefetch.ts';
 test('门前预取：每个房间的原画和地图只请求一次，失败后允许重试', async () => {
