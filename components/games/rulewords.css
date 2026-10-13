@@ -109,3 +109,7 @@ html[data-theme='tech']
   .rw-word:is(.is-you, .is-win, .is-stop, .is-push, .is-sink, .is-hot).is-on {
   color: #0b0f0c;
 }
+html[data-theme='tech'] .rw-thing.is-wall {
+  background: #24323d;
+  opacity: 1;
+}
