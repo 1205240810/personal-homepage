@@ -678,6 +678,16 @@ html[data-theme='tech'] .room-tl-row .ghost {
 html[data-theme='tech'] .room-tl-row .door {
     border: 3px dashed rgb(61 220 255 / 0.45)
 }
+html[data-theme='tech'] .room-chess-preview {
+    border: 1px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-chess-board {
+    border: 2px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-chess-board i {
+    background: #0f1f2e;
+    color: #dce8f4
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid rgb(61 220 255 / 0.45);

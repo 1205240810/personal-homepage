@@ -1533,3 +1533,33 @@
   border-radius: 3px;
   background: #15803d;
 }
+
+.room-chess-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #3a2f22;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #f3ead7;
+  background: #2b241c;
+}
+.room-chess-board {
+  display: grid;
+  grid-template-columns: repeat(4, 36px);
+  margin: 10px auto;
+  border: 2px solid #f3ead7;
+}
+.room-chess-board i {
+  display: grid;
+  place-items: center;
+  height: 36px;
+  font-style: normal;
+  font-size: 24px;
+  background: #ece3cf;
+  color: #1c1917;
+}
+.room-chess-board i.d {
+  background: #a8865f;
+}
