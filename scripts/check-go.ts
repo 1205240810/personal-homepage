@@ -19,7 +19,12 @@ import {
   validateGoRecords,
   type GoState,
 } from '../lib/games/go.ts';
-import { chooseGoMove, guessDead } from '../lib/games/go-ai.ts';
+import {
+  GO_LEVELS,
+  chooseGoMove,
+  guessDead,
+  resetGoTree,
+} from '../lib/games/go-ai.ts';
 import {
   GO_PROBLEMS,
   correctMoves,
@@ -99,7 +104,10 @@ void test('死活题：唯一或已知的正解、主线回放、错着有反击
     const keys = correctMoves(su);
     assert.ok(keys.length >= 1, `${p.id} 无正解`);
     const [kx, ky] = p.line[0];
-    assert.ok(keys.includes(ky * 9 + kx), `${p.id} 主线首手不是正解`);
+    assert.ok(
+      keys.includes(kx < 0 ? -1 : ky * 9 + kx),
+      `${p.id} 主线首手不是正解`,
+    );
     // Replay main line; every black move keeps black winning.
     let s = su.state;
     for (const [x, y] of p.line) {
@@ -139,15 +147,92 @@ void test('AI：开局不下一二线，各档都返回合法着法', () => {
   const g = newGame(9);
   let t = 0;
   const clock = () => (t += 1);
-  const r = chooseGoMove(g, 7.5, 3, rng(7), clock);
+  const r = chooseGoMove(g, 7.5, 6, rng(7), clock, { reuse: false });
   const x = r.move % 9;
   const y = Math.floor(r.move / 9);
   assert.ok(Math.min(x, y, 8 - x, 8 - y) >= 2, `开局下在 ${x},${y}`);
   assert.ok(r.playouts >= 1000);
-  for (const level of [1, 2] as const) {
+  for (const level of [1, 2, 5, 10] as const) {
     const m = chooseGoMove(g, 7.5, level, rng(3), clock);
     assert.ok(m.move === -1 || play(g, m.move).ok);
   }
+});
+
+void test('AI v2：十档难度，会提叫吃的子，搜索树可复用', () => {
+  assert.equal(Object.keys(GO_LEVELS).length, 10);
+  let t = 0;
+  const clock = () => (t += 1);
+  // White stone at E5 in atari: Black should capture it.
+  const s = fromRows(
+    [
+      '.........',
+      '.........',
+      '.........',
+      '....X....',
+      '...XOX...',
+      '.........',
+      '.........',
+      '.........',
+      '.........',
+    ],
+    BLACK,
+  );
+  const r = chooseGoMove(s, 7.5, 6, rng(5), clock, { reuse: false });
+  assert.equal(r.move, at(s, 4, 5));
+  // Reuse: after our move and a reply, the next search starts from the kept subtree.
+  const a = play(s, r.move) as { state: typeof s };
+  const reply = chooseGoMove(a.state, 7.5, 6, rng(6), clock);
+  const b = play(a.state, reply.move) as { state: typeof s };
+  const again = chooseGoMove(b.state, 7.5, 6, rng(7), clock);
+  assert.ok(again.move === -1 || play(b.state, again.move).ok);
+  resetGoTree();
+});
+
+void test('新死活题：解析齐全，正解在加深 4 层后不变，每个错着的反击都经穷举验证', () => {
+  let refutations = 0;
+  for (const p of GO_PROBLEMS) {
+    assert.ok(p.explain.length > 20, `${p.id} 缺解析`);
+    const su = setup(p);
+    const keys = correctMoves(su);
+    assert.deepEqual(
+      correctMoves({ ...su, depth: su.depth + 4 }),
+      keys,
+      `${p.id} 正解依赖搜索深度`,
+    );
+    const wrongAt = new Set((p.wrong ?? []).map((w) => w.at[1] * 9 + w.at[0]));
+    for (const q of su.region) {
+      if (
+        keys.includes(q) ||
+        su.state.board[q] !== EMPTY ||
+        !play(su.state, q).ok
+      )
+        continue;
+      assert.ok(wrongAt.has(q), `${p.id} 错着 ${q} 没有说明`);
+    }
+    for (const w of p.wrong ?? []) {
+      const q = w.at[1] * 9 + w.at[0];
+      assert.ok(!keys.includes(q), `${p.id} ${q} 其实是正解`);
+      assert.ok(w.why.length > 8, `${p.id} ${q} 缺说明`);
+      let s = (play(su.state, q) as { state: typeof su.state }).state;
+      // The shown line is legal, and after White's reply Black can no longer succeed.
+      w.line.forEach(([x, y], i) => {
+        const r = play(s, x < 0 ? -1 : y * 9 + x);
+        assert.ok(r.ok, `${p.id} 反击线不合法`);
+        s = r.state;
+        if (i === 0)
+          assert.equal(
+            playerWinning(su, s, su.depth - 2),
+            false,
+            `${p.id} ${q} 反击无效`,
+          );
+      });
+      refutations++;
+    }
+  }
+  assert.ok(GO_PROBLEMS.length >= 22, `题数 ${GO_PROBLEMS.length}`);
+  assert.ok(refutations >= 50, `反击数 ${refutations}`);
+  const seki = GO_PROBLEMS.find((p) => p.id === 'seki-pass')!;
+  assert.deepEqual(correctMoves(setup(seki)), [-1]);
 });
 
 void test('死子估计：被围死的孤子判为死子', () => {

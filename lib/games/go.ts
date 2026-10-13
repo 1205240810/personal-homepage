@@ -289,7 +289,7 @@ export function validateGoRecords(v: unknown): GoRecords | null {
   const games: GoRecords['games'] = {};
   for (const [k, g] of Object.entries(v.games))
     if (
-      /^(9|13|19)-[1-4]$/.test(k) &&
+      /^(9|13|19)-([1-9]|10)$/.test(k) &&
       isPlainObject(g) &&
       nat(g.played) &&
       nat(g.won)
