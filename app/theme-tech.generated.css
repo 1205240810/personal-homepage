@@ -620,6 +620,12 @@ html[data-theme='tech'] .room-life-preview {
 html[data-theme='tech'] .room-life-grid span.is-live {
     background: #0f1f2e
 }
+html[data-theme='tech'] .room-langton-preview {
+    border: 1px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-langton-grid span.is-on {
+    background: #0f1f2e
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid rgb(61 220 255 / 0.45);

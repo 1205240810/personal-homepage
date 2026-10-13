@@ -10,7 +10,8 @@ export type GameId =
   | 'circuit-repair'
   | 'mech-sweeper'
   | 'fault-finder'
-  | 'life';
+  | 'life'
+  | 'langton';
 
 export type GameDefinition = {
   id: GameId;
@@ -134,6 +135,16 @@ export const GAMES: readonly GameDefinition[] = [
       '点击拖动画细胞，滚轮或双指缩放；空格播放，N 单步，方向键加回车逐格编辑',
     estimatedDuration: '随玩随停，每道挑战约 2–10 分钟',
     daily: '今日引线：限定格数，让图案撑过指定代数',
+  },
+  {
+    id: 'langton',
+    title: '朗顿蚂蚁',
+    description:
+      '一只只会左转右转的蚂蚁，一万步混沌之后突然修起高速路。可放多只蚂蚁、自定义 RLLR 之类的转向规则，最快每帧十万步。',
+    href: '/games/langton',
+    category: '沙盒模拟',
+    controls: '点击放蚂蚁，滚轮缩放；空格运行，N 单步，[ ] 调速',
+    estimatedDuration: '随看随停',
   },
 ] as const;
 

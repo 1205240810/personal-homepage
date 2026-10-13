@@ -17,6 +17,7 @@
 | `/games/mech-sweeper`   | 机甲主题扫雷，三档难度、今日检修与保险丝           |
 | `/games/fault-finder`   | 按传感器读数推断故障模块，答案唯一、今日排查       |
 | `/games/life`           | 康威生命游戏沙盒：画格、图案库、构造挑战与今日引线 |
+| `/games/langton`        | 朗顿蚂蚁：多蚂蚁、自定义转向规则、高速路检测       |
 | `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲               |
 
 欢迎页的游戏室链接作为次要入口，保留工作台和进入机甲的选择。工作台通过主导航和侧栏通向游戏室。机甲内部的试作间设有可交互街机角；直接访问游戏页面时不需要先启动 Phaser 世界。
@@ -75,6 +76,8 @@ flowchart LR
 | `components/games/fault-finder.tsx`         | 故障排查界面：标记、传感器高亮、提交诊断、计时与键盘操作                 |
 | `lib/games/life.ts`                         | 生命游戏规则（B3/S23、环面）、图案库与旋转、挑战判定、今日引线与本机记录 |
 | `components/games/life-sandbox.tsx`         | 生命游戏界面：canvas 棋盘、拖画/盖章、缩放平移、播放控制、挑战与键盘操作 |
+| `lib/games/langton.ts`                      | 朗顿蚂蚁规则（多状态转向、环面）、高速路检测、预设与本机记录             |
+| `components/games/langton.tsx`              | 朗顿蚂蚁界面：ImageData 渲染、缩放平移、调速与规则编辑                   |
 | `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义                                           |
 | `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                                               |
 
@@ -154,6 +157,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 - 机甲扫雷：同一编号重建同一张检修舱，扫描起点九宫格无故障，第一次扫描一定安全；连开只在旗数相符时触发，保险丝只挡一次短路；长按插旗后不会误扫（`scripts/check-mech-sweeper.ts`、`standalone/blackjack/qa/mech-sweeper.check.tsx`）。
 - 故障排查：每张题枚举全部故障组合，确认只有一个答案；去掉任意一个传感器都会出现第二个答案；跟着提示一定能解出且提示从不说错；同一帧连点不会互相覆盖（`scripts/check-fault-finder.ts`、`standalone/blackjack/qa/fault-finder.check.tsx`）。
 - 生命游戏：规则与环面边界、已知振荡器/飞船周期、图案旋转、每道挑战都有已知解法且错误有原因、今日引线一年 366 天都可解、记录校验、大棋盘性能（`scripts/check-life.ts`、`standalone/blackjack/qa/life.check.tsx`）。
+- 朗顿蚂蚁：第一步与环面、经典 RL 约 1 万步出现周期 104 高速路、多蚂蚁上限、记录校验、百万步性能（`scripts/check-langton.ts`、`standalone/blackjack/qa/langton.check.tsx`）。
 - 往返：从街机离开时停步，带来路参数选择游戏，返回原位；浏览器后退恢复页面时不冻结输入。
 - 存储：只记录需要的本机结果，坏记录和不可用存储不会阻止开局；页面分享地址不携带个人记录。
 

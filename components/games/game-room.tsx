@@ -465,6 +465,32 @@ function LifePreview() {
   );
 }
 
+function LangtonPreview() {
+  const black = new Set([
+    9, 10, 16, 17, 19, 22, 24, 25, 27, 30, 33, 34, 35, 38, 41, 42, 46, 50,
+  ]);
+  return (
+    <div className="room-langton-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>RULE RL / STEP 11000</span>
+        <span>ANTS 01</span>
+      </div>
+      <div className="room-langton-grid">
+        {Array.from({ length: 64 }, (_, i) => (
+          <span
+            key={i}
+            className={i === 27 ? 'is-ant' : black.has(i) ? 'is-on' : ''}
+          />
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>HIGHWAY / 104</span>
+        <span>左转右转，自成道路</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -476,6 +502,7 @@ const previews = {
   'mech-sweeper': SweeperPreview,
   'fault-finder': FaultPreview,
   life: LifePreview,
+  langton: LangtonPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
