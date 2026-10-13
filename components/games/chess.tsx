@@ -5,6 +5,7 @@ import type { Square } from 'chess.js';
 import {
   CHESS_LEVELS,
   chooseMove,
+  mateKeys,
   type AiResult,
   type ChessLevel,
 } from '@/lib/games/chess-ai';
@@ -22,6 +23,8 @@ import {
   type Color,
 } from '@/lib/games/chess';
 import { useLocalRecords } from './kit';
+// Vite provides a default URL export for the worker query.
+// oxlint-disable-next-line import/default
 import chessWorkerUrl from './chess-worker.ts?worker&url';
 import './kit.css';
 import './chess.css';
@@ -38,41 +41,44 @@ const GLYPH: Record<string, string> = {
 };
 const COLOR_NAME: Record<Color, string> = { w: '白', b: '黑' };
 
-/** Talk to the search worker; fall back to an async main-thread call when workers are unavailable. */
-function useChessAi() {
-  const worker = useRef<Worker | null>(null);
-  const waiting = useRef(new Map<number, (r: AiResult | null) => void>());
-  const seq = useRef(0);
-  useEffect(() => {
-    if (typeof Worker === 'undefined') return;
-    let w: Worker;
-    try {
-      w = new Worker(chessWorkerUrl, { type: 'module' });
-    } catch {
+/** One search owns one worker so leaving a position also stops its CPU work. */
+function askChessAi(fen: string, level: ChessLevel) {
+  let worker: Worker | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let finish: (result: AiResult | null) => void = () => {};
+  const promise = new Promise<AiResult | null>((resolve) => {
+    finish = (result) => {
+      clearTimeout(timer);
+      worker?.terminate();
+      resolve(result);
+    };
+    if (typeof Worker === 'undefined') {
+      // Keep this compatibility path short enough to leave the controls responsive.
+      timer = setTimeout(() => {
+        try {
+          finish(chooseMove(fen, Math.min(level, 2) as ChessLevel));
+        } catch {
+          finish(null);
+        }
+      }, 0);
       return;
     }
-    const pending = waiting.current;
-    w.onmessage = (
-      e: MessageEvent<{ id: number; result?: AiResult | null }>,
-    ) => {
-      pending.get(e.data.id)?.(e.data.result ?? null);
-      pending.delete(e.data.id);
-    };
-    worker.current = w;
-    return () => {
-      w.terminate();
-      worker.current = null;
-      pending.clear();
-    };
-  }, []);
-  return (fen: string, level: ChessLevel) =>
-    new Promise<AiResult | null>((resolve) => {
-      const id = ++seq.current;
-      if (worker.current) {
-        waiting.current.set(id, resolve);
-        worker.current.postMessage({ id, fen, level });
-      } else setTimeout(() => resolve(chooseMove(fen, level)), 0);
-    });
+    try {
+      worker = new Worker(chessWorkerUrl, { type: 'module' });
+      worker.onmessage = (e: MessageEvent<{ result?: AiResult | null }>) =>
+        finish(e.data.result ?? null);
+      worker.onerror = (event) => {
+        event.preventDefault();
+        finish(null);
+      };
+      worker.onmessageerror = () => finish(null);
+      timer = setTimeout(() => finish(null), CHESS_LEVELS[level].timeMs + 5000);
+      worker.postMessage({ id: 1, fen, level });
+    } catch {
+      finish(null);
+    }
+  });
+  return { promise, cancel: () => finish(null) };
 }
 
 type Mode = { kind: 'game' } | { kind: 'puzzle'; index: number };
@@ -83,7 +89,8 @@ export function ChessGame() {
     validateChessRecords,
     EMPTY,
   );
-  const ask = useChessAi();
+  const [generation, setGeneration] = useState(0);
+  const [aiError, setAiError] = useState(false);
   const [mode, setMode] = useState<Mode>({ kind: 'game' });
   const [startFen, setStartFen] = useState(START_FEN);
   const [moves, setMoves] = useState<string[]>([]);
@@ -106,32 +113,32 @@ export function ChessGame() {
   const turn = game.turn() as Color;
   const aiTurn =
     !end.over && !resigned && turn !== player && !(puzzle?.kind === 'mate');
-  const thinking = aiTurn;
+  const thinking = aiTurn && !aiError;
   const history = game.history({ verbose: true });
   const last = history[history.length - 1];
   const puzzleSolved = !!puzzle && end.over && end.winner === player;
 
-  // AI move. `ask` lives in a ref so the effect only reacts to the position.
-  const askRef = useRef(ask);
-  useEffect(() => {
-    askRef.current = ask;
-  });
   const fen = game.fen();
   const aiLevel: ChessLevel = puzzle ? 4 : level;
   useEffect(() => {
     if (!aiTurn) return;
     const my = ++token.current;
     let cancelled = false;
-    void askRef.current(fen, aiLevel).then((r) => {
+    const request = askChessAi(fen, aiLevel);
+    void request.promise.then((r) => {
       if (cancelled || token.current !== my) return;
-      if (!r) return;
+      if (!r) {
+        setAiError(true);
+        return;
+      }
       setMoves((m) => [...m, r.san]);
       setAnnounce(`对手走 ${r.san}`);
     });
     return () => {
       cancelled = true;
+      request.cancel();
     };
-  }, [aiTurn, fen, aiLevel]);
+  }, [aiTurn, fen, aiLevel, generation]);
 
   // Record finished games once.
   useEffect(() => {
@@ -159,6 +166,8 @@ export function ChessGame() {
   function reset(next: Mode, fen: string, as: Color) {
     token.current++;
     counted.current = false;
+    setGeneration((n) => n + 1);
+    setAiError(false);
     setMode(next);
     setStartFen(fen);
     setMoves([]);
@@ -251,10 +260,10 @@ export function ChessGame() {
 
   function undo() {
     token.current++;
+    setAiError(false);
     setPromo(null);
     setSelected(null);
     setResigned(false);
-    counted.current = false;
     let n = moves.length;
     if (n === 0) return;
     // Take back to the player's turn.
@@ -266,7 +275,10 @@ export function ChessGame() {
 
   function hint() {
     if (!puzzle || puzzle.kind !== 'mate') return;
-    const want = puzzle.line[moves.length];
+    const keys = mateKeys(fen, puzzle.n - moves.length / 2);
+    const want = keys.includes(puzzle.line[moves.length])
+      ? puzzle.line[moves.length]
+      : keys[0];
     if (!want) return;
     const m = game.moves({ verbose: true }).find((x) => x.san === want);
     if (m) {
@@ -300,6 +312,7 @@ export function ChessGame() {
       ArrowLeft: [-1, 0],
       ArrowRight: [1, 0],
     };
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const v = d[e.key];
     if (!v) return;
     e.preventDefault();
@@ -320,6 +333,7 @@ export function ChessGame() {
       end.winner === null
         ? `和棋：${end.reason}`
         : `${COLOR_NAME[end.winner]}方胜（${end.reason}）${end.winner === player ? '，恭喜！' : ''}`;
+  else if (aiTurn && aiError) status = '对手暂时无法应着，请重试。';
   else if (thinking) status = '对手思考中…';
   else status = `${COLOR_NAME[turn]}方走${end.check ? '，被将军！' : ''}`;
 
@@ -365,7 +379,10 @@ export function ChessGame() {
           <select
             aria-label="难度"
             value={level}
-            onChange={(e) => setLevel(Number(e.target.value) as ChessLevel)}
+            onChange={(e) => {
+              setAiError(false);
+              setLevel(Number(e.target.value) as ChessLevel);
+            }}
           >
             {(Object.keys(CHESS_LEVELS) as unknown as ChessLevel[]).map((l) => (
               <option key={l} value={l}>
@@ -398,6 +415,17 @@ export function ChessGame() {
             </span>
           )}
         </span>
+        {aiTurn && aiError && (
+          <button
+            type="button"
+            onClick={() => {
+              setAiError(false);
+              setGeneration((n) => n + 1);
+            }}
+          >
+            重试 AI
+          </button>
+        )}
         <button type="button" onClick={undo} disabled={!moves.length}>
           <Undo2 size={15} aria-hidden="true" /> 悔棋
         </button>
@@ -523,7 +551,7 @@ export function ChessGame() {
       <p className="kit-help">
         点己方棋子再点目标格走子；键盘用方向键移动焦点、回车选择。支持王车易位、吃过路兵、升变，
         以及将死、逼和、三次重复、五十回合与子力不足判和。AI
-        在后台线程思考，不会卡住页面。
+        在后台线程思考；不支持后台线程时使用初级强度。
       </p>
       <p className="kit-sr" aria-live="polite">
         {announce}

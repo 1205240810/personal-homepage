@@ -176,3 +176,51 @@ void test('搜索引擎走法生成 perft 与标准值一致', () => {
     9467,
   );
 });
+
+void test('静态吃子搜索同样遵守 AI 截止时间', () => {
+  const fen =
+    'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1';
+  let calls = 0;
+  const result = chooseMove(
+    fen,
+    1,
+    () => 0.5,
+    () => (calls++ === 0 ? 0 : 100000),
+  );
+  assert.ok(result && new Chess(fen).moves().includes(result.san));
+  assert.equal(result.nodes, 1024);
+  assert.equal(calls, 2);
+});
+
+void test('搜索引擎与规则库在连续随机对局中一致，撤销恢复完整状态', () => {
+  let seed = 20261013;
+  const rand = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0);
+  for (let trial = 0; trial < 8; trial++) {
+    const c = new Chess();
+    for (let ply = 0; ply < 100 && !c.isGameOver(); ply++) {
+      const fen = c.fen();
+      const e = new Engine(fen);
+      const state = () =>
+        JSON.stringify([
+          Array.from(e.b),
+          e.side,
+          e.castle,
+          e.ep,
+          e.half,
+          e.kings,
+        ]);
+      const before = state();
+      const legal = c.moves({ verbose: true });
+      const generated = [];
+      for (const move of e.gen()) {
+        if (e.make(move)) {
+          generated.push(e.moveKey(move));
+          e.unmake();
+        }
+        assert.equal(state(), before, fen);
+      }
+      assert.deepEqual(generated.sort(), legal.map((m) => m.lan).sort(), fen);
+      c.move(legal[rand() % legal.length]);
+    }
+  }
+});

@@ -65,7 +65,8 @@ type Ctx = {
 
 function quiesce(ctx: Ctx, alpha: number, beta: number, depth: number): number {
   const e = ctx.e;
-  e.nodes++;
+  if ((++e.nodes & 1023) === 0 && ctx.now() > ctx.deadline) ctx.stop = true;
+  if (ctx.stop) return 0;
   const stand = e.evaluate();
   if (stand >= beta) return stand;
   if (alpha < stand) alpha = stand;
@@ -81,6 +82,7 @@ function quiesce(ctx: Ctx, alpha: number, beta: number, depth: number): number {
     if (!e.make(moves[i])) continue;
     const v = -quiesce(ctx, -beta, -alpha, depth - 1);
     e.unmake();
+    if (ctx.stop) return 0;
     if (v >= beta) return v;
     if (v > alpha) alpha = v;
   }

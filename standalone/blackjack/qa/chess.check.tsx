@@ -1,11 +1,12 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
   waitFor,
 } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChessGame } from '../../../components/games/chess';
 import { CHESS_PUZZLES, CHESS_RECORDS_KEY } from '../../../lib/games/chess';
 
@@ -21,7 +22,28 @@ const openPuzzle = (id: string) =>
   });
 
 beforeEach(() => localStorage.clear());
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+function mockWorkers() {
+  const workers: FakeWorker[] = [];
+  class FakeWorker {
+    onmessage?: (event: { data: unknown }) => void;
+    onerror?: (event: { preventDefault: () => void }) => void;
+    terminate = vi.fn();
+    postMessage = vi.fn();
+    constructor() {
+      workers.push(this);
+    }
+    reply(san: string) {
+      this.onmessage?.({ data: { result: { san } } });
+    }
+  }
+  vi.stubGlobal('Worker', FakeWorker);
+  return workers;
+}
 
 describe('国际象棋', () => {
   it('残局：列加尔杀两步杀，对方按主线应着，解出后记录', () => {
@@ -70,5 +92,111 @@ describe('国际象棋', () => {
     expect(document.activeElement).toBe(sq('d2'));
     fireEvent.click(sq('d2'));
     expect(sq('d4').getAttribute('aria-label')).toMatch(/可走/);
+  });
+  it('同色重新开局取消旧搜索并重新开始，相同 FEN 也能等到 AI 回应', async () => {
+    const workers = mockWorkers();
+    render(<ChessGame />);
+    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+    expect(workers).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+    expect(workers[0].terminate).toHaveBeenCalled();
+    expect(workers).toHaveLength(2);
+    await act(async () => workers[0].reply('d4'));
+    expect(screen.getByLabelText('棋谱').textContent).toBe('');
+    await act(async () => workers[1].reply('e4'));
+    expect(screen.getByLabelText('棋谱').textContent).toContain('e4');
+    expect(screen.getByText('黑方走')).toBeTruthy();
+  });
+
+  it('Worker 失败可重试，离开棋局会结束后台搜索', async () => {
+    const workers = mockWorkers();
+    const view = render(<ChessGame />);
+    move('e2', 'e4');
+    await act(async () => workers[0].onerror?.({ preventDefault: vi.fn() }));
+    expect(screen.getByText(/对手暂时无法应着/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '重试 AI' }));
+    expect(workers).toHaveLength(2);
+    openPuzzle('back-rank');
+    expect(workers[1].terminate).toHaveBeenCalled();
+    await act(async () => workers[1].reply('e5'));
+    expect(screen.getByLabelText('棋谱').textContent).toBe('');
+    fireEvent.change(screen.getByLabelText('残局模式'), {
+      target: { value: '' },
+    });
+    move('e2', 'e4');
+    view.unmount();
+    expect(workers[2].terminate).toHaveBeenCalled();
+  });
+
+  it('终局悔棋继续玩不会把同一局重复计入战绩', async () => {
+    const workers = mockWorkers();
+    render(<ChessGame />);
+    move('e2', 'e4');
+    await act(async () => workers[0].reply('e5'));
+    fireEvent.click(screen.getByRole('button', { name: /认输/ }));
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    move('e2', 'e4');
+    await act(async () => workers[1].reply('e5'));
+    fireEvent.click(screen.getByRole('button', { name: /认输/ }));
+    expect(
+      JSON.parse(localStorage.getItem(CHESS_RECORDS_KEY)!).games[2].played,
+    ).toBe(1);
+  });
+
+  it('双车楼梯接受另一条杀法且提示依据当前局面', () => {
+    render(<ChessGame />);
+    openPuzzle('ladder');
+    move('b1', 'b7');
+    fireEvent.click(screen.getByRole('button', { name: /提示/ }));
+    expect(sq('a2').getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(sq('a8'));
+    expect(
+      JSON.parse(localStorage.getItem(CHESS_RECORDS_KEY)!).puzzles,
+    ).toContain('ladder');
+  });
+
+  it('修饰方向键保留浏览器快捷键', () => {
+    render(<ChessGame />);
+    sq('e2').focus();
+    const event = new KeyboardEvent('keydown', {
+      key: 'ArrowLeft',
+      altKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    sq('e2').dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(sq('e2'));
+  });
+  it('升变可取消和选择马，子力不足时结束对局', () => {
+    const index = CHESS_PUZZLES.length;
+    CHESS_PUZZLES.push({
+      id: 'test-promotion',
+      name: '升变测试',
+      fen: '7k/P7/8/8/8/8/8/7K w - - 0 1',
+      kind: 'play',
+      n: 0,
+      line: [],
+      keys: [],
+      note: '',
+    });
+    try {
+      render(<ChessGame />);
+      fireEvent.change(screen.getByLabelText('残局模式'), {
+        target: { value: String(index) },
+      });
+      move('a7', 'a8');
+      expect(screen.getByRole('group', { name: '升变为' })).toBeTruthy();
+      fireEvent.click(
+        screen.getByRole('button', { name: '取消', exact: true }),
+      );
+      expect(sq('a7').getAttribute('aria-label')).toMatch(/白兵/);
+      fireEvent.click(sq('a8'));
+      fireEvent.click(screen.getByRole('button', { name: '马', exact: true }));
+      expect(sq('a8').getAttribute('aria-label')).toMatch(/白马/);
+      expect(screen.getByText(/和棋：子力不足/)).toBeTruthy();
+    } finally {
+      CHESS_PUZZLES.splice(index, 1);
+    }
   });
 });
