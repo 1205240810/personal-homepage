@@ -68,7 +68,7 @@ test('行走不能漏过狭缝或擦过家具顶点，路径必须绕行', () =>
     null,
   );
 });
-test('撞到斜墙时沿墙滑行，不会穿墙，也不会卡死', () => {
+void test('撞到斜墙时沿墙滑行，不会穿墙，也不会卡死', () => {
   // A 45° corridor: holding only “right” used to stop dead at its wall.
   const corridor = [
     [
@@ -108,7 +108,7 @@ test('撞到斜墙时沿墙滑行，不会穿墙，也不会卡死', () => {
     );
   assert.ok(h.x - 1065 > 80, `栈道上按住 D 1.5 秒只走了 ${h.x - 1065}px`);
 });
-test('包围盒剔除后的可行走判定与逐个多边形判定一致', () => {
+void test('包围盒剔除后的可行走判定与逐个多边形判定一致', () => {
   for (const scene of SCENES)
     for (let i = 0; i < 400; i++) {
       const p = {
@@ -145,7 +145,7 @@ import {
   WORLD_SCROLL_KEYS,
   shouldCaptureWorldKey,
 } from '../lib/world/keyboard.ts';
-test('键盘归属：按钮和表单保留自己的按键，画布和页面才由探索接管', () => {
+void test('键盘归属：按钮和表单保留自己的按键，画布和页面才由探索接管', () => {
   const element = (matches: string[]) => ({
     closest: (selector: string) =>
       selector.split(',').some((s) => matches.includes(s.trim())) ? {} : null,
@@ -161,7 +161,7 @@ test('键盘归属：按钮和表单保留自己的按键，画布和页面才�
   assert.equal(isFormField(button), false, '聚焦按钮时仍可用 WASD 行走');
   assert.ok(WORLD_SCROLL_KEYS.has('Space') && !WORLD_SCROLL_KEYS.has('KeyE'));
 });
-test('探索键盘保留浏览器和读屏组合键，但 Shift 方向键仍可快走', () => {
+void test('探索键盘保留浏览器和读屏组合键，但 Shift 方向键仍可快走', () => {
   const canvas = { closest: () => null };
   for (const code of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space']) {
     assert.equal(shouldCaptureWorldKey({ code, target: canvas }), true);
@@ -183,7 +183,7 @@ test('探索键盘保留浏览器和读屏组合键，但 Shift 方向键仍可�
 });
 import { SCENES, getScene } from '../lib/world/registry.ts';
 import { createScenePrefetcher, sceneAssets } from '../lib/world/prefetch.ts';
-test('门前预取：每个房间的原画和地图只请求一次，失败后允许重试', async () => {
+void test('门前预取：每个房间的原画和地图只请求一次，失败后允许重试', async () => {
   const urls: string[] = [];
   let fail = true,
     clock = 0;
@@ -215,7 +215,7 @@ test('门前预取：每个房间的原画和地图只请求一次，失败后�
           `${node.id} 指向不存在的场景`,
         );
 });
-test('断网时逐帧接近舱门不会反复预取，冷却后仍可恢复', async () => {
+void test('断网时逐帧接近舱门不会反复预取，冷却后仍可恢复', async () => {
   let clock = 0,
     calls = 0,
     offline = true;
@@ -242,7 +242,7 @@ test('断网时逐帧接近舱门不会反复预取，冷却后仍可恢复', as
   prefetch(room);
   assert.equal(calls, 4, '已成功的资源不重复预热');
 });
-test('HTTP 错误和响应体中断都会冷却后重试', async (t) => {
+void test('HTTP 错误和响应体中断都会冷却后重试', async (t) => {
   let clock = 0,
     calls = 0;
   t.mock.method(globalThis, 'fetch', async () => {
@@ -358,7 +358,7 @@ void test('试作间街机具有实体碰撞，可从舱门接近并保留所有
 
 import { readFileSync } from 'node:fs';
 import { joystickVector } from '../lib/world/joystick.ts';
-test('触控摇杆：死区静止，斜向等速，推到边缘满速且旋钮不出圈', () => {
+void test('触控摇杆：死区静止，斜向等速，推到边缘满速且旋钮不出圈', () => {
   assert.deepEqual(joystickVector(3, 2, 35).direction, { x: 0, y: 0 });
   assert.deepEqual(joystickVector(0, 0, 35).direction, { x: 0, y: 0 });
   const full = joystickVector(100, 0, 35);
@@ -399,7 +399,7 @@ test('OSPF 示例对应公开项目的四节点规划，参数变化后重新生
     assert.equal(addressPlan(lan, host), null);
 });
 import fs from 'node:fs';
-test('场景原画以 WebP 分发，单张不超过 800 KB，原始 PNG 仍保留', () => {
+void test('场景原画以 WebP 分发，单张不超过 800 KB，原始 PNG 仍保留', () => {
   for (const scene of SCENES) {
     assert.match(scene.art, /\.webp$/, `${scene.id} 应使用 WebP 原画`);
     const size = fs.statSync(`public${scene.art}`).size;
