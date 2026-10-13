@@ -1491,3 +1491,45 @@
   opacity: 0.35;
   transform: translate(10px, 6px) rotate(8deg);
 }
+
+.room-tl-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #2a2f3a;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #dbe3f0;
+  background: #1d2230;
+}
+.room-tl-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.room-tl-row i {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-style: normal;
+  font-weight: 800;
+}
+.room-tl-row .ghost {
+  border: 2px dashed #9aa4b8;
+  color: #9aa4b8;
+}
+.room-tl-row .door {
+  border-radius: 3px;
+  border: 3px dashed #60a5fa;
+}
+.room-tl-row .me {
+  background: #f97316;
+  color: #fff;
+}
+.room-tl-row .exit {
+  border-radius: 3px;
+  background: #15803d;
+}
