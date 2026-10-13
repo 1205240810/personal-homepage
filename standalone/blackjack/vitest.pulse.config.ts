@@ -11,6 +11,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Bound concurrent DOM suites as the game collection grows.
+    maxWorkers: 2,
     include: [
       'qa/pulse-game.check.tsx',
       'qa/circuit-repair.check.tsx',

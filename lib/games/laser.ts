@@ -167,7 +167,7 @@ export function placementsAllowed(level: Level, placed: Placements): Check {
   return { ok: true };
 }
 
-/** 3★ at par without hints; 2★ with one extra piece or any hint; else 1★. */
+/** 3★ at or below the reference count without hints; 2★ up to one extra piece and one hint; else 1★. */
 export function starsFor(level: Level, used: number, hints: number): 1 | 2 | 3 {
   if (used <= level.par && hints === 0) return 3;
   if (used <= level.par + 1 && hints <= 1) return 2;

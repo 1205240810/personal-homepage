@@ -133,3 +133,35 @@ void test('本机记录：每个尺寸最短用时，今日记日期，拒绝坏
   saveFlowRecords(r, st);
   assert.deepEqual(loadFlowRecords(st), r);
 });
+
+void test('合法铺满不必与参考路线一致', () => {
+  const routes = [
+    [0, 4, 8, 12],
+    [3, 2, 1, 5, 6, 7, 11, 10, 9, 13, 14, 15],
+  ];
+  const p: FlowPuzzle = {
+    id: 'alternative',
+    size: 4,
+    pairs: [
+      [0, 12],
+      [3, 15],
+    ],
+    solution: Array.from({ length: 16 }, (_, cell) =>
+      routes.findIndex((route) => route.includes(cell)),
+    ),
+    routes,
+  };
+  const other = [
+    [0, 1, 2, 6, 5, 4, 8, 9, 10, 14, 13, 12],
+    [3, 7, 11, 15],
+  ];
+  assert.notDeepEqual(other, p.routes);
+  assert.ok(flowStatus(p, p.routes).solved);
+  assert.ok(flowStatus(p, other).solved);
+  assert.ok(
+    flowStatus(
+      p,
+      other.map((route) => [...route].reverse()),
+    ).solved,
+  );
+});

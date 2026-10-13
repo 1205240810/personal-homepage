@@ -68,6 +68,7 @@ export function LaserMirrors() {
     EMPTY_RECORDS,
   );
   const [mode, setMode] = useState<Mode>({ kind: 'hand', index: 0 });
+  const [level, setLevel] = useState<Level>(HANDCRAFTED[0]);
   const [placed, setPlaced] = useState<Placements>(() => new Map());
   const [tool, setTool] = useState<Tool>('mirror');
   const [hints, setHints] = useState(0);
@@ -77,7 +78,6 @@ export function LaserMirrors() {
   const [size, setSize] = useState<Size>('medium');
   const gridRef = useRef<HTMLFieldSetElement>(null);
 
-  const level = levelFor(mode, ready);
   const { width, height } = dims(level);
   const t = trace(level, placed);
   const used = placed.size;
@@ -91,15 +91,16 @@ export function LaserMirrors() {
   const today = ready ? todayParts() : null;
   const dailyDone = !!today && records.daily.includes(dailyKey(today));
 
-  function load(next: Mode) {
+  function load(next: Mode, replay?: Level) {
     setMode(next);
+    setLevel(replay ?? levelFor(next, ready));
     setPlaced(new Map());
     setHints(0);
     setLocked(new Set());
     setFocus(0);
     setAnnounce('');
   }
-  function commit(next: Placements, message: string) {
+  function commit(next: Placements, message: string, nextHints = hints) {
     const check = placementsAllowed(level, next);
     if (!check.ok) {
       setAnnounce(check.reason);
@@ -107,8 +108,8 @@ export function LaserMirrors() {
     }
     setPlaced(next);
     const after = trace(level, next);
-    if (after.solved && !t.solved) {
-      const s = starsFor(level, next.size, hints);
+    if (after.solved) {
+      const s = starsFor(level, next.size, nextHints);
       saveRecords(mergeLaserRecord(records, level.id, s));
       setAnnounce(`全部点亮！${s} 星`);
     } else
@@ -142,6 +143,7 @@ export function LaserMirrors() {
     commit(next, `放下${tool === 'mirror' ? '镜子' : '分光镜'}`);
   }
   function takeHint() {
+    if (t.solved) return;
     const h = hint(level, placed);
     if (!h) return;
     const next = new Map(placed);
@@ -160,6 +162,7 @@ export function LaserMirrors() {
     commit(
       next,
       `提示：第 ${Math.floor(h.index / width) + 1} 行第 ${(h.index % width) + 1} 列放${h.piece.kind === 'mirror' ? '镜子' : '分光镜'}`,
+      hints + 1,
     );
   }
   function nextLevel() {
@@ -168,6 +171,7 @@ export function LaserMirrors() {
     else load({ kind: 'random', size, seed: Math.floor(Math.random() * 1e9) });
   }
   function onKey(e: KeyboardEvent<HTMLButtonElement>) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const k = e.key;
     let n = focus;
     if (k === 'ArrowRight') n = Math.min(width * height - 1, focus + 1);
@@ -264,7 +268,7 @@ export function LaserMirrors() {
       <div className="kit-brief">
         <p>
           <strong>{levelName}</strong> 用镜子和分光镜让激光点亮全部 {t.targets}{' '}
-          个目标。参考解 {level.par} 块。
+          个目标。参考解 {level.par} 块，不一定是最少件数。
         </p>
         <p className="kit-stats">
           <span>
@@ -325,7 +329,11 @@ export function LaserMirrors() {
         <button type="button" onClick={takeHint} disabled={t.solved}>
           <Lightbulb size={15} aria-hidden="true" /> 提示 (H)
         </button>
-        <button type="button" onClick={() => load(mode)} aria-label="重来">
+        <button
+          type="button"
+          onClick={() => load(mode, level)}
+          aria-label="重来"
+        >
           <RotateCcw size={15} aria-hidden="true" />
         </button>
       </div>
@@ -440,6 +448,7 @@ export function LaserMirrors() {
         点空格放镜子，再点一下旋转 90°；右键或 Delete
         移除。键盘：方向键移动，回车/空格放置或旋转，M/S/E 切换工具，H
         提示。光会穿过目标继续前进；分光镜让光一半直行、一半转弯。
+        不用提示且用块数不超过参考解可得三星，更省的解同样有效。
       </p>
       <p className="kit-sr" aria-live="polite">
         {announce}

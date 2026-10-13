@@ -27,6 +27,7 @@
   stroke: var(--games-accent, #6f7f2e);
 }
 .kit .hashi-island {
+  touch-action: none;
   position: absolute;
   transform: translate(-50%, -50%);
   width: clamp(26px, 8%, 46px);

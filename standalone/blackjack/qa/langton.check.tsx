@@ -1,5 +1,11 @@
 import { StrictMode } from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LangtonAnt } from '../../../components/games/langton';
 import { LANGTON_RECORDS_KEY } from '../../../lib/games/langton';
@@ -19,6 +25,44 @@ afterEach(() => {
 });
 
 describe('朗顿蚂蚁', () => {
+  it('初始暂停时就画出棋盘和中心蚂蚁', () => {
+    const drawImage = vi.fn();
+    const putImageData = vi.fn();
+    const ctx = {
+      clearRect: vi.fn(),
+      fillRect: vi.fn(),
+      setTransform: vi.fn(),
+      drawImage,
+      getImageData: () => ({ data: new Uint8ClampedArray([20, 40, 60, 255]) }),
+      createImageData: (w: number, h: number) => ({
+        data: new Uint8ClampedArray(w * h * 4),
+      }),
+      putImageData,
+    };
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue(
+      ctx as unknown as CanvasRenderingContext2D,
+    );
+    const frames = new Map<number, FrameRequestCallback>();
+    let next = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      frames.set(++next, cb);
+      return next;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+      frames.delete(id);
+    });
+    render(<LangtonAnt />);
+    act(() => {
+      const [id, callback] = [...frames][0];
+      frames.delete(id);
+      callback(16);
+    });
+    expect(steps()).toBe('0');
+    expect(ants()).toBe('1');
+    expect(putImageData).toHaveBeenCalledOnce();
+    expect(drawImage).toHaveBeenCalledOnce();
+  });
+
   it('单步、+1000、键盘 N 与 A 放蚂蚁', () => {
     render(
       <StrictMode>

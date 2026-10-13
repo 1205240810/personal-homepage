@@ -12,6 +12,7 @@ import {
   CHALLENGE_BOARD,
   LIFE_RECORDS_KEY,
   challengeZone,
+  dailyChallenge,
   getChallenge,
 } from '../../../lib/games/life';
 
@@ -45,6 +46,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('生命游戏沙盒', () => {
@@ -120,6 +122,9 @@ describe('生命游戏沙盒', () => {
     const saved = JSON.parse(localStorage.getItem(LIFE_RECORDS_KEY)!);
     expect(saved.best['long-fuse']).toBe(5);
     expect(screen.getByText('最佳 5 格')).toBeTruthy();
+    key('d');
+    key('Enter');
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('今日引线：通过后记下今天', () => {
@@ -136,5 +141,34 @@ describe('生命游戏沙盒', () => {
       JSON.parse(localStorage.getItem(LIFE_RECORDS_KEY)!).daily,
     ).toHaveLength(1);
     expect(screen.getByText('今日已完成')).toBeTruthy();
+  });
+
+  it('跨午夜仍验证已开始的每日题，重新选择才换到新日期', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 13, 23, 59));
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: /挑战/ }));
+    fireEvent.click(screen.getByRole('button', { name: /今日引线/ }));
+    const original = dailyChallenge({ year: 2026, month: 10, day: 13 });
+    fireEvent.click(screen.getByRole('button', { name: /R 五格/ }));
+    moveTo(30, 22);
+    key('Enter');
+    vi.setSystemTime(new Date(2026, 9, 14, 0, 1));
+    key('n');
+    expect(screen.getByText(original.brief, { exact: false })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '验证' }));
+    expect(JSON.parse(localStorage.getItem(LIFE_RECORDS_KEY)!).daily).toEqual([
+      '2026-10-13',
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: /今日引线/ }));
+    expect(gen()).toBe(0);
+    expect(pop()).toBe(0);
+    expect(screen.getByText('每天一题')).toBeTruthy();
+    expect(
+      screen.getByText(
+        dailyChallenge({ year: 2026, month: 10, day: 14 }).brief,
+        { exact: false },
+      ),
+    ).toBeTruthy();
   });
 });

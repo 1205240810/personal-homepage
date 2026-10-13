@@ -182,7 +182,9 @@ export function LangtonAnt() {
       'games-ink': '#282d29',
       'games-accent': '#6f7f2e',
     });
-    const states = (worldRef.current ?? freshWorld(ruleText)).rule.length;
+    const initial =
+      worldRef.current ?? (worldRef.current = freshWorld(ruleText));
+    const states = initial.rule.length;
     const palette: [number, number, number][] = [
       toRgb(octx, c['games-paper']),
       toRgb(octx, tech ? c['games-accent'] : c['games-ink']),
