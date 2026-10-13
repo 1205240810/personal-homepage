@@ -1,13 +1,14 @@
 'use client';
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
   type PointerEvent as RPointerEvent,
 } from 'react';
 import { CalendarDays, Lightbulb, RotateCcw, Shuffle } from 'lucide-react';
-import { dailyKey, todayParts } from '@/lib/games/kit';
+import { dailyKey, todayParts, type Today } from '@/lib/games/kit';
 import {
   HASHI_RECORDS_KEY,
   HASHI_SIZES,
@@ -38,7 +39,7 @@ const SIZE_NAMES: Record<HashiSize, string> = {
 };
 type Pick =
   | { kind: 'random'; size: HashiSize; seed: number }
-  | { kind: 'daily' };
+  | { kind: 'daily'; day: Today };
 const DIRS: Record<string, [number, number, string]> = {
   ArrowUp: [0, -1, '上'],
   ArrowDown: [0, 1, '下'],
@@ -47,7 +48,7 @@ const DIRS: Record<string, [number, number, string]> = {
 };
 
 function puzzleFor(pick: Pick, ready: boolean): HashiPuzzle {
-  if (pick.kind === 'daily' && ready) return dailyHashi(todayParts());
+  if (pick.kind === 'daily' && ready) return dailyHashi(pick.day);
   if (pick.kind === 'random') return generateHashi(pick.size, pick.seed);
   return generateHashi('medium', 1);
 }
@@ -64,7 +65,7 @@ export function HashiBridges() {
     size: 'small',
     seed: 20261013,
   });
-  const puzzle = puzzleFor(pick, ready);
+  const puzzle = useMemo(() => puzzleFor(pick, ready), [pick, ready]);
   const [bridges, setBridges] = useState<number[]>(() =>
     puzzle.edges.map(() => 0),
   );
@@ -135,7 +136,7 @@ export function HashiBridges() {
           records,
           sizeKey,
           secs,
-          pick.kind === 'daily' && today ? dailyKey(today) : undefined,
+          pick.kind === 'daily' ? dailyKey(pick.day) : undefined,
         ),
       );
       setAnnounce(`全部连通！用时 ${fmt(secs)}`);
@@ -201,6 +202,7 @@ export function HashiBridges() {
     commit(next, edge);
   }
   function onKey(e: KeyboardEvent<HTMLButtonElement>, k: number) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const d = DIRS[e.key];
     if (d) {
       e.preventDefault();
@@ -242,7 +244,7 @@ export function HashiBridges() {
             type="button"
             aria-pressed={pick.kind === 'daily'}
             disabled={!ready}
-            onClick={() => load({ kind: 'daily' })}
+            onClick={() => load({ kind: 'daily', day: todayParts() })}
           >
             <CalendarDays size={15} aria-hidden="true" /> 今日数桥
             {dailyDone ? ' ✓' : ''}
