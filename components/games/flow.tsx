@@ -100,8 +100,8 @@ export function FlowConnect() {
     return () => clearInterval(id);
   }, [startedAt, doneIn]);
 
-  function load(next: Pick) {
-    const p = puzzleFor(next, ready);
+  function load(next: Pick, replay?: FlowPuzzle) {
+    const p = replay ?? puzzleFor(next, ready);
     setPick(next);
     setPuzzle(p);
     dragging.current = false;
@@ -315,7 +315,11 @@ export function FlowConnect() {
         <button type="button" onClick={hint} disabled={doneIn !== null}>
           <Lightbulb size={15} aria-hidden="true" /> 提示 (H)
         </button>
-        <button type="button" onClick={() => load(pick)} aria-label="重来">
+        <button
+          type="button"
+          onClick={() => load(pick, puzzle)}
+          aria-label="重来"
+        >
           <RotateCcw size={15} aria-hidden="true" />
         </button>
         {pick.kind === 'random' && (

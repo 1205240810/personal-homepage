@@ -88,6 +88,9 @@ describe('连线提示和每日局稳定性', () => {
     vi.setSystemTime(new Date(2026, 9, 13, 23, 59, 59));
     render(<FlowConnect />);
     fireEvent.click(screen.getByRole('button', { name: /今日连线/ }));
+    const initialLabels = [...document.querySelectorAll('[data-cell]')].map(
+      (b) => b.getAttribute('aria-label'),
+    );
     fireEvent.click(screen.getByRole('button', { name: /提示/ }));
     const labels = () =>
       [...document.querySelectorAll('[data-cell]')].map((b) =>
@@ -97,6 +100,8 @@ describe('连线提示和每日局稳定性', () => {
     vi.setSystemTime(new Date(2026, 9, 14, 0, 0, 1));
     fireEvent.keyDown(cell(0), { key: 'ArrowRight' });
     expect(labels()).toEqual(before);
+    fireEvent.click(screen.getByRole('button', { name: '重来' }));
+    expect(labels()).toEqual(initialLabels);
     for (let i = 0; i < 12 && !document.querySelector('output'); i++)
       fireEvent.click(screen.getByRole('button', { name: /提示/ }));
     expect(JSON.parse(localStorage.getItem(FLOW_RECORDS_KEY)!).daily).toEqual([
