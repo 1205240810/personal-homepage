@@ -295,12 +295,12 @@ export function decodeScene(
     const n = Number(m[1]),
       e = m[2].charCodeAt(0) - 97;
     if (i + n > s.cells.length) return null;
-    s.cells.fill(e === FIRE ? EMPTY : e, i, i + n);
+    s.cells.fill(e, i, i + n);
     i += n;
   }
   if (consumed !== rle.length || i !== s.cells.length) return null;
   for (let k = 0; k < s.cells.length; k++)
-    s.life[k] = s.cells[k] === SMOKE ? 60 : (k * 7) % 32;
+    s.life[k] = s.cells[k] === FIRE || s.cells[k] === SMOKE ? 60 : (k * 7) % 32;
   return s;
 }
 export function validateSandSave(v: unknown): SandSave | null {

@@ -134,6 +134,18 @@ void test('场景存档：RLE 编码往返一致，坏数据被拒绝', () => {
   assert.deepEqual(loadSandSave(st), save);
 });
 
+void test('存档恢复全部材料，火和烟保留有效寿命', () => {
+  const s = createSand(16, 8);
+  for (const [x, e] of (
+    [EMPTY, SAND, WATER, WALL, FIRE, PLANT, SMOKE, OIL] as const
+  ).entries())
+    setParticle(s, x, 2, e, r0);
+  const restored = decodeScene(encodeScene(s), s.width, s.height)!;
+  assert.deepEqual(restored.cells, s.cells);
+  assert.ok(restored.life[2 * s.width + 4] > 1);
+  assert.ok(restored.life[2 * s.width + 6] > 1);
+});
+
 void test('性能：240×160 满屏混合颗粒 100 步 < 1.5 秒', () => {
   const s = createSand(240, 160);
   const r = mulberry32(3);

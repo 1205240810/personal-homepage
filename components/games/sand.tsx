@@ -36,6 +36,32 @@ import './sand.css';
 export const SAND_W = 240;
 export const SAND_H = 160;
 type Rgb = [number, number, number];
+type Stroke = { x: number; y: number; px: number; py: number; down: boolean };
+
+/** Commit the unpainted segment, including the last move before pointerup. */
+function paintStroke(
+  s: Sand,
+  p: Stroke,
+  brush: number,
+  element: Element,
+  random: () => number,
+) {
+  const n = Math.max(
+    1,
+    Math.ceil(Math.hypot(p.x - p.px, p.y - p.py) / Math.max(1, brush)),
+  );
+  for (let k = 1; k <= n; k++)
+    paint(
+      s,
+      Math.round(p.px + ((p.x - p.px) * k) / n),
+      Math.round(p.py + ((p.y - p.py) * k) / n),
+      brush,
+      element,
+      random,
+    );
+  p.px = p.x;
+  p.py = p.y;
+}
 
 const BASE: Record<'default' | 'tech', Rgb[]> = {
   // empty, sand, water, wall, fire, plant, smoke, oil
@@ -127,13 +153,7 @@ export function FallingSand() {
   const rootRef = useRef<HTMLDivElement>(null);
   const simRef = useRef<Sand | null>(null);
   const rngRef = useRef(mulberry32(1));
-  const pointer = useRef<{
-    x: number;
-    y: number;
-    px: number;
-    py: number;
-    down: boolean;
-  } | null>(null);
+  const pointer = useRef<Stroke | null>(null);
   const [element, setElement] = useState<Element>(SAND);
   const [brush, setBrush] = useState(4);
   const [runningPick, setRunning] = useState<boolean | null>(null);
@@ -164,7 +184,7 @@ export function FallingSand() {
     off.height = SAND_H;
     const octx = off.getContext('2d', { willReadFrequently: true });
     if (!octx) return;
-    const s = simRef.current ?? (simRef.current = demoScene());
+    if (!simRef.current) simRef.current = demoScene();
     const bg = parseRgb(
       octx,
       cssColors(canvas, { 'games-paper': '#f6f5f1' })['games-paper'],
@@ -176,26 +196,10 @@ export function FallingSand() {
     let frames = 0;
     const frame = () => {
       raf = requestAnimationFrame(frame);
+      const s = simRef.current!;
       const l = live.current;
       const p = pointer.current;
-      if (p?.down) {
-        // Interpolate between frames so fast strokes leave no gaps.
-        const n = Math.max(
-          1,
-          Math.ceil(Math.hypot(p.x - p.px, p.y - p.py) / Math.max(1, l.brush)),
-        );
-        for (let k = 1; k <= n; k++)
-          paint(
-            s,
-            Math.round(p.px + ((p.x - p.px) * k) / n),
-            Math.round(p.py + ((p.y - p.py) * k) / n),
-            l.brush,
-            l.element,
-            r,
-          );
-        p.px = p.x;
-        p.py = p.y;
-      }
+      if (p?.down) paintStroke(s, p, l.brush, l.element, r);
       if (l.running) for (let k = 0; k < l.speed; k++) stepSand(s, r);
       paintImage(img.data, s, pal);
       octx.putImageData(img, 0, 0);
@@ -245,6 +249,8 @@ export function FallingSand() {
     p.y = y;
   }
   function onUp() {
+    const p = pointer.current;
+    if (p?.down) paintStroke(sim(), p, brush, element, rngRef.current);
     pointer.current = null;
     setCounts(countElements(sim()));
   }
