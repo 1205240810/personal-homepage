@@ -173,6 +173,8 @@ export function MazeRace() {
         canvas.height = ch;
       }
       const cell = Math.floor(Math.min((cw - 8 * dpr) / w, (ch - 8 * dpr) / h));
+      // Layout can briefly hide the canvas during navigation or resizing.
+      if (cell <= 0) return;
       const ox = Math.floor((cw - cell * w) / 2),
         oy = Math.floor((ch - cell * h) / 2);
       const m =

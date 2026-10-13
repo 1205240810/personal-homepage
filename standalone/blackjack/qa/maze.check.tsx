@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MazeRace } from '../../../components/games/maze';
 import {
@@ -119,5 +125,39 @@ describe('迷宫竞速', () => {
     expect(
       Object.keys(JSON.parse(localStorage.getItem(MAZE_RECORDS_KEY)!).daily),
     ).toEqual(['2026-10-13']);
+  });
+
+  it('画布暂时没有尺寸时暂停绘制，恢复布局后继续绘制', () => {
+    let frame: FrameRequestCallback = () => {};
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frame = callback;
+      return 1;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    const arc = vi.fn((_x: number, _y: number, radius: number) => {
+      if (radius < 0) throw new Error('negative arc radius');
+    });
+    const context = {
+      setTransform: vi.fn(),
+      fillRect: vi.fn(),
+      setLineDash: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      arc,
+      fill: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue(context);
+    render(<MazeRace />);
+    expect(() => act(() => frame(0))).not.toThrow();
+    expect(arc).not.toHaveBeenCalled();
+    Object.defineProperties(canvas(), {
+      clientWidth: { configurable: true, value: 400 },
+      clientHeight: { configurable: true, value: 400 },
+    });
+    act(() => frame(16));
+    expect(arc).toHaveBeenCalled();
+    expect(arc.mock.calls[0][2]).toBeGreaterThan(0);
   });
 });
