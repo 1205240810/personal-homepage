@@ -69,7 +69,9 @@ export function FlowConnect() {
     size: 6,
     seed: 20261013,
   });
-  const puzzle = puzzleFor(pick, ready);
+  const [puzzle, setPuzzle] = useState<FlowPuzzle>(() =>
+    puzzleFor(pick, false),
+  );
   const [paths, setPaths] = useState<Paths>(() => emptyPaths(puzzle));
   const [active, setActive] = useState<number | null>(null);
   const [focus, setFocus] = useState(0);
@@ -101,6 +103,8 @@ export function FlowConnect() {
   function load(next: Pick) {
     const p = puzzleFor(next, ready);
     setPick(next);
+    setPuzzle(p);
+    dragging.current = false;
     setPaths(emptyPaths(p));
     setActive(null);
     setStartedAt(null);
@@ -126,7 +130,7 @@ export function FlowConnect() {
           records,
           n,
           secs,
-          pick.kind === 'daily' && today ? dailyKey(today) : undefined,
+          puzzle.id.startsWith('daily-') ? puzzle.id.slice(6) : undefined,
         ),
       );
       setAnnounce(`完成！用时 ${fmt(secs)}`);
@@ -178,9 +182,16 @@ export function FlowConnect() {
     dragging.current = false;
   }
   function hint() {
-    const colour = puzzle.pairs.findIndex(
+    if (doneIn !== null) return;
+    let colour = puzzle.pairs.findIndex(
       (_, c) => !isComplete(puzzle, paths[c], c),
     );
+    // Every pair can be connected while some cells remain empty. In that
+    // case replace a route that omits part of its reference solution.
+    if (colour < 0)
+      colour = puzzle.pairs.findIndex((_, c) =>
+        solutionPath(puzzle, c).some((cell) => !paths[c].includes(cell)),
+      );
     if (colour < 0) return;
     const route = solutionPath(puzzle, colour);
     let next = paths.map((p, c) => {
@@ -197,6 +208,7 @@ export function FlowConnect() {
     setAnnounce(`提示：画好了颜色 ${colour + 1}`);
   }
   function onKey(e: KeyboardEvent<HTMLButtonElement>, cell: number) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const x = cell % n,
       y = Math.floor(cell / n);
     const dirs: Record<string, [number, number]> = {
@@ -386,7 +398,7 @@ export function FlowConnect() {
       </fieldset>
       <p className="kit-help">
         从同色圆点按住拖到另一个同色圆点，把整张棋盘铺满。拖回自己的线会回退，穿过别人的线会把它剪断。键盘：方向键移动，回车在圆点或线上开始画，再用方向键延伸，回车结束；H
-        提示。
+        提示。题目只保证有解，任何不重叠、同色相连且铺满棋盘的连法都算完成。
       </p>
       <p className="kit-sr" aria-live="polite">
         {announce}
