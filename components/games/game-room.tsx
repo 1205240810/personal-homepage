@@ -491,6 +491,40 @@ function LangtonPreview() {
   );
 }
 
+function SandPreview() {
+  const rows = [
+    '........',
+    '...s....',
+    '..ss...w',
+    '.ssss.ww',
+    'ssssswww',
+    '########',
+  ];
+  return (
+    <div className="room-sand-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>PARTICLES / 240×160</span>
+        <span>SAND · WATER · FIRE</span>
+      </div>
+      <div className="room-sand-grid">
+        {rows
+          .join('')
+          .split('')
+          .map((c, i) => (
+            <span
+              key={i}
+              className={`is-${c === '.' ? 'e' : c === '#' ? 'h' : c}`}
+            />
+          ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>BRUSH / SAVE</span>
+        <span>沙会堆坡，水会摊平</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -503,6 +537,7 @@ const previews = {
   'fault-finder': FaultPreview,
   life: LifePreview,
   langton: LangtonPreview,
+  sand: SandPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {

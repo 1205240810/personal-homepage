@@ -1,0 +1,34 @@
+.sand-elements button small {
+  color: var(--games-muted, #626b61);
+  font-size: 0.7rem;
+}
+.sand-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--games-rule, #cfd3c9);
+}
+.sand-swatch.is-0 {
+  background: transparent;
+}
+.sand-swatch.is-1 {
+  background: #d6b470;
+}
+.sand-swatch.is-2 {
+  background: #4084d0;
+}
+.sand-swatch.is-3 {
+  background: #60645e;
+}
+.sand-swatch.is-4 {
+  background: #ec7028;
+}
+.sand-swatch.is-5 {
+  background: #489640;
+}
+.sand-swatch.is-6 {
+  background: #969696;
+}
+.sand-swatch.is-7 {
+  background: #5c4028;
+}
