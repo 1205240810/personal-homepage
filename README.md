@@ -94,6 +94,7 @@ npm run dev
 | `/games/sand`              | 落沙模拟               | `lib/games/sand.ts`、`components/games/sand.tsx`                     |
 | `/games/laser`             | 光线反射               | `lib/games/laser.ts`、`components/games/laser.tsx`                   |
 | `/games/flow`              | 连线解谜               | `lib/games/flow.ts`、`components/games/flow.tsx`                     |
+| `/games/hashi`             | 数桥                   | `lib/games/hashi.ts`、`components/games/hashi.tsx`                   |
 | `/vault`                   | 主人私藏入口           | `lib/private-vault/`、`app/api/vault/`                               |
 
 文章 ID、公开 slug 与地图坐标相互独立。移动或重画书架不会改变文章地址；新增文章自动进入对应栏目。

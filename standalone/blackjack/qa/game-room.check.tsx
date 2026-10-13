@@ -22,6 +22,7 @@ describe('game room shortcuts', () => {
       '/games/life?from=explore',
       '/games/laser?from=explore',
       '/games/flow?from=explore',
+      '/games/hashi?from=explore',
     ]);
   });
 
