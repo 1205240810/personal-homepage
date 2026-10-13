@@ -13,7 +13,8 @@ export type GameId =
   | 'life'
   | 'langton'
   | 'sand'
-  | 'laser';
+  | 'laser'
+  | 'flow';
 
 export type GameDefinition = {
   id: GameId;
@@ -168,6 +169,17 @@ export const GAMES: readonly GameDefinition[] = [
     controls: '点格子放镜子、再点旋转，右键移除；方向键移动，回车放置',
     estimatedDuration: '每关约 1–5 分钟',
     daily: '今日光路：8×8 随机关卡，保证有解',
+  },
+  {
+    id: 'flow',
+    title: '连线解谜',
+    description:
+      '把同色圆点两两连起来，而且要把整张棋盘铺满。5×5 到 9×9 随机出题，保证有铺满的解；每天一道今日连线，记录各尺寸最快用时。',
+    href: '/games/flow',
+    category: '逻辑解谜',
+    controls: '从圆点按住拖到同色圆点；方向键移动，回车开始/结束画线',
+    estimatedDuration: '每题约 1–5 分钟',
+    daily: '今日连线：7×7，保证能铺满',
   },
 ] as const;
 

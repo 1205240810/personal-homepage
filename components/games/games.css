@@ -1370,3 +1370,25 @@
 .room-laser-svg circle {
   fill: #ff4d6d;
 }
+
+.room-flow-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #263029;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #c9d1bf;
+  background: #1f2a24;
+}
+.room-flow-svg {
+  width: 120px;
+  margin: 12px auto;
+}
+.room-flow-svg polyline {
+  fill: none;
+  stroke-width: 0.34;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
