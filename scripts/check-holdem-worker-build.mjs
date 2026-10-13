@@ -66,21 +66,21 @@ function workerUrls(chunkPath) {
   assert.equal(
     urls.length,
     1,
-    'Expected exactly one strategy Worker in the holdem-lab chunk',
+    `Expected exactly one Worker in ${chunkPath}`,
   );
   return urls;
 }
 
-export function checkHoldemWorkerBuild(distDirectory) {
+function checkGameWorkerBuild(distDirectory, game, workerName) {
   const clientDirectory = join(distDirectory, 'client');
   const standaloneClient = join(distDirectory, 'standalone', 'dist', 'client');
   const chunks = readdirSync(
     join(clientDirectory, '_next', 'static', 'chunks'),
-  ).filter((name) => /^holdem-lab-[\w-]+\.js$/.test(name));
+  ).filter((name) => new RegExp(`^${game}-[\\w-]+\\.js$`).test(name));
   assert.equal(
     chunks.length,
     1,
-    'Expected one fresh production holdem-lab chunk',
+    `Expected one fresh production ${game} chunk`,
   );
   const name = chunks[0];
   const chunkPath = join(clientDirectory, '_next', 'static', 'chunks', name);
@@ -94,7 +94,7 @@ export function checkHoldemWorkerBuild(distDirectory) {
   assert.equal(
     digest(readFileSync(chunkPath)),
     digest(readFileSync(standaloneChunk)),
-    'Standalone holdem-lab chunk differs from the client build',
+    `Standalone ${game} chunk differs from the client build`,
   );
   for (const value of workerUrls(chunkPath)) {
     const url = new URL(value, buildOrigin);
@@ -110,7 +110,7 @@ export function checkHoldemWorkerBuild(distDirectory) {
     );
     assert.match(
       url.pathname,
-      /^\/_next\/static\/(?:[\w-]+\/)*holdem-worker-[\w-]+\.js$/,
+      new RegExp(`^/_next/static/(?:[\\w-]+/)*${workerName}-[\\w-]+\\.js$`),
       `Worker URL points outside the compiled strategy assets: ${url.href}`,
     );
     assert(
@@ -131,16 +131,20 @@ export function checkHoldemWorkerBuild(distDirectory) {
   }
 }
 
+export function checkHoldemWorkerBuild(distDirectory) {
+  checkGameWorkerBuild(distDirectory, 'holdem-lab', 'holdem-worker');
+}
+
 if (
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   try {
-    checkHoldemWorkerBuild(
-      process.argv[2]
+    const directory = process.argv[2]
         ? resolve(process.argv[2])
-        : fileURLToPath(new URL('../dist', import.meta.url)),
-    );
+        : fileURLToPath(new URL('../dist', import.meta.url));
+    checkHoldemWorkerBuild(directory);
+    checkGameWorkerBuild(directory, 'chess', 'chess-worker');
   } catch (error) {
     console.error(
       `Worker build check failed: ${error instanceof Error ? error.message : String(error)}`,

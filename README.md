@@ -98,6 +98,7 @@ npm run dev
 | `/games/maze`              | 迷宫竞速               | `lib/games/maze.ts`、`components/games/maze.tsx`                     |
 | `/games/rulewords`         | 改写规则               | `lib/games/rulewords.ts`、`components/games/rulewords.tsx`           |
 | `/games/timeloop`          | 时间回溯               | `lib/games/timeloop.ts`、`components/games/timeloop.tsx`             |
+| `/games/chess`             | 国际象棋               | `lib/games/chess.ts`、`components/games/chess.tsx`                   |
 | `/vault`                   | 主人私藏入口           | `lib/private-vault/`、`app/api/vault/`                               |
 
 文章 ID、公开 slug 与地图坐标相互独立。移动或重画书架不会改变文章地址；新增文章自动进入对应栏目。

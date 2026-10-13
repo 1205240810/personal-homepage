@@ -18,7 +18,8 @@ export type GameId =
   | 'hashi'
   | 'maze'
   | 'rulewords'
-  | 'timeloop';
+  | 'timeloop'
+  | 'chess';
 
 export type GameDefinition = {
   id: GameId;
@@ -226,6 +227,16 @@ export const GAMES: readonly GameDefinition[] = [
     category: '逻辑解谜',
     controls: '方向键/WASD 移动，空格等待，T 回溯，Z 撤销；手机滑动',
     estimatedDuration: '每关约 1–8 分钟',
+  },
+  {
+    id: 'chess',
+    title: '国际象棋',
+    description:
+      '完整规则：王车易位、吃过路兵、升变、三次重复与五十回合判和。五档 AI 在后台线程用 alpha-beta 迭代加深思考；还有 9 道经典杀局和 2 个基本残局练习。',
+    href: '/games/chess',
+    category: '棋类对弈',
+    controls: '点子再点目标格；键盘方向键移动焦点、回车落子',
+    estimatedDuration: '一局约 10–40 分钟',
   },
 ] as const;
 
