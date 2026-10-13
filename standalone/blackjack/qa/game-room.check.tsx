@@ -20,6 +20,7 @@ describe('game room shortcuts', () => {
       '/games/mech-sweeper?from=explore',
       '/games/fault-finder?from=explore',
       '/games/life?from=explore',
+      '/games/laser?from=explore',
     ]);
   });
 
