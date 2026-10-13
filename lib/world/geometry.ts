@@ -12,6 +12,28 @@ export function insidePolygon(point: Point, polygon: number[][]): boolean {
   }
   return inside;
 }
+const boxes = new WeakMap<number[][], [number, number, number, number]>();
+/** Cached [left, top, right, bottom]; polygons are static scene data. */
+export function bounds(polygon: number[][]) {
+  let box = boxes.get(polygon);
+  if (!box) {
+    const xs = polygon.map((p) => p[0]),
+      ys = polygon.map((p) => p[1]);
+    box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+    boxes.set(polygon, box);
+  }
+  return box;
+}
+const inside = (p: Point, polygon: number[][]) => {
+  const [left, top, right, bottom] = bounds(polygon);
+  return (
+    p.x >= left &&
+    p.x <= right &&
+    p.y >= top &&
+    p.y <= bottom &&
+    insidePolygon(p, polygon)
+  );
+};
 export const canWalk = (
   p: Point,
   areas: number[][][],
@@ -19,7 +41,7 @@ export const canWalk = (
 ) =>
   Number.isFinite(p.x) &&
   Number.isFinite(p.y) &&
-  areas.some((a) => insidePolygon(p, a)) &&
-  !obstacles.some((a) => insidePolygon(p, a));
+  areas.some((a) => inside(p, a)) &&
+  !obstacles.some((a) => inside(p, a));
 export const distance = (a: Point, b: Point) =>
   Math.hypot(a.x - b.x, a.y - b.y);
