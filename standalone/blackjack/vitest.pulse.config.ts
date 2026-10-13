@@ -19,6 +19,7 @@ export default defineConfig({
       'qa/fault-finder.check.tsx',
       'qa/life.check.tsx',
       'qa/theme-switcher.check.tsx',
+      'qa/langton.check.tsx',
     ],
     server: { deps: { inline: true } },
     deps: {
