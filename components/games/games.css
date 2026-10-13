@@ -1282,3 +1282,32 @@
   background: #c8e07a;
   box-shadow: 0 0 6px #c8e07a88;
 }
+
+.room-langton-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #263029;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #c9d1bf;
+  background: #1f2a24;
+}
+.room-langton-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 13px);
+  gap: 1px;
+  margin: 12px auto;
+}
+.room-langton-grid span {
+  width: 13px;
+  height: 13px;
+  background: #2c3a32;
+}
+.room-langton-grid span.is-on {
+  background: #c9d1bf;
+}
+.room-langton-grid span.is-ant {
+  background: #f97316;
+}
