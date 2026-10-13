@@ -240,3 +240,200 @@ html[data-theme='tech'] .sg .sg-error-tag {
   background: #391f27;
   color: #ffb0a3;
 }
+
+/* ==========================================================================
+   Tech polish: HUD frames, hero treatment, game boards
+   ========================================================================== */
+
+/* Default theme: page resets strip button borders, keep the switcher a pill. */
+#workbench .b-nav .theme-switcher {
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+}
+
+/* HUD corner brackets, drawn as background so they never shift layout. */
+html[data-theme='tech'] {
+  --tech-hud:
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent)),
+    linear-gradient(var(--tech-accent), var(--tech-accent));
+}
+html[data-theme='tech']
+  :is(
+    .room-game,
+    .room-daily,
+    #workbench .b-instrument,
+    #workbench .b-game-room,
+    .sweeper-console,
+    .arrival-workbench,
+    .arrival-explore
+  ) {
+  /* Page rules use the background shorthand with higher specificity. */
+  background-image: var(--tech-hud) !important;
+  background-position:
+    top left,
+    top left,
+    top right,
+    top right,
+    bottom left,
+    bottom left,
+    bottom right,
+    bottom right !important;
+  background-size:
+    14px 1px,
+    1px 14px !important;
+  background-repeat: no-repeat !important;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
+}
+html[data-theme='tech']
+  :is(
+    .room-game,
+    #workbench .b-game-room,
+    .arrival-workbench,
+    .arrival-explore
+  ):hover {
+  border-color: var(--tech-rule-strong);
+  box-shadow: var(--tech-glow);
+}
+
+/* Home hero: cooler grade, scan grid and cyan HUD actions over the artwork. */
+html[data-theme='tech'] .arrival-art {
+  filter: saturate(0.72) contrast(1.06) brightness(0.86);
+}
+html[data-theme='tech'] .arrival-shade {
+  background:
+    linear-gradient(rgb(61 220 255 / 0.05) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgb(61 220 255 / 0.05) 1px, transparent 1px) 0 0 /
+      40px 40px,
+    linear-gradient(
+      90deg,
+      #050b12d9 0%,
+      #050b1280 32%,
+      #050b1220 58%,
+      #0000 78%
+    ),
+    linear-gradient(
+      0deg,
+      #050b12c0,
+      transparent 34%,
+      transparent 82%,
+      #050b1266
+    ),
+    linear-gradient(135deg, rgb(61 220 255 / 0.1), rgb(20 40 80 / 0.18));
+}
+html[data-theme='tech'] .arrival-index {
+  color: var(--tech-accent);
+  letter-spacing: 0.24em;
+}
+@media (max-width: 520px) {
+  html[data-theme='tech'] .arrival-index {
+    letter-spacing: 0.14em;
+  }
+}
+html[data-theme='tech'] .arrival-index::before {
+  content: '▍SYS · ';
+  opacity: 0.8;
+}
+html[data-theme='tech'] .arrival-copy h1 {
+  text-shadow:
+    0 0 28px rgb(61 220 255 / 0.35),
+    0 2px 18px #000a;
+}
+html[data-theme='tech'] .arrival-period {
+  color: var(--tech-accent);
+}
+html[data-theme='tech'] .arrival-workbench {
+  color: var(--tech-ink);
+  background-color: rgb(8 30 44 / 0.82);
+  border: 1px solid var(--tech-rule-strong);
+  box-shadow: 0 0 22px rgb(61 220 255 / 0.22);
+}
+html[data-theme='tech'] .arrival-workbench small,
+html[data-theme='tech'] .arrival-explore small {
+  color: var(--tech-muted);
+}
+html[data-theme='tech'] .arrival-explore {
+  color: var(--tech-ink);
+  background-color: rgb(6 12 19 / 0.72);
+  border-color: var(--tech-rule);
+}
+html[data-theme='tech'] .arrival-choices a.arrival-games {
+  background-image: none;
+  color: var(--tech-ink);
+}
+html[data-theme='tech'] .arrival-choices .arrival-games:hover {
+  color: var(--tech-accent);
+}
+html[data-theme='tech'] :is(.arrival-light-switch, .arrival-controls button) {
+  border-color: var(--tech-rule-strong);
+}
+
+/* Section numbers and nav indices read as HUD readouts. */
+html[data-theme='tech'] #workbench :is(.b-nav-index, .b-section-number) {
+  color: var(--tech-accent);
+}
+
+/* Mech sweeper: dark steel modules with cyan readouts. */
+html[data-theme='tech'] .sweeper-levels button {
+  border-color: var(--tech-rule-strong);
+  color: var(--tech-muted);
+}
+html[data-theme='tech'] .sweeper-levels button[data-pressed] {
+  background: rgb(61 220 255 / 0.16);
+  border-color: var(--tech-accent);
+  color: var(--tech-ink);
+  box-shadow: 0 0 12px rgb(61 220 255 / 0.25);
+}
+html[data-theme='tech'] .sweeper-cell {
+  background: #15324a;
+  box-shadow:
+    inset 0 1px rgb(61 220 255 / 0.28),
+    inset 0 -2px #06121c;
+  color: var(--tech-ink);
+}
+html[data-theme='tech'] .sweeper-cell:hover:not([aria-disabled]):not(.is-open) {
+  background: #1c4363;
+}
+html[data-theme='tech'] .sweeper-cell.is-open {
+  background: #07131d;
+  box-shadow: inset 0 0 0 1px rgb(61 220 255 / 0.14);
+}
+html[data-theme='tech'] .sweeper-cell.is-start {
+  outline-color: var(--tech-accent);
+}
+html[data-theme='tech'] .sweeper-cell[data-n='1'] {
+  color: #6fd8ff;
+}
+html[data-theme='tech'] .sweeper-cell[data-n='2'] {
+  color: #7cf2c4;
+}
+/* Preserve the failure states above the generic closed/open module colours. */
+html[data-theme='tech'] .sweeper-cell.is-fault {
+  background: #3b2d25;
+}
+html[data-theme='tech'] .sweeper-cell.is-blown {
+  background: #5b3a26;
+  color: #ffd2a8;
+}
+html[data-theme='tech'] .sweeper-cell.is-boom {
+  background: #c4512f;
+}
+html[data-theme='tech'] .sweeper-cell.is-wrong {
+  background: #3a3a3a;
+  color: #b0b0b0;
+}
+
+/* Felt-green game previews recede so the HUD reads first. */
+html[data-theme='tech'] .room-game-preview {
+  filter: saturate(0.6) brightness(0.92);
+}
