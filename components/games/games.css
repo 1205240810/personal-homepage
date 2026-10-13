@@ -1311,3 +1311,33 @@
 .room-langton-grid span.is-ant {
   background: #f97316;
 }
+
+.room-sand-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #263029;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #c9d1bf;
+  background: #1f2a24;
+}
+.room-sand-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 14px);
+  margin: 12px auto;
+}
+.room-sand-grid span {
+  width: 14px;
+  height: 14px;
+}
+.room-sand-grid .is-s {
+  background: #d6b470;
+}
+.room-sand-grid .is-w {
+  background: #4084d0;
+}
+.room-sand-grid .is-h {
+  background: #60645e;
+}

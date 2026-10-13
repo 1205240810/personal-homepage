@@ -11,7 +11,8 @@ export type GameId =
   | 'mech-sweeper'
   | 'fault-finder'
   | 'life'
-  | 'langton';
+  | 'langton'
+  | 'sand';
 
 export type GameDefinition = {
   id: GameId;
@@ -145,6 +146,16 @@ export const GAMES: readonly GameDefinition[] = [
     category: '沙盒模拟',
     controls: '点击放蚂蚁，滚轮缩放；空格运行，N 单步，[ ] 调速',
     estimatedDuration: '随看随停',
+  },
+  {
+    id: 'sand',
+    title: '落沙模拟',
+    description:
+      '撒一把沙、倒一桶水、点一把火：沙会堆坡、水会摊平、油浮在水上、火烧光植物后化成烟。笔刷大小可调，场景能存到本机。',
+    href: '/games/sand',
+    category: '沙盒模拟',
+    controls: '按住拖动撒元素；1–7 选元素，[ ] 调笔刷，空格暂停',
+    estimatedDuration: '随玩随停',
   },
 ] as const;
 
