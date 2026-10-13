@@ -6,6 +6,7 @@ import {
   E,
   MAZE_SIZES,
   S,
+  W,
   applyCarves,
   canMove,
   carveSteps,
@@ -85,8 +86,9 @@ void test('移动、快跑到岔路、最短路', () => {
   const open = DIRS.find((d) => canMove(maze, 0, d))!;
   const end = run(maze, 0, open);
   assert.notEqual(end, 0);
-  // A plain corridor cell has exactly two openings; run never stops on one.
-  assert.notEqual(DIRS.filter((d) => canMove(maze, end, d)).length, 2);
+  // A plain corridor cell has two openings; only the goal can stop a run there.
+  if (end !== goal)
+    assert.notEqual(DIRS.filter((d) => canMove(maze, end, d)).length, 2);
 });
 
 void test('今日迷宫：同一天相同，算法按日期轮换，一年都完美', () => {
@@ -127,4 +129,14 @@ void test('本机记录：每档最快、今日最快，拒绝坏数据', () => 
   };
   saveMazeRecords(r, st);
   assert.deepEqual(loadMazeRecords(st), r);
+});
+
+void test('快跑在走廊中的终点停止，不能越过终点', () => {
+  const maze = applyCarves(2, 2, [
+    { a: 0, dir: E },
+    { a: 1, dir: S },
+    { a: 3, dir: W },
+  ]);
+  assert.equal(run(maze, 0, E), 3);
+  assert.equal(run(maze, 1, S), 3);
 });

@@ -1,6 +1,7 @@
 'use client';
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as RPointerEvent,
@@ -16,7 +17,7 @@ import {
   Shuffle,
   SkipForward,
 } from 'lucide-react';
-import { dailyKey, todayParts } from '@/lib/games/kit';
+import { dailyKey, todayParts, type Today } from '@/lib/games/kit';
 import {
   ALGORITHMS,
   E,
@@ -54,7 +55,7 @@ const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
 type Pick =
   | { kind: 'random'; size: MazeSize; alg: Algorithm; seed: number }
-  | { kind: 'daily' };
+  | { kind: 'daily'; day: Today };
 type Phase = 'building' | 'ready' | 'running' | 'done' | 'gave-up';
 const KEY_DIR: Record<string, number> = {
   ArrowUp: N,
@@ -82,7 +83,7 @@ function build(
   ready: boolean,
 ): { steps: Carve[]; maze: Maze; alg: Algorithm; size: MazeSize } {
   if (pick.kind === 'daily' && ready) {
-    const d = dailyMaze(todayParts());
+    const d = dailyMaze(pick.day);
     return { steps: d.steps, maze: d.maze, alg: d.alg, size: 'medium' };
   }
   const p =
@@ -111,7 +112,7 @@ export function MazeRace() {
   const [alg, setAlg] = useState<Algorithm>('backtracker');
   const [animatePick, setAnimate] = useState<boolean | null>(null);
   const animate = animatePick ?? !reduced;
-  const game = build(pick, ready);
+  const game = useMemo(() => build(pick, ready), [pick, ready]);
   const { maze, steps } = game;
   const goal = maze.cells.length - 1;
   const [phase, setPhase] = useState<Phase>('ready');
@@ -312,7 +313,7 @@ export function MazeRace() {
           records,
           game.size,
           secs,
-          pick.kind === 'daily' && today ? dailyKey(today) : undefined,
+          pick.kind === 'daily' ? dailyKey(pick.day) : undefined,
         ),
       );
       setAnnounce(`到达终点！用时 ${fmt(secs)}`);
@@ -382,7 +383,7 @@ export function MazeRace() {
           type="button"
           aria-pressed={pick.kind === 'daily'}
           disabled={!ready}
-          onClick={() => load({ kind: 'daily' })}
+          onClick={() => load({ kind: 'daily', day: todayParts() })}
         >
           <CalendarDays size={15} aria-hidden="true" /> 今日迷宫
           {todayBest ? ` · 最快 ${fmt(todayBest)}` : ''}

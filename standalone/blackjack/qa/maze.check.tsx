@@ -7,8 +7,10 @@ import {
   MAZE_RECORDS_KEY,
   N,
   S,
+  dailyMaze,
   generateMaze,
   move,
+  run,
   solve,
 } from '../../../lib/games/maze';
 
@@ -27,6 +29,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('迷宫竞速', () => {
@@ -71,5 +74,50 @@ describe('迷宫竞速', () => {
     fireEvent.click(screen.getByRole('button', { name: /生成新迷宫/ }));
     expect(screen.getByText(/MAZE · 24×24 · WILSON/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /跳过动画/ })).toBeNull();
+  });
+
+  it('手机方向键在经过终点的走廊停下并完成游戏', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(2 / 1e9);
+    render(<MazeRace />);
+    fireEvent.click(screen.getByLabelText('动画生成'));
+    fireEvent.change(screen.getByLabelText('尺寸'), {
+      target: { value: 'small' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /生成新迷宫/ }));
+    const { maze } = generateMaze('backtracker', 'small', 2);
+    const goal = maze.cells.length - 1;
+    let pos = 0;
+    const names: Record<number, string> = {
+      [N]: '上',
+      [E]: '右',
+      [S]: '下',
+      8: '左',
+    };
+    for (let guard = 0; pos !== goal && guard < maze.cells.length; guard++) {
+      const path = solve(maze, pos, goal);
+      const d = DIRS.find((x) => move(maze, pos, x) === path[1])!;
+      fireEvent.click(screen.getByRole('button', { name: `向${names[d]}跑` }));
+      pos = run(maze, pos, d);
+    }
+    expect(document.querySelector('output')?.textContent).toMatch(/到达终点/);
+  });
+
+  it('今日迷宫跨午夜不换图，完成记录属于开题日期', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 13, 23, 59, 59));
+    render(<MazeRace />);
+    fireEvent.click(screen.getByLabelText('动画生成'));
+    fireEvent.click(screen.getByRole('button', { name: /今日迷宫/ }));
+    const { maze } = dailyMaze({ year: 2026, month: 10, day: 13 });
+    const path = solve(maze, 0, maze.cells.length - 1);
+    for (let k = 1; k < path.length; k++) {
+      if (k === 2) vi.setSystemTime(new Date(2026, 9, 14, 0, 0, 1));
+      const d = DIRS.find((x) => move(maze, path[k - 1], x) === path[k])!;
+      fireEvent.keyDown(canvas(), { key: KEY[d] });
+    }
+    expect(document.querySelector('output')?.textContent).toMatch(/到达终点/);
+    expect(
+      Object.keys(JSON.parse(localStorage.getItem(MAZE_RECORDS_KEY)!).daily),
+    ).toEqual(['2026-10-13']);
   });
 });

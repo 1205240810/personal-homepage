@@ -183,12 +183,13 @@ export const canMove = (m: Maze, i: number, d: number) =>
 export function move(m: Maze, i: number, d: number) {
   return canMove(m, i, d) ? neighbour(m.width, m.height, i, d) : i;
 }
-/** Keep moving in `d` until a junction, dead end or turn-free corridor ends. */
+/** Follow a corridor from `d`, stopping at a junction, dead end or the goal. */
 export function run(m: Maze, i: number, d: number) {
   let cur = move(m, i, d);
   if (cur === i) return i;
   let dir = d;
   for (let guard = 0; guard < m.cells.length; guard++) {
+    if (cur === m.cells.length - 1) break;
     const exits = DIRS.filter((x) => x !== OPP[dir] && canMove(m, cur, x));
     if (exits.length !== 1) break;
     dir = exits[0];
