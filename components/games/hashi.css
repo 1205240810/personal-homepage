@@ -1,0 +1,61 @@
+.hashi-board {
+  position: relative;
+  width: min(100%, 560px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border: 1px solid var(--games-rule, #cfd3c9);
+  border-radius: 6px;
+  background:
+    radial-gradient(circle, var(--games-rule, #cfd3c9) 1px, transparent 1.5px) 0
+      0 / calc(100% / var(--n, 9)) calc(100% / var(--n, 9)),
+    var(--games-paper, #f6f5f1);
+  touch-action: manipulation;
+}
+.hashi-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.hashi-bridge line {
+  stroke: var(--games-ink, #282d29);
+  stroke-width: 0.07;
+  stroke-linecap: round;
+}
+.hashi-bridge.is-locked line {
+  stroke: var(--games-accent, #6f7f2e);
+}
+.kit .hashi-island {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: clamp(26px, 8%, 46px);
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--games-ink, #282d29);
+  background: var(--games-paper, #f6f5f1);
+  font-weight: 700;
+  font-size: clamp(0.8rem, 2.6vw, 1.1rem);
+  z-index: 1;
+}
+.kit .hashi-island.is-done {
+  border-color: var(--kit-ok);
+  background: color-mix(
+    in srgb,
+    var(--kit-ok) 18%,
+    var(--games-paper, #f6f5f1)
+  );
+}
+.kit .hashi-island.is-over {
+  border-color: var(--kit-bad);
+  color: var(--kit-bad);
+}
+.kit .hashi-island.is-selected,
+.kit .hashi-island[aria-pressed='true'] {
+  border-color: var(--games-accent, #6f7f2e);
+  box-shadow: 0 0 0 4px
+    color-mix(in srgb, var(--games-accent, #6f7f2e) 35%, transparent);
+}

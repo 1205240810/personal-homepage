@@ -1392,3 +1392,34 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.room-hashi-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #263029;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #c9d1bf;
+  background: #1f2a24;
+}
+.room-hashi-svg {
+  width: 160px;
+  margin: 12px auto;
+}
+.room-hashi-svg line {
+  stroke: #c9d1bf;
+  stroke-width: 0.06;
+}
+.room-hashi-svg circle {
+  fill: #1f2a24;
+  stroke: #c8e07a;
+  stroke-width: 0.06;
+}
+.room-hashi-svg text {
+  fill: #c8e07a;
+  font-size: 0.32px;
+  text-anchor: middle;
+  font-weight: 700;
+}
