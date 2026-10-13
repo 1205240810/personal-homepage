@@ -92,7 +92,7 @@ html[data-theme='tech'] {
   background: var(--tech-bg);
 }
 html[data-theme='tech'] body {
-  background: var(--tech-bg) var(--tech-grid);
+  background: var(--tech-grid), var(--tech-bg);
   background-attachment: fixed;
   color: var(--tech-ink);
 }
@@ -189,7 +189,7 @@ html[data-theme='tech']
   --arcade-ink: var(--tech-ink);
   --arcade-muted: var(--tech-muted);
   --arcade-rule: var(--tech-rule);
-  background: var(--tech-bg) var(--tech-grid);
+  background: var(--tech-grid), var(--tech-bg);
 }
 
 /* ---- Reading pages (/archive, /posts, /about, /projects, /vault) -------- */
@@ -215,6 +215,30 @@ html[data-theme='tech'] .world-header .direct-home-link {
 }
 html[data-theme='tech'] .world-header .direct-home-link {
   color: var(--tech-accent);
+}
+
+/* Sudoku states carry game meaning; a generic colour remap cannot flatten them. */
+html[data-theme='tech'] .sg .sg-primary {
+  background: var(--tech-accent);
+  color: var(--tech-bg);
+}
+html[data-theme='tech'] .sg .sg-primary:hover:not(:disabled) {
+  background: var(--tech-accent-2);
+  color: var(--tech-bg);
+}
+html[data-theme='tech'] .sg .sg-peer {
+  background: #132737;
+}
+html[data-theme='tech'] .sg .sg-hint-unit {
+  background: #1a3040;
+}
+html[data-theme='tech'] .sg .sg-conflict {
+  background: #391f27 !important;
+  color: #ffb0a3 !important;
+}
+html[data-theme='tech'] .sg .sg-error-tag {
+  background: #391f27;
+  color: #ffb0a3;
 }
 
 /* ==========================================================================

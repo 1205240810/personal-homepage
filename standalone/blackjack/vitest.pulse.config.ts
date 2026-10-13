@@ -17,6 +17,7 @@ export default defineConfig({
       'qa/mech-sweeper.check.tsx',
       'qa/game-room.check.tsx',
       'qa/fault-finder.check.tsx',
+      'qa/theme-switcher.check.tsx',
     ],
     server: { deps: { inline: true } },
     deps: {
