@@ -688,6 +688,18 @@ html[data-theme='tech'] .room-chess-board i {
     background: #0f1f2e;
     color: #dce8f4
 }
+html[data-theme='tech'] .room-go-preview {
+    border: 1px solid rgb(61 220 255 / 0.45);
+    color: #dce8f4;
+    background: #0f1f2e
+}
+html[data-theme='tech'] .room-go-board {
+    border-right: 1px solid rgb(61 220 255 / 0.45);
+    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+}
+html[data-theme='tech'] .room-go-board .w {
+    background: #0a1520
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid rgb(61 220 255 / 0.45);

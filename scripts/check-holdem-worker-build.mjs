@@ -145,6 +145,7 @@ if (
         : fileURLToPath(new URL('../dist', import.meta.url));
     checkHoldemWorkerBuild(directory);
     checkGameWorkerBuild(directory, 'chess', 'chess-worker');
+    checkGameWorkerBuild(directory, 'go', 'go-worker');
   } catch (error) {
     console.error(
       `Worker build check failed: ${error instanceof Error ? error.message : String(error)}`,
