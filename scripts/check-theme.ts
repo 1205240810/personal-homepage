@@ -26,7 +26,7 @@ const boot = (stored: string | null, throws = false) => {
   return { theme: attrs['data-theme'], scheme: root.style.colorScheme };
 };
 
-test('首屏脚本：读取保存的主题，未知值和存储被禁用时回退默认', () => {
+void test('首屏脚本：读取保存的主题，未知值和存储被禁用时回退默认', () => {
   assert.deepEqual(boot('tech'), { theme: 'tech', scheme: 'dark' });
   assert.deepEqual(boot(null), { theme: 'default', scheme: '' });
   assert.deepEqual(boot('neon<script>'), { theme: 'default', scheme: '' });
@@ -35,7 +35,7 @@ test('首屏脚本：读取保存的主题，未知值和存储被禁用时回�
   assert.equal(normalizeTheme(42), 'default');
 });
 
-test('根布局在 <head> 内同步注入首屏脚本，并只对 <html> 抑制水合差异', () => {
+void test('根布局在 <head> 内同步注入首屏脚本，并只对 <html> 抑制水合差异', () => {
   const layout = readFileSync('app/layout.tsx', 'utf8');
   assert.match(layout, /<html lang="zh-CN" suppressHydrationWarning>/);
   assert.match(
@@ -49,7 +49,7 @@ test('根布局在 <head> 内同步注入首屏脚本，并只对 <html> 抑制�
   );
 });
 
-test('所有站点导航都提供主题切换', () => {
+void test('所有站点导航都提供主题切换', () => {
   for (const file of [
     'components/home/arrival.tsx',
     'components/home/workbench.tsx',
@@ -78,7 +78,7 @@ const contrast = (a: string, b: string) => {
   return (x + 0.05) / (y + 0.05);
 };
 
-test('科技主题的文字色在所有底色上满足 WCAG AA（≥ 4.5:1）', () => {
+void test('科技主题的文字色在所有底色上满足 WCAG AA（≥ 4.5:1）', () => {
   const css = readFileSync('app/theme-tech.css', 'utf8');
   const token = (name: string) => {
     const m = new RegExp(`--tech-${name}:\\s*(#[0-9a-f]{6})`).exec(css);
@@ -93,7 +93,7 @@ test('科技主题的文字色在所有底色上满足 WCAG AA（≥ 4.5:1）', 
       );
 });
 
-test('流光动画只在用户未要求减少动态效果时出现', () => {
+void test('流光动画只在用户未要求减少动态效果时出现', () => {
   const css = readFileSync('app/theme-tech.css', 'utf8');
   const sweep = css.indexOf('animation: tech-sweep');
   const guard = css.lastIndexOf(

@@ -14,10 +14,12 @@ const subscribe = (notify: () => void) => {
     if (event.key !== null && event.key !== THEME_STORAGE_KEY) return;
     try {
       if (event.storageArea !== localStorage) return;
+      // A queued event can arrive after a newer local choice. Read the current
+      // value instead of applying its stale newValue to this document.
+      applyTheme(normalizeTheme(localStorage.getItem(THEME_STORAGE_KEY)));
     } catch {
       return;
     }
-    applyTheme(normalizeTheme(event.newValue));
     notify();
   };
   window.addEventListener(THEME_EVENT, notify);

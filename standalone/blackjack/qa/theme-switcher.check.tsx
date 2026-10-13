@@ -50,6 +50,9 @@ it('syncs theme changes and clears from other tabs, ignoring unrelated storage',
     newValue: string | null,
   ) =>
     act(() => {
+      if (key === null) storageArea.clear();
+      else if (newValue === null) storageArea.removeItem(key);
+      else storageArea.setItem(key, newValue);
       window.dispatchEvent(
         new StorageEvent('storage', { storageArea, key, newValue }),
       );
@@ -61,6 +64,22 @@ it('syncs theme changes and clears from other tabs, ignoring unrelated storage',
   expect(screen.getByRole('button', { name: '科技主题：已开启' })).toBeTruthy();
   change(localStorage, null, null);
   expect(screen.getByRole('button', { name: '科技主题：已关闭' })).toBeTruthy();
+});
+
+it('ignores a queued storage value after a newer local choice was saved', () => {
+  render(<ThemeSwitcher />);
+  localStorage.setItem(THEME_STORAGE_KEY, 'tech');
+  const queuedEvent = new StorageEvent('storage', {
+    storageArea: localStorage,
+    key: THEME_STORAGE_KEY,
+    newValue: 'tech',
+  });
+  fireEvent.click(screen.getByRole('button', { name: '科技主题：已关闭' }));
+  fireEvent.click(screen.getByRole('button', { name: '科技主题：已开启' }));
+  expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('default');
+  act(() => window.dispatchEvent(queuedEvent));
+  expect(screen.getByRole('button', { name: '科技主题：已关闭' })).toBeTruthy();
+  expect(document.documentElement.getAttribute('data-theme')).toBe('default');
 });
 
 it('persists successful changes and notifies every mounted switcher', () => {
