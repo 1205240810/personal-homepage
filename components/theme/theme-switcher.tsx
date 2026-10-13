@@ -10,24 +10,27 @@ import {
 } from '@/lib/theme';
 
 const subscribe = (notify: () => void) => {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== null && event.key !== THEME_STORAGE_KEY) return;
+    try {
+      if (event.storageArea !== localStorage) return;
+    } catch {
+      return;
+    }
+    applyTheme(normalizeTheme(event.newValue));
+    notify();
+  };
   window.addEventListener(THEME_EVENT, notify);
-  window.addEventListener('storage', notify);
+  window.addEventListener('storage', onStorage);
   return () => {
     window.removeEventListener(THEME_EVENT, notify);
-    window.removeEventListener('storage', notify);
+    window.removeEventListener('storage', onStorage);
   };
 };
-const readTheme = (): ThemeId => {
-  try {
-    const stored = normalizeTheme(localStorage.getItem(THEME_STORAGE_KEY));
-    // Another tab changed it: keep this document in sync.
-    if (document.documentElement.getAttribute('data-theme') !== stored)
-      applyTheme(stored);
-    return stored;
-  } catch {
-    return normalizeTheme(document.documentElement.getAttribute('data-theme'));
-  }
-};
+// The boot script initializes the document. Keep its current theme as the
+// snapshot so a failed persistence write cannot undo a user's local choice.
+const readTheme = (): ThemeId =>
+  normalizeTheme(document.documentElement.getAttribute('data-theme'));
 function applyTheme(theme: ThemeId) {
   const root = document.documentElement;
   root.setAttribute('data-theme', theme);
