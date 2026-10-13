@@ -723,6 +723,40 @@ function ChessPreview() {
   );
 }
 
+function GoPreview() {
+  return (
+    <div className="room-go-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>GO / MCTS</span>
+        <span>9 · 13 · 19</span>
+      </div>
+      <div className="room-go-board">
+        {[
+          [1, 1, 'b'],
+          [2, 1, 'w'],
+          [1, 2, 'w'],
+          [3, 2, 'b'],
+          [2, 3, 'b'],
+          [3, 3, 'w'],
+        ].map(([x, y, c]) => (
+          <i
+            key={`${x}${y}`}
+            className={c as string}
+            style={{
+              left: `${(x as number) * 25}%`,
+              top: `${(y as number) * 25}%`,
+            }}
+          />
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>TSUMEGO × 7</span>
+        <span>点眼、做活、接不归</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -743,6 +777,7 @@ const previews = {
   rulewords: RuleWordsPreview,
   timeloop: TimeLoopPreview,
   chess: ChessPreview,
+  go: GoPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
