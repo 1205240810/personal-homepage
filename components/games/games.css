@@ -1453,3 +1453,41 @@
 .room-maze-svg circle {
   fill: #f97316;
 }
+
+.room-rw-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #2b2a33;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #ece8dd;
+  background: #24232b;
+}
+.room-rw-rules {
+  display: grid;
+  grid-template-columns: repeat(3, 46px);
+  gap: 8px;
+  justify-content: center;
+}
+.room-rw-rules span {
+  display: grid;
+  place-items: center;
+  height: 46px;
+  border: 2px solid #ece8dd;
+  border-radius: 4px;
+  font-weight: 800;
+}
+.room-rw-rules .is {
+  color: #c8e07a;
+  border-color: #c8e07a;
+}
+.room-rw-rules .prop {
+  color: #24232b;
+  background: #ece8dd;
+}
+.room-rw-rules .off {
+  opacity: 0.35;
+  transform: translate(10px, 6px) rotate(8deg);
+}

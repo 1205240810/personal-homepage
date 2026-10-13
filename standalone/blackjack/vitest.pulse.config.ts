@@ -21,6 +21,7 @@ export default defineConfig({
       'qa/fault-finder.check.tsx',
       'qa/life.check.tsx',
       'qa/theme-switcher.check.tsx',
+      'qa/rulewords.check.tsx',
       'qa/maze.check.tsx',
       'qa/hashi.check.tsx',
       'qa/flow.check.tsx',

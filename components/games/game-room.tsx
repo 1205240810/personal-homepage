@@ -637,6 +637,29 @@ function MazePreview() {
   );
 }
 
+function RuleWordsPreview() {
+  return (
+    <div className="room-rw-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>RULE / WORDS</span>
+        <span>12 LEVELS</span>
+      </div>
+      <div className="room-rw-rules">
+        <span>机甲</span>
+        <span className="is">是</span>
+        <span className="prop">你</span>
+        <span>墙</span>
+        <span className="is">是</span>
+        <span className="prop off">挡</span>
+      </div>
+      <div className="room-preview-bottom">
+        <span>PUSH THE WORDS</span>
+        <span>规则也是方块</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -654,6 +677,7 @@ const previews = {
   flow: FlowPreview,
   hashi: HashiPreview,
   maze: MazePreview,
+  rulewords: RuleWordsPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
