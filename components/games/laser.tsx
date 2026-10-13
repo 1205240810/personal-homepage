@@ -91,9 +91,9 @@ export function LaserMirrors() {
   const today = ready ? todayParts() : null;
   const dailyDone = !!today && records.daily.includes(dailyKey(today));
 
-  function load(next: Mode) {
+  function load(next: Mode, replay?: Level) {
     setMode(next);
-    setLevel(levelFor(next, ready));
+    setLevel(replay ?? levelFor(next, ready));
     setPlaced(new Map());
     setHints(0);
     setLocked(new Set());
@@ -329,7 +329,11 @@ export function LaserMirrors() {
         <button type="button" onClick={takeHint} disabled={t.solved}>
           <Lightbulb size={15} aria-hidden="true" /> 提示 (H)
         </button>
-        <button type="button" onClick={() => load(mode)} aria-label="重来">
+        <button
+          type="button"
+          onClick={() => load(mode, level)}
+          aria-label="重来"
+        >
           <RotateCcw size={15} aria-hidden="true" />
         </button>
       </div>
