@@ -188,16 +188,19 @@ describe('国际象棋', () => {
     expect(document.activeElement).toBe(sq('e2'));
   });
   it('升变可取消和选择马，子力不足时结束对局', () => {
-    const index = CHESS_PUZZLES.length;
-    CHESS_PUZZLES.push({
+    const index = ALL_PUZZLES.length;
+    ALL_PUZZLES.push({
       id: 'test-promotion',
       name: '升变测试',
       fen: '7k/P7/8/8/8/8/8/7K w - - 0 1',
       kind: 'play',
       n: 0,
+      minGain: 0,
       line: [],
       keys: [],
       note: '',
+      explain: '',
+      wrong: [],
     });
     try {
       render(<ChessGame />);
@@ -215,7 +218,7 @@ describe('国际象棋', () => {
       expect(sq('a8').getAttribute('aria-label')).toMatch(/白马/);
       expect(screen.getByText(/和棋：子力不足/)).toBeTruthy();
     } finally {
-      CHESS_PUZZLES.splice(index, 1);
+      ALL_PUZZLES.splice(index, 1);
     }
   });
 });

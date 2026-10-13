@@ -3,18 +3,41 @@
  * mode = v2v1 （新引擎 vs 旧引擎，同样思考时间）或 levels:a:b（两档难度对比）。
  */
 import { Chess } from 'chess.js';
-import { chooseMove, searchBest, type ChessLevel, CHESS_LEVELS } from '../../lib/games/chess-ai.ts';
+import {
+  chooseMove,
+  searchBest,
+  type ChessLevel,
+  CHESS_LEVELS,
+} from '../../lib/games/chess-ai.ts';
 import { chooseMove as chooseV1, CHESS_LEVELS as V1 } from './chess-ai-v1.ts';
 
 const [mode = 'v2v1', gamesArg = '10', msArg = '200'] = process.argv.slice(2);
 const games = Number(gamesArg);
 const ms = Number(msArg);
 const OPENINGS = [
-  'e4 e5', 'e4 c5', 'd4 d5', 'd4 Nf6', 'c4 e5', 'e4 e6', 'e4 c6', 'Nf3 d5', 'e4 d5', 'd4 f5',
-  'g3 d5', 'b3 e5', 'e4 Nf6', 'd4 e6', 'c4 c5', 'e4 g6', 'f4 d5', 'Nc3 d5', 'e4 d6', 'd4 g6',
+  'e4 e5',
+  'e4 c5',
+  'd4 d5',
+  'd4 Nf6',
+  'c4 e5',
+  'e4 e6',
+  'e4 c6',
+  'Nf3 d5',
+  'e4 d5',
+  'd4 f5',
+  'g3 d5',
+  'b3 e5',
+  'e4 Nf6',
+  'd4 e6',
+  'c4 c5',
+  'e4 g6',
+  'f4 d5',
+  'Nc3 d5',
+  'e4 d6',
+  'd4 g6',
 ];
 let s = 12345;
-const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
 
 type Player = (fen: string, hist: string[]) => string;
 function v2Player(level?: ChessLevel): Player {
@@ -54,7 +77,10 @@ if (mode === 'v2v1') {
   const [, x, y] = mode.split(':').map(Number);
   // Scale every level's time budget by ms/1000 for quick samples (depth limits unchanged).
   for (const k of [x, y] as ChessLevel[])
-    CHESS_LEVELS[k].timeMs = Math.max(30, Math.round((CHESS_LEVELS[k].timeMs * ms) / 1000));
+    CHESS_LEVELS[k].timeMs = Math.max(
+      30,
+      Math.round((CHESS_LEVELS[k].timeMs * ms) / 1000),
+    );
   a = v2Player(y as ChessLevel);
   b = v2Player(x as ChessLevel);
   label = `等级 ${y} vs 等级 ${x}（思考时间 ×${ms / 1000}）`;
