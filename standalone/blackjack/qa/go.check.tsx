@@ -133,6 +133,67 @@ describe('围棋的对局隔离与数子', () => {
     expect(document.querySelectorAll('.go-stone')).toHaveLength(1);
   });
 
+  it('同一局复用空闲 Worker，重新开局和换难度清空旧搜索树', async () => {
+    const view = render(<GoGame />);
+    fireEvent.click(pt(40));
+    const first = workers().at(-1)!;
+    await reply(first, move(30));
+    expect(first.terminated).toBe(false);
+    fireEvent.click(pt(50));
+    expect(workers()).toHaveLength(1);
+    expect(first.message!.state.board[50]).toBe(1);
+    await reply(first, move(31));
+    fireEvent.change(screen.getByLabelText('难度（下局生效）'), {
+      target: { value: '10' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    const fresh = workers().at(-1)!;
+    expect(first.terminated).toBe(true);
+    expect(fresh).not.toBe(first);
+    expect(fresh.message!.level).toBe(10);
+    expect(fresh.message!.state.board.every((x) => x === 0)).toBe(true);
+    await reply(fresh, move(40));
+    view.unmount();
+    expect(fresh.terminated).toBe(true);
+  });
+
+  it('切题和悔棋释放空闲搜索树，错题说明不会残留到新对局', async () => {
+    render(<GoGame />);
+    fireEvent.click(pt(40));
+    const first = workers().at(-1)!;
+    await reply(first, move(30));
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(first.terminated).toBe(true);
+    fireEvent.click(pt(50));
+    const second = workers().at(-1)!;
+    await reply(second, move(30));
+    openProblem('straight-three-live');
+    expect(second.terminated).toBe(true);
+    fireEvent.click(pt(0));
+    expect(screen.getByText(/为什么不行/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('模式'), {
+      target: { value: '' },
+    });
+    expect(screen.queryByText(/为什么不行/)).toBeNull();
+  });
+
+  it('十档的八秒搜索不会被旧超时提前终止', async () => {
+    vi.useFakeTimers();
+    render(<GoGame />);
+    fireEvent.change(screen.getByLabelText('难度（下局生效）'), {
+      target: { value: '10' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    const worker = workers().at(-1)!;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12000);
+    });
+    expect(worker.terminated).toBe(false);
+    expect(screen.getByText(/AI 思考中/)).toBeTruthy();
+    await reply(worker, move(40));
+    expect(screen.getByText(/轮到你/)).toBeTruthy();
+  });
+
   it('估计死子期间禁止提前结算，离开数子会取消旧估计', async () => {
     render(<GoGame />);
     fireEvent.click(screen.getByRole('button', { name: /虚手/ }));

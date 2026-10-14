@@ -1,5 +1,11 @@
 'use client';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
 import {
   BookOpen,
   Flag,
@@ -32,6 +38,7 @@ import {
 import {
   GO_LEVELS,
   chooseGoMove,
+  resetGoTree,
   type GoAiResult,
   type GoLevel,
 } from '@/lib/games/go-ai';
@@ -141,6 +148,12 @@ function useGoAi() {
   }
   return {
     compatibility,
+    reset: () => {
+      keptWorker.current?.terminate();
+      keptWorker.current = null;
+      // Compatibility searches run in this realm and keep their own tree too.
+      resetGoTree();
+    },
     move: (s: GoState, komi: number, level: GoLevel) =>
       send<GoAiResult & { fallback?: true }>(
         { type: 'move', state: wire(s), komi, level },
@@ -193,8 +206,11 @@ export function GoGame() {
   const state = history[history.length - 1];
   const n = state.size;
   const problem = mode.kind === 'problem' ? GO_PROBLEMS[mode.index] : null;
-  const su: ProblemSetup | null = problem ? setup(problem) : null;
-  const correctKeys = su ? correctMoves(su) : [];
+  const su: ProblemSetup | null = useMemo(
+    () => (problem ? setup(problem) : null),
+    [problem],
+  );
+  const correctKeys = useMemo(() => (su ? correctMoves(su) : []), [su]);
   const aiToMove =
     mode.kind === 'game' && phase === 'play' && state.toPlay !== human;
   const gameKey = `${n}-${matchLevel}`;
@@ -226,11 +242,14 @@ export function GoGame() {
   }, [phase, state]);
 
   function newMatch(as: Player = human, sz: GoSize = size, hc = handicap) {
+    ai.reset();
     hc = Math.min(hc, sz === 9 ? 5 : 9);
     const g = newGame(sz, hc);
     setHandicap(hc);
     setMatchLevel(level);
     setProblemState('solving');
+    setShowExplain(false);
+    setRefuted('');
     setMode({ kind: 'game' });
     setHistory([g]);
     setHuman(as);
@@ -247,6 +266,7 @@ export function GoGame() {
     setAnnounce(`新对局：${sz} 路，你执${NAME[as]}，${GO_LEVELS[level].name}`);
   }
   function openProblem(i: number) {
+    ai.reset();
     const p = GO_PROBLEMS[i];
     const s = setup(p);
     setMode({ kind: 'problem', index: i });
@@ -305,7 +325,7 @@ export function GoGame() {
     const depth = s.depth - plies - 1;
     const good =
       plies === 0
-        ? correctMoves(s).includes(p)
+        ? correctKeys.includes(p)
         : playerWinning(s, r.state, Math.max(1, depth));
     const reply = whiteReply(
       s,
@@ -380,6 +400,7 @@ export function GoGame() {
 
   function undo() {
     if (history.length < 2 || phase === 'over') return;
+    ai.reset();
     let k = history.length - 1;
     // Undo the opponent's reply as well, including in problem mode.
     const player = mode.kind === 'game' ? human : BLACK;
@@ -405,12 +426,14 @@ export function GoGame() {
   }
   function resign() {
     if (phase !== 'play' || mode.kind !== 'game') return;
+    ai.reset();
     setPhase('over');
     setResult(`你认输了，${NAME[other(human)]}方胜。`);
     saveRecords(recordGoGame(records, gameKey, false));
   }
   function confirmScore() {
     if (phase !== 'scoring' || estimating) return;
+    ai.reset();
     const sc = score(state, komi, dead);
     const won = sc.winner === human;
     setPhase('over');
@@ -456,6 +479,7 @@ export function GoGame() {
       const now = latest.current;
       if (r.fallback) setMatchLevel(1);
       if (r.move === -2) {
+        aiRef.current.reset();
         setPhase('over');
         setResult('AI 认输，你赢了！');
         now.saveRecords(recordGoGame(now.records, now.gameKey, true));
@@ -694,10 +718,10 @@ export function GoGame() {
       </div>
       {message && <p className="kit-brief">{message}</p>}
       {refuted && (
-        <p className="go-refute" role="status">
+        <output className="go-refute">
           <strong>为什么不行：</strong>
           {refuted}
-        </p>
+        </output>
       )}
       {problem && showExplain && (
         <div className="go-explain">

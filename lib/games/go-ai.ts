@@ -392,7 +392,10 @@ function playout(
       for (let i = cand.length; i > 0 && chosen < 0; i--) {
         const j = (rng() * cand.length) | 0;
         if (pb.place(cand[j], c) >= 0) chosen = cand[j];
-        else ((cand[j] = cand[cand.length - 1]), cand.pop());
+        else {
+          cand[j] = cand[cand.length - 1];
+          cand.pop();
+        }
       }
       // 3. 3×3 patterns around the last move.
       if (chosen < 0) {
@@ -405,7 +408,10 @@ function playout(
         while (cand.length && chosen < 0) {
           const j = (rng() * cand.length) | 0;
           if (pb.place(cand[j], c) >= 0) chosen = cand[j];
-          else ((cand[j] = cand[cand.length - 1]), cand.pop());
+          else {
+            cand[j] = cand[cand.length - 1];
+            cand.pop();
+          }
         }
       }
     }
@@ -616,6 +622,8 @@ const sameState = (a: GoState, b: GoState) =>
   a.toPlay === b.toPlay &&
   a.ko === b.ko &&
   a.passes === b.passes &&
+  a.moves.length === b.moves.length &&
+  a.moves.at(-1) === b.moves.at(-1) &&
   a.board.every((v, i) => v === b.board[i]);
 function reuse(s: GoState, komi: number): Node | null {
   if (!kept || kept.komi !== komi || kept.root.state!.size !== s.size)
@@ -645,6 +653,7 @@ export function chooseGoMove(
   opts: { reuse?: boolean } = {},
 ): GoAiResult {
   const cfg = GO_LEVELS[level];
+  const deadline = now() + cfg.timeMs;
   const pb = new PBoard(s.size);
   let root = opts.reuse === false ? null : reuse(s, komi);
   if (!root) {
@@ -653,10 +662,9 @@ export function chooseGoMove(
   }
   if (!root.children) expand(root, pb);
   const amaf = new Uint8Array(pb.W * pb.W);
-  const deadline = now() + cfg.timeMs;
   let n = 0;
   const start = root.visits;
-  while (n < cfg.playouts && (n & 15 || now() < deadline)) {
+  while (n < cfg.playouts && now() < deadline) {
     n++;
     const path: Node[] = [root];
     let node = root;
