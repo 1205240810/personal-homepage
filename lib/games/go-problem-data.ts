@@ -696,6 +696,66 @@ export const GO_PROBLEM_DATA: Record<
     ],
     wrong: [],
   },
+  'square-four-kill': {
+    line: [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+      [0, 0],
+      [0, 1],
+      [0, 0],
+    ],
+    wrong: [],
+  },
+  'false-eye-kill': {
+    line: [[2, 0]],
+    wrong: [],
+  },
+  'net-capture': {
+    line: [[2, 1]],
+    wrong: [],
+  },
+  oiotoshi: {
+    line: [
+      [3, 0],
+      [-1, -1],
+      [3, 1],
+    ],
+    wrong: [],
+  },
+  'eye-vs-noeye': {
+    line: [
+      [3, 0],
+      [2, 0],
+      [4, 0],
+      [3, 0],
+      [4, 0],
+    ],
+    wrong: [
+      {
+        at: [2, 0],
+        line: [
+          [3, 0],
+          [-1, -1],
+          [-1, -1],
+        ],
+        why: '白 D9 抢先占了要点，之后（白D9）在本题限定区域内，白可以保住目标棋块。',
+      },
+    ],
+  },
+  'eye-vs-noeye-b': {
+    line: [[1, 0]],
+    wrong: [],
+  },
+  'tighten-two': {
+    line: [
+      [1, 0],
+      [-1, -1],
+      [2, 0],
+    ],
+    wrong: [],
+  },
   'seki-pass': {
     line: [[-1, -1]],
     wrong: [
