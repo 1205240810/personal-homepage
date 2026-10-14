@@ -700,7 +700,7 @@ export const BASE_PROBLEMS: GoProblem[] = [
   },
   {
     id: 'false-eye-kill',
-    name: '假眼：扑杀',
+    name: '一口气：直接提子',
     kind: 'kill',
     rows: [
       'XO+OX....',
@@ -715,14 +715,14 @@ export const BASE_PROBLEMS: GoProblem[] = [
     ],
     target: [3, 0],
     line: [],
-    note: '白看似两眼，其实有一只是假眼。',
+    note: '数一数这块白棋还剩几口气。',
     depth: 9,
     explain:
-      'A9 一侧被黑子顶住，C9 看起来像第二只眼。黑扑入 C9，白提后只剩一只真眼，黑再紧气即可杀死。点错边端，白会把假眼补成真眼。',
+      '相连的五颗白子只剩 C9 一口气。黑在 C9 落子时，先提掉没有气的整块白棋，落下的黑子也因此获得气。这一步就能完成提子。',
   },
   {
     id: 'net-capture',
-    name: '门吃',
+    name: '封口：切断接应',
     kind: 'capture',
     rows: [
       '..O......',
@@ -737,14 +737,14 @@ export const BASE_PROBLEMS: GoProblem[] = [
     ],
     target: [2, 2],
     line: [],
-    note: '白子两口气，出路已被封住。',
+    note: 'C7 的白子只剩一口气，上方另有一颗白子。',
     depth: 5,
     explain:
-      '白子两口气分别在上方与 C8。黑占 C8，白无处可逃，下一手提掉。这就是“门吃”：先封出路，再紧气吃子。',
+      'C7 白子的左、右、下方都是黑子，唯一一口气是 C8。黑在 C8 落子就立即提掉 C7。上方 C9 的白子尚未与 C7 相连，不能把两颗白子当作同一块来数气。',
   },
   {
     id: 'oiotoshi',
-    name: '滚打包收',
+    name: '两口气：提掉四子',
     kind: 'capture',
     rows: [
       'XOO+X....',
@@ -759,14 +759,14 @@ export const BASE_PROBLEMS: GoProblem[] = [
     ],
     target: [1, 0],
     line: [],
-    note: '连续叫吃，通吃白棋。',
+    note: '相连的四颗白子只剩两口气。',
     depth: 9,
     explain:
-      '黑先占一口公气叫吃，白接不胜接；黑再占另一口，把白子整块提掉。这是“滚打包收”的基本形：连续叫吃逼对方接，最后通吃。D9、D8 都是正解的起点。',
+      '四颗白子相连，只剩 D9、D8 两口气。黑先占任意一口叫吃，白在另一口落子会填掉自己的最后一口气，是禁入点。黑再占另一口即可提掉四子，D9、D8 都是正解。',
   },
   {
     id: 'eye-vs-noeye',
-    name: '有眼杀无眼',
+    name: '弃子：先送再提',
     kind: 'capture',
     rows: [
       'XO++XO...',
@@ -781,17 +781,17 @@ export const BASE_PROBLEMS: GoProblem[] = [
     ],
     target: [1, 0],
     line: [],
-    note: '黑有眼，白无眼，气很紧。',
+    note: '先紧气，即使白提掉送入的黑子也能继续吃。',
     depth: 11,
     explain:
-      '黑棋自己有一只眼，白棋没有。对杀时“有眼杀无眼”：黑占 D9 紧住白的公气，白无法反杀。先走错边，白可能逃出或反杀。',
+      '黑先 D9 叫吃。白若 C9 提掉 D9、E9 两颗黑子，黑再 E9 紧气；白 D9 再提一子后，黑 E9 就能提掉目标整块白棋。送子是为了缩小白的眼位。若黑首手 C9，白有应对可以保住目标棋块。',
   },
   {
     id: 'eye-vs-noeye-b',
-    name: '有眼杀无眼（单缺）',
+    name: '一口气：提净整块',
     kind: 'capture',
     rows: [
-      'X+OXO....',
+      'X+OXX....',
       'XOOOX....',
       'XXXXX....',
       '.........',
@@ -803,10 +803,10 @@ export const BASE_PROBLEMS: GoProblem[] = [
     ],
     target: [2, 0],
     line: [],
-    note: '黑有眼，白气更紧。',
+    note: '先找出相连的白棋，再数剩下的气。',
     depth: 9,
     explain:
-      '黑在 B9 紧气，白无眼无法长气，下一手提掉。有眼的一方在对杀里天然多一口气。',
+      'C9、B8、C8、D8 四颗白子相连，整块只剩 B9 一口气。黑在 B9 落子，当手就能把四颗白子全部提掉。数气要按整块棋计算，相邻的同色棋子不算气。',
   },
   {
     id: 'tighten-two',

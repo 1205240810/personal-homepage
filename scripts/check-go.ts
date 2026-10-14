@@ -6,6 +6,7 @@ import {
   WHITE,
   emptyGoRecords,
   fromRows,
+  group,
   handicapPoints,
   komiFor,
   loadGoRecords,
@@ -397,4 +398,23 @@ void test('本机记录', () => {
   };
   saveGoRecords(r, st);
   assert.deepEqual(loadGoRecords(st).games['9-3'], { played: 2, won: 1 });
+});
+
+void test('题库初始局面：每块棋都至少有一口气，题目标识唯一', () => {
+  assert.equal(new Set(GO_PROBLEMS.map((p) => p.id)).size, GO_PROBLEMS.length);
+  for (const p of GO_PROBLEMS) {
+    const { state } = setup(p);
+    assert.equal(p.rows.length, 9, p.id);
+    assert.ok(
+      p.rows.every((row) => /^[XO+.]{9}$/.test(row)),
+      p.id,
+    );
+    state.board.forEach((stone, point) => {
+      if (stone !== EMPTY)
+        assert.ok(
+          group(state.board, state.size, point).libs.size > 0,
+          `${p.id} 初始棋子 ${point} 没有气，局面不合法`,
+        );
+    });
+  }
 });
