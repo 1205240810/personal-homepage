@@ -4,6 +4,7 @@
  */
 import { Chess } from 'chess.js';
 import { isPlainObject, loadJson, saveJson } from './kit.ts';
+import { PUZZLE_DATA } from './chess-puzzle-data.ts';
 
 export const START_FEN =
   'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -14,6 +15,14 @@ export function replay(fen: string, sans: string[]) {
   const c = new Chess(fen);
   for (const s of sans) c.move(s);
   return c;
+}
+
+/** FENs of every position before the current one (for repetition detection). */
+export function replayFens(fen: string, sans: string[]) {
+  const c = new Chess(fen);
+  const out = [c.fen()];
+  for (const s of sans.slice(0, -1)) out.push((c.move(s), c.fen()));
+  return sans.length ? out : [];
 }
 
 export type GameEnd =
@@ -172,6 +181,45 @@ export const CHESS_PUZZLES: ChessPuzzle[] = [
   },
 ];
 
+/** Generated puzzle with key moves, main line, 解析 and verified refutations. */
+export type PuzzleData = {
+  id: string;
+  name: string;
+  fen: string;
+  kind: 'mate' | 'win' | 'play';
+  n: number;
+  minGain: number;
+  line: string[];
+  keys: string[];
+  note: string;
+  explain: string;
+  wrong: { san: string; reply: string; score: number; why: string }[];
+};
+
+/**
+ * Everything the puzzle menu offers: generated mate/tactic puzzles (with 解析 and
+ * refutations) followed by the two play-it-out endgame drills.
+ */
+export const ALL_PUZZLES: PuzzleData[] = [
+  ...PUZZLE_DATA,
+  ...CHESS_PUZZLES.filter((p) => p.kind === 'play').map((p) => ({
+    id: p.id,
+    name: p.name,
+    fen: p.fen,
+    kind: 'play' as const,
+    n: 0,
+    minGain: 0,
+    line: [],
+    keys: [],
+    note: p.note,
+    explain:
+      p.id === 'kq-vs-k'
+        ? '后走“马步”距离跟着黑王，一步步把它的活动范围压缩成边上的一条线，然后王走上来，后在边线将杀。每一步都要确认黑王还有地方走，否则就是逼和。'
+        : '车把黑王隔在一侧，自己的王与黑王“对王”时车将军，黑王就被赶退一条线。重复这个过程直到边线。没有对王时，车沿线“等一步”。',
+    wrong: [],
+  })),
+];
+
 export const CHESS_RECORDS_KEY = 'tscjj:chess:v1';
 export type ChessRecords = {
   games: Record<string, { played: number; won: number; drawn: number }>;
@@ -189,14 +237,14 @@ export function validateChessRecords(v: unknown): ChessRecords | null {
   const games: ChessRecords['games'] = {};
   for (const [k, g] of Object.entries(v.games))
     if (
-      /^[1-5]$/.test(k) &&
+      /^([1-9]|10)$/.test(k) &&
       isPlainObject(g) &&
       nat(g.played) &&
       nat(g.won) &&
       nat(g.drawn)
     )
       games[k] = { played: g.played, won: g.won, drawn: g.drawn };
-  const ids = new Set(CHESS_PUZZLES.map((p) => p.id));
+  const ids = new Set(ALL_PUZZLES.map((p) => p.id));
   return {
     games,
     puzzles: v.puzzles.filter(

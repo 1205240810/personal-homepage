@@ -8,7 +8,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChessGame } from '../../../components/games/chess';
-import { CHESS_PUZZLES, CHESS_RECORDS_KEY } from '../../../lib/games/chess';
+import { ALL_PUZZLES, CHESS_RECORDS_KEY } from '../../../lib/games/chess';
 
 const sq = (name: string) =>
   document.querySelector<HTMLButtonElement>(`[data-sq="${name}"]`)!;
@@ -18,7 +18,7 @@ const move = (from: string, to: string) => {
 };
 const openPuzzle = (id: string) =>
   fireEvent.change(screen.getByLabelText('残局模式'), {
-    target: { value: String(CHESS_PUZZLES.findIndex((p) => p.id === id)) },
+    target: { value: String(ALL_PUZZLES.findIndex((p) => p.id === id)) },
   });
 
 beforeEach(() => localStorage.clear());
@@ -59,14 +59,69 @@ describe('国际象棋', () => {
     ).toContain('legal');
   });
 
-  it('残局：走错会提示并保持局面，提示按钮选中正确的子', () => {
+  it('残局：走错会摆出对方的反击并解释原因，悔棋后提示选中正确的子', () => {
     render(<ChessGame />);
     openPuzzle('back-rank');
-    move('d1', 'd2');
-    expect(screen.getByText(/Rd2 不能强制将死/)).toBeTruthy();
+    const p = ALL_PUZZLES.find((x) => x.id === 'back-rank')!;
+    const w = p.wrong.find((x) => x.san === 'Rd7')!;
+    move('d1', 'd7');
+    expect(screen.getByText(/为什么不行/).parentElement!.textContent).toContain(
+      w.why,
+    );
+    expect(screen.getByLabelText('棋谱').textContent).toContain(w.reply);
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(screen.queryByText(/为什么不行/)).toBeNull();
     expect(sq('d1').getAttribute('aria-label')).toMatch(/白车/);
     fireEvent.click(screen.getByRole('button', { name: /提示/ }));
     expect(sq('d1').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('残局：解析按需展开；得子题走出正解后显示主线', () => {
+    render(<ChessGame />);
+    openPuzzle('petrov');
+    fireEvent.click(screen.getByRole('button', { name: /解析/ }));
+    expect(screen.getByText(/闪击/)).toBeTruthy();
+    move('e5', 'c6');
+    expect(screen.getByText(/正解！主线：Nc6\+/)).toBeTruthy();
+    expect(
+      JSON.parse(localStorage.getItem(CHESS_RECORDS_KEY)!).puzzles,
+    ).toContain('petrov');
+  });
+
+  it('解出后悔棋可以重新作答，错着反击后须先悔棋', () => {
+    render(<ChessGame />);
+    openPuzzle('back-rank');
+    move('d1', 'd8');
+    expect(screen.getAllByText(/将死/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(screen.getByRole('button', { name: /提示/ })).toBeTruthy();
+    move('d1', 'd8');
+    expect(screen.getAllByText(/将死/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /重来/ }));
+    move('d1', 'd7');
+    const before = screen.getByLabelText('棋谱').textContent;
+    move('d7', 'd8');
+    expect(screen.getByLabelText('棋谱').textContent).toBe(before);
+  });
+
+  it('未预存的错着搜索可以取消，失败能悔棋恢复', async () => {
+    const workers = mockWorkers();
+    const view = render(<ChessGame />);
+    openPuzzle('back-rank');
+    move('f2', 'f3');
+    expect(workers).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: /重来/ }));
+    expect(workers[0].terminate).toHaveBeenCalled();
+    await act(async () => workers[0].reply('h6'));
+    expect(screen.getByLabelText('棋谱').textContent).toBe('');
+    move('f2', 'f3');
+    await act(async () => workers[1].onerror?.({ preventDefault: vi.fn() }));
+    expect(screen.getByText(/暂时无法展示反击/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(sq('f2').getAttribute('aria-label')).toMatch(/白兵/);
+    move('f2', 'f3');
+    view.unmount();
+    expect(workers[2].terminate).toHaveBeenCalled();
   });
 
   it('对局：走 e4 后 AI 应着，悔棋回到开局；翻转棋盘', async () => {
@@ -169,16 +224,19 @@ describe('国际象棋', () => {
     expect(document.activeElement).toBe(sq('e2'));
   });
   it('升变可取消和选择马，子力不足时结束对局', () => {
-    const index = CHESS_PUZZLES.length;
-    CHESS_PUZZLES.push({
+    const index = ALL_PUZZLES.length;
+    ALL_PUZZLES.push({
       id: 'test-promotion',
       name: '升变测试',
       fen: '7k/P7/8/8/8/8/8/7K w - - 0 1',
       kind: 'play',
       n: 0,
+      minGain: 0,
       line: [],
       keys: [],
       note: '',
+      explain: '',
+      wrong: [],
     });
     try {
       render(<ChessGame />);
@@ -196,7 +254,7 @@ describe('国际象棋', () => {
       expect(sq('a8').getAttribute('aria-label')).toMatch(/白马/);
       expect(screen.getByText(/和棋：子力不足/)).toBeTruthy();
     } finally {
-      CHESS_PUZZLES.splice(index, 1);
+      ALL_PUZZLES.splice(index, 1);
     }
   });
 });

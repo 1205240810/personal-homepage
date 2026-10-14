@@ -1,0 +1,87 @@
+/** A few classic test positions (Win At Chess) with their best moves (SAN). */
+export const TACTICS: [string, string, string[]][] = [
+  [
+    'WAC.001',
+    '2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - 0 1',
+    ['Qg6'],
+  ],
+  ['WAC.002', '8/7p/5k2/5p2/p1p2P2/Pr1pPK2/1P1R3P/8 b - - 0 1', ['Rxb2']],
+  [
+    'WAC.003',
+    '5rk1/1ppb3p/p1pb4/6q1/3P1p1r/2P1R2P/PP1BQ1P1/5RKN w - - 0 1',
+    ['Rg3'],
+  ],
+  [
+    'WAC.004',
+    'r1bq2rk/pp3pbp/2p1p1pQ/7P/3P4/2PB1N2/PP3PPR/2KR4 w - - 0 1',
+    ['Qxh7+'],
+  ],
+  ['WAC.005', '5k2/6pp/p1qN4/1p1p4/3P4/2PKP2Q/PP3r2/3R4 b - - 0 1', ['Qc4+']],
+  ['WAC.006', '7k/p7/1R5K/6r1/6p1/6P1/8/8 w - - 0 1', ['Rb7']],
+  [
+    'WAC.007',
+    'rnbqkb1r/pppp1ppp/8/4P3/6n1/7P/PPPNPPP1/R1BQKBNR b KQkq - 0 1',
+    ['Ne3'],
+  ],
+  [
+    'WAC.008',
+    'r4q1k/p2bR1rp/2p2Q1N/5p2/5p2/2P5/PP3PPP/R5K1 w - - 0 1',
+    ['Rf7'],
+  ],
+  [
+    'WAC.009',
+    '3q1rk1/p4pp1/2pb3p/3p4/6Pr/1PNQ4/P1PB1PP1/4RRK1 b - - 0 1',
+    ['Bh2+'],
+  ],
+  [
+    'WAC.010',
+    '2br2k1/2q3rn/p2NppQ1/2p1P3/Pp5R/4P3/1P3PPP/3R2K1 w - - 0 1',
+    ['Rxh7'],
+  ],
+  [
+    'WAC.011',
+    'r1b1kb1r/3q1ppp/pBp1pn2/8/Np3P2/5B2/PPP3PP/R2Q1RK1 w kq - 0 1',
+    ['Bxc6'],
+  ],
+  [
+    'WAC.012',
+    '4k1r1/2p3r1/1pR1p3/3pP2p/3P2qP/P4N2/1PQ4P/5R1K b - - 0 1',
+    ['Qxf3+'],
+  ],
+  [
+    'WAC.013',
+    '5rk1/pp4p1/2n1p2p/2Npq3/2p5/6P1/P3P1BP/R4Q1K w - - 0 1',
+    ['Qxf8+'],
+  ],
+  [
+    'WAC.014',
+    'r2rb1k1/pp1q1p1p/2n1p1p1/2bp4/5P2/PP1BPR1Q/1BPN2PP/R5K1 w - - 0 1',
+    ['Qxh7+'],
+  ],
+  [
+    'WAC.015',
+    '1R6/1brk2p1/4p2p/p1P1Pp2/P7/6P1/1P4P1/2R3K1 w - - 0 1',
+    ['Rxb7'],
+  ],
+  [
+    'WAC.016',
+    'r4rk1/ppp2ppp/2n5/2bqp3/8/P2PB3/1PP1NPPP/R2Q1RK1 w - - 0 1',
+    ['Nc3'],
+  ],
+  [
+    'WAC.017',
+    '1k5r/pppbn1pp/4q1r1/1P3p2/2NPp3/1QP5/P4PPP/R1B1R1K1 w - - 0 1',
+    ['Ne5'],
+  ],
+  ['WAC.018', 'R7/P4k2/8/8/8/8/r7/6K1 w - - 0 1', ['Rh8']],
+  [
+    'WAC.019',
+    'r1b2rk1/ppbn1ppp/4p3/1QP4q/3P4/N4N2/5PPP/R1B2RK1 w - - 0 1',
+    ['c6'],
+  ],
+  [
+    'WAC.020',
+    'r2qkb1r/1ppb1ppp/p7/4p3/P1Q1P3/2P5/5PPP/R1B2KNR b kq - 0 1',
+    ['Bb5'],
+  ],
+];

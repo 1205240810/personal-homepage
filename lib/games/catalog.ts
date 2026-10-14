@@ -233,7 +233,7 @@ export const GAMES: readonly GameDefinition[] = [
     id: 'chess',
     title: '国际象棋',
     description:
-      '完整规则：王车易位、吃过路兵、升变、三次重复与五十回合判和。五档 AI 在后台线程用 alpha-beta 迭代加深思考；还有 9 道经典杀局和 2 个基本残局练习。',
+      '十档 AI 对弈，支持王车易位、吃过路兵、升变与和棋判定。28 道杀局和战术题附中文解析，走错后可查看对手的反击；另有 2 个基本残局练习。',
     href: '/games/chess',
     category: '棋类对弈',
     controls: '点子再点目标格；键盘方向键移动焦点、回车落子',
