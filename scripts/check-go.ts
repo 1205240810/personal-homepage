@@ -328,7 +328,7 @@ void test('新死活题：解析齐全，正解在加深 4 层后不变，每个
       refutations++;
     }
   }
-  assert.ok(GO_PROBLEMS.length >= 22, `题数 ${GO_PROBLEMS.length}`);
+  assert.ok(GO_PROBLEMS.length >= 29, `题数 ${GO_PROBLEMS.length}`);
   assert.ok(refutations >= 50, `反击数 ${refutations}`);
   const seki = GO_PROBLEMS.find((p) => p.id === 'seki-pass')!;
   assert.deepEqual(correctMoves(setup(seki)), [-1]);
