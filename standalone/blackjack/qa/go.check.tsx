@@ -380,3 +380,101 @@ it('已经能活的直四允许虚手保留眼位', () => {
   expect(screen.getByText(/活了！/)).toBeTruthy();
   expect(screen.getByText(/活了！/).textContent).toMatch(/限定区域/);
 });
+
+describe('围棋形势判断与 AI 认输', () => {
+  beforeEach(() => {
+    TestWorker.instances = [];
+    vi.stubGlobal('Worker', TestWorker);
+  });
+  const judgeWorker = () =>
+    workers().findLast((w) => w.message?.type === 'judge')!;
+  const startAs = (level: string) => {
+    fireEvent.change(screen.getByLabelText('难度（下局生效）'), {
+      target: { value: level },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+  };
+  /** Human plays row 0/1 from the left, AI (white) the bottom rows. */
+  const playRounds = async (
+    rounds: number,
+    ai: (i: number) => { winrate: number; lead?: number },
+  ) => {
+    for (let i = 0; i < rounds; i++) {
+      fireEvent.click(pt(i));
+      const w = workers().findLast((x) => x.message?.type === 'move')!;
+      await reply(w, { move: 80 - i, playouts: 1, ...ai(i) });
+    }
+  };
+
+  it('形势判断：开关后请求判断，显示胜率目差和归属图，关闭后淡出', async () => {
+    render(<GoGame />);
+    startAs('2');
+    fireEvent.click(screen.getByRole('button', { name: /形势判断/ }));
+    expect(screen.getByText(/形势判断计算中/)).toBeTruthy();
+    const own = Array.from({ length: 81 }, (_, p) =>
+      p % 9 < 4 ? 0.9 : p % 9 > 4 ? -0.6 : 0,
+    );
+    await reply(judgeWorker(), {
+      blackWinrate: 0.62,
+      lead: 4.5,
+      ownership: own,
+      playouts: 100,
+    });
+    expect(
+      screen.getByText(/黑胜率 62%，黑约领先 4.5 目.*黑 36 点 · 白 36 点/),
+    ).toBeTruthy();
+    expect(document.querySelectorAll('.go-own.is-black').length).toBe(36);
+    expect(document.querySelectorAll('.go-own.is-white').length).toBe(36);
+    expect(document.querySelector('.go-board.is-judging')).toBeTruthy();
+    // A new move invalidates the overlay until the AI has replied.
+    fireEvent.click(pt(40));
+    expect(document.querySelectorAll('.go-own').length).toBe(0);
+    expect(screen.getByText(/等 AI 落子后再判断/)).toBeTruthy();
+    const moveWorker = workers().findLast((x) => x.message?.type === 'move')!;
+    await reply(moveWorker, { move: 30, winrate: 0.4, playouts: 1 });
+    expect(judgeWorker().message!.state.board[30]).toBe(2);
+    fireEvent.click(screen.getByRole('button', { name: /形势判断/ }));
+    expect(document.querySelector('.go-board.is-judging')).toBeNull();
+    expect(screen.queryByText(/形势判断计算中/)).toBeNull();
+  });
+
+  it('AI 认输：开局再差也不认输，大势已去时认输并显示估计', async () => {
+    render(<GoGame />);
+    startAs('8');
+    await playRounds(16, () => ({ winrate: 0.01, lead: 40 }));
+    expect(screen.queryByText(/AI 认输/)).toBeNull();
+    fireEvent.click(pt(16));
+    const w = workers().findLast((x) => x.message?.type === 'move')!;
+    await reply(w, { move: 64, winrate: 0.02, lead: 40, playouts: 1 });
+    expect(
+      screen.getAllByText(/AI 认输：估计胜率 2%，落后约 40 目.*你赢了/),
+    ).toBeTruthy();
+    expect(
+      JSON.parse(localStorage.getItem(GO_RECORDS_KEY)!).games['9-8'].won,
+    ).toBe(1);
+  });
+
+  it('AI 认输：关闭自动认输或入门档时继续下', async () => {
+    render(<GoGame />);
+    startAs('8');
+    fireEvent.click(screen.getByLabelText('AI 自动认输'));
+    await playRounds(18, () => ({ winrate: 0.01, lead: 40 }));
+    expect(screen.queryByText(/AI 认输/)).toBeNull();
+    cleanup();
+    render(<GoGame />);
+    startAs('1');
+    await playRounds(18, () => ({ winrate: 0.01, lead: 40 }));
+    expect(screen.queryByText(/AI 认输/)).toBeNull();
+    expect(screen.getByText(/轮到你/)).toBeTruthy();
+  });
+
+  it('胜率走势：AI 每手后记录，悔棋同步回退', async () => {
+    render(<GoGame />);
+    startAs('2');
+    fireEvent.click(screen.getByRole('button', { name: /形势判断/ }));
+    await playRounds(3, (i) => ({ winrate: 0.5 - i * 0.1 }));
+    expect(screen.getByRole('img', { name: /最近 70%/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(screen.getByRole('img', { name: /最近 60%/ })).toBeTruthy();
+  });
+});
