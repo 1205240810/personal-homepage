@@ -716,7 +716,7 @@ function ChessPreview() {
         ))}
       </div>
       <div className="room-preview-bottom">
-        <span>5 LEVELS / 11 ENDGAMES</span>
+        <span>10 LEVELS / 28 PUZZLES + 2</span>
         <span>后台线程思考</span>
       </div>
     </div>
