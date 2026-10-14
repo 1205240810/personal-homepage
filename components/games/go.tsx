@@ -1,6 +1,19 @@
 'use client';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Flag, Hand, Lightbulb, RotateCcw, Undo2 } from 'lucide-react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
+import {
+  BookOpen,
+  Flag,
+  Hand,
+  Lightbulb,
+  RotateCcw,
+  Undo2,
+} from 'lucide-react';
 import {
   BLACK,
   EMPTY,
@@ -25,6 +38,7 @@ import {
 import {
   GO_LEVELS,
   chooseGoMove,
+  resetGoTree,
   type GoAiResult,
   type GoLevel,
 } from '@/lib/games/go-ai';
@@ -49,14 +63,24 @@ const wire = (s: GoState) => ({ ...s, board: Array.from(s.board) });
 
 function useGoAi() {
   const requests = useRef(new Set<() => void>());
+  /** The move worker stays alive between moves so the search tree can be reused. */
+  const keptWorker = useRef<Worker | null>(null);
   const [compatibility, setCompatibility] = useState(false);
   useEffect(() => {
     const pending = requests.current;
+    const kept = keptWorker;
     return () => {
       for (const cancel of pending) cancel();
+      kept.current?.terminate();
+      kept.current = null;
     };
   }, []);
-  function send<T>(msg: object, fallback: () => T | null, timeoutMs: number) {
+  function send<T>(
+    msg: object,
+    fallback: () => T | null,
+    timeoutMs: number,
+    keep = false,
+  ) {
     let worker: Worker | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let watchdog: ReturnType<typeof setTimeout> | undefined;
@@ -68,7 +92,10 @@ function useGoAi() {
       finish = (result) => {
         if (done) return;
         done = true;
-        worker?.terminate();
+        if (keep && result !== null && worker) {
+          worker.onmessage = null;
+          keptWorker.current = worker;
+        } else worker?.terminate();
         clearTimeout(timer);
         clearTimeout(watchdog);
         pending.delete(cancel);
@@ -91,7 +118,11 @@ function useGoAi() {
       };
       pending.add(cancel);
       try {
-        worker = new Worker(goWorkerUrl, { type: 'module' });
+        worker =
+          keep && keptWorker.current
+            ? keptWorker.current
+            : new Worker(goWorkerUrl, { type: 'module' });
+        if (keep) keptWorker.current = null;
         worker.onmessage = (
           e: MessageEvent<{ result?: T; error?: string }>,
         ) => {
@@ -117,11 +148,18 @@ function useGoAi() {
   }
   return {
     compatibility,
+    reset: () => {
+      keptWorker.current?.terminate();
+      keptWorker.current = null;
+      // Compatibility searches run in this realm and keep their own tree too.
+      resetGoTree();
+    },
     move: (s: GoState, komi: number, level: GoLevel) =>
       send<GoAiResult & { fallback?: true }>(
         { type: 'move', state: wire(s), komi, level },
         () => ({ ...chooseGoMove(s, komi, 1), fallback: true }),
         GO_LEVELS[level].timeMs + 5000,
+        true,
       ),
     dead: (s: GoState) =>
       send<number[]>({ type: 'dead', state: wire(s) }, () => null, 5000),
@@ -156,6 +194,9 @@ export function GoGame() {
   const [problemState, setProblemState] = useState<
     'solving' | 'solved' | 'failed'
   >('solving');
+  const [showExplain, setShowExplain] = useState(false);
+  /** Why the last wrong move fails (shown with the refutation on the board). */
+  const [refuted, setRefuted] = useState('');
   const boardRef = useRef<HTMLFieldSetElement>(null);
   const aiRef = useRef(ai);
   useEffect(() => {
@@ -165,7 +206,11 @@ export function GoGame() {
   const state = history[history.length - 1];
   const n = state.size;
   const problem = mode.kind === 'problem' ? GO_PROBLEMS[mode.index] : null;
-  const su: ProblemSetup | null = problem ? setup(problem) : null;
+  const su: ProblemSetup | null = useMemo(
+    () => (problem ? setup(problem) : null),
+    [problem],
+  );
+  const correctKeys = useMemo(() => (su ? correctMoves(su) : []), [su]);
   const aiToMove =
     mode.kind === 'game' && phase === 'play' && state.toPlay !== human;
   const gameKey = `${n}-${matchLevel}`;
@@ -197,11 +242,14 @@ export function GoGame() {
   }, [phase, state]);
 
   function newMatch(as: Player = human, sz: GoSize = size, hc = handicap) {
+    ai.reset();
     hc = Math.min(hc, sz === 9 ? 5 : 9);
     const g = newGame(sz, hc);
     setHandicap(hc);
     setMatchLevel(level);
     setProblemState('solving');
+    setShowExplain(false);
+    setRefuted('');
     setMode({ kind: 'game' });
     setHistory([g]);
     setHuman(as);
@@ -218,6 +266,7 @@ export function GoGame() {
     setAnnounce(`新对局：${sz} 路，你执${NAME[as]}，${GO_LEVELS[level].name}`);
   }
   function openProblem(i: number) {
+    ai.reset();
     const p = GO_PROBLEMS[i];
     const s = setup(p);
     setMode({ kind: 'problem', index: i });
@@ -226,8 +275,10 @@ export function GoGame() {
     setDead(new Set());
     setResult('');
     setProblemState('solving');
+    setShowExplain(false);
+    setRefuted('');
     setMessage(
-      `${p.kind === 'live' ? '黑先活' : p.kind === 'kill' ? '黑先杀' : '黑先吃'}。${p.note}（只在标出的区域落子）`,
+      `${p.koGoal ? '黑先造劫' : p.kind === 'live' ? '黑先活' : p.kind === 'kill' ? '黑先杀' : '黑先吃'}。${p.note}（只在标出的区域落子）`,
     );
     setFocus(s.region[0] ?? 0);
     setAnnounce(`死活题：${p.name}`);
@@ -261,6 +312,10 @@ export function GoGame() {
       setMessage('这道题只在标出的区域里下。');
       return;
     }
+    if (p < 0 && !problem!.passOk) {
+      setMessage('这道题需要落子，虚手的话白棋会抢先占到要点。');
+      return;
+    }
     const r = play(state, p);
     if (!r.ok) {
       setMessage(r.reason);
@@ -268,7 +323,10 @@ export function GoGame() {
     }
     const plies = state.moves.length;
     const depth = s.depth - plies - 1;
-    const good = playerWinning(s, r.state, Math.max(1, depth));
+    const good =
+      plies === 0
+        ? correctKeys.includes(p)
+        : playerWinning(s, r.state, Math.max(1, depth));
     const reply = whiteReply(
       s,
       r.state,
@@ -276,12 +334,20 @@ export function GoGame() {
       lineMove(plies + 1),
     );
     if (!good) {
-      const after = play(r.state, reply);
+      // A verified refutation for this first move, if the problem has one.
+      const w =
+        plies === 0
+          ? problem!.wrong?.find((x) => x.at[1] * n + x.at[0] === p)
+          : undefined;
+      const answer = w ? w.line[0][1] * n + w.line[0][0] : reply;
+      const after = play(r.state, answer);
       setHistory([...history, r.state, ...(after.ok ? [after.state] : [])]);
       setProblemState('failed');
-      setMessage(
-        `不对。白 ${coordName(n, reply)} 应对后，${problem!.kind === 'live' ? '黑棋活不了' : '白棋就安全了'}。点「重来」再试。`,
+      setRefuted(
+        w?.why ??
+          `白 ${coordName(n, answer)} 应对后，${problem!.kind === 'live' ? '黑棋活不了' : '白棋就安全了'}。`,
       );
+      setMessage('不对。点「悔棋」或「重来」再试，也可以看解析。');
       setAnnounce('答错了');
       return;
     }
@@ -289,10 +355,13 @@ export function GoGame() {
     if (captured || problem!.kind === 'live') {
       setHistory([...history, r.state]);
       setProblemState('solved');
+      setShowExplain(true);
       setMessage(
-        problem!.kind === 'live'
-          ? '活了！白怎么下都吃不掉。'
-          : '提掉了！正解。',
+        problem!.koGoal
+          ? '形成劫争！能否做活还要看劫材与后续应对。'
+          : problem!.kind === 'live'
+            ? '活了！在本题限定区域内可以保住黑棋。'
+            : '提掉了！正解。',
       );
       saveRecords(recordProblem(records, problem!.id));
       setAnnounce('答对了');
@@ -320,6 +389,10 @@ export function GoGame() {
         ? preferred
         : options[0];
     if (m === undefined) return;
+    if (m < 0) {
+      setMessage('提示：这时候最好的应对是不动——点「虚手」。');
+      return;
+    }
     setFocus(m);
     boardRef.current
       ?.querySelector<HTMLButtonElement>(`[data-pt="${m}"]`)
@@ -329,6 +402,7 @@ export function GoGame() {
 
   function undo() {
     if (history.length < 2 || phase === 'over') return;
+    ai.reset();
     let k = history.length - 1;
     // Undo the opponent's reply as well, including in problem mode.
     const player = mode.kind === 'game' ? human : BLACK;
@@ -338,10 +412,12 @@ export function GoGame() {
     setDead(new Set());
     setResult('');
     setProblemState('solving');
+    setRefuted('');
     setMessage('');
   }
 
   function humanPass() {
+    if (problem && su) return problemPlay(-1, su);
     if (phase !== 'play' || mode.kind !== 'game' || state.toPlay !== human)
       return;
     const r = play(state, -1);
@@ -352,12 +428,14 @@ export function GoGame() {
   }
   function resign() {
     if (phase !== 'play' || mode.kind !== 'game') return;
+    ai.reset();
     setPhase('over');
     setResult(`你认输了，${NAME[other(human)]}方胜。`);
     saveRecords(recordGoGame(records, gameKey, false));
   }
   function confirmScore() {
     if (phase !== 'scoring' || estimating) return;
+    ai.reset();
     const sc = score(state, komi, dead);
     const won = sc.winner === human;
     setPhase('over');
@@ -403,6 +481,7 @@ export function GoGame() {
       const now = latest.current;
       if (r.fallback) setMatchLevel(1);
       if (r.move === -2) {
+        aiRef.current.reset();
         setPhase('over');
         setResult('AI 认输，你赢了！');
         now.saveRecords(recordGoGame(now.records, now.gameKey, true));
@@ -594,6 +673,20 @@ export function GoGame() {
             </button>
             <button
               type="button"
+              onClick={humanPass}
+              disabled={problemState !== 'solving'}
+            >
+              <Hand size={15} aria-hidden="true" /> 虚手
+            </button>
+            <button
+              type="button"
+              aria-expanded={showExplain}
+              onClick={() => setShowExplain(!showExplain)}
+            >
+              <BookOpen size={15} aria-hidden="true" /> 解析
+            </button>
+            <button
+              type="button"
               onClick={() =>
                 openProblem(mode.kind === 'problem' ? mode.index : 0)
               }
@@ -626,6 +719,36 @@ export function GoGame() {
         )}
       </div>
       {message && <p className="kit-brief">{message}</p>}
+      {refuted && (
+        <output className="go-refute">
+          <strong>为什么不行：</strong>
+          {refuted}
+        </output>
+      )}
+      {problem && showExplain && (
+        <div className="go-explain">
+          <p>
+            <strong>解析：</strong>
+            {problem.explain}
+          </p>
+          {problem.line.length > 0 && (
+            <p>
+              主线：
+              {problem.line
+                .map(
+                  ([x, y], i) =>
+                    `${i % 2 ? '白' : '黑'}${x < 0 ? '虚手' : coordName(n, y * n + x)}`,
+                )
+                .join('、')}
+              {correctKeys.length > 1 &&
+                `（同样正确的首手：${correctKeys
+                  .filter((k) => k !== lineMove(0))
+                  .map((k) => (k < 0 ? '虚手' : coordName(n, k)))
+                  .join('、')}）`}
+            </p>
+          )}
+        </div>
+      )}
       {ai.compatibility && (
         <p className="kit-help">
           后台计算暂不可用，已切换入门强度兼容计算；数子时请手工标记死子。
@@ -696,7 +819,8 @@ export function GoGame() {
         棋盘、难度和让子在重新开局后生效。点交叉点落子；键盘用方向键移动、回车落子。中国规则数子（子
         + 围住的空），提子、禁止自杀、劫（不能立即提回）。
         双方连续虚手后进入数子：AI 先估计死子，你可以点棋块修改再确认。AI
-        用蒙特卡洛树搜索在后台线程思考，9 路最强，13/19 路明显变弱。
+        用蒙特卡洛树搜索（RAVE + 3×3 棋形模拟 +
+        搜索树复用）在后台线程思考，共十档；9 路最强，13/19 路明显变弱。
       </p>
       <p className="kit-sr" aria-live="polite">
         {announce}

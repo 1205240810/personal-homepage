@@ -143,3 +143,23 @@ html[data-theme='tech'] .go-stone.is-white {
   );
   box-shadow: 0 0 8px rgb(103 232 249 / 0.45);
 }
+
+.go .go-refute,
+.go .go-explain {
+  margin: 0.5rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  line-height: 1.6;
+}
+.go .go-refute {
+  display: block;
+  border-left: 3px solid #c0392b;
+  background: color-mix(in srgb, #c0392b 9%, transparent);
+}
+.go .go-explain {
+  border-left: 3px solid #2e8b57;
+  background: color-mix(in srgb, #2e8b57 9%, transparent);
+}
+.go .go-explain p {
+  margin: 0.2rem 0;
+}

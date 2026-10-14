@@ -44,7 +44,10 @@ describe('围棋', () => {
     fireEvent.click(pt(40));
     expect(screen.getByText(/只在标出的区域/)).toBeTruthy();
     fireEvent.click(pt(0));
-    expect(screen.getByText(/不对。白 B9 应对后，黑棋活不了/)).toBeTruthy();
+    expect(screen.getByText(/不对。/)).toBeTruthy();
+    expect(screen.getByText(/为什么不行/).parentElement!.textContent).toMatch(
+      /自己的眼位.*白 B9/,
+    );
     fireEvent.click(screen.getByRole('button', { name: /重来/ }));
     fireEvent.click(pt(1));
     expect(screen.getByText(/活了！/)).toBeTruthy();
@@ -128,6 +131,67 @@ describe('围棋的对局隔离与数子', () => {
     await reply(current, move(84));
     expect(pt(84).getAttribute('aria-label')).toContain('黑子');
     expect(document.querySelectorAll('.go-stone')).toHaveLength(1);
+  });
+
+  it('同一局复用空闲 Worker，重新开局和换难度清空旧搜索树', async () => {
+    const view = render(<GoGame />);
+    fireEvent.click(pt(40));
+    const first = workers().at(-1)!;
+    await reply(first, move(30));
+    expect(first.terminated).toBe(false);
+    fireEvent.click(pt(50));
+    expect(workers()).toHaveLength(1);
+    expect(first.message!.state.board[50]).toBe(1);
+    await reply(first, move(31));
+    fireEvent.change(screen.getByLabelText('难度（下局生效）'), {
+      target: { value: '10' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    const fresh = workers().at(-1)!;
+    expect(first.terminated).toBe(true);
+    expect(fresh).not.toBe(first);
+    expect(fresh.message!.level).toBe(10);
+    expect(fresh.message!.state.board.every((x) => x === 0)).toBe(true);
+    await reply(fresh, move(40));
+    view.unmount();
+    expect(fresh.terminated).toBe(true);
+  });
+
+  it('切题和悔棋释放空闲搜索树，错题说明不会残留到新对局', async () => {
+    render(<GoGame />);
+    fireEvent.click(pt(40));
+    const first = workers().at(-1)!;
+    await reply(first, move(30));
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(first.terminated).toBe(true);
+    fireEvent.click(pt(50));
+    const second = workers().at(-1)!;
+    await reply(second, move(30));
+    openProblem('straight-three-live');
+    expect(second.terminated).toBe(true);
+    fireEvent.click(pt(0));
+    expect(screen.getByText(/为什么不行/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('模式'), {
+      target: { value: '' },
+    });
+    expect(screen.queryByText(/为什么不行/)).toBeNull();
+  });
+
+  it('十档的八秒搜索不会被旧超时提前终止', async () => {
+    vi.useFakeTimers();
+    render(<GoGame />);
+    fireEvent.change(screen.getByLabelText('难度（下局生效）'), {
+      target: { value: '10' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    const worker = workers().at(-1)!;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12000);
+    });
+    expect(worker.terminated).toBe(false);
+    expect(screen.getByText(/AI 思考中/)).toBeTruthy();
+    await reply(worker, move(40));
+    expect(screen.getByText(/轮到你/)).toBeTruthy();
   });
 
   it('估计死子期间禁止提前结算，离开数子会取消旧估计', async () => {
@@ -231,6 +295,31 @@ describe('围棋的对局隔离与数子', () => {
   });
 });
 
+it('双活题：虚手才是正解；乱紧公气会被提，解析可展开', () => {
+  render(<GoGame />);
+  openProblem('seki-pass');
+  fireEvent.click(pt(0));
+  expect(screen.getByText(/为什么不行/).parentElement!.textContent).toMatch(
+    /紧掉了自己的气/,
+  );
+  fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+  expect(screen.queryByText(/为什么不行/)).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
+  expect(screen.getByText(/活了！/)).toBeTruthy();
+  expect(screen.getByText(/解析：/).parentElement!.textContent).toMatch(/双活/);
+});
+
+it('非双活题不能虚手；解析按钮展开要点', () => {
+  render(<GoGame />);
+  openProblem('plum-five-kill');
+  fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
+  expect(screen.getByText(/需要落子/)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: /解析/ }));
+  expect(screen.getByText(/解析：/).parentElement!.textContent).toMatch(
+    /梅花五/,
+  );
+});
+
 it('接不归的另一条正确线路仍会提示当前可落的正解', () => {
   render(<GoGame />);
   openProblem('cut-no-return');
@@ -257,7 +346,7 @@ it('后台无响应时限时回退，数子无响应时可改用手工标记', a
   expect(stalled.terminated).toBe(true);
   expect(screen.getByText(/轮到你/)).toBeTruthy();
   expect(screen.getByText(/已切换入门强度兼容计算/)).toBeTruthy();
-  expect(screen.getByText(/GO · 9 路 · 入门 · 执白/)).toBeTruthy();
+  expect(screen.getByText(/GO · 9 路 · 1 · 刚学规则 · 执白/)).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
   await reply(workers().at(-1)!, move(-1));
   const dead = workers().at(-1)!;
@@ -270,4 +359,24 @@ it('后台无响应时限时回退，数子无响应时可改用手工标记', a
     (screen.getByRole('button', { name: '确认结算' }) as HTMLButtonElement)
       .disabled,
   ).toBe(false);
+});
+
+it('打劫题完成造劫目标，不宣称已经无条件做活', () => {
+  render(<GoGame />);
+  openProblem('ko-live');
+  fireEvent.click(pt(4));
+  expect(screen.getByText(/形成劫争！/)).toBeTruthy();
+  expect(screen.queryByText(/活了！/)).toBeNull();
+  expect(screen.getByText(/形成劫争！/).textContent).toMatch(/劫材/);
+  expect(JSON.parse(localStorage.getItem(GO_RECORDS_KEY)!).problems).toContain(
+    'ko-live',
+  );
+});
+
+it('已经能活的直四允许虚手保留眼位', () => {
+  render(<GoGame />);
+  openProblem('straight-four-fill');
+  fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
+  expect(screen.getByText(/活了！/)).toBeTruthy();
+  expect(screen.getByText(/活了！/).textContent).toMatch(/限定区域/);
 });
