@@ -360,3 +360,23 @@ it('后台无响应时限时回退，数子无响应时可改用手工标记', a
       .disabled,
   ).toBe(false);
 });
+
+it('打劫题完成造劫目标，不宣称已经无条件做活', () => {
+  render(<GoGame />);
+  openProblem('ko-live');
+  fireEvent.click(pt(4));
+  expect(screen.getByText(/形成劫争！/)).toBeTruthy();
+  expect(screen.queryByText(/活了！/)).toBeNull();
+  expect(screen.getByText(/形成劫争！/).textContent).toMatch(/劫材/);
+  expect(JSON.parse(localStorage.getItem(GO_RECORDS_KEY)!).problems).toContain(
+    'ko-live',
+  );
+});
+
+it('已经能活的直四允许虚手保留眼位', () => {
+  render(<GoGame />);
+  openProblem('straight-four-fill');
+  fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
+  expect(screen.getByText(/活了！/)).toBeTruthy();
+  expect(screen.getByText(/活了！/).textContent).toMatch(/限定区域/);
+});

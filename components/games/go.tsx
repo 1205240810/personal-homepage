@@ -278,7 +278,7 @@ export function GoGame() {
     setShowExplain(false);
     setRefuted('');
     setMessage(
-      `${p.kind === 'live' ? '黑先活' : p.kind === 'kill' ? '黑先杀' : '黑先吃'}。${p.note}（只在标出的区域落子）`,
+      `${p.koGoal ? '黑先造劫' : p.kind === 'live' ? '黑先活' : p.kind === 'kill' ? '黑先杀' : '黑先吃'}。${p.note}（只在标出的区域落子）`,
     );
     setFocus(s.region[0] ?? 0);
     setAnnounce(`死活题：${p.name}`);
@@ -357,9 +357,11 @@ export function GoGame() {
       setProblemState('solved');
       setShowExplain(true);
       setMessage(
-        problem!.kind === 'live'
-          ? '活了！白怎么下都吃不掉。'
-          : '提掉了！正解。',
+        problem!.koGoal
+          ? '形成劫争！能否做活还要看劫材与后续应对。'
+          : problem!.kind === 'live'
+            ? '活了！在本题限定区域内可以保住黑棋。'
+            : '提掉了！正解。',
       );
       saveRecords(recordProblem(records, problem!.id));
       setAnnounce('答对了');

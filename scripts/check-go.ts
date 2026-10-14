@@ -24,6 +24,7 @@ import {
   chooseGoMove,
   guessDead,
   resetGoTree,
+  type GoLevel,
 } from '../lib/games/go-ai.ts';
 import {
   GO_PROBLEMS,
@@ -351,6 +352,30 @@ void test('死子估计：被围死的孤子判为死子', () => {
   const dead = guessDead(s, 120, rng(11));
   assert.ok(dead.includes(at(s, 4, 2)));
   assert.ok(!dead.includes(at(s, 0, 0)));
+});
+
+void test('AI：三种棋盘十档均遵守模拟时限，不修改输入，复用树仍遵守新劫点', () => {
+  for (const size of [9, 13, 19]) {
+    for (let l = 1; l <= 10; l++) {
+      const level = l as GoLevel;
+      resetGoTree();
+      const s = newGame(size);
+      const snapshot = JSON.stringify(s);
+      let time = 0;
+      const clock = () => (time += GO_LEVELS[level].timeMs / 80);
+      const r = chooseGoMove(s, 7.5, level, rng(size * 11 + l), clock);
+      assert.ok(r.move === -2 || play(s, r.move).ok);
+      assert.ok(r.playouts <= 80, `${size}路${level}档超出时限`);
+      assert.equal(JSON.stringify(s), snapshot, '搜索改变了输入局面');
+      if (r.move >= 0) {
+        const koState = { ...s, ko: r.move };
+        const next = chooseGoMove(koState, 7.5, level, rng(l + 71), clock);
+        assert.notEqual(next.move, r.move, '复用树忽略了新劫点');
+        assert.ok(next.move === -2 || play(koState, next.move).ok);
+      }
+    }
+  }
+  resetGoTree();
 });
 
 void test('本机记录', () => {
