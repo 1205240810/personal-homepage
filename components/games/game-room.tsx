@@ -750,7 +750,7 @@ function GoPreview() {
         ))}
       </div>
       <div className="room-preview-bottom">
-        <span>TSUMEGO × 7</span>
+        <span>TSUMEGO × 29</span>
         <span>点眼、做活、接不归</span>
       </div>
     </div>
