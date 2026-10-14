@@ -44,7 +44,10 @@ describe('围棋', () => {
     fireEvent.click(pt(40));
     expect(screen.getByText(/只在标出的区域/)).toBeTruthy();
     fireEvent.click(pt(0));
-    expect(screen.getByText(/不对。白 B9 应对后，黑棋活不了/)).toBeTruthy();
+    expect(screen.getByText(/不对。/)).toBeTruthy();
+    expect(screen.getByText(/为什么不行/).parentElement!.textContent).toMatch(
+      /自己的眼位.*白 B9/,
+    );
     fireEvent.click(screen.getByRole('button', { name: /重来/ }));
     fireEvent.click(pt(1));
     expect(screen.getByText(/活了！/)).toBeTruthy();
@@ -231,6 +234,31 @@ describe('围棋的对局隔离与数子', () => {
   });
 });
 
+it('双活题：虚手才是正解；乱紧公气会被提，解析可展开', () => {
+  render(<GoGame />);
+  openProblem('seki-pass');
+  fireEvent.click(pt(0));
+  expect(screen.getByText(/为什么不行/).parentElement!.textContent).toMatch(
+    /紧掉了自己的气/,
+  );
+  fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+  expect(screen.queryByText(/为什么不行/)).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
+  expect(screen.getByText(/活了！/)).toBeTruthy();
+  expect(screen.getByText(/解析：/).parentElement!.textContent).toMatch(/双活/);
+});
+
+it('非双活题不能虚手；解析按钮展开要点', () => {
+  render(<GoGame />);
+  openProblem('plum-five-kill');
+  fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
+  expect(screen.getByText(/需要落子/)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: /解析/ }));
+  expect(screen.getByText(/解析：/).parentElement!.textContent).toMatch(
+    /梅花五/,
+  );
+});
+
 it('接不归的另一条正确线路仍会提示当前可落的正解', () => {
   render(<GoGame />);
   openProblem('cut-no-return');
@@ -257,7 +285,7 @@ it('后台无响应时限时回退，数子无响应时可改用手工标记', a
   expect(stalled.terminated).toBe(true);
   expect(screen.getByText(/轮到你/)).toBeTruthy();
   expect(screen.getByText(/已切换入门强度兼容计算/)).toBeTruthy();
-  expect(screen.getByText(/GO · 9 路 · 入门 · 执白/)).toBeTruthy();
+  expect(screen.getByText(/GO · 9 路 · 1 · 刚学规则 · 执白/)).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
   await reply(workers().at(-1)!, move(-1));
   const dead = workers().at(-1)!;

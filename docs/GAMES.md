@@ -26,7 +26,7 @@
 | `/games/rulewords`      | 改写规则：推字块组成「名词 是 属性」规则的原创解谜，12 关，撤销/重来        |
 | `/games/timeloop`       | 时间回溯：录像重演的过去的自己、压力板与正/反向门，10 关，撤销/重来         |
 | `/games/chess`          | 国际象棋：完整规则、十档 Web Worker AI、悔棋/翻转/棋谱、28 道带解析与错着反击的残局            |
-| `/games/go`             | 围棋：三种棋盘、劫与禁着、数子与死子标记、四档 MCTS Worker AI、让子、死活题 |
+| `/games/go`             | 围棋：三种棋盘、劫与禁着、数子与死子标记、十档 MCTS Worker AI、让子、22 道带解析的死活题 |
 | `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲                                        |
 
 欢迎页的游戏室链接作为次要入口，保留工作台和进入机甲的选择。工作台通过主导航和侧栏通向游戏室。机甲内部的试作间设有可交互街机角；直接访问游戏页面时不需要先启动 Phaser 世界。
@@ -103,7 +103,7 @@ flowchart LR
 | `components/games/timeloop.tsx`             | 时间回溯界面：网格棋盘、过去的自己与时间条、回溯/撤销/重来、键盘/滑动/方向键                                                                               |
 | `lib/games/chess.ts`                        | 国际象棋：chess.js（BSD-2-Clause）负责规则与记谱；自写 0x88 搜索引擎（perft 校验）+ alpha-beta 迭代加深 + PST + 静态吃子搜索；杀局题库与穷举验证；本机记录 |
 | `components/games/chess.tsx`                | 国际象棋界面：按钮棋盘（键盘可走）、升变选择、棋谱、翻转、悔棋、认输、残局模式与提示；AI 在 Web Worker                                                     |
-| `lib/games/go.ts`                           | 围棋：规则（提子/禁自杀/劫/虚手）、数子与死子切换、让子星位；MCTS+RAVE AI 与蒙特卡洛死子估计；死活题有界穷举求解器与题库；本机记录                         |
+| `lib/games/go.ts`                           | 围棋：规则（提子/禁自杀/劫/虚手）、数子与死子切换、让子星位；MCTS+RAVE AI（3×3 棋形重模拟、树复用）与蒙特卡洛死子估计；死活题有界穷举求解器与题库（错着反击由 `scripts/gen-go-problems.ts` 生成）；本机记录                         |
 | `components/games/go.tsx`                   | 围棋界面：按钮棋盘（键盘可下）、虚手/认输/悔棋、数子阶段改死子、死活题提示与错着反击；AI 在 Web Worker                                                     |
 | `lib/world/registry.ts`                     | 机甲内街机节点、站位与家具定义                                                                                                                             |
 | `lib/world/arcade-cabinet.ts`               | 跟随室内透视绘制的街机纹理                                                                                                                                 |
