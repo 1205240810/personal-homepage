@@ -127,7 +127,7 @@ function build(spec: PuzzleSpec | (PuzzleSpec & { fenOnly: string })) {
       .map((m) => m.san);
   if (!keys.includes(spec.key))
     throw new Error(
-      `${spec.id}: 预期首着 ${spec.key} 不在正解 ${keys} 里（最佳 ${scored[0].san} ${scored[0].v}）`,
+      `${spec.id}: 预期首着 ${spec.key} 不在正解 ${keys.join('、')} 里（最佳 ${scored[0].san} ${scored[0].v}）`,
     );
   const keyScore = scored.find((m) => m.san === spec.key)!.v;
   // Main line: key, best defence, then best continuation (up to mate / 5 plies).

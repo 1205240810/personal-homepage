@@ -9,6 +9,7 @@ import {
   isMateScore,
   evaluate,
   mateKeys,
+  searchBest,
 } from '../lib/games/chess-ai.ts';
 import {
   ALL_PUZZLES,
@@ -298,4 +299,58 @@ void test('搜索引擎与规则库在连续随机对局中一致，撤销恢复
       c.move(legal[rand() % legal.length]);
     }
   }
+});
+
+void test('搜索地平线正确评估逼和；终局搜索返回空着法', () => {
+  const fen = '7k/5Q2/6K1/8/8/8/8/8 w - - 0 1';
+  const result = searchBest(fen, {
+    maxDepth: 1,
+    timeMs: 1e9,
+    rootScores: true,
+    fresh: true,
+  });
+  let stalemates = 0;
+  for (const { m, v } of result.scored) {
+    const c = new Chess(fen);
+    c.move(result.engine.moveKey(m));
+    if (c.isStalemate()) {
+      assert.equal(Math.abs(v), 0);
+      stalemates++;
+    }
+    if (c.isCheckmate()) assert.ok(isMateScore(v) && v > 0);
+  }
+  assert.ok(stalemates > 0);
+  assert.deepEqual(
+    searchBest('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1', { maxDepth: 4, timeMs: 10 })
+      .scored,
+    [],
+  );
+});
+
+void test('Zobrist 增量哈希匹配规则库 FEN，忽略不能合法吃过路兵的标记', () => {
+  let seed = 3081;
+  for (let trial = 0; trial < 5; trial++) {
+    const c = new Chess();
+    const e = new Engine(c.fen());
+    for (let ply = 0; ply < 120 && !c.isGameOver(); ply++) {
+      const legal = c.moves({ verbose: true });
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      const next = legal[seed % legal.length];
+      const m = e.gen().find((m) => e.moveKey(m) === next.lan)!;
+      assert.ok(e.make(m));
+      c.move(next);
+      const fresh = new Engine(c.fen());
+      assert.deepEqual([e.hlo, e.hhi], [fresh.hlo, fresh.hhi], c.fen());
+      const hash = [e.hlo, e.hhi];
+      e.rehash();
+      assert.deepEqual([e.hlo, e.hhi], hash, c.fen());
+      e.makeNull();
+      e.rehash();
+      e.unmakeNull();
+      assert.deepEqual([e.hlo, e.hhi], hash);
+    }
+  }
+  const pinned = new Engine('4r1k1/8/8/3pP3/8/8/8/4K3 w - d6 0 1');
+  const noEp = new Engine('4r1k1/8/8/3pP3/8/8/8/4K3 w - - 0 1');
+  assert.deepEqual([pinned.hlo, pinned.hhi], [noEp.hlo, noEp.hhi]);
 });

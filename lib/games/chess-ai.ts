@@ -160,28 +160,53 @@ function pickNext(moves: number[], scores: number[], i: number) {
   }
 }
 
+function hasLegalMove(e: Engine) {
+  return e.gen().some((m) => {
+    if (!e.make(m)) return false;
+    e.unmake();
+    return true;
+  });
+}
+
 function quiesce(ctx: Ctx, alpha: number, beta: number, ply: number): number {
   const e = ctx.e;
   if ((++e.nodes & 1023) === 0 && ctx.now() > ctx.deadline) ctx.stop = true;
   if (ctx.stop) return 0;
+  const inCheck = e.inCheck();
+  // Even at the horizon, a checked king must evade and a stalemate is a draw.
+  if (e.half >= 100 || e.repeated())
+    return inCheck && !hasLegalMove(e) ? -MATE + ply : 0;
   const stand = e.evaluate();
-  if (stand >= beta) return stand;
-  if (alpha < stand) alpha = stand;
-  if (ply > 40) return stand;
-  const moves = e.gen(true);
+  if (!inCheck) {
+    if (stand >= beta) return hasLegalMove(e) ? stand : 0;
+    if (alpha < stand) alpha = stand;
+  }
+  if (ply > 40) return hasLegalMove(e) ? stand : inCheck ? -MATE + ply : 0;
+  const moves = e.gen(!inCheck);
   const scores = moves.map((m) => e.captureScore(m));
+  let legal = 0;
   for (let i = 0; i < moves.length; i++) {
     pickNext(moves, scores, i);
-    // Delta pruning: even winning the captured piece (plus a margin) cannot lift alpha.
-    const gain = (scores[i] - 10000) / 10 + 50;
-    if (scores[i] < 10000 + 8000 && stand + gain + 200 < alpha) continue;
     if (!e.make(moves[i])) continue;
+    legal++;
+    // Never prune a check evasion, a checking capture, or a promotion.
+    const gain = (scores[i] - 10000) / 10 + 50;
+    if (
+      !inCheck &&
+      !e.inCheck() &&
+      !((moves[i] >> 14) & 7) &&
+      stand + gain + 200 < alpha
+    ) {
+      e.unmake();
+      continue;
+    }
     const v = -quiesce(ctx, -beta, -alpha, ply + 1);
     e.unmake();
     if (ctx.stop) return 0;
     if (v >= beta) return v;
     if (v > alpha) alpha = v;
   }
+  if (!legal && (inCheck || !hasLegalMove(e))) return inCheck ? -MATE + ply : 0;
   return alpha;
 }
 
@@ -398,6 +423,7 @@ export function searchBest(
       return ok;
     })
     .map((m) => ({ m, v: 0 }));
+  if (!scored.length) return { scored, depth: 0, nodes: e.nodes, engine: e };
   scored.sort((a, b) => e.captureScore(b.m) - e.captureScore(a.m));
   let doneDepth = 0;
   let prev = 0;

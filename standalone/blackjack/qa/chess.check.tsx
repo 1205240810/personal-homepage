@@ -88,6 +88,42 @@ describe('国际象棋', () => {
     ).toContain('petrov');
   });
 
+  it('解出后悔棋可以重新作答，错着反击后须先悔棋', () => {
+    render(<ChessGame />);
+    openPuzzle('back-rank');
+    move('d1', 'd8');
+    expect(screen.getAllByText(/将死/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(screen.getByRole('button', { name: /提示/ })).toBeTruthy();
+    move('d1', 'd8');
+    expect(screen.getAllByText(/将死/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /重来/ }));
+    move('d1', 'd7');
+    const before = screen.getByLabelText('棋谱').textContent;
+    move('d7', 'd8');
+    expect(screen.getByLabelText('棋谱').textContent).toBe(before);
+  });
+
+  it('未预存的错着搜索可以取消，失败能悔棋恢复', async () => {
+    const workers = mockWorkers();
+    const view = render(<ChessGame />);
+    openPuzzle('back-rank');
+    move('f2', 'f3');
+    expect(workers).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: /重来/ }));
+    expect(workers[0].terminate).toHaveBeenCalled();
+    await act(async () => workers[0].reply('h6'));
+    expect(screen.getByLabelText('棋谱').textContent).toBe('');
+    move('f2', 'f3');
+    await act(async () => workers[1].onerror?.({ preventDefault: vi.fn() }));
+    expect(screen.getByText(/暂时无法展示反击/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(sq('f2').getAttribute('aria-label')).toMatch(/白兵/);
+    move('f2', 'f3');
+    view.unmount();
+    expect(workers[2].terminate).toHaveBeenCalled();
+  });
+
   it('对局：走 e4 后 AI 应着，悔棋回到开局；翻转棋盘', async () => {
     render(<ChessGame />);
     move('e2', 'e4');

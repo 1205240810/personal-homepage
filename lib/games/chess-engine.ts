@@ -174,12 +174,32 @@ export class Engine {
     }
     lo ^= Z_CASTLE_LO[this.castle];
     hi ^= Z_CASTLE_HI[this.castle];
-    if (this.ep >= 0) {
-      lo ^= Z_EP_LO[this.ep & 7];
-      hi ^= Z_EP_HI[this.ep & 7];
+    const epFile = this.hashEpFile();
+    if (epFile >= 0) {
+      lo ^= Z_EP_LO[epFile];
+      hi ^= Z_EP_HI[epFile];
     }
     this.hlo = lo;
     this.hhi = hi;
+  }
+  /** Only a legal en-passant capture changes the position's repetition identity. */
+  private hashEpFile() {
+    if (this.ep < 0) return -1;
+    const side = this.ep >> 4 === 2 ? 1 : -1;
+    const captured = this.ep + side * 16;
+    if (this.b[captured] !== -side * P || this.b[this.ep]) return -1;
+    for (const from of [captured - 1, captured + 1]) {
+      if (from & 0x88 || this.b[from] !== side * P) continue;
+      this.b[from] = 0;
+      this.b[captured] = 0;
+      this.b[this.ep] = side * P;
+      const legal = !this.inCheck(side);
+      this.b[from] = side * P;
+      this.b[captured] = -side * P;
+      this.b[this.ep] = 0;
+      if (legal) return this.ep & 7;
+    }
+    return -1;
   }
   private zp(p: number, s: number) {
     this.hlo ^= Z_PIECE_LO[(p + 6) * 128 + s];
@@ -188,9 +208,10 @@ export class Engine {
   private zstate() {
     this.hlo ^= Z_CASTLE_LO[this.castle];
     this.hhi ^= Z_CASTLE_HI[this.castle];
-    if (this.ep >= 0) {
-      this.hlo ^= Z_EP_LO[this.ep & 7];
-      this.hhi ^= Z_EP_HI[this.ep & 7];
+    const epFile = this.hashEpFile();
+    if (epFile >= 0) {
+      this.hlo ^= Z_EP_LO[epFile];
+      this.hhi ^= Z_EP_HI[epFile];
     }
   }
   /** Pass the move (null-move pruning). */
@@ -366,13 +387,13 @@ export class Engine {
     let captured = b[to];
     let capSq = to;
     this.keys.push(this.hlo, this.hhi);
+    this.zstate();
     if (flag === 1) {
       capSq = to + (me === 1 ? 16 : -16);
       captured = b[capSq];
       b[capSq] = 0;
     }
     this.hist.push(m, captured, capSq, this.castle, this.ep, this.half);
-    this.zstate();
     if (captured) this.zp(captured, capSq);
     this.zp(piece, from);
     const placed = promo ? promo * me : piece;

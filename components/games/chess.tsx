@@ -125,6 +125,14 @@ export function ChessGame() {
   const [refuted, setRefuted] = useState('');
   const token = useRef(0);
   const counted = useRef(false);
+  const refutationRequest = useRef<ReturnType<typeof askChessAi> | null>(null);
+  useEffect(
+    () => () => {
+      token.current++;
+      refutationRequest.current?.cancel();
+    },
+    [],
+  );
   const boardRef = useRef<HTMLFieldSetElement>(null);
 
   const game = replay(startFen, moves);
@@ -195,6 +203,8 @@ export function ChessGame() {
 
   function reset(next: Mode, fen: string, as: Color) {
     token.current++;
+    refutationRequest.current?.cancel();
+    refutationRequest.current = null;
     counted.current = false;
     setGeneration((n) => n + 1);
     setAiError(false);
@@ -232,7 +242,8 @@ export function ChessGame() {
   }
 
   function tryMove(from: Square, to: Square, promotion?: string) {
-    if (end.over || resigned || turn !== player || thinking) return false;
+    if (end.over || resigned || turn !== player || thinking || refuted)
+      return false;
     const c = replay(startFen, moves);
     let mv;
     try {
@@ -244,14 +255,13 @@ export function ChessGame() {
       if (solved) return false;
       const ply = moves.length;
       const ok =
-        mv.san === puzzle.line[ply] ||
         c.isCheckmate() ||
-        (ply === 0 && puzzle.keys.includes(mv.san)) ||
-        (puzzle.kind === 'mate' &&
-          ply > 0 &&
-          mateKeys(replay(startFen, moves).fen(), puzzle.n - ply / 2).includes(
-            mv.san,
-          ));
+        (puzzle.kind === 'win'
+          ? ply === 0 && puzzle.keys.includes(mv.san)
+          : (ply === 0
+              ? puzzle.keys
+              : mateKeys(fen, puzzle.n - ply / 2)
+            ).includes(mv.san));
       setSelected(null);
       if (!ok) {
         // Play the refutation on the board so the reason is visible.
@@ -266,24 +276,36 @@ export function ChessGame() {
         const my = ++token.current;
         const after = [...moves, mv.san];
         setMoves(after);
+        setRefuted(`${mv.san} 没有达成本题目标。请悔棋或重来。`);
+        if (c.isGameOver()) {
+          setMessage(`${mv.san} 不是正解。悔棋后再想想，或者看解析。`);
+          return true;
+        }
         setMessage(`${mv.san} 不是正解，对手在想怎么反击…`);
-        if (!c.isGameOver())
-          void askChessAi(c.fen(), 7).promise.then((r) => {
-            if (token.current !== my || !r) return;
-            setMoves([...after, r.san]);
-            setRefuted(
-              `${mv.san}？对方 ${r.san} 应对之后，${puzzle.kind === 'mate' ? `已经没有 ${puzzle.n} 步内的强制将杀` : '你赢不到子力'}了。`,
-            );
-            setMessage(`${mv.san} 不是正解。悔棋后再想想，或者看解析。`);
-            setAnnounce(`${mv.san} 不对，对方 ${r.san}`);
-          });
+        const request = askChessAi(c.fen(), 7);
+        refutationRequest.current = request;
+        void request.promise.then((r) => {
+          if (token.current !== my) return;
+          refutationRequest.current = null;
+          if (!r) {
+            setMessage('暂时无法展示反击。可以悔棋重试，或查看解析。');
+            return;
+          }
+          setMoves([...after, r.san]);
+          setRefuted(
+            `${mv.san} 没有达成本题目标；对手示范应着 ${r.san}。悔棋后再试试，解析中有参考主线。`,
+          );
+          setMessage(`${mv.san} 不是正解。悔棋后再想想，或者看解析。`);
+          setAnnounce(`${mv.san} 不对，对方 ${r.san}`);
+        });
         return true;
       }
       const next = [...moves, mv.san];
       const done = c.isCheckmate() || (puzzle.kind === 'win' && ply === 0);
       if (done) {
         // Show the defender's best reply for tactic puzzles.
-        if (puzzle.kind === 'win' && puzzle.line[1]) next.push(puzzle.line[1]);
+        if (puzzle.kind === 'win' && c.moves().includes(puzzle.line[1]))
+          next.push(puzzle.line[1]);
         setSolved(true);
         setShowExplain(true);
         setMessage(
@@ -334,6 +356,9 @@ export function ChessGame() {
 
   function undo() {
     token.current++;
+    refutationRequest.current?.cancel();
+    refutationRequest.current = null;
+    setSolved(false);
     setAiError(false);
     setPromo(null);
     setSelected(null);
@@ -548,10 +573,10 @@ export function ChessGame() {
         <p className={puzzleSolved ? 'kit-ok' : 'kit-brief'}>{message}</p>
       )}
       {refuted && (
-        <p className="chess-refute" role="status">
+        <output className="chess-refute">
           <strong>为什么不行：</strong>
           {refuted}
-        </p>
+        </output>
       )}
       {puzzle && showExplain && (
         <div className="chess-explain">
