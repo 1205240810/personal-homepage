@@ -143,6 +143,104 @@ void test('死活题：唯一或已知的正解、主线回放、错着有反击
   }
 });
 
+// Independent fixed-point proof, with no search-depth cut-off and passing for
+// both players. Cycles outside the capture attractor are survival, not capture.
+function exactCaptures(su: ReturnType<typeof setup>) {
+  const key = (s: GoState) => `${s.toPlay}:${s.ko}:${s.board.join('')}`;
+  const states = [su.state];
+  const ids = new Map([[key(su.state), 0]]);
+  const parents: number[][] = [[]];
+  const remaining: number[] = [];
+  const wins: boolean[] = [];
+  for (let i = 0; i < states.length; i++) {
+    assert.ok(states.length < 10000, '局部题状态图异常增大');
+    const s = states[i];
+    wins[i] = s.board[su.target] === EMPTY;
+    remaining[i] = 0;
+    if (wins[i]) continue;
+    for (const move of [-1, ...su.region]) {
+      const r = play(s, move);
+      if (!r.ok) continue;
+      r.state.moves = [];
+      const k = key(r.state);
+      let next = ids.get(k);
+      if (next === undefined) {
+        next = states.length;
+        states.push(r.state);
+        ids.set(k, next);
+        parents.push([]);
+      }
+      parents[next].push(i);
+      remaining[i]++;
+    }
+  }
+  const queue = wins.flatMap((win, i) => (win ? [i] : []));
+  for (let head = 0; head < queue.length; head++) {
+    for (const parent of parents[queue[head]]) {
+      if (wins[parent]) continue;
+      remaining[parent]--;
+      if (states[parent].toPlay === su.attacker || remaining[parent] === 0) {
+        wins[parent] = true;
+        queue.push(parent);
+      }
+    }
+  }
+  return (s: GoState) => {
+    const id = ids.get(key(s));
+    assert.notEqual(id, undefined, '必须验证状态图内的局面');
+    return wins[id!];
+  };
+}
+
+void test('死活题：所有正解与错着通过无深度限制的全状态逆推', () => {
+  for (const p of GO_PROBLEMS) {
+    const su = setup(p);
+    const exact = exactCaptures(su);
+    const keys = correctMoves(su);
+    const expected: number[] = [];
+    for (const move of [...su.region, ...(su.passOk ? [-1] : [])]) {
+      const r = play(su.state, move);
+      if (!r.ok) continue;
+      const wins = p.koGoal
+        ? r.state.ko >= 0 && r.state.board[su.target] === BLACK
+        : su.attacker === BLACK
+          ? exact(r.state)
+          : !exact(r.state);
+      if (wins) expected.push(move);
+    }
+    assert.deepEqual(keys, expected, `${p.id} 有界求解与完整状态图不一致`);
+    for (const wrong of p.wrong ?? []) {
+      const move = wrong.at[0] < 0 ? -1 : wrong.at[1] * 9 + wrong.at[0];
+      const first = play(su.state, move);
+      assert.ok(first.ok, `${p.id} 错着必须合法`);
+      assert.ok(wrong.line.length > 0, `${p.id} 缺反击`);
+      let state = first.state;
+      for (const [x, y] of wrong.line) {
+        const reply = play(state, x < 0 ? -1 : y * 9 + x);
+        assert.ok(reply.ok);
+        state = reply.state;
+        if (state.toPlay === BLACK) {
+          assert.equal(
+            su.attacker === BLACK ? exact(state) : !exact(state),
+            false,
+            `${p.id} 反击线中白棋丢掉了优势`,
+          );
+        }
+      }
+    }
+  }
+  const straight = setup(
+    GO_PROBLEMS.find((p) => p.id === 'straight-four-fill')!,
+  );
+  assert.ok(correctMoves(straight).includes(-1), '直四保持原形的虚手也是正解');
+  const ko = setup(GO_PROBLEMS.find((p) => p.id === 'ko-live')!);
+  const taken = play(ko.state, 4);
+  assert.ok(taken.ok);
+  assert.equal(taken.state.ko, 3);
+  assert.equal(play(taken.state, 3).ok, false);
+  assert.equal(exactCaptures(ko)(taken.state), true, '制造劫争不能冒充净活');
+});
+
 void test('AI：开局不下一二线，各档都返回合法着法', () => {
   const g = newGame(9);
   let t = 0;

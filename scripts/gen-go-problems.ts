@@ -1,7 +1,7 @@
 /**
  * 生成 lib/games/go-problem-data.ts：
  *   node --experimental-strip-types scripts/gen-go-problems.ts
- * 每道题：用有界穷举求出主线；区域内每个合法的错着（以及虚手）都求出白棋的反击和后续最佳应对，
+ * 每道题：用有界穷举求出主线；区域内每个合法的错着都求出白棋的反击和后续最佳应对，
  * 再根据结果（做出两眼、提子、打劫、双活、被点眼……）写出中文说明。
  */
 import { writeFileSync } from 'node:fs';
@@ -65,28 +65,6 @@ function stubborn(su: ProblemSetup, s: GoState) {
   return su.region.find((p) => s.board[p] === EMPTY && play(s, p).ok) ?? -1;
 }
 
-/** Number of separate empty regions surrounded only by `c` that touch the target group. */
-function eyes(s: GoState, c: number) {
-  const seen = new Uint8Array(N * N);
-  let n = 0;
-  for (let p = 0; p < N * N; p++) {
-    if (s.board[p] !== EMPTY || seen[p]) continue;
-    const region = [p];
-    seen[p] = 1;
-    let pure = true;
-    for (let i = 0; i < region.length; i++)
-      for (const q of nb(region[i])) {
-        if (s.board[q] === EMPTY) {
-          if (!seen[q]) {
-            seen[q] = 1;
-            region.push(q);
-          }
-        } else if (s.board[q] !== c) pure = false;
-      }
-    if (pure && region.length <= 6) n++;
-  }
-  return n;
-}
 const nb = (p: number) => {
   const x = p % N;
   const y = (p / N) | 0;
@@ -97,28 +75,6 @@ const nb = (p: number) => {
     y < N - 1 ? p + N : -1,
   ].filter((q) => q >= 0);
 };
-/** Seki: target alive, every liberty of it also touches the other colour. */
-function seki(su: ProblemSetup, s: GoState) {
-  const c = s.board[su.target];
-  if (c === EMPTY) return false;
-  const seen = new Set([su.target]);
-  const st = [su.target];
-  const libs = new Set<number>();
-  while (st.length) {
-    const q = st.pop()!;
-    for (const r of nb(q)) {
-      if (s.board[r] === EMPTY) libs.add(r);
-      else if (s.board[r] === c && !seen.has(r)) {
-        seen.add(r);
-        st.push(r);
-      }
-    }
-  }
-  return (
-    libs.size >= 2 &&
-    [...libs].every((l) => nb(l).some((r) => s.board[r] === 3 - c))
-  );
-}
 
 function why(
   p: GoProblem,
@@ -157,7 +113,7 @@ function why(
     return `${wrong >= 0 ? `${nm(wrong)} 紧掉了自己的气，` : ''}白 ${nm(reply)} 直接提掉整块黑棋。`;
   if (p.kind === 'live') {
     if (end.board[su.target] === EMPTY)
-      parts.push(`接下来（${seq}）黑棋只剩一只眼，最终整块被提`);
+      parts.push(`接下来（${seq}）目标黑棋最终被提掉`);
     else if (rest.ko) parts.push(`接下来（${seq}）变成打劫，黑棋不能净活`);
     else parts.push(`之后（${seq}）黑棋做不出两只眼`);
   } else {
@@ -165,12 +121,7 @@ function why(
       parts.push(
         `接下来（${seq}）只能打劫，本题要求净${p.kind === 'kill' ? '杀' : '吃'}`,
       );
-    else if (seki(su, end)) parts.push(`之后（${seq}）成了双活，白棋没死`);
-    else if (eyes(end, WHITE) >= 2)
-      parts.push(`之后（${seq}）白棋分出两只眼，活了`);
-    else if (p.kind === 'capture')
-      parts.push(`之后（${seq}）白棋长出了气，吃不掉了`);
-    else parts.push(`之后（${seq}）白棋已经吃不掉了`);
+    else parts.push(`之后（${seq}）在本题限定区域内，白可以保住目标棋块`);
     if (rest.capturedBlack)
       parts.push(`你下进去的 ${rest.capturedBlack} 颗子也被提掉`);
   }
@@ -187,14 +138,15 @@ for (const p of BASE_PROBLEMS) {
   const keys = correctMoves(su);
   let line: Pt[] = p.line;
   if (!line.length) {
-    const first = p.passOk ? -1 : (keys.find((k) => k >= 0) ?? keys[0]);
+    const first = keys[0];
+    if (first === undefined) throw new Error(`${p.id} 没有正解`);
     const r = play(su.state, first);
     if (!r.ok) throw new Error(p.id);
     const rest = bestLine(
       su,
       r.state,
       su.depth - 1,
-      p.kind === 'live' ? (p.passOk ? 0 : 1) : su.depth - 1,
+      p.kind === 'live' ? (first < 0 || p.koGoal ? 0 : 1) : su.depth - 1,
     );
     line = [first, ...rest.moves].map(pt);
   }
@@ -208,6 +160,8 @@ for (const p of BASE_PROBLEMS) {
     const reply = whiteReply(su, r.state, su.depth - 1);
     const after = play(r.state, reply);
     if (!after.ok) throw new Error(`${p.id} 反击不合法`);
+    if (playerWinning(su, after.state, su.depth - 2))
+      throw new Error(`${p.id} 反击无效`);
     const rest = bestLine(su, after.state, su.depth - 2, 6);
     wrong.push({
       at: pt(q),

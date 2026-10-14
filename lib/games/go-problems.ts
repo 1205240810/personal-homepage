@@ -2,7 +2,7 @@
  * 死活 / 吃子题：小块角部局面 + 有界穷举求解器。
  * 题目图中 X 黑、O 白、+ 为“题目区域”的空点（双方只在这里落子）、. 为区域外空点。
  * 黑先。kill/capture：黑要提掉 target 所在的白棋；live：黑要让 target 所在的黑棋不被提。
- * 求解器在区域内（守方还可以虚手）搜索到给定深度，用于判对错、给出对手应着与测试验证。
+ * 求解器在区域内（双方都可以虚手）搜索到给定深度，用于判对错、给出对手应着与测试验证。
  */
 import { GO_PROBLEM_DATA } from './go-problem-data.ts';
 import {
@@ -29,6 +29,8 @@ export type GoProblem = {
   depth: number;
   /** Passing is a correct answer (seki). */
   passOk?: boolean;
+  /** This exercise asks only to create a ko, not prove unconditional life. */
+  koGoal?: boolean;
   /** 中文解析：要点和原因。 */
   explain: string;
   /** Generated refutations of wrong first moves (see scripts/gen-go-problems.ts). */
@@ -50,6 +52,7 @@ export type ProblemSetup = {
   depth: number;
   /** Passing can be a correct answer (seki problems). */
   passOk: boolean;
+  koGoal: boolean;
 };
 
 export function setup(p: GoProblem): ProblemSetup {
@@ -75,6 +78,7 @@ export function setup(p: GoProblem): ProblemSetup {
     attacker: p.kind === 'live' ? WHITE : BLACK,
     depth: p.depth,
     passOk: !!p.passOk,
+    koGoal: !!p.koGoal,
   };
 }
 function touchesRegion(rows: string[], x: number, y: number) {
@@ -103,7 +107,7 @@ export function attackerWins(
   let result: boolean;
   if (s.toPlay === su.attacker) {
     result = false;
-    for (const p of su.region) {
+    for (const p of [-1, ...su.region]) {
       const r = play(s, p);
       if (r.ok && attackerWins(su, r.state, depth - 1, memo)) {
         result = true;
@@ -128,6 +132,8 @@ export function attackerWins(
 
 /** Whether the player (always Black) is winning in state s. */
 export function playerWinning(su: ProblemSetup, s: GoState, depth = su.depth) {
+  if (su.koGoal)
+    return s.toPlay === WHITE && s.ko >= 0 && s.board[su.target] === BLACK;
   const w = attackerWins(su, s, depth);
   return su.attacker === BLACK ? w : !w;
 }
@@ -285,7 +291,7 @@ export const BASE_PROBLEMS: GoProblem[] = [
     note: '刀把五只有一个要点，下错一步白就活了。',
     depth: 15,
     explain:
-      '刀把五只有一个要点：同时连着四个点的那一格。点中它，白提子后剩下的形状仍然只有一只眼；点错任何别的位置，白占要点就活。',
+      '刀把五的要点是 B9：它连接 A9、C9 和 B8 三个眼位。黑点入后可以继续紧气提掉目标白棋；若先下其他位置，白有应对可以保住棋块。',
   },
   {
     id: 'straight-three-live',
@@ -360,7 +366,7 @@ export const BASE_PROBLEMS: GoProblem[] = [
     note: '同时叫吃两块，白棋想接也接不回去。',
     depth: 5,
     explain:
-      '黑一手同时叫吃两块白棋。白接上一块，另一块就被提；就算接，接上后的整块也只剩一口气，接了也回不去——这就是“接不归”。',
+      '白棋的两块共用 D9、C8 两口气。黑先占一口同时叫吃；白在另一口连接会填掉双方最后的气，是禁入点，所以接不回来。黑下一手占另一口就能把两块一起提掉。',
   },
   {
     id: 'plum-five-kill',
@@ -404,7 +410,7 @@ export const BASE_PROBLEMS: GoProblem[] = [
     note: '轮到你守：同样的十字形眼位。',
     depth: 17,
     explain:
-      '守方同样要占中心：黑在中心落子，四周立刻分出两只以上的眼，白无从下手。下在边上的任何一点，白点中心就杀死。',
+      '守方同样要占中心 C8：黑在中心落子，四周立刻分出两只以上的眼，白无从下手。下在边上的任何一点，白有应对可以破眼。',
   },
   {
     id: 'pyramid-four-live',
@@ -448,11 +454,11 @@ export const BASE_PROBLEMS: GoProblem[] = [
     note: '刀把五，轮到你守。',
     depth: 17,
     explain:
-      '刀把五的要点就是连着四个点的那一格。黑先占住，剩下的点自然分成两只眼。别的点都会让白点进要点。',
+      '刀把五的要点是 B9，它连接 A9、C9 和 B8 三个眼位。黑先占住后，C9 单独成眼，另一边还留有眼位；先下其他点，白就有破眼的应对。',
   },
   {
     id: 'side-bent3-kill',
-    name: '边上的弯三',
+    name: '边上的丁四',
     kind: 'kill',
     rows: [
       'X+++OX...',
@@ -470,7 +476,7 @@ export const BASE_PROBLEMS: GoProblem[] = [
     note: '这次眼位贴着上边。',
     depth: 11,
     explain:
-      '白棋的三个眼位 B9、C9、D9 加上 C8，拐角的 C9 同时连着其他点，是要点。点中它，白只能做出一只眼。',
+      '白棋有 B9、C9、D9、C8 四个眼位，形成丁四。C9 同时连着另外三点，是要点。黑点中它后继续紧气，可以提掉目标白棋。',
   },
   {
     id: 'side-pyramid-live',
@@ -560,6 +566,7 @@ export const BASE_PROBLEMS: GoProblem[] = [
   },
   {
     id: 'straight-four-fill',
+    passOk: true,
     name: '直四：别自己填眼',
     kind: 'live',
     rows: [
@@ -582,7 +589,8 @@ export const BASE_PROBLEMS: GoProblem[] = [
   },
   {
     id: 'ko-live',
-    name: '打劫做活',
+    koGoal: true,
+    name: '打劫：制造劫争',
     kind: 'live',
     rows: [
       '+XXO+O...',
@@ -596,11 +604,11 @@ export const BASE_PROBLEMS: GoProblem[] = [
       '.........',
     ],
     target: [1, 0],
-    line: [],
-    note: '黑棋只有一只眼，右边的白子只剩一口气。',
+    line: [[4, 0]],
+    note: '找出能提子并形成劫争的一手；本题不把打劫算作净活。',
     depth: 9,
     explain:
-      '黑在 E9 提掉 D9 的白子，就有了第二只眼。这个形状是“劫”：白本来可以立刻在 D9 提回，但打劫规则不允许马上回提，白必须先在别处走一手；本题不考虑劫材，黑下一手粘在 D9 即可做活。',
+      '黑在 E9 提掉 D9 的白子，形成单劫，白不能立即在 D9 提回。本题目标只是找到这手制造劫争的提子，并不代表黑棋已经活了；D9 粘劫会填掉眼位，也不能据此判活。后续结果取决于劫材和局面，不能把“形成劫争”当成“两眼净活”。',
   },
   {
     id: 'corner-vital',
