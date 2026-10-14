@@ -9,6 +9,7 @@ import {
 import {
   BookOpen,
   Flag,
+  Gauge,
   Hand,
   Lightbulb,
   RotateCcw,
@@ -38,8 +39,11 @@ import {
 import {
   GO_LEVELS,
   chooseGoMove,
+  judgeGo,
   resetGoTree,
+  shouldResign,
   type GoAiResult,
+  type GoJudgment,
   type GoLevel,
 } from '@/lib/games/go-ai';
 import {
@@ -155,11 +159,22 @@ function useGoAi() {
       resetGoTree();
     },
     move: (s: GoState, komi: number, level: GoLevel) =>
-      send<GoAiResult & { fallback?: true }>(
+      send<GoAiResult & { fallback?: true; lead?: number }>(
         { type: 'move', state: wire(s), komi, level },
         () => ({ ...chooseGoMove(s, komi, 1), fallback: true }),
         GO_LEVELS[level].timeMs + 5000,
         true,
+      ),
+    judge: (s: GoState, komi: number) =>
+      send<GoJudgment>(
+        { type: 'judge', state: wire(s), komi },
+        () =>
+          judgeGo(s, komi, Math.random, () => Date.now(), {
+            playouts: 300,
+            timeMs: 250,
+            samples: 40,
+          }),
+        8000,
       ),
     dead: (s: GoState) =>
       send<number[]>({ type: 'dead', state: wire(s) }, () => null, 5000),
@@ -197,6 +212,15 @@ export function GoGame() {
   const [showExplain, setShowExplain] = useState(false);
   /** Why the last wrong move fails (shown with the refutation on the board). */
   const [refuted, setRefuted] = useState('');
+  /** 形势判断 toggle and the judgment for the position it was computed on. */
+  const [judgeOn, setJudgeOn] = useState(false);
+  const [judgment, setJudgment] = useState<{
+    state: GoState;
+    j: GoJudgment;
+  } | null>(null);
+  const [autoResign, setAutoResign] = useState(true);
+  /** Black winrate after each AI move, keyed by move number (undo-safe). */
+  const [trend, setTrend] = useState<{ n: number; w: number }[]>([]);
   const boardRef = useRef<HTMLFieldSetElement>(null);
   const aiRef = useRef(ai);
   useEffect(() => {
@@ -247,6 +271,8 @@ export function GoGame() {
     const g = newGame(sz, hc);
     setHandicap(hc);
     setMatchLevel(level);
+    setTrend([]);
+    setJudgment(null);
     setProblemState('solving');
     setShowExplain(false);
     setRefuted('');
@@ -455,6 +481,8 @@ export function GoGame() {
     gameKey,
     startScoring,
     saveRecords,
+    trend,
+    autoResign,
   });
   useEffect(() => {
     latest.current = {
@@ -465,6 +493,8 @@ export function GoGame() {
       gameKey,
       startScoring,
       saveRecords,
+      trend,
+      autoResign,
     };
   });
   useEffect(() => {
@@ -480,16 +510,38 @@ export function GoGame() {
       }
       const now = latest.current;
       if (r.fallback) setMatchLevel(1);
-      if (r.move === -2) {
+      const aiColor = l.state.toPlay;
+      const moveNo = l.state.moves.length + 1;
+      const earlier = now.trend
+        .filter((t) => t.n < moveNo && t.n % 2 === moveNo % 2)
+        .map((t) => (aiColor === BLACK ? t.w : 1 - t.w));
+      const deficit =
+        r.lead === undefined ? 0 : aiColor === BLACK ? -r.lead : r.lead;
+      if (
+        shouldResign({
+          winrates: [...earlier, r.winrate],
+          deficit,
+          moveCount: l.state.moves.length,
+          size: l.state.size,
+          level: l.level,
+          enabled: now.autoResign,
+        })
+      ) {
         aiRef.current.reset();
         setPhase('over');
-        setResult('AI 认输，你赢了！');
+        const text = `AI 认输：估计胜率 ${Math.round(r.winrate * 100)}%，落后约 ${deficit} 目（已计贴目）。你赢了！`;
+        setResult(text);
         now.saveRecords(recordGoGame(now.records, now.gameKey, true));
-        setAnnounce('AI 认输');
+        setAnnounce(text);
         return;
       }
       const res = play(l.state, r.move);
       if (!res.ok) return;
+      const blackW = aiColor === BLACK ? r.winrate : 1 - r.winrate;
+      setTrend((t) => [
+        ...t.filter((x) => x.n < moveNo),
+        { n: moveNo, w: blackW },
+      ]);
       setHistory((h) => [...h, res.state]);
       setAnnounce(
         `AI 下 ${coordName(res.state.size, r.move)}，胜率估计 ${Math.round(r.winrate * 100)}%`,
@@ -501,6 +553,26 @@ export function GoGame() {
       request.cancel();
     };
   }, [aiToMove, state]);
+
+  // 形势判断 runs in its own worker, only while it is the human's turn so it
+  // never competes with the AI's search.
+  const judging = judgeOn && !problem && phase === 'play' && !aiToMove;
+  useEffect(() => {
+    if (!judging) return;
+    let cancelled = false;
+    const l = latest.current;
+    const request = aiRef.current.judge(l.state, l.komi);
+    void request.promise.then((j) => {
+      if (!cancelled && j) setJudgment({ state: l.state, j });
+    });
+    return () => {
+      cancelled = true;
+      request.cancel();
+    };
+  }, [judging, state]);
+  const judged = judgeOn && judgment?.state === state ? judgment.j : null;
+  const judgeSummary = judged ? summarize(judged) : '';
+  const shownTrend = trend.filter((t) => t.n <= state.moves.length);
 
   const live =
     phase === 'scoring' || phase === 'over' ? score(state, komi, dead) : null;
@@ -715,6 +787,21 @@ export function GoGame() {
             <button type="button" onClick={resign} disabled={phase !== 'play'}>
               <Flag size={15} aria-hidden="true" /> 认输
             </button>
+            <button
+              type="button"
+              aria-pressed={judgeOn}
+              onClick={() => setJudgeOn(!judgeOn)}
+            >
+              <Gauge size={15} aria-hidden="true" /> 形势判断
+            </button>
+            <label className="go-check">
+              <input
+                type="checkbox"
+                checked={autoResign}
+                onChange={(e) => setAutoResign(e.target.checked)}
+              />
+              AI 自动认输
+            </label>
           </>
         )}
       </div>
@@ -754,6 +841,20 @@ export function GoGame() {
           后台计算暂不可用，已切换入门强度兼容计算；数子时请手工标记死子。
         </p>
       )}
+      {judgeOn && !problem && (
+        <div className="go-judge">
+          <output aria-live="polite">
+            {judged
+              ? judgeSummary
+              : phase !== 'play'
+                ? '形势判断只在对局进行中更新。'
+                : aiToMove
+                  ? '等 AI 落子后再判断…'
+                  : '形势判断计算中…'}
+          </output>
+          {shownTrend.length >= 2 && <Trend points={shownTrend} />}
+        </div>
+      )}
       {live && (
         <p className="kit-help">
           当前数子：黑 {live.black} · 白 {live.white}（含贴目 {komi}）
@@ -761,7 +862,7 @@ export function GoGame() {
       )}
       <fieldset
         ref={boardRef}
-        className={`go-board${phase === 'scoring' ? ' is-scoring' : ''}`}
+        className={`go-board${phase === 'scoring' ? ' is-scoring' : ''}${judgeOn ? ' is-judging' : ''}`}
         style={{ ['--n' as string]: n }}
         aria-label={`${n} 路棋盘。方向键移动，回车落子。`}
       >
@@ -811,6 +912,20 @@ export function GoGame() {
                   aria-hidden="true"
                 />
               )}
+              {judged &&
+                !live &&
+                Math.abs(judged.ownership[p]) >= 0.2 &&
+                (c === EMPTY || (c === BLACK) !== judged.ownership[p] > 0) && (
+                  <span
+                    className={`go-own ${judged.ownership[p] > 0 ? 'is-black' : 'is-white'}`}
+                    style={{
+                      ['--a' as string]: Math.abs(judged.ownership[p]).toFixed(
+                        2,
+                      ),
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
             </button>
           );
         })}
@@ -821,6 +936,8 @@ export function GoGame() {
         双方连续虚手后进入数子：AI 先估计死子，你可以点棋块修改再确认。AI
         用蒙特卡洛树搜索（RAVE + 3×3 棋形模拟 +
         搜索树复用）在后台线程思考，共十档；9 路最强，13/19 路明显变弱。
+        「形势判断」显示胜率、目差估计和归属图（方块越实越确定）；AI
+        在大势已去时会认输（入门档不认输，可关闭）。
       </p>
       <p className="kit-sr" aria-live="polite">
         {announce}
@@ -837,4 +954,43 @@ function starPoints(n: number) {
   for (const x of xs) for (const y of xs) s.add(y * n + x);
   if (n === 9) s.add(mid * n + mid);
   return s;
+}
+
+function summarize(j: GoJudgment) {
+  let b = 0;
+  let w = 0;
+  for (const o of j.ownership) {
+    if (o >= 0.5) b++;
+    else if (o <= -0.5) w++;
+  }
+  const lead =
+    Math.abs(j.lead) < 0.5
+      ? '双方接近'
+      : `${j.lead > 0 ? '黑' : '白'}约领先 ${Math.abs(j.lead)} 目`;
+  return `形势判断：黑胜率 ${Math.round(j.blackWinrate * 100)}%，${lead}（已计贴目）。较确定的归属：黑 ${b} 点 · 白 ${w} 点。`;
+}
+
+function Trend({ points }: { points: { n: number; w: number }[] }) {
+  const W = 120;
+  const H = 28;
+  const pts = points
+    .map(
+      (p, i) =>
+        `${((i / (points.length - 1)) * W).toFixed(1)},${((1 - p.w) * H).toFixed(1)}`,
+    )
+    .join(' ');
+  const lastW = points[points.length - 1].w;
+  return (
+    <svg
+      className="go-trend"
+      viewBox={`0 0 ${W} ${H}`}
+      width={W}
+      height={H}
+      role="img"
+      aria-label={`黑胜率走势（AI 每手后估计）：最近 ${Math.round(lastW * 100)}%`}
+    >
+      <line x1="0" x2={W} y1={H / 2} y2={H / 2} className="go-trend-mid" />
+      <polyline points={pts} fill="none" />
+    </svg>
+  );
 }
