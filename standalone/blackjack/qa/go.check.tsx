@@ -6,8 +6,10 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
+import { hydrateRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GoGame } from '../../../components/games/go';
+import { GO_AUTO_RESIGN_KEY, GoGame } from '../../../components/games/go';
 import { GO_RECORDS_KEY } from '../../../lib/games/go';
 import * as GoAi from '../../../lib/games/go-ai';
 import { GO_PROBLEMS as PROBLEMS } from '../../../lib/games/go-problems';
@@ -21,6 +23,8 @@ const openProblem = (id: string) =>
 
 beforeEach(() => localStorage.clear());
 afterEach(() => {
+  // Clear the external setting store while its subscribers still exist.
+  act(() => window.dispatchEvent(new StorageEvent('storage', { key: null })));
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -112,7 +116,13 @@ const reply = async (worker: TestWorker, result: unknown) => {
     worker.reply(result);
   });
 };
-const move = (point: number) => ({ move: point, winrate: 0.5, playouts: 1 });
+const move = (point: number) => ({
+  move: point,
+  winrate: 0.5,
+  blackWinrate: 0.5,
+  lead: 0.5,
+  playouts: 1,
+});
 
 describe('围棋的对局隔离与数子', () => {
   beforeEach(() => {
@@ -408,7 +418,15 @@ describe('围棋形势判断与 AI 认输', () => {
     for (let i = 0; i < rounds; i++) {
       fireEvent.click(pt(i));
       const w = workers().findLast((x) => x.message?.type === 'move')!;
-      await reply(w, { move: 80 - i, playouts: 1, ...ai(i) });
+      const r = ai(i);
+      // AI plays white: black's share and lead mirror its own estimate.
+      await reply(w, {
+        move: 80 - i,
+        playouts: 1,
+        blackWinrate: 1 - r.winrate,
+        lead: r.lead ?? 0.5,
+        ...r,
+      });
     }
   };
 
@@ -437,7 +455,13 @@ describe('围棋形势判断与 AI 认输', () => {
     expect(document.querySelectorAll('.go-own').length).toBe(0);
     expect(screen.getByText(/等 AI 落子后再判断/)).toBeTruthy();
     const moveWorker = workers().findLast((x) => x.message?.type === 'move')!;
-    await reply(moveWorker, { move: 30, winrate: 0.4, playouts: 1 });
+    await reply(moveWorker, {
+      move: 30,
+      winrate: 0.4,
+      blackWinrate: 0.6,
+      lead: 2.5,
+      playouts: 1,
+    });
     expect(judgeWorker().message!.state.board[30]).toBe(2);
     fireEvent.click(screen.getByRole('button', { name: /形势判断/ }));
     expect(document.querySelector('.go-board.is-judging')).toBeNull();
@@ -451,7 +475,13 @@ describe('围棋形势判断与 AI 认输', () => {
     expect(screen.queryByText(/AI 认输/)).toBeNull();
     fireEvent.click(pt(16));
     const w = workers().findLast((x) => x.message?.type === 'move')!;
-    await reply(w, { move: 64, winrate: 0.02, lead: 40, playouts: 1 });
+    await reply(w, {
+      move: 64,
+      winrate: 0.02,
+      blackWinrate: 0.98,
+      lead: 40,
+      playouts: 1,
+    });
     expect(
       screen.getAllByText(/AI 认输：估计胜率 2%，落后约 40 目.*你赢了/),
     ).toBeTruthy();
@@ -472,6 +502,149 @@ describe('围棋形势判断与 AI 认输', () => {
     await playRounds(18, () => ({ winrate: 0.01, lead: 40 }));
     expect(screen.queryByText(/AI 认输/)).toBeNull();
     expect(screen.getByText(/轮到你/)).toBeTruthy();
+  });
+
+  it('高档落子失败回退入门时，即使估计极差也不会用原难度自动认输', async () => {
+    render(<GoGame />);
+    startAs('8');
+    await playRounds(16, () => ({ winrate: 0.01, lead: 40 }));
+    vi.useFakeTimers();
+    vi.spyOn(GoAi, 'chooseGoMove').mockReturnValue({
+      move: 64,
+      winrate: 0.01,
+      blackWinrate: 0.99,
+      lead: 40,
+      playouts: 1,
+    });
+    fireEvent.click(pt(16));
+    const failed = workers().findLast((w) => w.message?.type === 'move')!;
+    act(() => failed.onerror?.({ preventDefault() {} }));
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    expect(screen.queryByText(/AI 认输：/)).toBeNull();
+    expect(screen.getByText(/轮到你/)).toBeTruthy();
+    expect(screen.getByText(/GO · 9 路 · 1 · 刚学规则/)).toBeTruthy();
+    expect(localStorage.getItem(GO_RECORDS_KEY)).toBeNull();
+  });
+
+  it.each(['write', 'read-and-write'])(
+    '存储 %s 失败时设置仍可切换，同页面重新挂载仍保留并影响认输策略',
+    async (failure) => {
+      localStorage.setItem(GO_AUTO_RESIGN_KEY, '1');
+      const read = Storage.prototype.getItem;
+      if (failure === 'read-and-write') {
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(
+          function (this: Storage, key) {
+            if (key === GO_AUTO_RESIGN_KEY) throw new Error('storage denied');
+            return read.call(this, key);
+          },
+        );
+      }
+      const write = Storage.prototype.setItem;
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
+        function (this: Storage, key, value) {
+          if (key === GO_AUTO_RESIGN_KEY)
+            throw new Error('storage unavailable');
+          return write.call(this, key, value);
+        },
+      );
+      render(<GoGame />);
+      const box = () => screen.getByLabelText<HTMLInputElement>('AI 自动认输');
+      fireEvent.click(box());
+      expect(box().checked).toBe(false);
+      fireEvent.click(box());
+      expect(box().checked).toBe(true);
+      fireEvent.click(box());
+      cleanup();
+      render(<GoGame />);
+      expect(box().checked).toBe(false);
+      startAs('8');
+      await playRounds(18, () => ({ winrate: 0.01, lead: 40 }));
+      expect(screen.queryByText(/AI 认输：/)).toBeNull();
+      expect(screen.getByText(/轮到你/)).toBeTruthy();
+      // An unrelated cross-tab write must not discard the session preference.
+      act(() =>
+        window.dispatchEvent(
+          new StorageEvent('storage', { key: 'unrelated', newValue: '1' }),
+        ),
+      );
+      expect(box().checked).toBe(false);
+    },
+  );
+
+  it('跨标签页修改或清空设置时同步开关，并取消进行中搜索的自动认输', async () => {
+    render(<GoGame />);
+    startAs('8');
+    await playRounds(16, () => ({ winrate: 0.01, lead: 40 }));
+    fireEvent.click(pt(16));
+    const active = workers().findLast((w) => w.message?.type === 'move')!;
+    localStorage.setItem(GO_AUTO_RESIGN_KEY, '0');
+    act(() =>
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: GO_AUTO_RESIGN_KEY, newValue: '0' }),
+      ),
+    );
+    expect(screen.getByLabelText<HTMLInputElement>('AI 自动认输').checked).toBe(
+      false,
+    );
+    await reply(active, {
+      move: 64,
+      winrate: 0.01,
+      blackWinrate: 0.99,
+      lead: 40,
+      playouts: 1,
+    });
+    expect(screen.queryByText(/AI 认输：/)).toBeNull();
+    expect(screen.getByText(/轮到你/)).toBeTruthy();
+    localStorage.clear();
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: null })));
+    expect(screen.getByLabelText<HTMLInputElement>('AI 自动认输').checked).toBe(
+      true,
+    );
+  });
+
+  it('自动认输设置写入 localStorage，重开页面后保留；坏数据按默认开启', async () => {
+    render(<GoGame />);
+    const box = () => screen.getByLabelText<HTMLInputElement>('AI 自动认输');
+    expect(box().checked).toBe(true);
+    fireEvent.click(box());
+    expect(box().checked).toBe(false);
+    expect(localStorage.getItem(GO_AUTO_RESIGN_KEY)).toBe('0');
+    cleanup();
+    render(<GoGame />);
+    expect(box().checked).toBe(false);
+    // Disabled setting survives into a lost game: the AI keeps playing.
+    startAs('8');
+    await playRounds(18, () => ({ winrate: 0.01, lead: 40 }));
+    expect(screen.queryByText(/AI 认输/)).toBeNull();
+    cleanup();
+    localStorage.setItem(GO_AUTO_RESIGN_KEY, '{garbage');
+    render(<GoGame />);
+    expect(box().checked).toBe(true);
+  });
+
+  it('自动认输设置 SSR 安全：服务端按默认渲染，水合无不一致后再读取保存值', async () => {
+    localStorage.setItem(GO_AUTO_RESIGN_KEY, '0');
+    const html = renderToString(<GoGame />);
+    expect(html).toMatch(/type="checkbox" checked=""/);
+    const host = document.createElement('div');
+    host.innerHTML = html;
+    document.body.append(host);
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+    await act(async () => {
+      root = hydrateRoot(host, <GoGame />, {
+        onRecoverableError: (e) => console.error(e),
+      });
+    });
+    expect(
+      host.querySelector<HTMLInputElement>('.go-check input')!.checked,
+    ).toBe(false);
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+    act(() => root!.unmount());
+    host.remove();
   });
 
   it('胜率走势：AI 每手后记录，悔棋同步回退', async () => {
@@ -649,13 +822,20 @@ describe('形势判断任务隔离', () => {
       await reply(workers().at(-1)!, {
         move: 80 - i,
         winrate: 0.01,
+        blackWinrate: 0.01,
         lead: -40,
         playouts: 1,
       });
       fireEvent.click(pt(i));
     }
     const worker = workers().at(-1)!;
-    const lost = { move: 60, winrate: 0.02, lead: -40, playouts: 1 };
+    const lost = {
+      move: 60,
+      winrate: 0.02,
+      blackWinrate: 0.02,
+      lead: -40,
+      playouts: 1,
+    };
     await reply(worker, lost);
     await reply(worker, lost);
     expect(

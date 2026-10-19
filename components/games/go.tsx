@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent,
 } from 'react';
 import {
@@ -62,6 +63,50 @@ import './kit.css';
 import './go.css';
 
 const EMPTY_RECORDS = emptyGoRecords();
+
+/** 「AI 自动认输」 persists in localStorage. Read through an external store so
+ *  the server render and hydration use the default (on), then the saved value. */
+export const GO_AUTO_RESIGN_KEY = 'tscjj-go-auto-resign';
+const AUTO_RESIGN_EVENT = 'tscjj-go-auto-resign';
+// Keep controls usable for this page even when browser storage is denied/full.
+let autoResignValue = true;
+let autoResignSessionOnly = false;
+function readAutoResign() {
+  if (!autoResignSessionOnly) {
+    try {
+      // Anything other than an explicit "0" (missing, corrupt) means on.
+      autoResignValue = localStorage.getItem(GO_AUTO_RESIGN_KEY) !== '0';
+    } catch {
+      // Retain the last known value when storage access becomes unavailable.
+    }
+  }
+  return autoResignValue;
+}
+function subscribeAutoResign(cb: () => void) {
+  const changedElsewhere = (event: StorageEvent) => {
+    if (event.key !== null && event.key !== GO_AUTO_RESIGN_KEY) return;
+    autoResignValue = event.newValue !== '0';
+    autoResignSessionOnly = false;
+    cb();
+  };
+  window.addEventListener('storage', changedElsewhere);
+  window.addEventListener(AUTO_RESIGN_EVENT, cb);
+  return () => {
+    window.removeEventListener('storage', changedElsewhere);
+    window.removeEventListener(AUTO_RESIGN_EVENT, cb);
+  };
+}
+function saveAutoResign(on: boolean) {
+  autoResignValue = on;
+  try {
+    localStorage.setItem(GO_AUTO_RESIGN_KEY, on ? '1' : '0');
+    autoResignSessionOnly = false;
+  } catch {
+    // A failed write must not undo the user's choice in the current page.
+    autoResignSessionOnly = true;
+  }
+  window.dispatchEvent(new Event(AUTO_RESIGN_EVENT));
+}
 const NAME: Record<Player, string> = { 1: '黑', 2: '白' };
 const wire = (s: GoState) => ({ ...s, board: Array.from(s.board) });
 
@@ -162,7 +207,7 @@ function useGoAi() {
       resetGoTree();
     },
     move: (s: GoState, komi: number, level: GoLevel) =>
-      send<GoAiResult & { fallback?: true; lead?: number }>(
+      send<GoAiResult & { fallback?: true }>(
         { type: 'move', state: wire(s), komi, level },
         () => ({ ...chooseGoMove(s, komi, 1), fallback: true }),
         GO_LEVELS[level].timeMs + 5000,
@@ -175,7 +220,6 @@ function useGoAi() {
           judgeGo(s, komi, Math.random, () => Date.now(), {
             playouts: 300,
             timeMs: 250,
-            samples: 40,
           }),
         8000,
         // Judgment has its own Worker and must not change the match strength.
@@ -223,7 +267,11 @@ export function GoGame() {
     state: GoState;
     j: GoJudgment | null;
   } | null>(null);
-  const [autoResign, setAutoResign] = useState(true);
+  const autoResign = useSyncExternalStore(
+    subscribeAutoResign,
+    readAutoResign,
+    () => true,
+  );
   /** Black winrate after each AI move, keyed by move number (undo-safe). */
   const [trend, setTrend] = useState<{ n: number; w: number }[]>([]);
   const boardRef = useRef<HTMLFieldSetElement>(null);
@@ -520,15 +568,15 @@ export function GoGame() {
       const earlier = now.trend
         .filter((t) => t.n < moveNo && t.n % 2 === moveNo % 2)
         .map((t) => (aiColor === BLACK ? t.w : 1 - t.w));
-      const deficit =
-        r.lead === undefined ? 0 : aiColor === BLACK ? -r.lead : r.lead;
+      // Same estimator as 形势判断: winrate and lead share one playout sample.
+      const deficit = aiColor === BLACK ? -r.lead : r.lead;
       if (
         shouldResign({
           winrates: [...earlier, r.winrate],
           deficit,
           moveCount: l.state.moves.length,
           size: l.state.size,
-          level: l.level,
+          level: r.fallback ? 1 : l.level,
           enabled: now.autoResign,
         })
       ) {
@@ -542,7 +590,7 @@ export function GoGame() {
       }
       const res = play(l.state, r.move);
       if (!res.ok) return;
-      const blackW = aiColor === BLACK ? r.winrate : 1 - r.winrate;
+      const blackW = r.blackWinrate;
       setTrend((t) => [
         ...t.filter((x) => x.n < moveNo),
         { n: moveNo, w: blackW },
@@ -808,7 +856,7 @@ export function GoGame() {
               <input
                 type="checkbox"
                 checked={autoResign}
-                onChange={(e) => setAutoResign(e.target.checked)}
+                onChange={(e) => saveAutoResign(e.target.checked)}
               />
               AI 自动认输
             </label>
