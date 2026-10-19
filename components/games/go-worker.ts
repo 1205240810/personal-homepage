@@ -1,6 +1,5 @@
 import {
   chooseGoMove,
-  estimateScore,
   guessDead,
   judgeGo,
   type GoLevel,
@@ -24,11 +23,8 @@ self.onmessage = (event: MessageEvent<GoWorkerRequest>) => {
     const s = revive(req.state);
     let result: unknown;
     if (req.type === 'move') {
-      const r = chooseGoMove(s, req.komi, req.level);
-      // Only pay for a score estimate when the AI might be lost (resign check).
-      const lead =
-        r.winrate < 0.15 ? estimateScore(s, req.komi, 80).lead : undefined;
-      result = { ...r, lead };
+      // winrate and lead come from the same playouts (used by the resign check).
+      result = chooseGoMove(s, req.komi, req.level);
     } else if (req.type === 'judge') result = judgeGo(s, req.komi);
     else result = guessDead(s, s.size <= 9 ? 300 : 120);
     self.postMessage({ id: req.id, result });
