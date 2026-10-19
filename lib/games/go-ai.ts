@@ -492,6 +492,9 @@ type Node = {
   prior: number;
   children: Node[] | null;
   state: GoState | null;
+  /** Black's final area margin (komi applied) of every playout through this
+   *  move. Keep it with visits so reused descendants retain the same sample. */
+  margins?: number[];
 };
 
 function libsAt(board: Uint8Array, size: number, p: number, cap: number) {
@@ -611,9 +614,25 @@ function select(node: Node): Node {
 
 export type GoAiResult = {
   move: number; // -1 pass, -2 resign (decided by shouldResign, not the search)
+  /** Side to move's winning share, from the best move's playouts. */
   winrate: number;
   playouts: number;
+  /** Black's winning share and upper-median score lead from the same
+   *  playouts as `winrate`. At exactly 50% the upper median favours black. */
+  blackWinrate: number;
+  lead: number;
+  /** Per-point ownership averaged over this search's playouts (opt-in). */
+  ownership?: Float32Array;
 };
+
+/** Win share and median margin of one playout sample (black perspective). */
+export function marginStats(margins: number[]) {
+  if (!margins.length) return { blackWinrate: 0.5, lead: 0 };
+  const m = [...margins].sort((a, b) => a - b);
+  const wins = m.filter((x) => x > 0).length;
+  // Upper median: positive exactly when at least half of the playouts are won.
+  return { blackWinrate: wins / m.length, lead: m[m.length >> 1] };
+}
 
 // Tree reuse across calls (each worker keeps its own).
 let kept: { root: Node; komi: number } | null = null;
@@ -655,6 +674,7 @@ export function chooseGoMove(
     keep?: boolean;
     playouts?: number;
     timeMs?: number;
+    ownership?: boolean;
   } = {},
 ): GoAiResult {
   const cfg = {
@@ -671,6 +691,7 @@ export function chooseGoMove(
   }
   if (!root.children) expand(root, pb);
   const amaf = new Uint8Array(pb.W * pb.W);
+  const own = opts.ownership ? new Float32Array(s.board.length) : null;
   let n = 0;
   const start = root.visits;
   while (n < cfg.playouts && now() < deadline) {
@@ -705,9 +726,14 @@ export function chooseGoMove(
         lm !== undefined && lm >= 0 ? pb.toPad(lm) : -1,
       );
     }
-    const blackWins = diff - komi > 0;
+    const margin = diff - komi;
+    const blackWins = margin > 0;
+    if (own) addOwnership(pb, own);
     for (const p of path) {
       p.visits++;
+      // A descendant can become the root on the next turn. Its children's
+      // margins must cover the same simulations as their existing visits.
+      if (p !== root) (p.margins ??= []).push(margin);
       if ((p.player === BLACK) === blackWins) p.wins++;
       if (p.children)
         for (const c of p.children)
@@ -720,8 +746,16 @@ export function chooseGoMove(
   if (opts.keep !== false) kept = { root, komi };
   const kids = root.children!;
   const best = kids.reduce((a, c) => (c.visits > a.visits ? c : a), kids[0]);
-  const winrate = best.visits ? best.wins / best.visits : 0.5;
   const total = root.visits - start;
+  const est = best.margins?.length
+    ? marginStats(best.margins)
+    : { blackWinrate: 0.5, lead: 0 };
+  const winrate = s.toPlay === BLACK ? est.blackWinrate : 1 - est.blackWinrate;
+  const extra = {
+    blackWinrate: est.blackWinrate,
+    lead: est.lead,
+    ...(own ? { ownership: own.map((v) => v / Math.max(1, n)) } : {}),
+  };
   // Weaker levels: occasional random reasonable move, otherwise sample by visits.
   if (cfg.blunder && rng() < cfg.blunder) {
     const ok = kids.filter((c) => c.move >= 0 && c.prior > -1);
@@ -731,6 +765,7 @@ export function chooseGoMove(
         move: c.move,
         winrate, // best-move estimate: the honest evaluation of the position
         playouts: total,
+        ...extra,
       };
     }
   }
@@ -748,11 +783,12 @@ export function chooseGoMove(
           move: c.move,
           winrate,
           playouts: total,
+          ...extra,
         };
       }
     }
   }
-  return { move: best.move, winrate, playouts: total };
+  return { move: best.move, winrate, playouts: total, ...extra };
 }
 
 function areaOf(pb: PBoard) {
@@ -778,6 +814,23 @@ function areaOf(pb: PBoard) {
 }
 
 /** Monte-Carlo ownership: estimated owner per point (+1 black … -1 white). */
+function addOwnership(pb: PBoard, own: Float32Array) {
+  for (let p = 0; p < own.length; p++) {
+    const q = pb.toPad(p);
+    let o = pb.b[q] === BLACK ? 1 : pb.b[q] === WHITE ? -1 : 0;
+    if (!o) {
+      let bl = 0;
+      let wh = 0;
+      for (const d of pb.d4) {
+        if (pb.b[q + d] === BLACK) bl++;
+        else if (pb.b[q + d] === WHITE) wh++;
+      }
+      o = bl && !wh ? 1 : wh && !bl ? -1 : 0;
+    }
+    own[p] += o;
+  }
+}
+
 export function ownership(
   s: GoState,
   samples = 200,
@@ -839,32 +892,35 @@ export function estimateScore(
 }
 
 export type GoJudgment = {
-  /** Black's winning chance from a fresh MCTS search. */
+  /** Black's winning share of the best move's playouts. */
   blackWinrate: number;
-  /** Area lead for black after komi, from averaged playout ownership. */
+  /** Median area lead for black (komi applied) of the same playouts. */
   lead: number;
+  /** Ownership averaged over all of this search's playouts. */
   ownership: number[];
   playouts: number;
 };
 
+/** Win rate and score lead share the best move's playout sample. Ownership
+ *  averages every explored move; it is an illustration, not a score tally. */
 export function judgeGo(
   s: GoState,
   komi: number,
   rng: Rng = Math.random,
   now: () => number = () => Date.now(),
-  budget: { playouts?: number; timeMs?: number; samples?: number } = {},
+  budget: { playouts?: number; timeMs?: number } = {},
 ): GoJudgment {
   const r = chooseGoMove(s, komi, 10, rng, now, {
     reuse: false,
     keep: false,
+    ownership: true,
     playouts: budget.playouts ?? 3000,
-    timeMs: budget.timeMs ?? 900,
+    timeMs: budget.timeMs ?? 1000,
   });
-  const est = estimateScore(s, komi, budget.samples ?? 160, rng);
   return {
-    blackWinrate: s.toPlay === BLACK ? r.winrate : 1 - r.winrate,
-    lead: est.lead,
-    ownership: Array.from(est.ownership, (v) => Math.round(v * 100) / 100),
+    blackWinrate: r.blackWinrate,
+    lead: r.lead,
+    ownership: Array.from(r.ownership!, (v) => Math.round(v * 100) / 100),
     playouts: r.playouts,
   };
 }

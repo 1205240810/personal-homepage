@@ -26,6 +26,7 @@ import {
   estimateScore,
   guessDead,
   judgeGo,
+  marginStats,
   shouldResign,
   resetGoTree,
   type GoLevel,
@@ -498,7 +499,6 @@ void test('judge: analysis leaves the input and retained game search unchanged',
       const j = judgeGo(otherGame, 0.5, seeded(71), () => 0, {
         playouts: 20,
         timeMs: 1,
-        samples: 10,
       });
       assert.deepEqual(otherGame, snapshot);
       assert.equal(j.playouts, 20);
@@ -520,7 +520,6 @@ void test('judge: clearly lost position for white gives black a high winrate', (
   const j = judgeGo(s, 7.5, seeded(3), () => (t += 1), {
     playouts: 400,
     timeMs: 1e9,
-    samples: 60,
   });
   assert.ok(j.blackWinrate > 0.85, `winrate ${j.blackWinrate}`);
   assert.ok(j.lead > 30, `lead ${j.lead}`);
@@ -612,7 +611,7 @@ void test('resign end to end: AI in a hopeless position resigns per policy', () 
     reuse: false,
   });
   assert.ok(r.move !== -2, 'search itself never resigns');
-  const lead = estimateScore(s, 7.5, 60, seeded(5)).lead;
+  const lead = r.lead; // AI is white: its deficit is black's lead
   assert.ok(r.winrate < 0.08, `winrate ${r.winrate}`);
   assert.equal(
     shouldResign({
@@ -625,4 +624,129 @@ void test('resign end to end: AI in a hopeless position resigns per policy', () 
     }),
     true,
   );
+});
+
+void test('marginStats: win share and upper median use the same sample', () => {
+  assert.deepEqual(marginStats([]), { blackWinrate: 0.5, lead: 0 });
+  assert.deepEqual(marginStats([-30.5, 1.5]), {
+    blackWinrate: 0.5,
+    lead: 1.5,
+  });
+  // Exact draws count as no black win, matching the search's score rule.
+  assert.deepEqual(marginStats([-1, 0, 1]), {
+    blackWinrate: 1 / 3,
+    lead: 0,
+  });
+  assert.deepEqual(marginStats([-3.5, 1.5, 2.5]), {
+    blackWinrate: 2 / 3,
+    lead: 1.5,
+  });
+  assert.deepEqual(marginStats([-12.5, -0.5, 30.5]), {
+    blackWinrate: 1 / 3,
+    lead: -0.5,
+  });
+  const rng = seeded(9);
+  for (let k = 0; k < 200; k++) {
+    // Skewed samples: a mean would disagree with the win share, the median cannot.
+    const m = Array.from({ length: 1 + ((rng() * 40) | 0) }, () =>
+      rng() < 0.3 ? 40.5 : -1.5 - ((rng() * 4) | 0),
+    );
+    const { blackWinrate, lead } = marginStats(m);
+    assert.equal(lead > 0, blackWinrate >= 0.5, JSON.stringify(m));
+  }
+});
+
+/** Mid-game positions from quick level-1 self-play, deterministic per seed. */
+function midgame(seed: number, plies: number, size: 9 | 13 = 9) {
+  const rng = seeded(seed);
+  let s = newGame(size);
+  let t = 0;
+  for (let i = 0; i < plies; i++) {
+    const r = chooseGoMove(s, 7.5, 1, rng, () => (t += 1), {
+      reuse: false,
+      keep: false,
+    });
+    const n = play(s, r.move);
+    if (!n.ok) break;
+    s = n.state;
+  }
+  return s;
+}
+
+void test('judge: win rate and score lead share the best move sample (fixed positions)', () => {
+  const positions = [
+    settled(5, BLACK),
+    settled(7, WHITE),
+    settled(3, BLACK),
+    newGame(9),
+    ...[11, 12, 13, 14, 15, 16].map((seed) => midgame(seed, 20 + seed)),
+    midgame(21, 40, 13),
+  ];
+  for (const [i, s] of positions.entries()) {
+    let t = 0;
+    const j = judgeGo(s, 7.5, seeded(100 + i), () => (t += 1), {
+      playouts: 600,
+      timeMs: 1e9,
+    });
+    // Sign consistency: black >= 50% exactly when the lead favours black.
+    assert.equal(
+      j.lead > 0,
+      j.blackWinrate >= 0.5,
+      `#${i} ${j.blackWinrate} ${j.lead}`,
+    );
+    // The AI's own move result uses the same estimator.
+    t = 0;
+    const r = chooseGoMove(s, 7.5, 6, seeded(200 + i), () => (t += 1), {
+      reuse: false,
+      keep: false,
+      playouts: 400,
+    });
+    assert.equal(r.lead > 0, r.blackWinrate >= 0.5, `move #${i}`);
+    assert.equal(
+      r.winrate,
+      s.toPlay === BLACK ? r.blackWinrate : 1 - r.blackWinrate,
+    );
+  }
+});
+
+void test('judge: settled positions give the expected lead from the same playouts', () => {
+  let t = 0;
+  const j = judgeGo(settled(5, BLACK), 7.5, seeded(7), () => (t += 1), {
+    playouts: 300,
+    timeMs: 1e9,
+  });
+  assert.equal(j.lead, 1.5); // 45 - 36 - 7.5
+  assert.equal(j.blackWinrate, 1);
+  t = 0;
+  const w = judgeGo(settled(3, BLACK), 7.5, seeded(8), () => (t += 1), {
+    playouts: 300,
+    timeMs: 1e9,
+  });
+  assert.ok(
+    w.lead < -20 && w.blackWinrate < 0.05,
+    `${w.lead} ${w.blackWinrate}`,
+  );
+});
+
+void test('AI: a reused descendant retains its win rate and margin before new simulations', () => {
+  resetGoTree();
+  const s = settled(5, BLACK);
+  const r = chooseGoMove(s, 7.5, 6, seeded(18), () => 0, {
+    playouts: 300,
+    timeMs: 1,
+  });
+  assert.equal(r.move, -1, 'both groups are settled, so Black passes');
+  const next = play(s, r.move);
+  assert.ok(next.ok);
+  let t = 0;
+  // Expire the new budget immediately, so the retained tree is the only
+  // evidence. White's best move is the final pass in Black's winning game.
+  const reused = chooseGoMove(next.state, 7.5, 6, seeded(19), () => t++, {
+    timeMs: 1,
+  });
+  assert.equal(reused.playouts, 0);
+  assert.equal(reused.blackWinrate, 1);
+  assert.equal(reused.winrate, 0);
+  assert.equal(reused.lead, 1.5);
+  resetGoTree();
 });
