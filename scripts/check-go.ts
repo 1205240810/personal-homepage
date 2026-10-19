@@ -457,13 +457,13 @@ function settled(split: number, toPlay: typeof BLACK | typeof WHITE) {
   return fromRows(rows, toPlay);
 }
 
-test('score estimator: empty board is even before komi, komi favours white', () => {
+void test('score estimator: empty board is even before komi, komi favours white', () => {
   const e = estimateScore(newGame(9), 0, 120, seeded(1));
   assert.ok(Math.abs(e.lead) <= 12, `empty 9x9 lead ${e.lead}`);
   for (const o of e.ownership) assert.ok(o >= -1 && o <= 1);
 });
 
-test('score estimator: walled-off territory is counted for its owner', () => {
+void test('score estimator: walled-off territory is counted for its owner', () => {
   // Black owns columns 0-4, white 5-8, both with two eyes.
   const s = settled(5, BLACK);
   const e = estimateScore(s, 7.5, 120, seeded(2));
@@ -473,7 +473,48 @@ test('score estimator: walled-off territory is counted for its owner', () => {
   assert.ok(e.ownership[at(s, 8, 4)] < -0.8);
 });
 
-test('judge: clearly lost position for white gives black a high winrate', () => {
+void test('score estimator: komi changes only the lead, with either player to move', () => {
+  for (const toPlay of [BLACK, WHITE] as const) {
+    const s = settled(5, toPlay);
+    const unadjusted = estimateScore(s, 0, 80, seeded(12));
+    const adjusted = estimateScore(s, 7.5, 80, seeded(12));
+    assert.deepEqual(adjusted.ownership, unadjusted.ownership);
+    assert.equal(unadjusted.lead, 9);
+    assert.equal(adjusted.lead, 1.5);
+  }
+});
+
+void test('judge: analysis leaves the input and retained game search unchanged', () => {
+  const s = newGame(9);
+  const continueSearch = (analyze: boolean) => {
+    resetGoTree();
+    const random = seeded(42);
+    const options = { playouts: 250, timeMs: 1 };
+    // A fixed clock makes the playout count independent of machine speed.
+    chooseGoMove(s, 7.5, 6, random, () => 0, options);
+    if (analyze) {
+      const otherGame = newGame(13, 4);
+      const snapshot = structuredClone(otherGame);
+      const j = judgeGo(otherGame, 0.5, seeded(71), () => 0, {
+        playouts: 20,
+        timeMs: 1,
+        samples: 10,
+      });
+      assert.deepEqual(otherGame, snapshot);
+      assert.equal(j.playouts, 20);
+      assert.equal(j.ownership.length, 169);
+      assert.ok(j.ownership.every((v) => v >= -1 && v <= 1));
+    }
+    return chooseGoMove(s, 7.5, 6, random, () => 0, {
+      playouts: 50,
+      timeMs: 1,
+    });
+  };
+  assert.deepEqual(continueSearch(true), continueSearch(false));
+  resetGoTree();
+});
+
+void test('judge: clearly lost position for white gives black a high winrate', () => {
   const s = settled(7, WHITE);
   let t = 0;
   const j = judgeGo(s, 7.5, seeded(3), () => (t += 1), {
@@ -486,7 +527,7 @@ test('judge: clearly lost position for white gives black a high winrate', () => 
   assert.equal(j.ownership.length, 81);
 });
 
-test('resign policy: never early, never at low levels, never when disabled', () => {
+void test('resign policy: never early, never at low levels, never when disabled', () => {
   const lost = { winrates: [0.01, 0.02, 0.01, 0.01], deficit: 40, size: 9 };
   assert.equal(
     shouldResign({ ...lost, moveCount: 60, level: 8, enabled: true }),
@@ -563,7 +604,7 @@ test('resign policy: never early, never at low levels, never when disabled', () 
   );
 });
 
-test('resign end to end: AI in a hopeless position resigns per policy', () => {
+void test('resign end to end: AI in a hopeless position resigns per policy', () => {
   let s = settled(7, WHITE);
   s = { ...s, moves: Array.from({ length: 50 }, () => -1) };
   let t = 0;

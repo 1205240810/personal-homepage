@@ -83,7 +83,10 @@ function useGoAi() {
     msg: object,
     fallback: () => T | null,
     timeoutMs: number,
-    keep = false,
+    {
+      keep = false,
+      reportCompatibility = true,
+    }: { keep?: boolean; reportCompatibility?: boolean } = {},
   ) {
     let worker: Worker | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -109,7 +112,7 @@ function useGoAi() {
         if (done) return;
         clearTimeout(watchdog);
         clearTimeout(timer);
-        setCompatibility(true);
+        if (reportCompatibility) setCompatibility(true);
         worker?.terminate();
         worker = null;
         timer = setTimeout(() => {
@@ -133,7 +136,7 @@ function useGoAi() {
           if (done) return;
           if (e.data.error) local();
           else {
-            setCompatibility(false);
+            if (reportCompatibility) setCompatibility(false);
             finish(e.data.result ?? null);
           }
         };
@@ -163,7 +166,7 @@ function useGoAi() {
         { type: 'move', state: wire(s), komi, level },
         () => ({ ...chooseGoMove(s, komi, 1), fallback: true }),
         GO_LEVELS[level].timeMs + 5000,
-        true,
+        { keep: true },
       ),
     judge: (s: GoState, komi: number) =>
       send<GoJudgment>(
@@ -175,6 +178,8 @@ function useGoAi() {
             samples: 40,
           }),
         8000,
+        // Judgment has its own Worker and must not change the match strength.
+        { reportCompatibility: false },
       ),
     dead: (s: GoState) =>
       send<number[]>({ type: 'dead', state: wire(s) }, () => null, 5000),
@@ -216,7 +221,7 @@ export function GoGame() {
   const [judgeOn, setJudgeOn] = useState(false);
   const [judgment, setJudgment] = useState<{
     state: GoState;
-    j: GoJudgment;
+    j: GoJudgment | null;
   } | null>(null);
   const [autoResign, setAutoResign] = useState(true);
   /** Black winrate after each AI move, keyed by move number (undo-safe). */
@@ -563,14 +568,16 @@ export function GoGame() {
     const l = latest.current;
     const request = aiRef.current.judge(l.state, l.komi);
     void request.promise.then((j) => {
-      if (!cancelled && j) setJudgment({ state: l.state, j });
+      if (!cancelled) setJudgment({ state: l.state, j });
     });
     return () => {
       cancelled = true;
       request.cancel();
     };
   }, [judging, state]);
-  const judged = judgeOn && judgment?.state === state ? judgment.j : null;
+  const currentJudgment =
+    !problem && phase === 'play' && judgment?.state === state ? judgment : null;
+  const judged = judgeOn ? currentJudgment?.j : null;
   const judgeSummary = judged ? summarize(judged) : '';
   const shownTrend = trend.filter((t) => t.n <= state.moves.length);
 
@@ -790,7 +797,10 @@ export function GoGame() {
             <button
               type="button"
               aria-pressed={judgeOn}
-              onClick={() => setJudgeOn(!judgeOn)}
+              onClick={() => {
+                if (!judgeOn) setJudgment(null);
+                setJudgeOn(!judgeOn);
+              }}
             >
               <Gauge size={15} aria-hidden="true" /> 形势判断
             </button>
@@ -850,7 +860,9 @@ export function GoGame() {
                 ? '形势判断只在对局进行中更新。'
                 : aiToMove
                   ? '等 AI 落子后再判断…'
-                  : '形势判断计算中…'}
+                  : currentJudgment?.j === null
+                    ? '形势判断暂不可用，关闭后重新打开可重试。'
+                    : '形势判断计算中…'}
           </output>
           {shownTrend.length >= 2 && <Trend points={shownTrend} />}
         </div>
@@ -912,16 +924,16 @@ export function GoGame() {
                   aria-hidden="true"
                 />
               )}
-              {judged &&
-                !live &&
-                Math.abs(judged.ownership[p]) >= 0.2 &&
-                (c === EMPTY || (c === BLACK) !== judged.ownership[p] > 0) && (
+              {currentJudgment?.j &&
+                Math.abs(currentJudgment.j.ownership[p]) >= 0.2 &&
+                (c === EMPTY ||
+                  (c === BLACK) !== currentJudgment.j.ownership[p] > 0) && (
                   <span
-                    className={`go-own ${judged.ownership[p] > 0 ? 'is-black' : 'is-white'}`}
+                    className={`go-own ${currentJudgment.j.ownership[p] > 0 ? 'is-black' : 'is-white'}`}
                     style={{
-                      ['--a' as string]: Math.abs(judged.ownership[p]).toFixed(
-                        2,
-                      ),
+                      ['--a' as string]: Math.abs(
+                        currentJudgment.j.ownership[p],
+                      ).toFixed(2),
                     }}
                     aria-hidden="true"
                   />
@@ -986,6 +998,8 @@ function Trend({ points }: { points: { n: number; w: number }[] }) {
       viewBox={`0 0 ${W} ${H}`}
       width={W}
       height={H}
+      // SVG charts need an image role so their accessible name is announced.
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
       role="img"
       aria-label={`黑胜率走势（AI 每手后估计）：最近 ${Math.round(lastW * 100)}%`}
     >

@@ -9,6 +9,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GoGame } from '../../../components/games/go';
 import { GO_RECORDS_KEY } from '../../../lib/games/go';
+import * as GoAi from '../../../lib/games/go-ai';
 import { GO_PROBLEMS as PROBLEMS } from '../../../lib/games/go-problems';
 
 const pt = (p: number) =>
@@ -22,6 +23,7 @@ beforeEach(() => localStorage.clear());
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.useRealTimers();
 });
 
@@ -84,8 +86,12 @@ class TestWorker {
   onmessage: ((event: { data: unknown }) => void) | null = null;
   onerror: ((event: { preventDefault: () => void }) => void) | null = null;
   onmessageerror: (() => void) | null = null;
-  message: { type: string; level?: number; state: { board: number[] } } | null =
-    null;
+  message: {
+    type: string;
+    level?: number;
+    komi?: number;
+    state: { board: number[] };
+  } | null = null;
   terminated = false;
   constructor() {
     TestWorker.instances.push(this);
@@ -476,5 +482,190 @@ describe('围棋形势判断与 AI 认输', () => {
     expect(screen.getByRole('img', { name: /最近 70%/ })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
     expect(screen.getByRole('img', { name: /最近 60%/ })).toBeTruthy();
+  });
+});
+
+describe('形势判断任务隔离', () => {
+  beforeEach(() => {
+    TestWorker.instances = [];
+    vi.stubGlobal('Worker', TestWorker);
+  });
+  const toggle = () =>
+    fireEvent.click(screen.getByRole('button', { name: /形势判断/ }));
+  const judged = (size = 9) => ({
+    blackWinrate: 0.62,
+    lead: 4.5,
+    ownership: Array.from({ length: size * size }, () => 0.9),
+    playouts: 100,
+  });
+
+  it('关闭后保留淡出元素，重新落子立即移除旧局面的归属', async () => {
+    render(<GoGame />);
+    toggle();
+    await reply(workers().at(-1)!, judged());
+    toggle();
+    expect(document.querySelector('.go-board.is-judging')).toBeNull();
+    expect(document.querySelectorAll('.go-own')).toHaveLength(81);
+    expect(screen.queryByText(/黑胜率 62%/)).toBeNull();
+    fireEvent.click(pt(40));
+    expect(document.querySelectorAll('.go-own')).toHaveLength(0);
+  });
+
+  it('关闭、换棋盘让子、切题和卸载会取消判断并忽略迟到结果', async () => {
+    const view = render(<GoGame />);
+    toggle();
+    const closed = workers().at(-1)!;
+    toggle();
+    expect(closed.terminated).toBe(true);
+    await reply(closed, judged());
+    expect(document.querySelectorAll('.go-own')).toHaveLength(0);
+    toggle();
+    const old = workers().at(-1)!;
+    fireEvent.change(screen.getByLabelText('棋盘'), {
+      target: { value: '13' },
+    });
+    fireEvent.change(screen.getByLabelText('让子'), {
+      target: { value: '2' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    const current = workers().at(-1)!;
+    expect(old.terminated).toBe(true);
+    expect(current.message!.type).toBe('judge');
+    expect(current.message!.komi).toBe(0.5);
+    expect(current.message!.state.board).toHaveLength(169);
+    await reply(old, judged());
+    expect(document.querySelectorAll('.go-own')).toHaveLength(0);
+    openProblem('straight-three-live');
+    expect(current.terminated).toBe(true);
+    await reply(current, judged(13));
+    expect(document.querySelectorAll('.go-own')).toHaveLength(0);
+    fireEvent.change(screen.getByLabelText('模式'), {
+      target: { value: '' },
+    });
+    const unmounted = workers().at(-1)!;
+    expect(unmounted.message!.type).toBe('judge');
+    view.unmount();
+    expect(unmounted.terminated).toBe(true);
+  });
+
+  it('悔棋取消旧判断，重算回退局面且不复用旧归属', async () => {
+    render(<GoGame />);
+    fireEvent.click(pt(40));
+    const firstMove = workers().at(-1)!;
+    await reply(firstMove, move(30));
+    toggle();
+    const old = workers().at(-1)!;
+    fireEvent.click(screen.getByRole('button', { name: /悔棋/ }));
+    expect(old.terminated).toBe(true);
+    expect(firstMove.terminated).toBe(true);
+    const fresh = workers().at(-1)!;
+    expect(fresh.message!.state.board.every((p) => p === 0)).toBe(true);
+    await reply(old, judged());
+    expect(document.querySelectorAll('.go-own')).toHaveLength(0);
+    await reply(fresh, judged());
+    expect(document.querySelectorAll('.go-own')).toHaveLength(81);
+  });
+
+  it('判断超时独立回退，不降档、不释放落子搜索树', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(GoAi, 'judgeGo').mockReturnValue(judged());
+    render(<GoGame />);
+    fireEvent.change(screen.getByLabelText('难度（下局生效）'), {
+      target: { value: '8' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+    fireEvent.click(pt(40));
+    const retained = workers().at(-1)!;
+    await reply(retained, move(30));
+    toggle();
+    const stalled = workers().at(-1)!;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(8001);
+    });
+    expect(stalled.terminated).toBe(true);
+    expect(retained.terminated).toBe(false);
+    expect(screen.getByText(/黑胜率 62%/)).toBeTruthy();
+    expect(screen.queryByText(/已切换入门强度兼容计算/)).toBeNull();
+    fireEvent.click(pt(50));
+    expect(workers().filter((w) => w.message?.type === 'move')).toEqual([
+      retained,
+    ]);
+    expect(retained.message!.level).toBe(8);
+  });
+
+  it('判断失败会结束等待，重新开关可以重试', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(GoAi, 'judgeGo').mockImplementation(() => {
+      throw new Error('judgment unavailable');
+    });
+    render(<GoGame />);
+    toggle();
+    const failed = workers().at(-1)!;
+    act(() => failed.onerror?.({ preventDefault() {} }));
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    expect(screen.getByText(/形势判断暂不可用/)).toBeTruthy();
+    expect(screen.queryByText(/形势判断计算中/)).toBeNull();
+    expect(screen.queryByText(/已切换入门强度兼容计算/)).toBeNull();
+    toggle();
+    toggle();
+    expect(screen.queryByText(/形势判断暂不可用/)).toBeNull();
+    expect(screen.getByText(/形势判断计算中/)).toBeTruthy();
+    await reply(workers().at(-1)!, judged());
+    expect(screen.getByText(/黑胜率 62%/)).toBeTruthy();
+  });
+
+  it('认输后不再显示旧判断，待处理的判断也会中止', async () => {
+    render(<GoGame />);
+    toggle();
+    await reply(workers().at(-1)!, judged());
+    fireEvent.click(screen.getByRole('button', { name: '认输' }));
+    expect(screen.queryByText(/黑胜率 62%/)).toBeNull();
+    expect(screen.getByText(/形势判断只在对局进行中更新/)).toBeTruthy();
+    expect(document.querySelectorAll('.go-own')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+    const pending = workers().at(-1)!;
+    fireEvent.click(screen.getByRole('button', { name: /虚手/ }));
+    expect(pending.terminated).toBe(true);
+    await reply(workers().at(-1)!, move(-1));
+    const dead = workers().at(-1)!;
+    expect(dead.message!.type).toBe('dead');
+    await reply(pending, judged());
+    expect(screen.queryByText(/黑胜率 62%/)).toBeNull();
+    await reply(dead, []);
+    expect(
+      screen.getByRole('button', { name: '确认结算' }).hasAttribute('disabled'),
+    ).toBe(false);
+  });
+
+  it('AI 执黑时按黑方目差认输，只记一次胜局', async () => {
+    render(<GoGame />);
+    fireEvent.change(screen.getByLabelText('难度（下局生效）'), {
+      target: { value: '8' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    for (let i = 0; i < 16; i++) {
+      await reply(workers().at(-1)!, {
+        move: 80 - i,
+        winrate: 0.01,
+        lead: -40,
+        playouts: 1,
+      });
+      fireEvent.click(pt(i));
+    }
+    const worker = workers().at(-1)!;
+    const lost = { move: 60, winrate: 0.02, lead: -40, playouts: 1 };
+    await reply(worker, lost);
+    await reply(worker, lost);
+    expect(
+      screen.getAllByText(/AI 认输：估计胜率 2%，落后约 40 目/),
+    ).toHaveLength(2);
+    expect(
+      JSON.parse(localStorage.getItem(GO_RECORDS_KEY)!).games['9-8'],
+    ).toEqual({
+      played: 1,
+      won: 1,
+    });
   });
 });
