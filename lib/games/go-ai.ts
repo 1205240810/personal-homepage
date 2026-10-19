@@ -610,7 +610,7 @@ function select(node: Node): Node {
 }
 
 export type GoAiResult = {
-  move: number; // -1 pass, -2 resign
+  move: number; // -1 pass, -2 resign (decided by shouldResign, not the search)
   winrate: number;
   playouts: number;
 };
@@ -650,9 +650,18 @@ export function chooseGoMove(
   level: GoLevel,
   rng: Rng = Math.random,
   now: () => number = () => Date.now(),
-  opts: { reuse?: boolean } = {},
+  opts: {
+    reuse?: boolean;
+    keep?: boolean;
+    playouts?: number;
+    timeMs?: number;
+  } = {},
 ): GoAiResult {
-  const cfg = GO_LEVELS[level];
+  const cfg = {
+    ...GO_LEVELS[level],
+    ...(opts.playouts ? { playouts: opts.playouts } : {}),
+    ...(opts.timeMs ? { timeMs: opts.timeMs } : {}),
+  };
   const deadline = now() + cfg.timeMs;
   const pb = new PBoard(s.size);
   let root = opts.reuse === false ? null : reuse(s, komi);
@@ -708,7 +717,7 @@ export function chooseGoMove(
           }
     }
   }
-  kept = { root, komi };
+  if (opts.keep !== false) kept = { root, komi };
   const kids = root.children!;
   const best = kids.reduce((a, c) => (c.visits > a.visits ? c : a), kids[0]);
   const winrate = best.visits ? best.wins / best.visits : 0.5;
@@ -720,7 +729,7 @@ export function chooseGoMove(
       const c = ok[(rng() * ok.length) | 0];
       return {
         move: c.move,
-        winrate: c.visits ? c.wins / c.visits : 0.5,
+        winrate, // best-move estimate: the honest evaluation of the position
         playouts: total,
       };
     }
@@ -737,14 +746,12 @@ export function chooseGoMove(
         const c = pool[i];
         return {
           move: c.move,
-          winrate: c.visits ? c.wins / c.visits : 0.5,
+          winrate,
           playouts: total,
         };
       }
     }
   }
-  if (level >= 4 && root.visits > 800 && winrate < 0.06)
-    return { move: -2, winrate, playouts: total };
   return { move: best.move, winrate, playouts: total };
 }
 
@@ -815,4 +822,72 @@ export function guessDead(
     if (s.board[p] === WHITE && own[p] > 0.5) dead.push(p);
   }
   return dead;
+}
+
+/** Black-perspective estimate of a position: ownership in [-1, 1] per point
+ *  and the area score lead after komi (positive = black ahead). */
+export function estimateScore(
+  s: GoState,
+  komi: number,
+  samples = 200,
+  rng: Rng = Math.random,
+): { ownership: Float32Array; lead: number } {
+  const own = ownership(s, samples, rng);
+  let sum = 0;
+  for (const o of own) sum += o;
+  return { ownership: own, lead: Math.round((sum - komi) * 2) / 2 };
+}
+
+export type GoJudgment = {
+  /** Black's winning chance from a fresh MCTS search. */
+  blackWinrate: number;
+  /** Area lead for black after komi, from averaged playout ownership. */
+  lead: number;
+  ownership: number[];
+  playouts: number;
+};
+
+export function judgeGo(
+  s: GoState,
+  komi: number,
+  rng: Rng = Math.random,
+  now: () => number = () => Date.now(),
+  budget: { playouts?: number; timeMs?: number; samples?: number } = {},
+): GoJudgment {
+  const r = chooseGoMove(s, komi, 10, rng, now, {
+    reuse: false,
+    keep: false,
+    playouts: budget.playouts ?? 3000,
+    timeMs: budget.timeMs ?? 900,
+  });
+  const est = estimateScore(s, komi, budget.samples ?? 160, rng);
+  return {
+    blackWinrate: s.toPlay === BLACK ? r.winrate : 1 - r.winrate,
+    lead: est.lead,
+    ownership: Array.from(est.ownership, (v) => Math.round(v * 100) / 100),
+    playouts: r.playouts,
+  };
+}
+
+/** Resign policy, kept outside the search so it is testable and switchable.
+ *  `winrates` are the AI's own best-move winrates after each of its moves,
+ *  `deficit` is how many points the AI is behind (positive = losing). */
+export function shouldResign(o: {
+  winrates: number[];
+  deficit: number;
+  moveCount: number;
+  size: number;
+  level: GoLevel;
+  enabled: boolean;
+}): boolean {
+  if (!o.enabled || o.level <= 2) return false;
+  const area = o.size * o.size;
+  // Never in the opening: ~40% of the board must have been played.
+  if (o.moveCount < Math.round(area * 0.4)) return false;
+  const strong = o.level >= 6;
+  const need = strong ? 3 : 4;
+  const limit = strong ? 0.08 : 0.04;
+  const tail = o.winrates.slice(-need);
+  if (tail.length < need || tail.some((w) => w >= limit)) return false;
+  return o.deficit >= Math.max(10, area * (strong ? 0.12 : 0.18));
 }

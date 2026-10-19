@@ -23,7 +23,10 @@ import {
 import {
   GO_LEVELS,
   chooseGoMove,
+  estimateScore,
   guessDead,
+  judgeGo,
+  shouldResign,
   resetGoTree,
   type GoLevel,
 } from '../lib/games/go-ai.ts';
@@ -417,4 +420,209 @@ void test('题库初始局面：每块棋都至少有一口气，题目标识唯
         );
     });
   }
+});
+
+function seeded(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** A settled board: black fills columns < split, white the rest, with eyes. */
+function settled(split: number, toPlay: typeof BLACK | typeof WHITE) {
+  const eyes = new Set([
+    '1,1',
+    '1,4',
+    '1,7',
+    '8,1',
+    '8,4',
+    '8,7',
+    '3,2',
+    '3,6',
+  ]);
+  const rows = Array.from({ length: 9 }, (_, y) =>
+    Array.from({ length: 9 }, (_, x) =>
+      eyes.has(`${x},${y}`) && (x < split - 1 || x > split)
+        ? '.'
+        : x < split
+          ? 'X'
+          : 'O',
+    ).join(''),
+  );
+  return fromRows(rows, toPlay);
+}
+
+void test('score estimator: empty board is even before komi, komi favours white', () => {
+  const e = estimateScore(newGame(9), 0, 120, seeded(1));
+  assert.ok(Math.abs(e.lead) <= 12, `empty 9x9 lead ${e.lead}`);
+  for (const o of e.ownership) assert.ok(o >= -1 && o <= 1);
+});
+
+void test('score estimator: walled-off territory is counted for its owner', () => {
+  // Black owns columns 0-4, white 5-8, both with two eyes.
+  const s = settled(5, BLACK);
+  const e = estimateScore(s, 7.5, 120, seeded(2));
+  // Area: black 45, white 36 -> black +9 - 7.5 = +1.5.
+  assert.ok(Math.abs(e.lead - 1.5) <= 2, `lead ${e.lead}`);
+  assert.ok(e.ownership[at(s, 0, 4)] > 0.8);
+  assert.ok(e.ownership[at(s, 8, 4)] < -0.8);
+});
+
+void test('score estimator: komi changes only the lead, with either player to move', () => {
+  for (const toPlay of [BLACK, WHITE] as const) {
+    const s = settled(5, toPlay);
+    const unadjusted = estimateScore(s, 0, 80, seeded(12));
+    const adjusted = estimateScore(s, 7.5, 80, seeded(12));
+    assert.deepEqual(adjusted.ownership, unadjusted.ownership);
+    assert.equal(unadjusted.lead, 9);
+    assert.equal(adjusted.lead, 1.5);
+  }
+});
+
+void test('judge: analysis leaves the input and retained game search unchanged', () => {
+  const s = newGame(9);
+  const continueSearch = (analyze: boolean) => {
+    resetGoTree();
+    const random = seeded(42);
+    const options = { playouts: 250, timeMs: 1 };
+    // A fixed clock makes the playout count independent of machine speed.
+    chooseGoMove(s, 7.5, 6, random, () => 0, options);
+    if (analyze) {
+      const otherGame = newGame(13, 4);
+      const snapshot = structuredClone(otherGame);
+      const j = judgeGo(otherGame, 0.5, seeded(71), () => 0, {
+        playouts: 20,
+        timeMs: 1,
+        samples: 10,
+      });
+      assert.deepEqual(otherGame, snapshot);
+      assert.equal(j.playouts, 20);
+      assert.equal(j.ownership.length, 169);
+      assert.ok(j.ownership.every((v) => v >= -1 && v <= 1));
+    }
+    return chooseGoMove(s, 7.5, 6, random, () => 0, {
+      playouts: 50,
+      timeMs: 1,
+    });
+  };
+  assert.deepEqual(continueSearch(true), continueSearch(false));
+  resetGoTree();
+});
+
+void test('judge: clearly lost position for white gives black a high winrate', () => {
+  const s = settled(7, WHITE);
+  let t = 0;
+  const j = judgeGo(s, 7.5, seeded(3), () => (t += 1), {
+    playouts: 400,
+    timeMs: 1e9,
+    samples: 60,
+  });
+  assert.ok(j.blackWinrate > 0.85, `winrate ${j.blackWinrate}`);
+  assert.ok(j.lead > 30, `lead ${j.lead}`);
+  assert.equal(j.ownership.length, 81);
+});
+
+void test('resign policy: never early, never at low levels, never when disabled', () => {
+  const lost = { winrates: [0.01, 0.02, 0.01, 0.01], deficit: 40, size: 9 };
+  assert.equal(
+    shouldResign({ ...lost, moveCount: 60, level: 8, enabled: true }),
+    true,
+  );
+  assert.equal(
+    shouldResign({ ...lost, moveCount: 10, level: 8, enabled: true }),
+    false,
+  );
+  assert.equal(
+    shouldResign({ ...lost, moveCount: 60, level: 2, enabled: true }),
+    false,
+  );
+  assert.equal(
+    shouldResign({ ...lost, moveCount: 60, level: 8, enabled: false }),
+    false,
+  );
+  // One recent hopeful estimate keeps it playing.
+  assert.equal(
+    shouldResign({
+      ...lost,
+      winrates: [0.01, 0.3, 0.01],
+      moveCount: 60,
+      level: 8,
+      enabled: true,
+    }),
+    false,
+  );
+  // Small deficit: keep playing even with low winrate.
+  assert.equal(
+    shouldResign({
+      ...lost,
+      deficit: 4,
+      moveCount: 60,
+      level: 8,
+      enabled: true,
+    }),
+    false,
+  );
+  // Mid levels need a longer, deeper streak.
+  assert.equal(
+    shouldResign({
+      winrates: [0.06, 0.06, 0.06],
+      deficit: 40,
+      size: 9,
+      moveCount: 60,
+      level: 4,
+      enabled: true,
+    }),
+    false,
+  );
+  // Opening threshold scales with the board.
+  assert.equal(
+    shouldResign({
+      ...lost,
+      size: 19,
+      deficit: 80,
+      moveCount: 60,
+      level: 8,
+      enabled: true,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldResign({
+      ...lost,
+      size: 19,
+      deficit: 80,
+      moveCount: 150,
+      level: 8,
+      enabled: true,
+    }),
+    true,
+  );
+});
+
+void test('resign end to end: AI in a hopeless position resigns per policy', () => {
+  let s = settled(7, WHITE);
+  s = { ...s, moves: Array.from({ length: 50 }, () => -1) };
+  let t = 0;
+  const r = chooseGoMove(s, 7.5, 8, seeded(4), () => (t += 1), {
+    reuse: false,
+  });
+  assert.ok(r.move !== -2, 'search itself never resigns');
+  const lead = estimateScore(s, 7.5, 60, seeded(5)).lead;
+  assert.ok(r.winrate < 0.08, `winrate ${r.winrate}`);
+  assert.equal(
+    shouldResign({
+      winrates: [0.02, 0.03, r.winrate],
+      deficit: lead,
+      moveCount: s.moves.length,
+      size: 9,
+      level: 8,
+      enabled: true,
+    }),
+    true,
+  );
 });
