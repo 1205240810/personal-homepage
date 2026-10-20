@@ -3,8 +3,8 @@
    - `html[data-theme]` is set by THEME_BOOT_SCRIPT (lib/theme.ts) before paint.
    - Default theme = the original look; nothing below changes it except the
      neutral switcher control.
-   - 「科技」theme = dark base, cyan accents, faint grid + scanlines, mono HUD
-     labels and glow on focus/hover. Pages keep their own local tokens
+   - 「科技」theme = deep blue-slate base, one muted cyan accent, mono labels.
+     Restrained: no scanlines, sweep, grid or neon glow. Pages keep their own local tokens
      (--b-*, --games-*, --arcade-*); this file remaps them, so new UI that
      uses those tokens follows the theme automatically.
    ========================================================================== */
@@ -52,27 +52,24 @@ html[data-theme='tech'] {
   --tech-surface-2: #0f1f2e;
   --tech-ink: #dce8f4;
   --tech-muted: #93a8bc;
-  --tech-accent: #3ddcff;
+  --tech-accent: #7cc7df;
   --tech-accent-2: #7cf2c4;
   --tech-warn: #ffb44d;
-  --tech-rule: rgb(61 220 255 / 0.2);
-  --tech-rule-strong: rgb(61 220 255 / 0.45);
+  --tech-rule: rgb(124 199 223 / 0.2);
+  --tech-rule-strong: rgb(124 199 223 / 0.45);
+  /* Elegant, not neon: a hairline ring and a deep soft shadow. */
   --tech-glow:
-    0 0 0 1px rgb(61 220 255 / 0.55), 0 0 18px rgb(61 220 255 / 0.28);
+    0 0 0 1px rgb(124 199 223 / 0.32), 0 14px 32px -16px rgb(0 0 0 / 0.75);
   --tech-mono:
     'JetBrains Mono', 'SFMono-Regular', 'Cascadia Code', Consolas,
     'Liberation Mono', monospace;
-  --tech-grid:
-    linear-gradient(rgb(61 220 255 / 0.045) 1px, transparent 1px) 0 0 / 32px
-      32px,
-    linear-gradient(90deg, rgb(61 220 255 / 0.045) 1px, transparent 1px) 0 0 /
-      32px 32px,
-    radial-gradient(
-        120% 80% at 50% -10%,
-        rgb(61 220 255 / 0.1),
-        transparent 60%
-      )
-      0 0 / 100% 100%;
+  /* A single soft light from above; no grid lines. */
+  --tech-grid: radial-gradient(
+      120% 80% at 50% -10%,
+      rgb(124 199 223 / 0.07),
+      transparent 60%
+    )
+    0 0 / 100% 100%;
 
   /* shadcn / global tokens */
   --background: var(--tech-bg);
@@ -90,68 +87,23 @@ html[data-theme='tech'] body {
   background-attachment: fixed;
   color: var(--tech-ink);
 }
-/* Faint CRT scanlines over everything; never intercepts input. */
-html[data-theme='tech'] body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 2147483000;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgb(255 255 255 / 0.018) 0 1px,
-    transparent 1px 3px
-  );
-}
-@media (prefers-reduced-motion: no-preference) {
-  html[data-theme='tech'] body::before {
-    content: '';
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: -20vh;
-    height: 20vh;
-    z-index: 2147483000;
-    pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(61 220 255 / 0.035),
-      transparent
-    );
-    animation: tech-sweep 9s linear infinite;
-  }
-}
-@keyframes tech-sweep {
-  to {
-    transform: translateY(140vh);
-  }
-}
+/* No scanlines, sweep or HUD brackets: the theme is a palette, not effects. */
 html[data-theme='tech'] ::selection {
-  background: rgb(61 220 255 / 0.3);
+  background: rgb(124 199 223 / 0.3);
   color: #fff;
 }
 html[data-theme='tech']
   :is(a, button, [tabindex], input, select, textarea, summary):focus-visible {
   outline: 2px solid var(--tech-accent);
   outline-offset: 3px;
-  box-shadow: 0 0 14px rgb(61 220 255 / 0.45);
 }
 html[data-theme='tech'] .theme-switcher {
   color: var(--tech-accent);
   border-color: var(--tech-rule-strong);
-  background: rgb(61 220 255 / 0.1);
-  font-family: var(--tech-mono);
-  box-shadow: 0 0 12px rgb(61 220 255 / 0.25);
-}
-html[data-theme='tech'] .theme-switcher:hover {
-  box-shadow: var(--tech-glow);
+  background: rgb(124 199 223 / 0.1);
 }
 
 /* ---- Shared HUD helpers ------------------------------------------------- */
-html[data-theme='tech'] :is(h1, h2, h3) {
-  text-shadow: 0 0 22px rgb(61 220 255 / 0.18);
-}
 html[data-theme='tech']
   :is(.b-mono, .eyebrow, .b-index, .arrival-index, time, kbd, code) {
   font-family: var(--tech-mono);
@@ -195,7 +147,6 @@ html[data-theme='tech'] .reading-page {
 html[data-theme='tech'] .world-header nav {
   background: rgb(10 21 32 / 0.88);
   border-color: var(--tech-rule-strong);
-  box-shadow: 0 0 22px rgb(61 220 255 / 0.12);
 }
 html[data-theme='tech'] .world-header .nav-button,
 html[data-theme='tech'] .world-header .direct-home-link {
@@ -235,48 +186,6 @@ html[data-theme='tech'] .sg .sg-error-tag {
 
 /* Default theme: page resets strip button borders, keep the switcher a pill. */
 
-/* HUD corner brackets, drawn as background so they never shift layout. */
-html[data-theme='tech'] {
-  --tech-hud:
-    linear-gradient(var(--tech-accent), var(--tech-accent)),
-    linear-gradient(var(--tech-accent), var(--tech-accent)),
-    linear-gradient(var(--tech-accent), var(--tech-accent)),
-    linear-gradient(var(--tech-accent), var(--tech-accent)),
-    linear-gradient(var(--tech-accent), var(--tech-accent)),
-    linear-gradient(var(--tech-accent), var(--tech-accent)),
-    linear-gradient(var(--tech-accent), var(--tech-accent)),
-    linear-gradient(var(--tech-accent), var(--tech-accent));
-}
-html[data-theme='tech']
-  :is(
-    .room-game,
-    .room-daily,
-    #workbench .b-instrument,
-    #workbench .b-game-room,
-    .sweeper-console,
-    .arrival-workbench,
-    .arrival-explore
-  ) {
-  /* Page rules use the background shorthand with higher specificity. */
-  background-image: var(--tech-hud) !important;
-  background-position:
-    top left,
-    top left,
-    top right,
-    top right,
-    bottom left,
-    bottom left,
-    bottom right,
-    bottom right !important;
-  background-size:
-    14px 1px,
-    1px 14px !important;
-  background-repeat: no-repeat !important;
-  transition:
-    box-shadow 0.2s,
-    border-color 0.2s,
-    transform 0.2s;
-}
 html[data-theme='tech']
   :is(
     .room-game,
@@ -285,18 +194,14 @@ html[data-theme='tech']
     .arrival-explore
   ):hover {
   border-color: var(--tech-rule-strong);
-  box-shadow: var(--tech-glow);
 }
 
-/* Home hero: cooler grade, scan grid and cyan HUD actions over the artwork. */
+/* Home hero: a cooler, quieter grade over the artwork. */
 html[data-theme='tech'] .arrival-art {
   filter: saturate(0.72) contrast(1.06) brightness(0.86);
 }
 html[data-theme='tech'] .arrival-shade {
   background:
-    linear-gradient(rgb(61 220 255 / 0.05) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, rgb(61 220 255 / 0.05) 1px, transparent 1px) 0 0 /
-      40px 40px,
     linear-gradient(
       90deg,
       #050b12d9 0%,
@@ -311,7 +216,7 @@ html[data-theme='tech'] .arrival-shade {
       transparent 82%,
       #050b1266
     ),
-    linear-gradient(135deg, rgb(61 220 255 / 0.1), rgb(20 40 80 / 0.18));
+    linear-gradient(135deg, rgb(124 199 223 / 0.1), rgb(20 40 80 / 0.18));
 }
 html[data-theme='tech'] .arrival-index {
   color: var(--tech-accent);
@@ -322,23 +227,19 @@ html[data-theme='tech'] .arrival-index {
     letter-spacing: 0.14em;
   }
 }
-html[data-theme='tech'] .arrival-index::before {
-  content: '▍SYS · ';
-  opacity: 0.8;
-}
 html[data-theme='tech'] .arrival-copy h1 {
-  text-shadow:
-    0 0 28px rgb(61 220 255 / 0.35),
-    0 2px 18px #000a;
+  text-shadow: 0 2px 18px #000a;
 }
 html[data-theme='tech'] .arrival-period {
   color: var(--tech-accent);
 }
 html[data-theme='tech'] .arrival-workbench {
   color: var(--tech-ink);
+  /* The paper button's light gradient must not show through in this theme. */
+  background-image: none;
   background-color: rgb(8 30 44 / 0.82);
   border: 1px solid var(--tech-rule-strong);
-  box-shadow: 0 0 22px rgb(61 220 255 / 0.22);
+  box-shadow: var(--tech-glow);
 }
 html[data-theme='tech'] .arrival-workbench small,
 html[data-theme='tech'] .arrival-explore small {
@@ -346,6 +247,7 @@ html[data-theme='tech'] .arrival-explore small {
 }
 html[data-theme='tech'] .arrival-explore {
   color: var(--tech-ink);
+  background-image: none;
   background-color: rgb(6 12 19 / 0.72);
   border-color: var(--tech-rule);
 }
@@ -368,15 +270,14 @@ html[data-theme='tech'] .sweeper-levels button {
   color: var(--tech-muted);
 }
 html[data-theme='tech'] .sweeper-levels button[data-pressed] {
-  background: rgb(61 220 255 / 0.16);
+  background: rgb(124 199 223 / 0.16);
   border-color: var(--tech-accent);
   color: var(--tech-ink);
-  box-shadow: 0 0 12px rgb(61 220 255 / 0.25);
 }
 html[data-theme='tech'] .sweeper-cell {
   background: #15324a;
   box-shadow:
-    inset 0 1px rgb(61 220 255 / 0.28),
+    inset 0 1px rgb(124 199 223 / 0.28),
     inset 0 -2px #06121c;
   color: var(--tech-ink);
 }
@@ -385,7 +286,7 @@ html[data-theme='tech'] .sweeper-cell:hover:not([aria-disabled]):not(.is-open) {
 }
 html[data-theme='tech'] .sweeper-cell.is-open {
   background: #07131d;
-  box-shadow: inset 0 0 0 1px rgb(61 220 255 / 0.14);
+  box-shadow: inset 0 0 0 1px rgb(124 199 223 / 0.14);
 }
 html[data-theme='tech'] .sweeper-cell.is-start {
   outline-color: var(--tech-accent);

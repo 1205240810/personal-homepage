@@ -5,7 +5,7 @@ html[data-theme='tech'] #workbench .b-index {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-instrument {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: linear-gradient(
     115deg,
     #0a1520 0%,
@@ -18,7 +18,7 @@ html[data-theme='tech'] #workbench .b-hardware-tag {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-screw {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: linear-gradient(120deg, #0a1520, #0f1f2e)
 }
 html[data-theme='tech'] #workbench .b-screen-bezel {
@@ -41,7 +41,7 @@ html[data-theme='tech'] #workbench[data-disconnected='true'] .b-upper-core {
     fill: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-screen-bottom {
-    border-top: 1px solid rgb(61 220 255 / 0.16)
+    border-top: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] #workbench .b-route-caption {
     color: #93a8bc
@@ -53,7 +53,7 @@ html[data-theme='tech'] #workbench .b-state-description {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-switch {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .b-switch:hover {
     background: linear-gradient(#0f1f2e, #e96831)
@@ -62,7 +62,7 @@ html[data-theme='tech'] #workbench .b-switch::before {
     background: #0a1520
 }
 html[data-theme='tech'] #workbench .b-bottom-rail {
-    border-top: 1px solid rgb(61 220 255 / 0.30)
+    border-top: 1px solid rgb(124 199 223 / 0.30)
 }
 html[data-theme='tech'] #workbench .b-vents i {
     background: #0f1f2e
@@ -74,7 +74,7 @@ html[data-theme='tech'] #workbench .b-project-note p {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-section-head {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .b-section-number {
     color: #93a8bc
@@ -83,7 +83,7 @@ html[data-theme='tech'] #workbench .b-section-head .b-text-link {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-article:hover .b-article-title {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] #workbench .b-article-kicker {
     color: #93a8bc
@@ -98,14 +98,14 @@ html[data-theme='tech'] #workbench .b-album-tag {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-album-button:hover .b-album-name {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] #workbench .b-album p {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-album-tabs i {
     background: #0a1520;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .b-album-tabs i:nth-child(2) {
     background: #0f1f2e
@@ -115,7 +115,7 @@ html[data-theme='tech'] #workbench .b-album-tabs i:nth-child(3) {
 }
 html[data-theme='tech'] #workbench .b-album-tabs i:nth-child(3)::after {
     background: #0f1f2e;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .b-footer {
     color: #93a8bc
@@ -125,15 +125,15 @@ html[data-theme='tech'] #workbench .b-footer button {
 }
 @media (max-width: 760px) {
     html[data-theme='tech'] #workbench .b-album-tag {
-        border-bottom: 1px solid rgb(61 220 255 / 0.45)
+        border-bottom: 1px solid rgb(124 199 223 / 0.45)
     }
 }
 html[data-theme='tech'] #workbench .b-mode-symbol {
-    color: #3ddcff;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    color: #7cc7df;
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .b-game-room {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] #workbench .b-game-room-head {
@@ -143,20 +143,20 @@ html[data-theme='tech'] #workbench .b-game-room p {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-game-room-titles {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .b-game-room-titles i {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .b-game-room-enter {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] #workbench .b-game-room:hover {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 /*  components/home/project-library.css  */
 html[data-theme='tech'] #workbench [data-project-kind] {
-    --work-accent: #3ddcff;
+    --work-accent: #7cc7df;
     --work-tint: #0f1f2e
 }
 html[data-theme='tech'] #workbench [data-project-kind='album'] {
@@ -168,7 +168,7 @@ html[data-theme='tech'] #workbench [data-project-kind='delivery'] {
     --work-tint: #0f1f2e
 }
 html[data-theme='tech'] #workbench [data-project-kind='cost'] {
-    --work-accent: #3ddcff;
+    --work-accent: #7cc7df;
     --work-tint: #0f1f2e
 }
 html[data-theme='tech'] #workbench [data-project-kind='bridge'] {
@@ -184,18 +184,18 @@ html[data-theme='tech'] #workbench .library-filters button {
 }
 html[data-theme='tech'] #workbench .library-filters button[data-pressed] {
     color: #93a8bc;
-    border-bottom-color: rgb(61 220 255 / 0.45)
+    border-bottom-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .library-filters button:hover {
     color: #dce8f4;
     background: #0a1520
 }
 html[data-theme='tech'] #workbench .library-project-list button {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45);
+    border-bottom: 1px solid rgb(124 199 223 / 0.45);
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .library-item-mark {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520;
     color: #93a8bc
 }
@@ -207,13 +207,13 @@ html[data-theme='tech'] #workbench .library-item-copy small {
 }
 html[data-theme='tech'] #workbench .library-project-list button[data-active] {
     background: #0a1520;
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .library-project-list button:hover {
     background: #0a1520
 }
 html[data-theme='tech'] #workbench .library-project-panel .b-instrument {
-    border-color: rgb(61 220 255 / 0.45);
+    border-color: rgb(124 199 223 / 0.45);
     background: linear-gradient(125deg, #0a1520, #0a1520)
 }
 html[data-theme='tech'] #workbench .library-project-panel .b-hardware-tag {
@@ -226,7 +226,7 @@ html[data-theme='tech'] #workbench .library-project-panel .b-hardware-head h3 {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .library-project-emblem {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a152099
 }
 html[data-theme='tech'] #workbench .library-project-prompt {
@@ -236,7 +236,7 @@ html[data-theme='tech'] #workbench .library-feature-line {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .library-feature-line span + span {
-    border-left: 1px solid rgb(61 220 255 / 0.45)
+    border-left: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .library-project-panel .b-screen-bezel {
     background: linear-gradient(#63745c, #0f1f2e)
@@ -248,16 +248,16 @@ html[data-theme='tech'] #workbench .library-project-footer a {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .library-project-footer a.library-main-link {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .library-project-footer a:hover {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] #workbench .cost-fields input, html[data-theme='tech'] #workbench .delivery-destination select {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .cost-fields input:focus-visible, html[data-theme='tech'] #workbench .delivery-destination select:focus-visible {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .delivery-map line {
     stroke: #93a8bc
@@ -273,13 +273,13 @@ html[data-theme='tech'] #workbench .delivery-map .route-used circle {
     fill: #93a8bc
 }
 html[data-theme='tech'] #workbench .delivery-destination {
-    border-top: 1px solid rgb(61 220 255 / 0.16)
+    border-top: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] #workbench .guide-step-list button {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .guide-step-list button[data-active] {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .guide-step-number {
     color: #93a8bc
@@ -288,10 +288,10 @@ html[data-theme='tech'] #workbench
   .library-project-panel
   .demo-node[aria-pressed='true']
   .demo-node-icon {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .library-project-panel .demo-config {
-    border-color: rgb(61 220 255 / 0.40)
+    border-color: rgb(124 199 223 / 0.40)
 }
 html[data-theme='tech'] #workbench .delivery-map text {
     stroke: #dce8f4
@@ -308,49 +308,49 @@ html[data-theme='tech'] #workbench .demo-tabs button[data-active] {
     color: #dce8f4
 }
 html[data-theme='tech'] #workbench .demo-screen-label {
-    border-bottom: 1px solid rgb(61 220 255 / 0.16)
+    border-bottom: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] #workbench .demo-topology:before {
     background: #0f1f2e99
 }
 html[data-theme='tech'] #workbench .demo-node-icon {
-    border: 1px solid rgb(61 220 255 / 0.33)
+    border: 1px solid rgb(124 199 223 / 0.33)
 }
 html[data-theme='tech'] #workbench .demo-node[aria-pressed='true'] .demo-node-icon {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .demo-planner {
-    border-top: 1px solid rgb(61 220 255 / 0.16)
+    border-top: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] #workbench .demo-planner input {
-    border: 1px solid rgb(61 220 255 / 0.44)
+    border: 1px solid rgb(124 199 223 / 0.44)
 }
 html[data-theme='tech'] #workbench .demo-plan-button {
     background: #0f1f2e;
     color: #dce8f4
 }
 html[data-theme='tech'] #workbench .demo-config {
-    border: 1px solid rgb(61 220 255 / 0.16)
+    border: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] #workbench .demo-config > div {
-    border-bottom: 1px solid rgb(61 220 255 / 0.16)
+    border-bottom: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] #workbench .demo-primary {
     background: linear-gradient(#0f1f2e, #d97744);
     color: #dce8f4
 }
 html[data-theme='tech'] #workbench .demo-disclosure {
-    border-top: 1px solid rgb(61 220 255 / 0.16)
+    border-top: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] #workbench .demo-filters select {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .demo-empty button {
     background: #0f1f2e;
     color: #dce8f4
 }
 html[data-theme='tech'] #workbench .demo-expand-button {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520;
     color: #dce8f4
 }
@@ -358,11 +358,11 @@ html[data-theme='tech'] #workbench .demo-compact-preview p {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .demo-compact-network span + span {
-    border-left: 1px solid rgb(61 220 255 / 0.45)
+    border-left: 1px solid rgb(124 199 223 / 0.45)
 }
 /*  components/home/pulse-game.css  */
 html[data-theme='tech'] #workbench .pulse-game {
-    border-top: 1px solid rgb(61 220 255 / 0.45)
+    border-top: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-heading {
     color: #93a8bc
@@ -375,14 +375,14 @@ html[data-theme='tech'] #workbench #pulse-rule {
 }
 html[data-theme='tech'] #workbench .pulse-console {
     background: #0a1520;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-levels button {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .pulse-levels button[data-pressed] {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-moves {
     color: #93a8bc
@@ -391,42 +391,42 @@ html[data-theme='tech'] #workbench .pulse-moves strong {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .pulse-board {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-cell {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-cell span {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     color: #dce8f4
 }
 html[data-theme='tech'] #workbench .pulse-cell.is-on {
     background: #0f1f2e;
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-cell.is-on span {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-cell.is-hint {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .is-solved .pulse-board {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-feedback {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .pulse-actions {
-    border-top: 1px solid rgb(61 220 255 / 0.45)
+    border-top: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-actions button {
     color: #93a8bc
 }
 html[data-theme='tech'] #workbench .pulse-actions button:hover:not(:disabled) {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] #workbench .pulse-chapters {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] #workbench .pulse-chapters button {
     color: #93a8bc
@@ -442,7 +442,7 @@ html[data-theme='tech'] #workbench .pulse-progress {
     color: #93a8bc
 }
 html[data-theme='tech'] :is(#workbench, .signal-stage) .pulse-resume {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520;
     color: #93a8bc
 }
@@ -451,10 +451,10 @@ html[data-theme='tech'] :is(#workbench, .signal-stage) .pulse-resume button {
     color: #93a8bc
 }
 html[data-theme='tech'] :is(#workbench, .signal-stage) .pulse-game button:focus-visible {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] :is(#workbench, .signal-stage) .pulse-game .pulse-cell:focus-visible {
-    outline-color: rgb(61 220 255 / 0.45)
+    outline-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] :is(#workbench, .signal-stage) .pulse-storage {
     color: #93a8bc
@@ -464,113 +464,113 @@ html[data-theme='tech'] :is(#workbench, .signal-stage) .pulse-chapter-descriptio
 }
 /*  components/games/games.css  */
 html[data-theme='tech'] .room-game {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .room-game:hover {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-game-preview {
     background: #0f1f2e;
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-blackjack-preview, html[data-theme='tech'] .room-holdem-preview, html[data-theme='tech'] .room-pulse-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-blackjack-dealer i {
-    border: 2px solid rgb(61 220 255 / 0.45)
+    border: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-blackjack-hand > span {
     background: #0a1520;
     color: #dce8f4
 }
 html[data-theme='tech'] .room-blackjack-hand .is-red {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .room-preview-top {
-    border-bottom: 1px solid rgb(61 220 255 / 0.16)
+    border-bottom: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] .room-preview-bottom {
-    border-top: 1px solid rgb(61 220 255 / 0.16)
+    border-top: 1px solid rgb(124 199 223 / 0.16)
 }
 html[data-theme='tech'] .room-table-rim {
-    border: 8px solid rgb(61 220 255 / 0.45)
+    border: 8px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-opponent-cards i {
-    border: 3px solid rgb(61 220 255 / 0.45)
+    border: 3px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-community-cards > span, html[data-theme='tech'] .room-player-cards > span {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520;
     color: #dce8f4
 }
 html[data-theme='tech'] .room-community-cards > .is-red {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .room-pulse-grid {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-pulse-grid i {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-pulse-grid i.is-on {
     background: #0f1f2e;
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-sudoku-preview {
     background: #0a1520;
     color: #93a8bc;
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-sudoku-preview .room-preview-top, html[data-theme='tech'] .room-sudoku-preview .room-preview-bottom {
     color: #93a8bc
 }
 html[data-theme='tech'] .room-sudoku-board {
-    border: 2px solid rgb(61 220 255 / 0.45)
+    border: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-sudoku-board > span {
-    border-right: 1px solid rgb(61 220 255 / 0.45);
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-right: 1px solid rgb(124 199 223 / 0.45);
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-sudoku-board > span:nth-child(9n + 3), html[data-theme='tech'] .room-sudoku-board > span:nth-child(9n + 6) {
-    border-right: 2px solid rgb(61 220 255 / 0.45)
+    border-right: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-sudoku-board > span:nth-child(n + 19):nth-child(-n + 27), html[data-theme='tech'] .room-sudoku-board > span:nth-child(n + 46):nth-child(-n + 54) {
-    border-bottom: 2px solid rgb(61 220 255 / 0.45)
+    border-bottom: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-sudoku-board .is-selected {
     background: #0f1f2e;
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-sudoku-board small {
     color: #93a8bc
 }
 html[data-theme='tech'] .room-stud-preview {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-stud-hand > span {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520;
     color: #dce8f4
 }
 html[data-theme='tech'] .room-stud-hand .is-red {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .room-stud-hand .is-hidden {
-    border: 2px solid rgb(61 220 255 / 0.45)
+    border: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-stud-streets i {
-    border-top: 1px solid rgb(61 220 255 / 0.40)
+    border-top: 1px solid rgb(124 199 223 / 0.40)
 }
 html[data-theme='tech'] .room-game-copy > p {
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .room-circuit-grid {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-circuit-grid line {
     stroke: #93a8bc
@@ -580,24 +580,24 @@ html[data-theme='tech'] .room-circuit-grid circle {
     stroke: #93a8bc
 }
 html[data-theme='tech'] .room-circuit-grid rect {
-    fill: #3ddcff
+    fill: #7cc7df
 }
 html[data-theme='tech'] .room-sweeper-grid {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-daily, html[data-theme='tech'] .room-recent {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .room-daily {
-    border-color: rgb(61 220 255 / 0.45);
+    border-color: rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .room-daily a, html[data-theme='tech'] .room-recent a {
     background: #0a1520
 }
 html[data-theme='tech'] .room-fault-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-fault-grid span {
     color: #93a8bc
@@ -606,97 +606,97 @@ html[data-theme='tech'] .room-fault-grid .is-ok {
     background: #0f1f2e
 }
 html[data-theme='tech'] .room-fault-rows i:not(:empty), html[data-theme='tech'] .room-fault-cols i:not(:empty) {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-life-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-life-grid span.is-live {
     background: #0f1f2e
 }
 html[data-theme='tech'] .room-langton-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-langton-grid span.is-on {
     background: #0f1f2e
 }
 html[data-theme='tech'] .room-sand-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-sand-grid .is-s {
     background: #0f1f2e
 }
 html[data-theme='tech'] .room-laser-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-laser-svg polyline {
-    stroke: #3ddcff
+    stroke: #7cc7df
 }
 html[data-theme='tech'] .room-laser-svg circle {
-    fill: #3ddcff
+    fill: #7cc7df
 }
 html[data-theme='tech'] .room-flow-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-hashi-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-hashi-svg circle {
     fill: #dce8f4
 }
 html[data-theme='tech'] .room-maze-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-maze-svg circle {
-    fill: #3ddcff
+    fill: #7cc7df
 }
 html[data-theme='tech'] .room-rw-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-rw-rules span {
-    border: 2px solid rgb(61 220 255 / 0.45)
+    border: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-rw-rules .is {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-rw-rules .prop {
     color: #dce8f4;
     background: #0a1520
 }
 html[data-theme='tech'] .room-tl-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-tl-row .ghost {
-    border: 2px dashed rgb(61 220 255 / 0.45)
+    border: 2px dashed rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-tl-row .door {
-    border: 3px dashed rgb(61 220 255 / 0.45)
+    border: 3px dashed rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-chess-preview {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-chess-board {
-    border: 2px solid rgb(61 220 255 / 0.45)
+    border: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-chess-board i {
     background: #0f1f2e;
     color: #dce8f4
 }
 html[data-theme='tech'] .room-go-preview {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     color: #dce8f4;
     background: #0f1f2e
 }
 html[data-theme='tech'] .room-go-board {
-    border-right: 1px solid rgb(61 220 255 / 0.45);
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-right: 1px solid rgb(124 199 223 / 0.45);
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .room-go-board .w {
     background: #0a1520
 }
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .sweeper-heading {
@@ -710,24 +710,24 @@ html[data-theme='tech'] #sweeper-rule {
 }
 html[data-theme='tech'] .sweeper-console {
     background: #0a1520;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sweeper-levels button {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     color: #93a8bc
 }
 html[data-theme='tech'] .sweeper-levels button[data-pressed] {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sweeper-board-switch {
     color: #93a8bc
 }
 html[data-theme='tech'] .sweeper-board-switch button {
-    border: 1px solid rgb(61 220 255 / 0.45) !important;
+    border: 1px solid rgb(124 199 223 / 0.45) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .sweeper-board-switch button:hover:not(:disabled), html[data-theme='tech'] .sweeper-actions button:hover:not(:disabled) {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .sweeper-stats {
     color: #93a8bc
@@ -736,13 +736,13 @@ html[data-theme='tech'] .sweeper-stats strong {
     color: #93a8bc
 }
 html[data-theme='tech'] fieldset.sweeper-board {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sweeper-cell:focus-visible {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sweeper-cell.is-start {
-    outline: 1px dashed rgb(61 220 255 / 0.45)
+    outline: 1px dashed rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sweeper-fault {
     background: radial-gradient(circle at 40% 35%, #0f1f2e, #a3402a 70%)
@@ -751,19 +751,19 @@ html[data-theme='tech'] .sweeper-cell.is-boom .sweeper-fault {
     background: radial-gradient(circle, #0a1520, #0f1f2e 50%, #e2763d)
 }
 html[data-theme='tech'] .sweeper-play.is-lost fieldset.sweeper-board {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sweeper-play.is-won fieldset.sweeper-board {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sweeper-feedback {
     color: #93a8bc
 }
 html[data-theme='tech'] .sweeper-play.is-lost .sweeper-feedback {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .sweeper-actions {
-    border-top: 1px solid rgb(61 220 255 / 0.45)
+    border-top: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sweeper-actions button {
     color: #93a8bc
@@ -776,7 +776,7 @@ html[data-theme='tech'] .sweeper-storage {
 }
 /*  components/games/circuit-repair.css  */
 html[data-theme='tech'] .circuit-stage {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .circuit-heading {
@@ -790,24 +790,24 @@ html[data-theme='tech'] #circuit-rule {
 }
 html[data-theme='tech'] .circuit-console {
     background: #0a1520;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .circuit-sizes button {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-sizes button[data-pressed] {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .circuit-board-switch {
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-board-switch button {
-    border: 1px solid rgb(61 220 255 / 0.45) !important;
+    border: 1px solid rgb(124 199 223 / 0.45) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-board-switch button:hover:not(:disabled), html[data-theme='tech'] .circuit-actions button:hover:not(:disabled) {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .circuit-stats {
     color: #93a8bc
@@ -816,10 +816,10 @@ html[data-theme='tech'] .circuit-stats strong {
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-board {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .circuit-cell:focus-visible {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .circuit-wire line {
     stroke: #93a8bc
@@ -832,19 +832,19 @@ html[data-theme='tech'] .circuit-bulb {
     stroke: #93a8bc
 }
 html[data-theme='tech'] .circuit-core {
-    fill: #3ddcff
+    fill: #7cc7df
 }
 html[data-theme='tech'] .circuit-cell.is-hint {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .circuit-play.is-solved .circuit-board {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .circuit-feedback {
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-actions {
-    border-top: 1px solid rgb(61 220 255 / 0.45)
+    border-top: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .circuit-actions button {
     color: #93a8bc
@@ -857,7 +857,7 @@ html[data-theme='tech'] .circuit-storage {
 }
 /*  components/games/fault-finder.css  */
 html[data-theme='tech'] .fault-stage {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .fault-heading {
@@ -871,24 +871,24 @@ html[data-theme='tech'] #fault-rule {
 }
 html[data-theme='tech'] .fault-console {
     background: #0a1520;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .fault-levels button {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-levels button[data-pressed] {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .fault-board-switch {
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-board-switch button {
-    border: 1px solid rgb(61 220 255 / 0.45) !important;
+    border: 1px solid rgb(124 199 223 / 0.45) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-board-switch button:hover:not(:disabled), html[data-theme='tech'] .fault-actions button:hover:not(:disabled) {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .fault-stats {
     color: #93a8bc
@@ -897,40 +897,40 @@ html[data-theme='tech'] .fault-stats strong {
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-cell {
-    border: 1px solid rgb(61 220 255 / 0.45) !important
+    border: 1px solid rgb(124 199 223 / 0.45) !important
 }
 html[data-theme='tech'] .fault-cell:focus-visible {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .fault-cell.is-fault {
-    border-color: rgb(61 220 255 / 0.45) !important
+    border-color: rgb(124 199 223 / 0.45) !important
 }
 html[data-theme='tech'] .fault-cell.is-ok {
     background: #0f1f2e;
-    border-color: rgb(61 220 255 / 0.45) !important;
+    border-color: rgb(124 199 223 / 0.45) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-cell.is-hint {
-    outline: 2px dashed rgb(61 220 255 / 0.45)
+    outline: 2px dashed rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .fault-sensor {
-    border: 2px solid rgb(61 220 255 / 0.45) !important
+    border: 2px solid rgb(124 199 223 / 0.45) !important
 }
 html[data-theme='tech'] .fault-sensor.is-conflict {
-    border-color: rgb(61 220 255 / 0.45) !important
+    border-color: rgb(124 199 223 / 0.45) !important
 }
 html[data-theme='tech'] .fault-sensor.is-lit, html[data-theme='tech'] .fault-sensor:focus-visible {
-    border-color: rgb(61 220 255 / 0.45) !important
+    border-color: rgb(124 199 223 / 0.45) !important
 }
 html[data-theme='tech'] .fault-feedback {
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-actions button {
-    border: 1px solid rgb(61 220 255 / 0.45) !important;
+    border: 1px solid rgb(124 199 223 / 0.45) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-actions .fault-submit {
-    border-color: rgb(61 220 255 / 0.45) !important
+    border-color: rgb(124 199 223 / 0.45) !important
 }
 html[data-theme='tech'] .fault-progress {
     color: #93a8bc
@@ -943,7 +943,7 @@ html[data-theme='tech'] .fault-storage {
 }
 /*  components/games/signal-pulse.css  */
 html[data-theme='tech'] .signal-stage .pulse-game {
-    border-top: 1px solid rgb(61 220 255 / 0.45)
+    border-top: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-heading {
     color: #93a8bc
@@ -956,14 +956,14 @@ html[data-theme='tech'] .signal-stage #pulse-rule {
 }
 html[data-theme='tech'] .signal-stage .pulse-console {
     background: #0a1520;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-levels button {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage .pulse-levels button[data-pressed] {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-moves {
     color: #93a8bc
@@ -972,42 +972,42 @@ html[data-theme='tech'] .signal-stage .pulse-moves strong {
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage .pulse-board {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-cell {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-cell span {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     color: #dce8f4
 }
 html[data-theme='tech'] .signal-stage .pulse-cell.is-on {
     background: #0f1f2e;
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-cell.is-on span {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-cell.is-hint {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .is-solved .pulse-board {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-feedback {
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage .pulse-actions {
-    border-top: 1px solid rgb(61 220 255 / 0.45)
+    border-top: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-actions button {
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage .pulse-actions button:hover:not(:disabled) {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .signal-stage .pulse-chapters {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .signal-stage .pulse-chapters button {
     color: #93a8bc
@@ -1023,20 +1023,20 @@ html[data-theme='tech'] .signal-stage .pulse-progress {
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage .pulse-daily-total {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .signal-stage .pulse-daily-rule {
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage .pulse-daily-live {
-    color: #3ddcff
+    color: #7cc7df
 }
 /*  components/games/blackjack/blackjack-room.css  */
 html[data-theme='tech'] .blackjack-room-footer a:focus-visible, html[data-theme='tech'] .blackjack-room-loading button:focus-visible {
-    outline: 2px solid rgb(61 220 255 / 0.45)
+    outline: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .blackjack-room-footer {
-    border-top: 1px solid rgb(61 220 255 / 0.16);
+    border-top: 1px solid rgb(124 199 223 / 0.16);
     color: #93a8bc
 }
 html[data-theme='tech'] .blackjack-room-footer .icp-filing-link {
@@ -1052,29 +1052,29 @@ html[data-theme='tech'] .sg {
     --sg-paper: #0a1520;
     --sg-ink: #dce8f4;
     --sg-line: #0f1f2e;
-    --sg-teal: #3ddcff;
+    --sg-teal: #7cc7df;
     --sg-soft: #0a1520
 }
 html[data-theme='tech'] .sg button:focus-visible, html[data-theme='tech'] .sg select:focus-visible, html[data-theme='tech'] .sg input:focus-visible {
-    outline: 3px solid rgb(61 220 255 / 0.45)
+    outline: 3px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-header {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-board {
-    border: 2px solid rgb(61 220 255 / 0.45)
+    border: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-box-right {
-    border-right: 2px solid rgb(61 220 255 / 0.45)
+    border-right: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-box-bottom {
-    border-bottom: 2px solid rgb(61 220 255 / 0.45)
+    border-bottom: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-given {
     color: #dce8f4 !important
 }
 html[data-theme='tech'] .sg .sg-entered {
-    color: #3ddcff !important
+    color: #7cc7df !important
 }
 html[data-theme='tech'] .sg .sg-peer {
     background: #0a1520
@@ -1093,7 +1093,7 @@ html[data-theme='tech'] .sg .sg-selected {
 }
 html[data-theme='tech'] .sg .sg-conflict {
     background: #0a1520 !important;
-    color: #3ddcff !important
+    color: #7cc7df !important
 }
 html[data-theme='tech'] .sg .sg-cell:hover {
     background: #0a1520
@@ -1115,7 +1115,7 @@ html[data-theme='tech'] .sg .sg-tools .sg-active {
 }
 html[data-theme='tech'] .sg .sg-keypad button {
     background: #0f1f2e;
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-keypad button:hover:not(:disabled) {
     background: #0f1f2e
@@ -1127,7 +1127,7 @@ html[data-theme='tech'] .sg .sg-key-help {
     color: #93a8bc
 }
 html[data-theme='tech'] .sg .sg-coach {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-switch {
     background: #0f1f2e !important
@@ -1136,17 +1136,17 @@ html[data-theme='tech'] .sg .sg-switch span {
     background: #0a1520
 }
 html[data-theme='tech'] .sg .sg-coach-caption {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-tag {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520;
     color: #93a8bc
 }
 html[data-theme='tech'] .sg .sg-error-tag {
-    color: #3ddcff;
+    color: #7cc7df;
     background: #0a1520;
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-coach-body>p {
     color: #93a8bc
@@ -1155,17 +1155,17 @@ html[data-theme='tech'] .sg .sg-legend {
     color: #93a8bc
 }
 html[data-theme='tech'] .sg .sg-legend-target {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .sg .sg-no-spoiler {
     color: #93a8bc !important
 }
 html[data-theme='tech'] .sg .sg-settings {
-    border-top: 1px solid rgb(61 220 255 / 0.45)
+    border-top: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-setting-row {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-setting-row label {
     color: #93a8bc
@@ -1174,7 +1174,7 @@ html[data-theme='tech'] .sg .sg-setting-row label span {
     color: #93a8bc
 }
 html[data-theme='tech'] .sg .sg-audio-row {
-    border-bottom: 1px solid rgb(61 220 255 / 0.45)
+    border-bottom: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-audio-row button span {
     color: #93a8bc
@@ -1183,7 +1183,7 @@ html[data-theme='tech'] .sg .sg-audio-note {
     color: #93a8bc
 }
 html[data-theme='tech'] .sg .sg-new {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-new:hover {
     background: #0a1520
@@ -1195,11 +1195,11 @@ html[data-theme='tech'] .sg .sg-footer-note {
     color: #93a8bc
 }
 html[data-theme='tech'] .sg .sg-footer {
-    border-top: 1px solid rgb(61 220 255 / 0.45)
+    border-top: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-pause {
     background: #0a1520;
-    border: 2px solid rgb(61 220 255 / 0.45)
+    border: 2px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-modal>p:not(.sg-eyebrow) {
     color: #93a8bc
@@ -1211,20 +1211,20 @@ html[data-theme='tech'] .sg .sg-select-label {
     color: #93a8bc
 }
 html[data-theme='tech'] .sg .sg-select-label select {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520;
     color: #93a8bc
 }
 html[data-theme='tech'] .sg .sg-modal-actions>button {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-puzzle-tile {
-    border: 1px solid rgb(61 220 255 / 0.45);
+    border: 1px solid rgb(124 199 223 / 0.45);
     background: #0a1520
 }
 html[data-theme='tech'] .sg .sg-puzzle-tile:hover {
     background: #0a1520;
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .sg .sg-puzzle-solved {
     background: #0a1520
@@ -1236,14 +1236,14 @@ html[data-theme='tech'] .sg .sg-library-empty {
     background: #0a1520
 }
 html[data-theme='tech'] .sg .sg-library-actions>button {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 /*  app/globals.css  */
 html[data-theme='tech'] .eyebrow {
     color: #93a8bc
 }
 html[data-theme='tech'] .article-item {
-    border-top: 1px solid rgb(61 220 255 / 0.20)
+    border-top: 1px solid rgb(124 199 223 / 0.20)
 }
 html[data-theme='tech'] .article-item small {
     color: #93a8bc
@@ -1264,7 +1264,7 @@ html[data-theme='tech'] .empty-message {
     color: #93a8bc
 }
 html[data-theme='tech'] .reading-footer {
-    border-top: 1px solid rgb(61 220 255 / 0.20);
+    border-top: 1px solid rgb(124 199 223 / 0.20);
     color: #93a8bc
 }
 html[data-theme='tech'] .reading-meta {
@@ -1277,15 +1277,15 @@ html[data-theme='tech'] .reading-tags {
     color: #93a8bc
 }
 html[data-theme='tech'] .reading-tags span {
-    border-bottom: 1px solid rgb(61 220 255 / 0.20)
+    border-bottom: 1px solid rgb(124 199 223 / 0.20)
 }
 html[data-theme='tech'] .draft-notice {
-    border-left: 2px solid rgb(61 220 255 / 0.20);
+    border-left: 2px solid rgb(124 199 223 / 0.20);
     color: #93a8bc
 }
 html[data-theme='tech'] .reading-toc {
-    border-top: 1px solid rgb(61 220 255 / 0.20);
-    border-bottom: 1px solid rgb(61 220 255 / 0.20);
+    border-top: 1px solid rgb(124 199 223 / 0.20);
+    border-bottom: 1px solid rgb(124 199 223 / 0.20);
     color: #93a8bc
 }
 html[data-theme='tech'] .reading-toc a:hover {
@@ -1302,7 +1302,7 @@ html[data-theme='tech'] .prose-archive a {
 }
 html[data-theme='tech'] .prose-archive pre {
     background: #0a1520;
-    border: 1px solid rgb(61 220 255 / 0.20)
+    border: 1px solid rgb(124 199 223 / 0.20)
 }
 html[data-theme='tech'] .prose-archive code {
     color: #93a8bc
@@ -1311,18 +1311,18 @@ html[data-theme='tech'] .prose-archive :not(pre) > code {
     background: #0a1520
 }
 html[data-theme='tech'] .prose-archive td, html[data-theme='tech'] .prose-archive th {
-    border: 1px solid rgb(61 220 255 / 0.20)
+    border: 1px solid rgb(124 199 223 / 0.20)
 }
 html[data-theme='tech'] .prose-archive th {
     background: #0a1520
 }
 html[data-theme='tech'] .prose-archive blockquote {
-    border-left: 2px solid rgb(61 220 255 / 0.20);
+    border-left: 2px solid rgb(124 199 223 / 0.20);
     background: #0a152099;
     color: #93a8bc
 }
 html[data-theme='tech'] .article-source {
-    border-top: 1px solid rgb(61 220 255 / 0.20);
+    border-top: 1px solid rgb(124 199 223 / 0.20);
     color: #93a8bc
 }
 html[data-theme='tech'] .article-source a {
@@ -1336,7 +1336,7 @@ html[data-theme='tech'] .article-body pre {
     color: #93a8bc
 }
 html[data-theme='tech'] .prose-archive .missing-source-image {
-    border-left: 2px solid rgb(61 220 255 / 0.45);
+    border-left: 2px solid rgb(124 199 223 / 0.45);
     background: #0a152099;
     color: #93a8bc
 }
@@ -1345,14 +1345,14 @@ html[data-theme='tech'] .vault-page {
     color: #dce8f4
 }
 html[data-theme='tech'] .vault-heading {
-    border-bottom: 1px solid rgb(61 220 255 / 0.19)
+    border-bottom: 1px solid rgb(124 199 223 / 0.19)
 }
 html[data-theme='tech'] .vault-heading button, html[data-theme='tech'] .vault-back {
     color: #93a8bc
 }
 html[data-theme='tech'] .vault-keyhole {
-    border: 1px solid rgb(61 220 255 / 0.44);
-    color: #3ddcff
+    border: 1px solid rgb(124 199 223 / 0.44);
+    color: #7cc7df
 }
 html[data-theme='tech'] .vault-door p {
     color: #93a8bc
@@ -1362,29 +1362,29 @@ html[data-theme='tech'] .vault-door label {
 }
 html[data-theme='tech'] .vault-door input {
     background: #0a152099;
-    border: 1px solid rgb(61 220 255 / 0.33);
+    border: 1px solid rgb(124 199 223 / 0.33);
     color: #93a8bc
 }
 html[data-theme='tech'] .vault-door input:focus-visible {
-    border-color: rgb(61 220 255 / 0.45)
+    border-color: rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .vault-door form button, html[data-theme='tech'] .vault-enter {
-    border: 1px solid rgb(61 220 255 / 0.45)
+    border: 1px solid rgb(124 199 223 / 0.45)
 }
 html[data-theme='tech'] .vault-door small, html[data-theme='tech'] .vault-door > a {
     color: #93a8bc
 }
 html[data-theme='tech'] .vault-error {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .vault-records > p {
     color: #93a8bc
 }
 html[data-theme='tech'] .vault-records > button {
-    border-top: 1px solid rgb(61 220 255 / 0.20)
+    border-top: 1px solid rgb(124 199 223 / 0.20)
 }
 html[data-theme='tech'] .vault-records > button:hover {
-    color: #3ddcff
+    color: #7cc7df
 }
 html[data-theme='tech'] .vault-records time, html[data-theme='tech'] .vault-article > time {
     color: #93a8bc

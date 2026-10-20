@@ -115,14 +115,11 @@ void test('科技主题的文字色在所有底色上满足 WCAG AA（≥ 4.5:1�
       );
 });
 
-void test('流光动画只在用户未要求减少动态效果时出现', () => {
+void test('科技主题克制：没有扫描线、流光、网格、HUD 角标和霓虹外发光', () => {
   const css = readFileSync('app/theme-tech.css', 'utf8');
-  const sweep = css.indexOf('animation: tech-sweep');
-  const guard = css.lastIndexOf(
-    '@media (prefers-reduced-motion: no-preference)',
-    sweep,
-  );
-  assert.ok(sweep > 0 && guard > 0 && sweep - guard < 600);
+  assert.ok(!/tech-sweep|repeating-linear-gradient|--tech-hud/.test(css));
+  assert.ok(!/0 0 \d{2}px rgb\(/.test(css), '不应有大半径外发光');
+  assert.ok(!/body::(before|after)/.test(css));
   assert.ok(
     !/animation:/.test(readFileSync('app/theme-tech.generated.css', 'utf8')),
   );
