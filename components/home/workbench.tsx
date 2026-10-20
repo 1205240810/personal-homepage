@@ -1,5 +1,5 @@
 'use client';
-import { ThemeSwitcher } from '@/components/theme/theme-switcher';
+import { SiteHeader } from '@/components/site/site-header';
 import { ProjectWorkbench } from './project-library';
 import { ArrowUpRight, Gamepad2, ScanLine } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
@@ -10,31 +10,7 @@ export default function Workbench({ posts }: { posts: ArticleSummary[] }) {
   const featured = posts.filter((p) => p.status !== 'draft').slice(0, 3);
   return (
     <main id="workbench">
-      <header className="b-header">
-        <a className="b-brand" href="/" aria-label="徒手拆机甲首页">
-          <span className="b-brand-mark" aria-hidden="true" />
-          徒手拆机甲
-        </a>
-        <nav className="b-nav" aria-label="主要导航">
-          <a href="/projects">
-            <span className="b-nav-index b-mono">01</span>作品
-          </a>
-          <a href="/archive">
-            <span className="b-nav-index b-mono">02</span>文章
-          </a>
-          <a href="/about">
-            <span className="b-nav-index b-mono">03</span>关于
-          </a>
-          {/* oxlint-disable-next-line nextjs/no-html-link-for-pages -- Game routes use stable full-document navigation. */}
-          <a href="/games">
-            <span className="b-nav-index b-mono">04</span>游戏室
-          </a>
-          <a href="/explore" className="b-explore-nav">
-            进入机甲 <ArrowUpRight size={14} />
-          </a>
-          <ThemeSwitcher />
-        </nav>
-      </header>
+      <SiteHeader current="workbench" />
       <div className="b-intro">
         <div>
           <h1>

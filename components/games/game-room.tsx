@@ -1,5 +1,4 @@
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation isolates game/Phaser lifecycles and avoids the current Vinext production prefetch error. */
-import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,6 +18,7 @@ import { RecentGameMark, RecentGames } from '@/components/games/recent-games';
 import { GAMES, type GameDefinition } from '@/lib/games/catalog';
 import { PULSE_LEVELS } from '@/lib/pulse-puzzle';
 import type { ReactNode } from 'react';
+import { SiteHeader } from '@/components/site/site-header';
 import './games.css';
 
 function GamesHeader({
@@ -29,28 +29,11 @@ function GamesHeader({
   gamePage?: boolean;
 }) {
   return (
-    <header className="games-header">
-      <a className="games-brand" href="/" aria-label="徒手拆机甲首页">
-        <span className="games-brand-mark" aria-hidden="true" />
-        徒手拆机甲
-      </a>
-      <nav className="games-nav" aria-label="游戏室导航">
-        <a href={fromExplore ? '/explore' : '/workbench'}>
-          {fromExplore ? '返回机甲' : '返回工作台'}
-        </a>
-        <a
-          href={fromExplore ? '/games?from=explore' : '/games'}
-          aria-current={gamePage ? undefined : 'page'}
-        >
-          游戏室
-        </a>
-        <a href={fromExplore ? '/workbench' : '/explore'}>
-          {fromExplore ? '工作台' : '进入机甲'}{' '}
-          <ArrowUpRight size={14} aria-hidden="true" />
-        </a>
-        <ThemeSwitcher />
-      </nav>
-    </header>
+    <SiteHeader
+      current="games"
+      fromExplore={fromExplore}
+      label={gamePage ? '游戏导航' : '游戏室导航'}
+    />
   );
 }
 

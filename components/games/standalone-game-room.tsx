@@ -1,5 +1,5 @@
 'use client';
-import { ThemeSwitcher } from '@/components/theme/theme-switcher';
+import { SiteHeader } from '@/components/site/site-header';
 
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full navigation releases each game's audio, listeners and AI calculations. */
 import { useEffect, useState, type ComponentType } from 'react';
@@ -69,22 +69,11 @@ export function StandaloneGameRoom({
 
   return (
     <div className={`standalone-room standalone-room-${gameId}`}>
-      <header className="standalone-room-nav">
-        <a href="/" className="standalone-room-brand">
-          徒手拆机甲
-        </a>
-        <nav aria-label={`${game.title}导航`}>
-          <a href={returnPath}>
-            <ArrowLeft size={15} aria-hidden="true" />
-            游戏室
-          </a>
-          <a href={fromExplore ? '/explore' : '/workbench'}>
-            {fromExplore ? '返回机甲' : '工作台'}
-            <ArrowUpRight size={14} aria-hidden="true" />
-          </a>
-          <ThemeSwitcher />
-        </nav>
-      </header>
+      <SiteHeader
+        current="games"
+        fromExplore={fromExplore}
+        label={`${game.title}导航`}
+      />
       {Game ? (
         <Game
           persist

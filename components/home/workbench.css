@@ -44,62 +44,6 @@
   font-weight: 400;
   letter-spacing: 0.055em;
 }
-#workbench .b-header {
-  max-width: 1220px;
-  margin: auto;
-  min-height: 79px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  border-bottom: 1px solid var(--b-rule);
-}
-#workbench .b-brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font-size: 19px;
-  letter-spacing: -0.07em;
-  font-weight: 650;
-  white-space: nowrap;
-}
-#workbench .b-brand-mark {
-  width: 18px;
-  height: 21px;
-  position: relative;
-  display: inline-block;
-  border-left: 5px solid var(--b-ink);
-  border-right: 5px solid var(--b-ink);
-  transform: skewY(-14deg);
-}
-#workbench .b-brand-mark::after {
-  content: '';
-  position: absolute;
-  left: 1px;
-  top: 8px;
-  width: 5px;
-  height: 5px;
-  background: var(--b-orange);
-}
-#workbench .b-nav {
-  display: flex;
-  align-items: center;
-  gap: 29px;
-}
-#workbench .b-nav button {
-  min-height: 44px;
-  padding: 12px 0;
-  background: transparent;
-  font-size: 13px;
-}
-#workbench .b-nav button:hover {
-  color: var(--b-orange);
-}
-#workbench .b-nav-index {
-  color: #969991;
-  font-size: 11px;
-  margin-right: 6px;
-}
 #workbench .b-intro {
   max-width: 1220px;
   margin: auto;
@@ -674,34 +618,6 @@
   #workbench {
     padding: 0 17px 22px;
   }
-  #workbench .b-header {
-    min-height: 73px;
-    gap: 8px;
-  }
-  #workbench .b-brand {
-    font-size: 17px;
-    gap: 8px;
-  }
-  #workbench .b-brand-mark {
-    width: 15px;
-    height: 18px;
-    border-width: 4px;
-  }
-  #workbench .b-brand-mark::after {
-    left: 1px;
-    top: 7px;
-    width: 4px;
-    height: 4px;
-  }
-  #workbench .b-nav {
-    gap: 15px;
-  }
-  #workbench .b-nav-index {
-    display: none;
-  }
-  #workbench .b-nav button {
-    font-size: 12px;
-  }
   #workbench .b-intro h1 {
     font-size: 28px;
     line-height: 1.35;
@@ -832,15 +748,6 @@
   outline: 2px solid var(--b-orange);
   outline-offset: 5px;
 }
-#workbench .b-nav a {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 14px;
-}
-#workbench .b-nav a:hover {
-  color: var(--b-orange);
-}
 #workbench .b-intro {
   padding-top: 38px;
   padding-bottom: 34px;
@@ -910,9 +817,6 @@
 #workbench .b-mode-link:hover strong {
   color: var(--b-orange);
 }
-#workbench .b-explore-nav {
-  color: #ab4824;
-}
 #workbench .b-game-room {
   display: block;
   padding: 20px 22px 18px;
@@ -927,13 +831,15 @@
   align-items: center;
   color: #64705d;
 }
-#workbench .b-game-room-head > span { font-size: 11px; }
+#workbench .b-game-room-head > span {
+  font-size: 11px;
+}
 #workbench .b-game-room > strong {
   display: block;
   margin-top: 12px;
   font-size: 25px;
   font-weight: 550;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
 }
 #workbench .b-game-room p {
   margin-top: 7px;
@@ -947,8 +853,15 @@
   padding: 16px 0;
   border-bottom: 1px solid #c2cbbb;
 }
-#workbench .b-game-room-titles span { font-size: 13px; }
-#workbench .b-game-room-titles i { font-style: normal; margin-right: 10px; font-size: 11px; color: #6e7b63; }
+#workbench .b-game-room-titles span {
+  font-size: 13px;
+}
+#workbench .b-game-room-titles i {
+  font-style: normal;
+  margin-right: 10px;
+  font-size: 11px;
+  color: #6e7b63;
+}
 #workbench .b-game-room-enter {
   display: flex;
   justify-content: space-between;
@@ -958,9 +871,15 @@
   color: #a34e2b;
   font-size: 13px;
 }
-#workbench .b-game-room:hover { border-color: #919e87; }
-#workbench .b-game-room:hover .b-game-room-enter svg { transform: translate(2px, -2px); }
-#workbench .b-game-room-enter svg { transition: transform .2s; }
+#workbench .b-game-room:hover {
+  border-color: #919e87;
+}
+#workbench .b-game-room:hover .b-game-room-enter svg {
+  transform: translate(2px, -2px);
+}
+#workbench .b-game-room-enter svg {
+  transition: transform 0.2s;
+}
 @media (min-width: 1500px) {
   #workbench .b-intro {
     padding-top: 52px;
@@ -977,24 +896,8 @@
   #workbench .b-album {
     margin-top: 24px;
   }
-  #workbench .b-nav {
-    gap: 18px;
-  }
-  #workbench .b-nav-index {
-    display: none;
-  }
 }
 @media (max-width: 480px) {
-  #workbench .b-header {
-    flex-wrap: wrap;
-    padding: 14px 0 6px;
-    gap: 2px;
-  }
-  #workbench .b-nav {
-    width: 100%;
-    justify-content: space-between;
-    gap: 8px;
-  }
   #workbench .b-intro {
     padding: 27px 0;
   }
@@ -1053,7 +956,6 @@
   #workbench .b-article-kicker {
     font-size: 12px;
   }
-  #workbench .b-header a,
   #workbench .b-section-head a {
     min-height: 44px;
     display: inline-flex;

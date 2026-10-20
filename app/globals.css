@@ -974,17 +974,6 @@ kbd {
   padding: 0 50px 90px;
   min-height: 100dvh;
 }
-.reading-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 35px 0 70px;
-  font-size: 12px;
-  color: #314a39;
-}
-.reading-header a:hover {
-  color: #4f7049;
-}
 .icp-filing-link {
   display: inline-flex;
   align-items: center;
@@ -1461,9 +1450,6 @@ kbd {
   }
   .reading-page {
     padding: 0 24px 60px;
-  }
-  .reading-header {
-    padding: 25px 0 45px;
   }
   .directory-tabs [data-slot='tabs-trigger'] {
     margin-right: 12px;
@@ -3563,10 +3549,6 @@ kbd {
   background: #eeeae0;
   color: #313d3a;
   padding: 30px clamp(22px, 6vw, 100px) 80px;
-}
-.vault-page > .reading-header {
-  max-width: 1000px;
-  margin: 0 auto 55px;
 }
 .vault-page .private-vault {
   max-width: 760px;

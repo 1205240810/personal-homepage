@@ -1,5 +1,5 @@
 'use client';
-import { ThemeSwitcher } from '@/components/theme/theme-switcher';
+import { SiteHeader } from '@/components/site/site-header';
 
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation releases game audio, timers and Worker ownership. */
 import { useEffect, useState, type ComponentType } from 'react';
@@ -39,22 +39,11 @@ export function BlackjackRoom({
 
   return (
     <div className="blackjack-room-shell">
-      <header className="blackjack-room-nav">
-        <a href="/" className="blackjack-room-brand">
-          徒手拆机甲
-        </a>
-        <nav aria-label="暗牌 21 导航">
-          <a href={returnPath}>
-            <ArrowLeft size={15} aria-hidden="true" />
-            游戏室
-          </a>
-          <a href={fromExplore ? '/explore' : '/workbench'}>
-            {fromExplore ? '返回机甲' : '工作台'}
-            <ArrowUpRight size={14} aria-hidden="true" />
-          </a>
-          <ThemeSwitcher />
-        </nav>
-      </header>
+      <SiteHeader
+        current="games"
+        fromExplore={fromExplore}
+        label="暗牌 21 导航"
+      />
       {Game ? (
         <Game
           persist

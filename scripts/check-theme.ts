@@ -63,7 +63,29 @@ void test('所有站点导航都提供主题切换', () => {
     'app/vault/page.tsx',
     'app/posts/[slug]/page.tsx',
   ])
-    assert.ok(readFileSync(file, 'utf8').includes('<ThemeSwitcher'), file);
+    assert.ok(
+      /<(ThemeSwitcher|SiteHeader)\b/.test(readFileSync(file, 'utf8')),
+      file,
+    );
+  assert.ok(
+    readFileSync('components/site/site-header.tsx', 'utf8').includes(
+      '<ThemeSwitcher',
+    ),
+  );
+});
+
+void test('工作台、阅读页、游戏室与移植游戏共用同一个站点页眉', () => {
+  for (const file of [
+    'components/home/workbench.tsx',
+    'components/games/game-room.tsx',
+    'components/games/standalone-game-room.tsx',
+    'components/games/blackjack/blackjack-room.tsx',
+    'app/archive/page.tsx',
+    'app/about/page.tsx',
+    'app/projects/page.tsx',
+    'app/posts/[slug]/page.tsx',
+  ])
+    assert.match(readFileSync(file, 'utf8'), /<SiteHeader\b/, file);
 });
 
 const luminance = (hex: string) => {

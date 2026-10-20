@@ -1,4 +1,4 @@
-import { ThemeSwitcher } from '@/components/theme/theme-switcher';
+import { SiteHeader } from '@/components/site/site-header';
 import { contentSource, isPrivatePreview } from '@/lib/content/source';
 import { CHAPTERS } from '@/lib/world/registry';
 import { IcpFilingLink } from '@/components/icp-filing-link';
@@ -7,11 +7,7 @@ export default async function Archive() {
   const posts = await contentSource.list();
   return (
     <main className="reading-page archive-page">
-      <header className="reading-header">
-        <a href="/workbench">← 返回工作台</a>
-        <a href="/about">关于</a>
-        <ThemeSwitcher />
-      </header>
+      <SiteHeader current="archive" />
       <span className="eyebrow">THE ARCHIVE</span>
       <h1>
         所有故事，

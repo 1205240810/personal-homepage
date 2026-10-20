@@ -1,0 +1,164 @@
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  max-width: var(--page-max);
+  min-height: 76px;
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  box-sizing: content-box;
+}
+/* Inside pages that already provide the page gutter. */
+#workbench .site-header {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+}
+:is(.games-shell, .reading-page) .site-header {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-brand-mark {
+  position: relative;
+  width: 16px;
+  height: 19px;
+  border-inline: 4.5px solid currentColor;
+  transform: skewY(-14deg);
+}
+.site-brand-mark::after {
+  content: '';
+  position: absolute;
+  left: 0.5px;
+  top: 7px;
+  width: 4.5px;
+  height: 4.5px;
+  background: var(--rust);
+}
+.site-nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 26px);
+  min-width: 0;
+}
+.site-nav a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease);
+}
+.site-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur) var(--ease);
+}
+.site-nav a:hover,
+.site-nav a[aria-current='page'] {
+  color: var(--ink);
+}
+.site-nav a:hover::after,
+.site-nav a[aria-current='page']::after {
+  transform: scaleX(1);
+}
+.site-nav a.site-nav-explore {
+  color: var(--rust);
+}
+.site-nav-back {
+  padding-right: clamp(10px, 1.6vw, 22px);
+  border-right: 1px solid var(--line);
+}
+.site-nav-back::after {
+  display: none;
+}
+.site-nav a:focus-visible,
+.site-brand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+/* The ID selector beats page-level button resets (e.g. #workbench button). */
+.site-header .site-theme,
+#workbench .site-header .site-theme {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.site-header .site-theme:hover {
+  color: var(--ink);
+  border-color: var(--ink-faint);
+}
+.site-header .site-theme[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--accent-soft);
+}
+@media (max-width: 760px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 0 var(--space-4);
+    min-height: 0;
+    padding-top: var(--space-2);
+  }
+  .site-brand {
+    margin-right: auto;
+  }
+  .site-nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    gap: var(--space-4);
+    overflow-x: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, #000 88%, transparent);
+  }
+  .site-nav::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import './tokens.css';
 import './globals.css';
 import 'katex/dist/katex.min.css';
 import './theme-tech.generated.css';
