@@ -96,7 +96,7 @@ OSPF 与相册预览在 `components/home/project-workbench.tsx`。OSPF 规划函
 
 灯阵定义在 `lib/pulse-puzzle.ts`，界面在 `components/home/pulse-game.tsx`。30 关分六阶段，前八关 4×4，后续为 5×5；原十二关的稳定 ID、棋盘和最短步数保留，追加十八关，最短解逐步增加到十五步。新增关卡必须验证可解性与 `par` 最短步数，不能只凭视觉决定难度。`npm run check` 包含求解、边界和重复点击检查。提示、撤回与重来不影响内容访问；关卡、撤回历史、提示次数、完成统计及最佳步数自动保存在当前浏览器；扩关必须保持原 ID，以兼容旧存档。
 
-音乐音量保存在 `mecha-music-volume`，每次打开页面均由访客主动播放。更换曲目时同步来源和 THIRD_PARTY_NOTICES 授权记录。
+背景音乐播放列表集中在 `lib/music/playlist.ts`，音频放在 `public/audio/`（建议 96–128 kbps MP3）。音量保存在 `mecha-music-volume`，当前曲目与进度保存在 `mecha-music-state`；每次打开页面均由访客主动播放，不自动播放。只能加入允许网站使用的曲目（CC0、CC BY、公有领域录音等），不要放商业版权歌曲；增删曲目时同步 THIRD_PARTY_NOTICES 授权记录。
 
 公开抓取导入器：`node scripts/import-cnblogs-public.mjs 已审核目录`。它只接受本次核实的74篇公开清单，校验原文/图片SHA-256，将原始抓取另存ignored备份并输出迁移清单。不能对私人导出使用。6张源图无法取回，阅读页已放缺失说明；1篇源正文仅字母S，保持原状。3个旧链接404、25个403未能验证，原链接保留。私藏室规则见 PRIVATE-VAULT.md。
 

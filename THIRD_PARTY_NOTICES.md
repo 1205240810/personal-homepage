@@ -47,3 +47,19 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ```
+
+### 背景音乐播放列表（lib/music/playlist.ts）
+
+以下曲目均为 Kevin MacLeod（incompetech.com）作品，使用 [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)。除 Morning 外均转码为 96 kbps MP3，未剪辑。播放器内对当前曲目显示署名与授权链接。
+
+- **Morning** — Kevin MacLeod，ISRC USUAN2300003，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2300003)
+- **Evening** — Kevin MacLeod，ISRC USUAN2300002，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2300002)
+- **Dreamer** — Kevin MacLeod，ISRC USUAN1600043，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600043)
+- **Fresh Air** — Kevin MacLeod，ISRC USUAN1500084，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1500084)
+- **Reawakening** — Kevin MacLeod，ISRC USUAN1400017，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400017)
+- **Clear Air** — Kevin MacLeod，ISRC USUAN1100626，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100626)
+- **Last Kiss Goodnight** — Kevin MacLeod，ISRC USUAN1100611，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100611)
+- **Windswept** — Kevin MacLeod，ISRC USUAN1100757，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100757)
+- **Danse Morialta** — Kevin MacLeod，ISRC USUAN1200026，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1200026)
+- **Promises to Keep** — Kevin MacLeod，ISRC USUAN1200004，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1200004)
+- **Gymnopedie No. 1** — Kevin MacLeod，ISRC USUAN1100787，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100787)
