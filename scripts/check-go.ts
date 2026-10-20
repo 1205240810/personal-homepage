@@ -750,3 +750,135 @@ void test('AI: a reused descendant retains its win rate and margin before new si
   assert.equal(reused.lead, 1.5);
   resetGoTree();
 });
+
+// ---- Strength regression guards (see #33/#34 report) ----
+const fixedClock = () => {
+  let t = 0;
+  return () => (t += 1);
+};
+const atari = (toPlay: typeof BLACK | typeof WHITE) =>
+  fromRows(
+    [
+      '.........',
+      '.........',
+      '...O.....',
+      '..OXO....',
+      '.........',
+      '.........',
+      '.........',
+      '.........',
+      '.........',
+    ],
+    toPlay,
+  );
+
+test('tactics: saves own group in atari, captures an atari group', () => {
+  for (const level of [6, 8] as GoLevel[]) {
+    const save = chooseGoMove(
+      atari(BLACK),
+      7.5,
+      level,
+      seeded(31),
+      fixedClock(),
+      {
+        reuse: false,
+        keep: false,
+        playouts: 1500,
+      },
+    );
+    assert.equal(save.move, at(atari(BLACK), 3, 4), `L${level} save`);
+    const take = chooseGoMove(
+      atari(WHITE),
+      7.5,
+      level,
+      seeded(32),
+      fixedClock(),
+      {
+        reuse: false,
+        keep: false,
+        playouts: 1500,
+      },
+    );
+    assert.equal(take.move, at(atari(WHITE), 3, 4), `L${level} capture`);
+  }
+});
+
+test('tactics: never fills its own eyes (passes on a settled board)', () => {
+  for (const side of [BLACK, WHITE] as const) {
+    const r = chooseGoMove(settled(5, side), 7.5, 8, seeded(33), fixedClock(), {
+      reuse: false,
+      keep: false,
+      playouts: 300,
+    });
+    assert.equal(r.move, -1);
+  }
+});
+
+test('opening: first moves stay off the first two lines on every board', () => {
+  for (const size of [9, 13, 19] as const) {
+    for (let k = 0; k < 4; k++) {
+      let s = newGame(size);
+      for (let ply = 0; ply < 2; ply++) {
+        const r = chooseGoMove(
+          s,
+          7.5,
+          6,
+          seeded(40 + k * 7 + ply),
+          fixedClock(),
+          {
+            reuse: false,
+            keep: false,
+            playouts: size === 9 ? 600 : 200,
+          },
+        );
+        const x = r.move % size;
+        const y = Math.floor(r.move / size);
+        const line = Math.min(x, y, size - 1 - x, size - 1 - y) + 1;
+        assert.ok(line >= 3, `${size}路 第 ${ply + 1} 手 ${x},${y}`);
+        s = ok(s, r.move);
+      }
+    }
+  }
+});
+
+test('strength: current engine holds its own against the #32 engine', async () => {
+  const old = await import('./bench/go-ai-pr32.ts');
+  const L = 6 as GoLevel;
+  const keepCur = GO_LEVELS[L].playouts;
+  const keepOld = old.GO_LEVELS[L].playouts;
+  GO_LEVELS[L].playouts = 250;
+  old.GO_LEVELS[L].playouts = 250;
+  try {
+    const rng = seeded(2026);
+    const games = 12;
+    let won = 0;
+    for (let g = 0; g < games; g++) {
+      const curBlack = g % 2 === 0;
+      resetGoTree();
+      old.resetGoTree();
+      let s = newGame(9);
+      let winner = 0;
+      for (let i = 0; i < 200 && s.passes < 2; i++) {
+        const cur = (s.toPlay === BLACK) === curBlack;
+        const m = cur
+          ? chooseGoMove(s, 7.5, L, rng, fixedClock()).move
+          : old.chooseGoMove(s, 7.5, L, rng, fixedClock()).move;
+        if (m === -2) {
+          winner = s.toPlay === BLACK ? WHITE : BLACK;
+          break;
+        }
+        const r = play(s, m);
+        s = r.ok ? r.state : ok(s, -1);
+      }
+      if (!winner)
+        winner = score(s, 7.5, new Set(guessDead(s, 200, rng))).winner;
+      if ((winner === BLACK) === curBlack) won++;
+    }
+    // Equal settings: a healthy engine scores about half; a broken one ~0.
+    assert.ok(won >= 5, `current engine won ${won}/${games} vs #32`);
+  } finally {
+    GO_LEVELS[L].playouts = keepCur;
+    old.GO_LEVELS[L].playouts = keepOld;
+    resetGoTree();
+  }
+});

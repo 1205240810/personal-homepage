@@ -318,12 +318,36 @@ export function GoGame() {
     };
   }, [phase, state]);
 
-  function newMatch(as: Player = human, sz: GoSize = size, hc = handicap) {
+  /** Settings as shown on screen. A choice made before hydration finishes
+   *  never reaches React state (the select keeps showing it while the match
+   *  silently started at the default 入门), so read the controls themselves. */
+  const sizeSel = useRef<HTMLSelectElement>(null);
+  const levelSel = useRef<HTMLSelectElement>(null);
+  const handicapSel = useRef<HTMLSelectElement>(null);
+  function shownSettings() {
+    const num = (el: HTMLSelectElement | null, fallback: number) => {
+      const v = Number(el?.value);
+      return el && el.value !== '' && Number.isFinite(v) ? v : fallback;
+    };
+    const sz = num(sizeSel.current, size) as GoSize;
+    const lv = num(levelSel.current, level) as GoLevel;
+    return {
+      sz: GO_SIZES.includes(sz) ? sz : size,
+      lv: lv in GO_LEVELS ? lv : level,
+      hc: num(handicapSel.current, handicap),
+    };
+  }
+
+  function newMatch(as: Player = human) {
     ai.reset();
-    hc = Math.min(hc, sz === 9 ? 5 : 9);
+    const shown = shownSettings();
+    const sz = shown.sz;
+    const hc = Math.min(shown.hc, sz === 9 ? 5 : 9);
     const g = newGame(sz, hc);
+    setSize(sz);
+    setLevel(shown.lv);
     setHandicap(hc);
-    setMatchLevel(level);
+    setMatchLevel(shown.lv);
     setTrend([]);
     setJudgment(null);
     setProblemState('solving');
@@ -342,7 +366,9 @@ export function GoGame() {
         : `贴 ${komiFor(hc)} 目，黑先走。`,
     );
     setFocus(Math.floor((sz * sz) / 2));
-    setAnnounce(`新对局：${sz} 路，你执${NAME[as]}，${GO_LEVELS[level].name}`);
+    setAnnounce(
+      `新对局：${sz} 路，你执${NAME[as]}，${GO_LEVELS[shown.lv].name}`,
+    );
   }
   function openProblem(i: number) {
     ai.reset();
@@ -708,6 +734,7 @@ export function GoGame() {
       {!problem && (
         <div className="kit-row">
           <select
+            ref={sizeSel}
             aria-label="棋盘"
             value={size}
             onChange={(e) => {
@@ -723,6 +750,7 @@ export function GoGame() {
             ))}
           </select>
           <select
+            ref={levelSel}
             aria-label="难度（下局生效）"
             value={level}
             onChange={(e) => setLevel(Number(e.target.value) as GoLevel)}
@@ -734,6 +762,7 @@ export function GoGame() {
             ))}
           </select>
           <select
+            ref={handicapSel}
             aria-label="让子"
             value={handicap}
             onChange={(e) => setHandicap(Number(e.target.value))}
@@ -750,11 +779,11 @@ export function GoGame() {
           <button
             type="button"
             className="kit-primary"
-            onClick={() => newMatch(BLACK, size, handicap)}
+            onClick={() => newMatch(BLACK)}
           >
             执黑开局
           </button>
-          <button type="button" onClick={() => newMatch(WHITE, size, handicap)}>
+          <button type="button" onClick={() => newMatch(WHITE)}>
             执白开局
           </button>
         </div>

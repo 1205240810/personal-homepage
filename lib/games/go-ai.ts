@@ -572,6 +572,27 @@ function newNode(move: number, player: Player, prior: number): Node {
   };
 }
 
+/** Opening pruning: in the first `size` moves, a 1st/2nd-line point with no
+ *  stone within two steps is never a good move, but random playouts on an
+ *  empty board cannot tell. Searching them made short searches open on the
+ *  edge at random. Contact moves near the edge stay available. */
+function lonelyEdgeOpening(s: GoState, p: number) {
+  const n = s.size;
+  if (s.moves.length >= n) return false;
+  const x = p % n;
+  const y = Math.floor(p / n);
+  if (Math.min(x, y, n - 1 - x, n - 1 - y) >= 2) return false;
+  for (let dy = -2; dy <= 2; dy++)
+    for (let dx = -2; dx <= 2; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) > 2) continue;
+      const xx = x + dx;
+      const yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= n || yy >= n) continue;
+      if (s.board[yy * n + xx] !== EMPTY) return false;
+    }
+  return true;
+}
+
 function expand(node: Node, pb: PBoard) {
   const s = node.state!;
   pb.b.fill(BORDER);
@@ -581,6 +602,7 @@ function expand(node: Node, pb: PBoard) {
   for (let p = 0; p < s.board.length; p++) {
     if (s.board[p] !== EMPTY || p === s.ko) continue;
     if (isEyeish(s.board, s.size, p, s.toPlay)) continue;
+    if (lonelyEdgeOpening(s, p)) continue;
     if (!play(s, p).ok) continue;
     kids.push(newNode(p, s.toPlay, priorFor(s, p, pb)));
   }

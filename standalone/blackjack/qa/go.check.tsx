@@ -75,6 +75,19 @@ describe('围棋', () => {
     expect(document.querySelectorAll('.go-stone').length).toBe(0);
   });
 
+  it('开局按界面上显示的难度/棋盘/让子：水合前的选择不会被悄悄丢成入门', () => {
+    render(<GoGame />);
+    // A choice made before hydration changes the DOM but never fires onChange.
+    const level = screen.getByLabelText<HTMLSelectElement>('难度（下局生效）');
+    const size = screen.getByLabelText<HTMLSelectElement>('棋盘');
+    level.value = '8';
+    size.value = '13';
+    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+    expect(screen.getByText(/13 路 · 8 · 强 · 执黑/)).toBeTruthy();
+    expect(level.value).toBe('8');
+    expect(document.querySelectorAll('.go-pt').length).toBe(169);
+  });
+
   it('键盘：方向键移动焦点', () => {
     render(<GoGame />);
     pt(40).focus();
