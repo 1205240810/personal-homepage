@@ -1,0 +1,144 @@
+/*
+ * Surfaces, texture and typography · 简约大气，重质感.
+ * Builds on tokens.css. Kept separate from globals.css so the material layer
+ * reads as one decision: paper, a whisper of grain, calm type.
+ */
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+/* Paper light: a broad, soft top light instead of flat colour. */
+:is(#workbench, .games-shell, .reading-page) {
+  background:
+    radial-gradient(
+      1100px 520px at 50% -180px,
+      rgba(255, 255, 255, 0.75),
+      transparent 70%
+    ),
+    var(--paper);
+}
+#workbench {
+  --b-paper: var(--paper);
+  --b-ink: var(--ink);
+  --b-muted: var(--ink-soft);
+  --b-rule: var(--line-strong);
+}
+html[data-theme='tech'] :is(#workbench, .games-shell, .reading-page) {
+  background:
+    radial-gradient(
+      1100px 520px at 50% -180px,
+      rgba(124, 199, 223, 0.07),
+      transparent 70%
+    ),
+    var(--paper);
+}
+
+/* Fine grain over the page, never over interaction: pointer-events none and a
+   blend that only shifts tone. */
+:is(#workbench, .games-shell, .reading-page)::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background-image: var(--grain);
+  background-size: 160px 160px;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: multiply;
+}
+html[data-theme='tech'] :is(#workbench, .games-shell, .reading-page)::after {
+  mix-blend-mode: screen;
+}
+@media print {
+  :is(#workbench, .games-shell, .reading-page)::after {
+    display: none;
+  }
+}
+
+/* Workbench: one confident headline, more air. */
+#workbench .b-intro {
+  padding: var(--space-8) 0 var(--space-7);
+}
+#workbench .b-intro h1 {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: var(--leading-tight);
+}
+#workbench .b-intro p {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+}
+
+/* Reading pages: a calm measure, a clear scale, real paragraphs. */
+.reading-page {
+  max-width: 820px;
+  padding: 0 var(--page-gutter) var(--space-9);
+}
+.reading-page > .site-header {
+  margin-bottom: var(--space-8);
+}
+.reading-article > h1 {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: var(--tracking-tight);
+  margin: var(--space-5) 0 var(--space-4);
+}
+.reading-summary {
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  color: var(--ink-soft);
+}
+.prose-archive {
+  font-size: var(--text-base);
+  line-height: 1.95;
+  color: var(--ink);
+}
+.prose-archive h1,
+.prose-archive h2 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.45;
+  margin: 2.4em 0 0.8em;
+}
+.prose-archive h3 {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+.prose-archive pre {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-gradient);
+  box-shadow: var(--shadow-1);
+  padding: var(--space-5);
+  font-size: 12.5px;
+}
+.prose-archive :not(pre) > code {
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+}
+.prose-archive blockquote {
+  margin: 1.6em 0;
+  padding: 0.2em 0 0.2em var(--space-5);
+  border-left: 2px solid var(--line-strong);
+  color: var(--ink-soft);
+}
+.prose-archive img {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+}
+.reading-toc,
+.reading-footer {
+  border-color: var(--line);
+}
+
+/* Selection and focus share the accent, softly. */
+::selection {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
