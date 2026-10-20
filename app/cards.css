@@ -1,0 +1,84 @@
+/*
+ * One card language for the game room and the workbench (简约大气 3/4).
+ * Same radius, hairline border, layered soft shadow and a calm lift on hover.
+ * `html` / `body` prefixes outrank page CSS that loads later, so the tokens
+ * win in both themes without editing every page sheet.
+ */
+html :is(.room-game, .room-daily, .room-recent),
+html #workbench :is(.b-game-room, .library-project-panel .b-instrument) {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-gradient);
+  box-shadow: var(--shadow-1);
+  transition:
+    box-shadow var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+html[data-theme='tech'] body :is(.room-game, .room-daily, .room-recent),
+html[data-theme='tech']
+  body
+  #workbench
+  :is(.b-game-room, .library-project-panel .b-instrument) {
+  border-color: var(--line);
+  background: var(--surface-gradient);
+  box-shadow: var(--shadow-1);
+}
+html .room-game:hover,
+html[data-theme='tech'] body .room-game:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-2);
+  transform: translateY(-2px);
+}
+html .room-game:active {
+  transform: translateY(0);
+  transition-duration: var(--dur-fast);
+}
+html .room-game:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+/* The preview is a recessed window inside the card. */
+html .room-game-preview,
+html[data-theme='tech'] body .room-game-preview {
+  margin: var(--space-2) var(--space-2) 0;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius-lg) - var(--space-2));
+  background: var(--surface-sunk);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+html .room-game-copy {
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+html .room-game h2 {
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+html .room-game-copy > p {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+/* Daily challenge: same card, a single rust hairline marks it as today's. */
+html .room-daily,
+html[data-theme='tech'] body .room-daily {
+  box-shadow:
+    inset 0 2px 0 color-mix(in srgb, var(--rust) 70%, transparent),
+    var(--shadow-1);
+  padding: var(--space-5);
+}
+html .room-recent {
+  padding: var(--space-5);
+}
+html .game-room-selection {
+  gap: var(--space-5);
+}
+html #workbench .b-game-room {
+  padding: var(--space-5);
+}
+@media (prefers-reduced-motion: reduce) {
+  html .room-game:hover {
+    transform: none;
+  }
+}
