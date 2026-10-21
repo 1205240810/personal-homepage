@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './tokens.css';
 import './globals.css';
+import './surfaces.css';
 import 'katex/dist/katex.min.css';
 import './theme-tech.generated.css';
 import './theme-tech.css';
