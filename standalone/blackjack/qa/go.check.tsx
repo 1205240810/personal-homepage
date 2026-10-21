@@ -143,6 +143,41 @@ describe('围棋的对局隔离与数子', () => {
     vi.stubGlobal('Worker', TestWorker);
   });
 
+  it('实际 SSR 水合保留提前选择，读取自动认输设置后仍按所选棋盘、让子和难度发起搜索', async () => {
+    localStorage.setItem(GO_AUTO_RESIGN_KEY, '0');
+    const host = document.createElement('div');
+    host.innerHTML = renderToString(<GoGame />);
+    document.body.append(host);
+    const select = (label: string) =>
+      host.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)!;
+    select('棋盘').value = '13';
+    select('难度（下局生效）').value = '8';
+    select('让子').value = '5';
+    const errors: unknown[] = [];
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+    try {
+      await act(async () => {
+        root = hydrateRoot(host, <GoGame />, {
+          onRecoverableError: (error) => errors.push(error),
+        });
+      });
+      expect(select('棋盘').value).toBe('13');
+      expect(select('难度（下局生效）').value).toBe('8');
+      expect(select('让子').value).toBe('5');
+      fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+      const search = workers().at(-1)!.message!;
+      expect(search.level).toBe(8);
+      expect(search.komi).toBe(0.5);
+      expect(search.state.board).toHaveLength(169);
+      expect(search.state.board.filter((x) => x === 1)).toHaveLength(5);
+      expect(document.querySelectorAll('.go-pt')).toHaveLength(169);
+      expect(errors).toEqual([]);
+    } finally {
+      act(() => root?.unmount());
+      host.remove();
+    }
+  });
+
   it('AI 思考期间同色重新开局会中止旧任务，不让旧棋落入新局', async () => {
     render(<GoGame />);
     fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
@@ -160,6 +195,24 @@ describe('围棋的对局隔离与数子', () => {
     await reply(current, move(84));
     expect(pt(84).getAttribute('aria-label')).toContain('黑子');
     expect(document.querySelectorAll('.go-stone')).toHaveLength(1);
+  });
+
+  it('原生棋盘选择改回九路时把九子让棋收敛到五子，搜索和棋盘保持一致', () => {
+    render(<GoGame />);
+    fireEvent.change(screen.getByLabelText('棋盘'), {
+      target: { value: '19' },
+    });
+    fireEvent.change(screen.getByLabelText('让子'), {
+      target: { value: '9' },
+    });
+    screen.getByLabelText<HTMLSelectElement>('棋盘').value = '9';
+    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+    const search = workers().at(-1)!.message!;
+    expect(search.state.board).toHaveLength(81);
+    expect(search.state.board.filter((x) => x === 1)).toHaveLength(5);
+    expect(search.komi).toBe(0.5);
+    expect(screen.getByLabelText<HTMLSelectElement>('让子').value).toBe('5');
+    expect(document.querySelectorAll('.go-stone.is-black')).toHaveLength(5);
   });
 
   it('同一局复用空闲 Worker，重新开局和换难度清空旧搜索树', async () => {

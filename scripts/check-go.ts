@@ -772,7 +772,7 @@ const atari = (toPlay: typeof BLACK | typeof WHITE) =>
     toPlay,
   );
 
-test('tactics: saves own group in atari, captures an atari group', () => {
+void test('tactics: saves own group in atari, captures an atari group', () => {
   for (const level of [6, 8] as GoLevel[]) {
     const save = chooseGoMove(
       atari(BLACK),
@@ -803,7 +803,7 @@ test('tactics: saves own group in atari, captures an atari group', () => {
   }
 });
 
-test('tactics: never fills its own eyes (passes on a settled board)', () => {
+void test('tactics: never fills its own eyes (passes on a settled board)', () => {
   for (const side of [BLACK, WHITE] as const) {
     const r = chooseGoMove(settled(5, side), 7.5, 8, seeded(33), fixedClock(), {
       reuse: false,
@@ -814,7 +814,7 @@ test('tactics: never fills its own eyes (passes on a settled board)', () => {
   }
 });
 
-test('opening: first moves stay off the first two lines on every board', () => {
+void test('opening: first moves stay off the first two lines on every board', () => {
   for (const size of [9, 13, 19] as const) {
     for (let k = 0; k < 4; k++) {
       let s = newGame(size);
@@ -841,7 +841,29 @@ test('opening: first moves stay off the first two lines on every board', () => {
   }
 });
 
-test('strength: current engine holds its own against the #32 engine', async () => {
+void test('opening pruning keeps first- and second-line captures available', () => {
+  // Setup positions have no move history, so the opening cutoff is active.
+  // Black's other empty points are eyes; these edge captures must remain.
+  const fixtures = [
+    { rows: ['O.OXXXXXX', 'XXXXXXXXX', 'X.X.XXXXX'], capture: 1 },
+    {
+      rows: ['XXXXXXXXX', 'X.XXXXXXX', 'XOXXXXXXX', 'XXXXXXXXX', 'X.X.XXXXX'],
+      capture: 10,
+    },
+  ];
+  for (const { rows, capture } of fixtures) {
+    const s = fromRows([...rows, ...Array(9 - rows.length).fill('XXXXXXXXX')]);
+    const r = chooseGoMove(s, 7.5, 8, seeded(97), fixedClock(), {
+      reuse: false,
+      keep: false,
+      playouts: 500,
+    });
+    assert.equal(r.move, capture);
+    assert.ok(ok(s, r.move).board.every((stone) => stone !== WHITE));
+  }
+});
+
+void test('strength: current engine holds its own against the #32 engine', async () => {
   const old = await import('./bench/go-ai-pr32.ts');
   const L = 6 as GoLevel;
   const keepCur = GO_LEVELS[L].playouts;

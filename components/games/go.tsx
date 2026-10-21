@@ -1,6 +1,7 @@
 'use client';
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -324,6 +325,16 @@ export function GoGame() {
   const sizeSel = useRef<HTMLSelectElement>(null);
   const levelSel = useRef<HTMLSelectElement>(null);
   const handicapSel = useRef<HTMLSelectElement>(null);
+  // Capture native choices before external-store hydration causes a rerender
+  // and controlled selects restore their initial React values.
+  useLayoutEffect(() => {
+    const sz = Number(sizeSel.current?.value) as GoSize;
+    const lv = Number(levelSel.current?.value) as GoLevel;
+    const hc = Number(handicapSel.current?.value);
+    if (GO_SIZES.includes(sz)) setSize(sz);
+    if (lv in GO_LEVELS) setLevel(lv);
+    if (Number.isFinite(hc)) setHandicap(Math.min(hc, sz === 9 ? 5 : 9));
+  }, []);
   function shownSettings() {
     const num = (el: HTMLSelectElement | null, fallback: number) => {
       const v = Number(el?.value);
