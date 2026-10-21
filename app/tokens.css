@@ -50,7 +50,7 @@
   --line-strong: rgba(35, 48, 42, 0.18);
   --accent: #4f7049;
   --accent-soft: rgba(79, 112, 73, 0.1);
-  --rust: #b05a32;
+  --rust: #ac562f;
 
   /* Soft layered shadows: a hairline top highlight, a contact shadow and a
      wide ambient one. Never a single hard drop shadow. */
