@@ -78,7 +78,8 @@ html #workbench .b-game-room {
   padding: var(--space-5);
 }
 @media (prefers-reduced-motion: reduce) {
-  html .room-game:hover {
+  html .room-game:hover,
+  html[data-theme='tech'] body .room-game:hover {
     transform: none;
   }
 }
