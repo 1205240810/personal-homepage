@@ -3550,6 +3550,29 @@ kbd {
   color: #313d3a;
   padding: 30px clamp(22px, 6vw, 100px) 80px;
 }
+/* The vault keeps its contextual navigation and still uses the reader header. */
+.vault-page > .reading-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  max-width: 1000px;
+  margin: 0 auto 55px;
+  padding: 35px 0 70px;
+  font-size: 12px;
+  color: var(--ink);
+}
+.vault-page > .reading-header > a:first-child {
+  margin-right: auto;
+}
+.vault-page > .reading-header a:hover {
+  color: var(--accent);
+}
+@media (max-width: 700px) {
+  .vault-page > .reading-header {
+    padding: 25px 0 45px;
+  }
+}
 .vault-page .private-vault {
   max-width: 760px;
   margin: auto;
