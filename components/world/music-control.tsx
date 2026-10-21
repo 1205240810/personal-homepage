@@ -14,6 +14,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverTitle,
 } from '@/components/ui/popover';
 import { PLAYLIST } from '@/lib/music/playlist';
 
@@ -29,7 +30,8 @@ function clock(seconds: number) {
 export function MusicControl({ reading }: { reading: boolean }) {
   const audio = useRef<HTMLAudioElement>(null),
     intent = useRef(false),
-    resumeAt = useRef(0);
+    resumeAt = useRef(0),
+    playRequest = useRef(0);
   const [playing, setPlaying] = useState(false),
     [volume, setVolume] = useState(0.2),
     [index, setIndex] = useState(0),
@@ -51,7 +53,7 @@ export function MusicControl({ reading }: { reading: boolean }) {
         setIndex(at);
         setDuration(PLAYLIST[at].duration);
         const t = Number(state.time);
-        if (Number.isFinite(t) && t > 0) {
+        if (Number.isFinite(t) && t > 0 && t < PLAYLIST[at].duration) {
           resumeAt.current = t;
           setTime(t);
         }
@@ -71,43 +73,54 @@ export function MusicControl({ reading }: { reading: boolean }) {
   useEffect(() => {
     const player = audio.current;
     if (player) player.volume = reading ? volume * 0.42 : volume;
-  }, [volume, reading]);
+  }, [volume, reading, index]);
+
+  // A play promise may reject after pause or a source change. Only the latest
+  // request for the current audio element may update the playback intent.
+  const start = useCallback(async () => {
+    const player = audio.current;
+    if (!player) return;
+    intent.current = true;
+    if (document.hidden) return;
+    const request = ++playRequest.current;
+    setMessage('正在接入远处的旋律…');
+    try {
+      if (player.error) player.load();
+      await player.play();
+      if (request === playRequest.current && player === audio.current)
+        setMessage('');
+    } catch {
+      if (request !== playRequest.current || player !== audio.current) return;
+      intent.current = false;
+      setPlaying(false);
+      setMessage('音乐暂未开始，请再点一次。');
+    }
+  }, []);
 
   useEffect(() => {
     const player = audio.current;
     const visible = () => {
       if (!player) return;
-      if (document.hidden) player.pause();
-      else if (intent.current)
-        player.play().catch(() => setMessage('点击播放键继续。'));
+      if (document.hidden) {
+        ++playRequest.current;
+        player.pause();
+      } else if (intent.current) void start();
     };
     document.addEventListener('visibilitychange', visible);
     return () => {
       document.removeEventListener('visibilitychange', visible);
       player?.pause();
     };
-  }, []);
+  }, [index, start]);
 
-  async function start() {
-    const player = audio.current;
-    if (!player) return;
-    intent.current = true;
-    setMessage('正在接入远处的旋律…');
-    try {
-      await player.play();
-      setMessage('');
-    } catch {
-      intent.current = false;
-      setMessage('音乐暂未开始，请再点一次。');
-    }
-  }
   function toggle() {
     const player = audio.current;
     if (!player) return;
     if (intent.current) {
       intent.current = false;
+      ++playRequest.current;
       player.pause();
-      save(track.id, player.currentTime);
+      save(track.id, resumeAt.current || player.currentTime);
       setMessage('');
       return;
     }
@@ -115,49 +128,59 @@ export function MusicControl({ reading }: { reading: boolean }) {
   }
   function go(next: number, autoplay = intent.current) {
     const n = (next + PLAYLIST.length) % PLAYLIST.length;
+    ++playRequest.current;
+    audio.current?.pause();
     resumeAt.current = 0;
+    setPlaying(false);
+    setMessage('');
     setIndex(n);
     setTime(0);
     setDuration(PLAYLIST[n].duration);
     save(PLAYLIST[n].id, 0);
     intent.current = autoplay;
   }
-  // 换曲后，如果访客原本在听，就继续播放新曲。
+  // Each track gets its own audio element so late media events from the old
+  // source cannot overwrite the new track's progress or playback state.
   useEffect(() => {
-    const player = audio.current;
-    if (!player || !intent.current) return;
-    player.play().catch(() => {
-      intent.current = false;
-      setMessage('点击播放键继续。');
-    });
-  }, [index]);
+    if (intent.current) void start();
+  }, [index, start]);
 
   const label = `${track.title} · ${track.artist}`;
   return (
     <div className="music-controls">
       <audio
+        key={track.id}
         ref={audio}
         src={track.src}
         preload="none"
         onLoadedMetadata={(e) => {
           const p = e.currentTarget;
           if (Number.isFinite(p.duration)) setDuration(p.duration);
-          if (resumeAt.current > 0 && resumeAt.current < p.duration - 2)
+          if (resumeAt.current > 0 && resumeAt.current < p.duration)
             p.currentTime = resumeAt.current;
           resumeAt.current = 0;
+          setTime(p.currentTime);
         }}
         onTimeUpdate={(e) => {
+          if (resumeAt.current > 0) return;
           const t = e.currentTarget.currentTime;
           setTime(t);
           if (Math.floor(t) % 5 === 0) save(track.id, t);
         }}
-        onPlaying={() => {
+        onPlaying={(e) => {
+          if (!intent.current || document.hidden) {
+            e.currentTarget.pause();
+            return;
+          }
           setPlaying(true);
           setMessage('');
         }}
         onPause={() => setPlaying(false)}
-        onEnded={() => go(index + 1, true)}
+        onEnded={() => {
+          if (intent.current) go(index + 1, true);
+        }}
         onError={() => {
+          ++playRequest.current;
           intent.current = false;
           setPlaying(false);
           setMessage('音乐加载失败，可以稍后重试。');
@@ -199,11 +222,11 @@ export function MusicControl({ reading }: { reading: boolean }) {
           <span className="eyebrow">
             来自远处的旋律 · {index + 1}/{PLAYLIST.length}
           </span>
-          <h3>{track.title}</h3>
+          <PopoverTitle className="music-title">{track.title}</PopoverTitle>
           <p className="music-now">
             {track.artist} · {track.mood}
           </p>
-          <div className="music-transport" role="group" aria-label="播放控制">
+          <fieldset className="music-transport" aria-label="播放控制">
             <button
               type="button"
               onClick={() => go(index - 1)}
@@ -226,7 +249,7 @@ export function MusicControl({ reading }: { reading: boolean }) {
             >
               <SkipForward size={15} />
             </button>
-          </div>
+          </fieldset>
           <div className="music-progress">
             <span>{clock(time)}</span>
             <input
@@ -284,16 +307,16 @@ export function MusicControl({ reading }: { reading: boolean }) {
               「{track.title}」 {track.artist} · 原曲与授权页
             </a>
             <a href={track.license.url} target="_blank" rel="noreferrer">
-              {track.license.name} · 已转码为 96 kbps，未剪辑
+              {track.license.name} · {track.changes}
             </a>
             <span>阅读时会轻轻降低音量；切到后台自动暂停。</span>
           </div>
         </PopoverContent>
       </Popover>
       {message && (
-        <span className="music-message" role="status">
+        <output className="music-message">
           {message}
-        </span>
+        </output>
       )}
     </div>
   );

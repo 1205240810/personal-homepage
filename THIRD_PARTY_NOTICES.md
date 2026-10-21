@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ### 背景音乐播放列表（lib/music/playlist.ts）
 
-以下曲目均为 Kevin MacLeod（incompetech.com）作品，使用 [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)。除 Morning 外均转码为 96 kbps MP3，未剪辑。播放器内对当前曲目显示署名与授权链接。
+以下曲目均为 Kevin MacLeod（incompetech.com）作品，使用 [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)。除 Morning 外均转码为 96 kbps MP3，未剪辑。播放器内对当前曲目显示署名与授权链接。播放器位于机甲探索页（`/explore`），各曲的作者页面与许可于 2026-10-21 核对。
 
 - **Morning** — Kevin MacLeod，ISRC USUAN2300003，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2300003)
 - **Evening** — Kevin MacLeod，ISRC USUAN2300002，[原曲与授权页](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2300002)

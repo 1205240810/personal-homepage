@@ -1727,7 +1727,7 @@ kbd {
   z-index: 80;
   min-width: 280px;
 }
-.music-popover h3 {
+.music-popover .music-title {
   font-size: 18px;
   margin: 14px 0 7px;
   font-weight: 500;
@@ -1747,6 +1747,10 @@ kbd {
 .music-popover input {
   width: 100%;
   accent-color: #4f7049;
+}
+.music-popover {
+  max-height: min(680px, var(--available-height, calc(100dvh - 24px)));
+  overflow-y: auto;
 }
 .music-popover .music-now {
   margin-bottom: 12px;
@@ -1824,6 +1828,11 @@ kbd {
   }
   .music-list button {
     padding: 10px 4px;
+    min-height: 44px;
+  }
+  .music-transport button {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 .music-credit {
