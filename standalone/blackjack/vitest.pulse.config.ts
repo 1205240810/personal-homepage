@@ -21,6 +21,7 @@ export default defineConfig({
       'qa/fault-finder.check.tsx',
       'qa/life.check.tsx',
       'qa/theme-switcher.check.tsx',
+      'qa/music-control.check.tsx',
       'qa/go.check.tsx',
       'qa/chess.check.tsx',
       'qa/timeloop.check.tsx',

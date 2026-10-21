@@ -35,7 +35,7 @@
 
 公开 GitHub 数据来自用户确认的 [1205240810](https://github.com/1205240810)，项目展示只使用公开仓库资料，核对日期与外链记录在 `content/data/projects.json`。
 
-背景音乐为 Kevin MacLeod 的 Morning，源音频时长153.31265秒；来源、署名与 CC BY 4.0 许可证见 THIRD_PARTY_NOTICES.md。
+背景音乐为 lib/music/playlist.ts 中的 11 首 Kevin MacLeod 作品（首曲 Morning，源音频时长153.31265秒）；来源、署名与 CC BY 4.0 许可证见 THIRD_PARTY_NOTICES.md。
 
 ## 2026-09-08 双轨更新
 

@@ -416,3 +416,35 @@ html[data-theme='tech'] .sweeper-cell.is-wrong {
 html[data-theme='tech'] .room-game-preview {
   filter: saturate(0.6) brightness(0.92);
 }
+
+/* 背景音乐播放器 */
+html[data-theme='tech'] .music-popover {
+  background: #0a1520 !important;
+  border-color: rgba(61, 220, 255, 0.28) !important;
+  color: #dce8f4;
+}
+html[data-theme='tech'] .music-popover p,
+html[data-theme='tech'] .music-progress,
+html[data-theme='tech'] .music-credit,
+html[data-theme='tech'] .music-list button {
+  color: #93a8bc;
+}
+html[data-theme='tech'] .music-popover input {
+  accent-color: #3ddcff;
+}
+html[data-theme='tech'] .music-list button[aria-current],
+html[data-theme='tech'] .music-list button:hover,
+html[data-theme='tech'] .music-credit a:hover {
+  color: #3ddcff;
+}
+html[data-theme='tech'] .music-transport .music-play {
+  border-color: rgba(61, 220, 255, 0.45);
+}
+html[data-theme='tech'] .music-transport button:hover {
+  background: rgba(61, 220, 255, 0.1);
+}
+html[data-theme='tech'] .music-list,
+html[data-theme='tech'] .music-list button,
+html[data-theme='tech'] .music-credit {
+  border-color: rgba(61, 220, 255, 0.14);
+}

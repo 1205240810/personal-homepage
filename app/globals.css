@@ -1713,7 +1713,7 @@ kbd {
   z-index: 80;
   min-width: 280px;
 }
-.music-popover h3 {
+.music-popover .music-title {
   font-size: 18px;
   margin: 14px 0 7px;
   font-weight: 500;
@@ -1733,6 +1733,93 @@ kbd {
 .music-popover input {
   width: 100%;
   accent-color: #4f7049;
+}
+.music-popover {
+  max-height: min(680px, var(--available-height, calc(100dvh - 24px)));
+  overflow-y: auto;
+}
+.music-popover .music-now {
+  margin-bottom: 12px;
+}
+.music-transport {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0 12px;
+}
+.music-transport button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: inherit;
+  transition: background 0.15s;
+}
+.music-transport button:hover {
+  background: #4f654314;
+}
+.music-transport .music-play {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #4f654355;
+}
+.music-transport button:focus-visible,
+.music-list button:focus-visible {
+  outline: 2px solid #4f7049;
+  outline-offset: 2px;
+}
+.music-progress {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #64715e;
+}
+.music-list {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  border-top: 1px solid #4f654322;
+}
+.music-list button {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 4px;
+  font-size: 12px;
+  text-align: left;
+  color: #314a39;
+  border-bottom: 1px solid #4f654314;
+}
+.music-list button:hover,
+.music-list button[aria-current] {
+  color: #4f7049;
+}
+.music-list button[aria-current] .music-list-title::before {
+  content: '▸ ';
+}
+.music-list-time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+@media (max-width: 640px) {
+  .music-popover {
+    min-width: min(320px, calc(100vw - 24px));
+  }
+  .music-list button {
+    padding: 10px 4px;
+    min-height: 44px;
+  }
+  .music-transport button {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 .music-credit {
   border-top: 1px solid #4f654333;
