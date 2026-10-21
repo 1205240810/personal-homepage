@@ -1,3 +1,4 @@
+/* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation releases each game's audio, timers and Workers, and avoids Vinext production prefetch errors. */
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { ThemeSwitcher } from '@/components/theme/theme-switcher';
 import './site-header.css';

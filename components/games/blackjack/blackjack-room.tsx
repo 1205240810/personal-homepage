@@ -3,7 +3,6 @@ import { SiteHeader } from '@/components/site/site-header';
 
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation releases game audio, timers and Worker ownership. */
 import { useEffect, useState, type ComponentType } from 'react';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import type { BlackjackGameProps } from './generated/BlackjackGame';
 import './blackjack-room.css';

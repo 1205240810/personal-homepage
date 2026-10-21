@@ -3,7 +3,6 @@ import { SiteHeader } from '@/components/site/site-header';
 
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full navigation releases each game's audio, listeners and AI calculations. */
 import { useEffect, useState, type ComponentType } from 'react';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { getGame, type GameId } from '@/lib/games/catalog';
 import './standalone-game-room.css';
