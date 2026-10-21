@@ -1,4 +1,4 @@
-import { ThemeSwitcher } from '@/components/theme/theme-switcher';
+import { SiteHeader } from '@/components/site/site-header';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { contentSource } from '@/lib/content/source';
@@ -23,11 +23,7 @@ export default async function Post({
   if (!d || d.kind !== 'article') notFound();
   return (
     <main className="reading-page">
-      <header className="reading-header">
-        <a href="/workbench">← 返回工作台</a>
-        <a href="/archive">全部记录</a>
-        <ThemeSwitcher />
-      </header>
+      <SiteHeader current="archive" />
       <ArticleView article={d.article} />
     </main>
   );

@@ -1,0 +1,108 @@
+/*
+ * Design tokens · 简约大气，重质感.
+ * One scale for type, space, radius, surfaces, shadows and motion, shared by
+ * every page. The 科技 theme only swaps values, never adds effects.
+ */
+:root {
+  /* Type scale (1.2 ratio around a 15px body). */
+  --font-sans:
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13.5px;
+  --text-base: 15px;
+  --text-md: 17px;
+  --text-lg: 21px;
+  --text-xl: 27px;
+  --text-2xl: clamp(30px, 3.4vw, 40px);
+  --text-display: clamp(38px, 5.2vw, 64px);
+  --leading-tight: 1.18;
+  --leading-body: 1.75;
+  --tracking-tight: -0.02em;
+  --tracking-caps: 0.14em;
+
+  /* Space (4px base) and radius. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 72px;
+  --space-9: 112px;
+  --page-max: 1180px;
+  --page-gutter: clamp(20px, 5vw, 56px);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Palette: warm paper, deep pine ink, one green accent, one rust highlight. */
+  --paper: #f6f5ee;
+  --surface: #fcfbf6;
+  --surface-sunk: #efeee5;
+  --ink: #23302a;
+  --ink-soft: #57655b;
+  --ink-faint: #8a958b;
+  --line: rgba(35, 48, 42, 0.1);
+  --line-strong: rgba(35, 48, 42, 0.18);
+  --accent: #4f7049;
+  --accent-soft: rgba(79, 112, 73, 0.1);
+  --rust: #ac562f;
+
+  /* Soft layered shadows: a hairline top highlight, a contact shadow and a
+     wide ambient one. Never a single hard drop shadow. */
+  --shadow-1:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 1px rgba(28, 38, 30, 0.04),
+    0 2px 6px -2px rgba(28, 38, 30, 0.06);
+  --shadow-2:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 1px 2px rgba(28, 38, 30, 0.05),
+    0 8px 24px -12px rgba(28, 38, 30, 0.16);
+  --shadow-3:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 4px rgba(28, 38, 30, 0.05),
+    0 24px 48px -24px rgba(28, 38, 30, 0.22);
+  --surface-gradient: linear-gradient(180deg, #fefdf9 0%, #f8f7f0 100%);
+  /* Fine paper grain: tiny fractal noise, multiplied in at low opacity. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.14 0 0 0 0 0.19 0 0 0 0 0.16 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-opacity: 0.07;
+
+  /* Motion: one quality easing, short durations, nothing bouncy. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+}
+
+html[data-theme='tech'] {
+  --paper: #0b1117;
+  --surface: #111a22;
+  --surface-sunk: #0d151c;
+  --ink: #e4ecf1;
+  --ink-soft: #9fb0bc;
+  --ink-faint: #6c7d89;
+  --line: rgba(170, 205, 230, 0.1);
+  --line-strong: rgba(170, 205, 230, 0.2);
+  --accent: #7cc7df;
+  --accent-soft: rgba(124, 199, 223, 0.1);
+  --rust: #e19a6b;
+  --shadow-1:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-2:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.35),
+    0 12px 28px -14px rgba(0, 0, 0, 0.6);
+  --shadow-3:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 4px rgba(0, 0, 0, 0.35),
+    0 28px 56px -24px rgba(0, 0, 0, 0.7);
+  --surface-gradient: linear-gradient(180deg, #131d26 0%, #0f1820 100%);
+  --grain-opacity: 0.05;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}

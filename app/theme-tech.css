@@ -38,12 +38,6 @@
 .theme-switcher[aria-pressed='true'] {
   opacity: 1;
 }
-.reading-header {
-  gap: 18px;
-}
-.reading-header > a:first-child {
-  margin-right: auto;
-}
 @media (max-width: 520px) {
   .theme-switcher {
     min-height: 30px;
@@ -196,12 +190,6 @@ html[data-theme='tech']
 html[data-theme='tech'] .reading-page {
   color: var(--tech-ink);
 }
-html[data-theme='tech'] .reading-header {
-  color: var(--tech-ink);
-}
-html[data-theme='tech'] .reading-header a:hover {
-  color: var(--tech-accent);
-}
 
 /* ---- Explore overlay chrome (/explore) --------------------------------- */
 html[data-theme='tech'] .world-header nav {
@@ -246,12 +234,6 @@ html[data-theme='tech'] .sg .sg-error-tag {
    ========================================================================== */
 
 /* Default theme: page resets strip button borders, keep the switcher a pill. */
-#workbench .b-nav .theme-switcher {
-  min-height: 32px;
-  padding: 5px 10px;
-  border: 1px solid currentColor;
-  font-size: 12px;
-}
 
 /* HUD corner brackets, drawn as background so they never shift layout. */
 html[data-theme='tech'] {
@@ -379,9 +361,6 @@ html[data-theme='tech'] :is(.arrival-light-switch, .arrival-controls button) {
 }
 
 /* Section numbers and nav indices read as HUD readouts. */
-html[data-theme='tech'] #workbench :is(.b-nav-index, .b-section-number) {
-  color: var(--tech-accent);
-}
 
 /* Mech sweeper: dark steel modules with cyan readouts. */
 html[data-theme='tech'] .sweeper-levels button {
