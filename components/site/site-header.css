@@ -12,6 +12,27 @@
   font-family: var(--font-sans);
   box-sizing: content-box;
 }
+/* These games keep their own dark table in the default theme. Match the
+   header tokens to that table instead of drawing paper-theme ink on it. */
+html:not([data-theme='tech']) .blackjack-room-shell > .site-header {
+  --ink: #e1e4d5;
+  --ink-soft: #a7b8a6;
+  --ink-faint: #8f9f8b;
+  --line: #bccba926;
+  --line-strong: #bccba950;
+  --accent: #dfc28a;
+  --rust: #dfc28a;
+}
+html:not([data-theme='tech'])
+  :is(.standalone-room-yahtzee, .standalone-room-stud) > .site-header {
+  --ink: var(--arcade-ink);
+  --ink-soft: var(--arcade-muted);
+  --ink-faint: var(--arcade-muted);
+  --line: var(--arcade-rule);
+  --line-strong: var(--arcade-muted);
+  --accent: var(--arcade-ink);
+  --rust: var(--arcade-ink);
+}
 /* Inside pages that already provide the page gutter. */
 #workbench .site-header {
   max-width: 1220px;
