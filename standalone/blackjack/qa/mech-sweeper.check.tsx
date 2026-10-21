@@ -64,26 +64,43 @@ describe('机甲扫雷', () => {
     expect(screen.getByText(/通关 1 次/)).toBeTruthy();
   });
 
-  it('首次点到故障也安全；保险丝挡一次，第二次短路并可重试本张', () => {
-    mount();
-    const field = todayField();
-    const faults = field.mines.flatMap((m, i) => (m ? [i] : []));
-    fireEvent.click(cells()[faults[0]]);
-    expect(label(faults[0])).not.toMatch(/故障|短路/);
-    // The rescued fault moved; find two faults that are still hidden.
-    const hidden = faults.filter(
-      (i) => i !== faults[0] && /未扫描/.test(label(i)),
-    );
-    fireEvent.click(cells()[hidden[0]]);
-    expect(screen.getByText(/保险丝熔断/)).toBeTruthy();
-    expect(label(hidden[0])).toMatch(/保险丝熔断/);
-    fireEvent.click(cells()[hidden[1]]);
-    expect(screen.getByText(/短路了/)).toBeTruthy();
-    expect(label(hidden[1])).toMatch(/短路点/);
-    fireEvent.click(screen.getByRole('button', { name: /重试本张/ }));
-    expect(label(field.start)).toMatch(/扫描起点/);
-    expect(localStorage.getItem(SWEEPER_RECORDS_KEY)).toBeNull();
-  });
+  it.each([
+    { day: 20, revealed: '信号 1' },
+    { day: 21, revealed: '安全，周围无故障' },
+  ])(
+    '首次救援显示 $revealed；保险丝挡一次，第二次短路并可重试本张',
+    ({ day, revealed }) => {
+      // Pin both outcomes: the first rescued cell may be a number or open space.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, day, 12));
+      mount();
+      const field = todayField();
+      const faults = field.mines.flatMap((m, i) => (m ? [i] : []));
+      fireEvent.click(cells()[faults[0]]);
+      const row = Math.floor(faults[0] / 8) + 1;
+      const col = (faults[0] % 8) + 1;
+      expect(label(faults[0])).toBe(`第 ${row} 行第 ${col} 列，${revealed}`);
+      expect(document.querySelector('.sweeper-play.is-playing')).toBeTruthy();
+      expect(
+        screen.getByTitle('保险丝可以吸收一次短路').querySelector('strong')
+          ?.textContent,
+      ).toBe('1');
+      // The rescued fault moved; find two faults that are still hidden.
+      const hidden = faults.filter(
+        (i) => i !== faults[0] && /未扫描/.test(label(i)),
+      );
+      expect(hidden.length).toBeGreaterThanOrEqual(2);
+      fireEvent.click(cells()[hidden[0]]);
+      expect(screen.getByText(/保险丝熔断/)).toBeTruthy();
+      expect(label(hidden[0])).toMatch(/保险丝熔断/);
+      fireEvent.click(cells()[hidden[1]]);
+      expect(screen.getByText(/短路了/)).toBeTruthy();
+      expect(label(hidden[1])).toMatch(/短路点/);
+      fireEvent.click(screen.getByRole('button', { name: /重试本张/ }));
+      expect(label(field.start)).toMatch(/扫描起点/);
+      expect(localStorage.getItem(SWEEPER_RECORDS_KEY)).toBeNull();
+    },
+  );
 
   it('右键、标记模式和触控长按都能插旗，长按后不会误扫', () => {
     vi.useFakeTimers();

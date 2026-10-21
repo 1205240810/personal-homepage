@@ -45,6 +45,7 @@ const submit = () => screen.getByRole('button', { name: /提交诊断/ });
 beforeEach(() => localStorage.clear());
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -100,25 +101,62 @@ describe('故障排查', () => {
     expect(label(healthy[0])).toMatch(/未判断/);
   });
 
-  it('传感器显示读数与状态，点击高亮它连着的模块；矛盾时提示', () => {
-    mount();
-    const p = todayPuzzle();
-    const sensor = screen.getAllByRole('button', { name: /传感器，读数/ })[0];
-    expect(
-      screen.getAllByRole('button', { name: /传感器，读数/ }),
-    ).toHaveLength(p.sensors.length);
-    fireEvent.click(sensor);
-    expect(sensor.getAttribute('aria-pressed')).toBe('true');
-    const lit = cells().filter((c) => c.classList.contains('is-lit'));
-    expect(lit.length).toBe(p.sensors[0].cells.length);
-    // Marking every module of a sensor as healthy contradicts any reading > 0.
-    const busy = p.sensors.findIndex((_, i) => p.readings[i] > 0);
-    for (const c of p.sensors[busy].cells) {
-      fireEvent.click(cells()[c]);
-      fireEvent.click(cells()[c]);
-    }
-    expect(screen.getByText(/对不上/)).toBeTruthy();
-  });
+  it.each([
+    { kind: '正读数', day: 20, positive: true },
+    { kind: '全零读数', day: 21, positive: false },
+  ])(
+    '$kind 传感器显示状态、高亮模块，并在矛盾出现和解除时更新提示',
+    ({ day, positive }) => {
+      // Both are valid daily puzzles. In particular, a panel of zero readings
+      // can uniquely locate the faults outside all of its sensors.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, day, 12));
+      mount();
+      const p = todayPuzzle();
+      if (!positive)
+        expect(p.readings.every((reading) => reading === 0)).toBe(true);
+      const index = p.readings.findIndex(
+        (reading, i) =>
+          p.sensors[i].kind === 'row' &&
+          (positive ? reading > 0 : reading === 0),
+      );
+      expect(index).toBeGreaterThanOrEqual(0);
+      const sensors = screen.getAllByRole('button', { name: /传感器，读数/ });
+      expect(sensors).toHaveLength(p.sensors.length);
+      // Panel DOM order is nodes, rows, columns; locate the actual row by name.
+      const sensor = screen.getByRole('button', {
+        name: new RegExp(
+          `^第 ${p.sensors[index].at + 1} 行总线传感器，读数 ${p.readings[index]}，`,
+        ),
+      });
+      const connected = p.sensors[index].cells;
+      fireEvent.click(sensor);
+      expect(sensor.getAttribute('aria-pressed')).toBe('true');
+      expect(
+        cells().flatMap((c, i) => (c.classList.contains('is-lit') ? [i] : [])),
+      ).toEqual(connected);
+      expect(screen.queryByText(/对不上/)).toBeNull();
+
+      if (positive) {
+        // No possible fault remains to satisfy a positive reading.
+        for (const c of connected) {
+          fireEvent.click(cells()[c]);
+          fireEvent.click(cells()[c]);
+        }
+      } else {
+        // A single marked fault already exceeds a zero reading.
+        fireEvent.click(cells()[connected[0]]);
+      }
+      expect(sensor.getAttribute('aria-label')).toMatch(/与标记矛盾/);
+      expect(screen.getByText(/对不上/)).toBeTruthy();
+
+      for (const c of positive ? connected : [connected[0]]) {
+        fireEvent.click(cells()[c]);
+      }
+      expect(sensor.getAttribute('aria-label')).not.toMatch(/与标记矛盾/);
+      expect(screen.queryByText(/对不上/)).toBeNull();
+    },
+  );
 
   it('提示指向一个模块、不算无误通关；键盘 F/X/Delete 与方向键可用', () => {
     mount();
