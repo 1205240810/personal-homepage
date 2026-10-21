@@ -117,7 +117,7 @@ html[data-theme='tech'] :is(#workbench, .games-shell, .reading-page)::after {
   background: var(--surface-gradient);
   box-shadow: var(--shadow-1);
   padding: var(--space-5);
-  font-size: 12.5px;
+  font-size: 14px;
 }
 .prose-archive :not(pre) > code {
   background: var(--accent-soft);
