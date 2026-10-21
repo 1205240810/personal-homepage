@@ -36,8 +36,8 @@ const T = {
   surface2: '#0f1f2e',
   ink: '#dce8f4',
   muted: '#93a8bc',
-  accent: '#3ddcff',
-  rule: [61, 220, 255],
+  accent: '#7cc7df',
+  rule: [124, 199, 223],
 };
 
 function parseColor(node) {
