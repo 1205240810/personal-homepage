@@ -225,13 +225,12 @@ html[data-theme='tech'] .kit {
 }
 /* Board cells are buttons too, but they are part of the board's own surface:
    keep the control material (gradient, highlight shadow, press nudge) off
-   them. */
+   them. `:where` keeps this at base specificity so each game's own cell
+   styles (selection rings, grid hairlines) still win. */
 .kit
-  :is(
+  :where(
     .chess-board,
     .go-board,
-    .laser-board,
-    .laser-grid,
     .hashi-board,
     .flow-board,
     .rw-board,
