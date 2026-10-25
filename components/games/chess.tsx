@@ -457,7 +457,7 @@ export function ChessGame() {
               ? `残局 · ${puzzle.name}`
               : `${CHESS_LEVELS[level].name} · 执${COLOR_NAME[player]}`}
           </p>
-          <h2>国际象棋</h2>
+          <h2 className="kit-sr">国际象棋</h2>
         </div>
         <select
           aria-label="残局模式"

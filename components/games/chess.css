@@ -1,6 +1,9 @@
 .chess-layout {
   display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(140px, 220px);
+  /* Keep the whole board inside one desktop screen. */
+  grid-template-columns:
+    minmax(0, min(560px, calc(100dvh - 120px)))
+    minmax(140px, 220px);
   gap: 16px;
   justify-content: center;
   align-items: start;

@@ -144,6 +144,23 @@ html[data-theme='tech'] .kit {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+/* Phones: controls wrap instead of pushing the page sideways, and every
+   control is at least a 44px touch target. */
+.kit select {
+  min-width: 0;
+  max-width: 100%;
+}
+.kit > *,
+.kit-head > *,
+.kit-row > * {
+  min-width: 0;
+}
+@media (pointer: coarse), (max-width: 640px) {
+  .kit button,
+  .kit select {
+    min-height: 44px;
+  }
+}
 @media (max-width: 640px) {
   .kit-canvas {
     height: auto;

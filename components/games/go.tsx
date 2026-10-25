@@ -722,7 +722,7 @@ export function GoGame() {
               ? `死活题 · ${problem.name}`
               : `${n} 路 · ${GO_LEVELS[matchLevel].name} · 执${NAME[human]}`}
           </p>
-          <h2>围棋</h2>
+          <h2 className="kit-sr">围棋</h2>
         </div>
         <select
           aria-label="模式"
