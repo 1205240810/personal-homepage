@@ -1,9 +1,9 @@
 export const ARRIVAL_ART = [
   {
     id: 'industrial-explorer',
-    src: '/art/arrival-industrial-explorer.webp',
-    alt: '暖日光穿过维护馆高窗，圆形单眼、墨绿装甲与旧铜关节的巨型探索机甲扶着检修架。',
-    desktop: '64% 65%',
+    src: '/art/arrival-industrial-explorer-depth.webp',
+    alt: '近处的暗色检修设备框住维护馆，暖日光勾勒墨绿单眼机甲与旧铜关节，远处的廊柱隐入冷灰色光尘。',
+    desktop: '64% 20%',
     mobile: '69% 50%',
   },
   {
