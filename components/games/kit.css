@@ -41,7 +41,20 @@ html[data-theme='tech'] .kit {
     box-shadow var(--dur-fast, 0.15s) var(--ease, ease),
     transform var(--dur-fast, 0.15s) var(--ease, ease);
 }
-.kit button:active:not(:disabled) {
+/* Board buttons keep their positioning and selection/grid shadows while
+   pressed. In particular, Hashi islands use transform to stay centered. */
+.kit
+  button:active:not(:disabled):not(
+    :where(
+      .chess-board *,
+      .go-board *,
+      .hashi-board *,
+      .flow-board *,
+      .rw-board *,
+      .tl-board *,
+      .laser-grid *
+    )
+  ) {
   transform: translateY(1px);
   box-shadow: none;
 }
