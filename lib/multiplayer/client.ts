@@ -175,7 +175,7 @@ export class PlayClient<V = unknown> {
         return;
       this.set({ seats: m.seats, view: m.view as V, version: m.version });
     } else if (m.t === 'error') {
-      if (m.code === 'no-room' || m.code === 'room-full' || m.code === 'wrong-game') {
+      if (!this.snapshot.code || m.code === 'no-room' || m.code === 'room-full' || m.code === 'wrong-game') {
         this.close();
         this.set({ code: null, seat: null, seats: [], view: null, version: 0 });
       }

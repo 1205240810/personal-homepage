@@ -187,6 +187,21 @@ void describe('play server (two real clients)', () => {
     assert.equal(((await r.json()) as { ok: boolean }).ok, true);
   });
 
+  void it('can retry creating a room after the server rejects its options', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo', { target: -1 });
+      await until(() => a.snapshot.error);
+      assert.equal(a.snapshot.status, 'closed');
+      a.create('echo', { target: 5 });
+      await until(() => a.snapshot.view);
+      assert.equal(a.snapshot.status, 'open');
+      assert.equal(a.snapshot.error, null);
+    } finally {
+      a.close();
+    }
+  });
+
   void it('can create another room after playing without keeping the old version or view', async () => {
     const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
     try {
