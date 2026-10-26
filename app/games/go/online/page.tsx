@@ -1,5 +1,5 @@
 import { GamePageFrame } from '@/components/games/game-room';
-import { GoOnline } from '@/components/play/go-online';
+import { GoOnline } from '@/components/play/online-go';
 import { getGame } from '@/lib/games/catalog';
 
 export const metadata = {

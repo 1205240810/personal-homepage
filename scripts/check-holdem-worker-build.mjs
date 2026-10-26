@@ -63,25 +63,24 @@ function workerUrls(chunkPath) {
     ts.forEachChild(node, visit);
   }
   visit(source);
-  assert.equal(
-    urls.length,
-    1,
-    `Expected exactly one Worker in ${chunkPath}`,
-  );
+  assert.equal(urls.length, 1, `Expected exactly one Worker in ${chunkPath}`);
   return urls;
 }
 
 function checkGameWorkerBuild(distDirectory, game, workerName) {
   const clientDirectory = join(distDirectory, 'client');
   const standaloneClient = join(distDirectory, 'standalone', 'dist', 'client');
-  const chunks = readdirSync(
-    join(clientDirectory, '_next', 'static', 'chunks'),
-  ).filter((name) => new RegExp(`^${game}-[\\w-]+\\.js$`).test(name));
-  assert.equal(
-    chunks.length,
-    1,
-    `Expected one fresh production ${game} chunk`,
-  );
+  const chunks = readdirSync(join(clientDirectory, '_next', 'static', 'chunks'))
+    .filter((name) => new RegExp(`^${game}-[\\w-]+\\.js$`).test(name))
+    // Other chunks may share the prefix (e.g. shared rules split out for the
+    // online page); the game chunk is the one that spawns the worker.
+    .filter((name) =>
+      readFileSync(
+        join(clientDirectory, '_next', 'static', 'chunks', name),
+        'utf8',
+      ).includes(workerName),
+    );
+  assert.equal(chunks.length, 1, `Expected one fresh production ${game} chunk`);
   const name = chunks[0];
   const chunkPath = join(clientDirectory, '_next', 'static', 'chunks', name);
   const standaloneChunk = join(
@@ -141,8 +140,8 @@ if (
 ) {
   try {
     const directory = process.argv[2]
-        ? resolve(process.argv[2])
-        : fileURLToPath(new URL('../dist', import.meta.url));
+      ? resolve(process.argv[2])
+      : fileURLToPath(new URL('../dist', import.meta.url));
     checkHoldemWorkerBuild(directory);
     checkGameWorkerBuild(directory, 'chess', 'chess-worker');
     checkGameWorkerBuild(directory, 'go', 'go-worker');
