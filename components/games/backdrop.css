@@ -1,0 +1,38 @@
+/* Game pages: one quiet backdrop — a soft light from above on the shared
+   paper plus the site's fine grain. No pattern, no colour shift. */
+.games-shell {
+  position: relative;
+  isolation: isolate;
+}
+.games-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    90% 60% at 50% -10%,
+    rgb(255 255 255 / 0.55),
+    transparent 70%
+  );
+}
+.games-shell::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--grain, none) 0 0 / 160px 160px;
+  opacity: var(--grain-opacity, 0.07);
+  mix-blend-mode: multiply;
+}
+html[data-theme='tech'] .games-shell::before {
+  background: radial-gradient(
+    90% 60% at 50% -10%,
+    rgb(124 199 223 / 0.07),
+    transparent 70%
+  );
+}
+html[data-theme='tech'] .games-shell::after {
+  mix-blend-mode: screen;
+}
