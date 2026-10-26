@@ -30,7 +30,7 @@ import {
   validateChessRecords,
   type Color,
 } from '@/lib/games/chess';
-import { useLocalRecords } from './kit';
+import { useBoardViewport, useLocalRecords } from './kit';
 // Vite provides a default URL export for the worker query.
 // oxlint-disable-next-line import/default
 import chessWorkerUrl from './chess-worker.ts?worker&url';
@@ -134,6 +134,7 @@ export function ChessGame() {
     [],
   );
   const boardRef = useRef<HTMLFieldSetElement>(null);
+  useBoardViewport(boardRef);
 
   const game = replay(startFen, moves);
   const end = gameEnd(game);

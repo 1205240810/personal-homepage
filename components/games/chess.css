@@ -1,8 +1,8 @@
 .chess-layout {
   display: grid;
-  /* Keep the whole board inside one desktop screen. */
+  /* Fit below the controls; short screens may scroll instead of shrinking cells. */
   grid-template-columns:
-    minmax(0, min(560px, calc(100dvh - 120px)))
+    minmax(0, min(560px, max(320px, var(--board-available-height, 560px))))
     minmax(140px, 220px);
   gap: 16px;
   justify-content: center;
