@@ -1,0 +1,205 @@
+/* Online card tables: the same deep, muted felt as the solo rooms. */
+.pt-felt {
+  display: grid;
+  gap: 14px;
+  padding: clamp(14px, 3vw, 28px);
+  border-radius: 28px;
+  border: 1px solid #c4b07a33;
+  color: #e6e8d8;
+  background:
+    repeating-linear-gradient(
+      25deg,
+      transparent 0 2px,
+      rgb(220 240 210 / 0.025) 2px 3px
+    ),
+    radial-gradient(ellipse at 50% 40%, #2b5544 0, #1d4032 55%, #12281f 100%);
+  box-shadow:
+    inset 0 0 0 6px #0f241b,
+    inset 0 0 0 7px #cab47b33,
+    inset 0 0 60px #04140d99,
+    var(--shadow-3, 0 20px 50px -20px #0006);
+}
+.pt-seat {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #c2d1a426;
+  border-radius: 16px;
+  background: #0d241a55;
+  transition:
+    border-color var(--dur, 0.2s),
+    box-shadow var(--dur, 0.2s);
+}
+.pt-seat.is-acting {
+  border-color: #e1c083b0;
+  box-shadow: 0 0 0 3px #e1c08318;
+}
+.pt-seat-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 13px;
+}
+.pt-role {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e4c88f;
+  color: #23382c;
+  font-weight: 700;
+  font-size: 12px;
+}
+.pt-name {
+  color: #f0ead6;
+}
+.pt-chips {
+  margin-left: auto;
+  color: #bfccae;
+}
+.pt-chips strong {
+  color: #f0d9a7;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.pt-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #e4c88f;
+  color: #294031;
+  font-size: 11px;
+}
+.pt-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 92px;
+}
+.pc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 88px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fffdf6, #f1ece0);
+  color: #1d2420;
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 2px 4px #0005,
+    0 10px 18px -10px #0008;
+  animation: pc-in var(--dur-slow, 0.4s) var(--ease, ease-out);
+}
+.pc b {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: 15px;
+}
+.pc i {
+  font-style: normal;
+  font-size: 30px;
+}
+.pc.is-red {
+  color: #a8322a;
+}
+.pc-back {
+  background:
+    repeating-linear-gradient(45deg, #24463a 0 3px, #2c5245 3px 4px), #24463a;
+  border: 4px solid #e9e2cf;
+}
+@keyframes pc-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) rotate(-2deg);
+  }
+}
+.pt-total {
+  margin: 0;
+  color: #f0d9a7;
+  font-size: 15px;
+}
+.pt-total span {
+  margin-left: 8px;
+  color: #a9b89f;
+  font-size: 12px;
+}
+.pt-center {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  text-align: center;
+  color: #d1dbb0;
+  letter-spacing: 0.04em;
+}
+.pt-timer {
+  color: #f0d9a7;
+}
+.pt-log {
+  color: #a9b89f;
+}
+.pt-outcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+}
+.pt-outcome strong {
+  font-size: 18px;
+  color: #f3e5be;
+}
+.pt-outcome.kit-ok strong {
+  color: #9fe0b0;
+}
+.pt-outcome.kit-bad strong {
+  color: #f0a59a;
+}
+.pt-outcome span {
+  color: #d1dbb0;
+}
+.play-table-page .pt-felt button {
+  color: #f0ead6;
+  border-color: #c7d3ad55;
+  background: #152f23;
+  box-shadow: none;
+}
+.play-table-page .pt-felt button.kit-primary {
+  color: #23382c;
+  background: linear-gradient(180deg, #ecd39c, #d8bb7c);
+  border-color: #d8bb7c;
+}
+.play-table-page .pt-felt button:disabled {
+  opacity: 0.4;
+}
+.pt-actions {
+  justify-content: center;
+}
+.play-rules {
+  font-size: var(--text-sm, 13.5px);
+  color: var(--games-muted, #626b61);
+}
+.play-rules summary {
+  cursor: pointer;
+  color: var(--games-ink, #282d29);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc {
+    animation: none;
+  }
+}
+@media (max-width: 520px) {
+  .pc {
+    width: 50px;
+    height: 72px;
+  }
+  .pc i {
+    font-size: 24px;
+  }
+  .pt-cards {
+    min-height: 76px;
+  }
+}
