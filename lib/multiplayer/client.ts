@@ -42,7 +42,11 @@ export const browserTokens: TokenStore = {
 };
 
 export function defaultPlayUrl() {
-  const { protocol, host } = globalThis.location;
+  const { protocol, host, hostname } = globalThis.location;
+  // `npm run dev` can't proxy WebSockets through the Worker dev server, so in
+  // development talk to `npm run play:server` directly.
+  if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV)
+    return `ws://${hostname}:3100/play/ws`;
   return `${protocol === 'https:' ? 'wss' : 'ws'}://${host}/play/ws`;
 }
 

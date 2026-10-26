@@ -224,7 +224,7 @@ sudo systemctl restart personal-homepage.service personal-homepage-play.service
 curl -fsS http://127.0.0.1:3100/play/health
 ```
 
-3100 端口只监听本机，不需要在防火墙放行。查看日志：`sudo journalctl -u personal-homepage-play.service -n 80 --no-pager`。本地开发时另开一个终端运行 `npm run play:server`，`npm run dev` 会把 `/play/ws` 代理过去。
+3100 端口只监听本机，不需要在防火墙放行。查看日志：`sudo journalctl -u personal-homepage-play.service -n 80 --no-pager`。本地开发时另开一个终端运行 `npm run play:server`；开发模式下页面直接连 `ws://localhost:3100/play/ws`。
 
 ## 域名与 HTTPS
 
