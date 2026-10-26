@@ -21,6 +21,7 @@ import type { ReactNode } from 'react';
 import { SiteHeader } from '@/components/site/site-header';
 import { GameStage } from '@/components/games/shortcuts';
 import './games.css';
+import './backdrop.css';
 
 function GamesHeader({
   fromExplore = false,
