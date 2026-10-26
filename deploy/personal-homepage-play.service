@@ -1,0 +1,22 @@
+[Unit]
+Description=Personal homepage 联机对战 WebSocket relay
+After=network.target
+
+[Service]
+Type=simple
+User=mecha
+Group=mecha
+WorkingDirectory=/srv/personal-homepage/current
+ExecStart=/opt/node-v24.21.0-linux-x64/bin/node /srv/personal-homepage/current/play-server.mjs
+Environment=NODE_ENV=production
+Environment=PLAY_HOST=127.0.0.1
+Environment=PLAY_PORT=3100
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
