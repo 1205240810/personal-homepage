@@ -203,3 +203,100 @@
     min-height: 76px;
   }
 }
+
+/* Hold'em online */
+.ph-others {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+.ph-seat {
+  gap: 6px;
+}
+.ph-seat .pt-cards {
+  min-height: 0;
+}
+.ph-others .pc {
+  width: 46px;
+  height: 66px;
+}
+.ph-others .pc i {
+  font-size: 22px;
+}
+.ph-others .pc b {
+  font-size: 12px;
+}
+.ph-seat.is-folded {
+  opacity: 0.5;
+}
+.ph-seat.is-winner {
+  border-color: #e1c083;
+  background: #3a3a1d40;
+}
+.ph-style {
+  color: #a9b89f;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.ph-status {
+  margin: 0;
+  min-height: 1.2em;
+  color: #d9cfa8;
+  font-size: 12px;
+}
+.ph-rebuy {
+  margin-left: 8px;
+  color: #a9b89f;
+}
+.ph-board {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.ph-slot {
+  width: 62px;
+  height: 88px;
+  border-radius: 8px;
+  border: 1px dashed #c2d1a440;
+}
+.ph-pot {
+  color: #f0d9a7;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.ph-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+.ph-sizer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ph-sizer input {
+  width: min(260px, 70vw);
+  accent-color: #e1c083;
+}
+.ph-sizer button {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .ph-others {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ph-board {
+    gap: 4px;
+  }
+  .ph-board .pc,
+  .ph-slot {
+    width: 50px;
+    height: 72px;
+  }
+  .ph-board .pc i {
+    font-size: 24px;
+  }
+}

@@ -807,6 +807,15 @@
   color: #b2bf9b;
   font-size: 10px;
 }
+.poker-online-entry {
+  margin-right: auto;
+  color: #d8c48f;
+  font-size: 10px;
+  text-decoration: none;
+}
+.poker-online-entry:hover {
+  color: #f0d9a7;
+}
 .poker-footer b {
   font-size: 9px;
   font-weight: 500;
