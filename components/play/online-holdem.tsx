@@ -35,8 +35,9 @@ const Card = ({ n }: { n: number | null }) => (
 );
 
 export function HoldemOnline() {
-  const [snap, client] = useRoom<HoldemOnlineView>();
-  const bots = useRef<HTMLSelectElement>(null);
+  const [snap, client] = useRoom<HoldemOnlineView>('holdem');
+  const [bots, setBots] = useState(2);
+  const [styles, setStyles] = useState(['careful', 'active', 'tricky']);
   const diff = useRef<HTMLSelectElement>(null);
   const v = snap.view;
   return (
@@ -65,12 +66,36 @@ export function HoldemOnline() {
             <>
               <label>
                 AI 对手
-                <select ref={bots} defaultValue="2" aria-label="AI 数量">
+                <select
+                  value={bots}
+                  onChange={(e) => setBots(Number(e.target.value))}
+                  aria-label="AI 数量"
+                >
                   <option value="1">1 位（灯塔）</option>
                   <option value="2">2 位（灯塔、疾风）</option>
                   <option value="3">3 位（灯塔、疾风、帷幕）</option>
                 </select>
               </label>
+              {['灯塔', '疾风', '帷幕'].slice(0, bots).map((name, i) => (
+                <label key={name}>
+                  {name}的风格
+                  <select
+                    aria-label={`${name}的风格`}
+                    value={styles[i]}
+                    onChange={(e) =>
+                      setStyles(
+                        styles.map((s, j) => (j === i ? e.target.value : s)),
+                      )
+                    }
+                  >
+                    {Object.entries(STYLE_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
               <label>
                 AI 难度
                 <select ref={diff} defaultValue="standard" aria-label="AI 难度">
@@ -82,7 +107,8 @@ export function HoldemOnline() {
             </>
           ),
           value: () => ({
-            bots: Number(bots.current?.value ?? 2),
+            bots,
+            styles: styles.slice(0, bots),
             difficulty: diff.current?.value ?? 'standard',
           }),
         }}
@@ -98,8 +124,8 @@ export function HoldemOnline() {
       <details className="play-rules">
         <summary>联机规则</summary>
         <p>
-          你和朋友坐在同一张桌上，一起对抗单机练习桌里的 AI
-          性格（灯塔稳健、疾风积极、帷幕灵活）。每人起始 1000 筹码，盲注
+          你和朋友坐在同一张桌上，一起对抗单机练习桌里的 AI 性格；每位 AI
+          可分别选均衡、稳健、积极或灵活风格。每人起始 1000 筹码，盲注
           5/10，庄位每手顺移。牌由服务器洗发，AI
           也在服务器上思考，它们和你的朋友都看不到你的底牌；只有摊牌时才公开未弃牌玩家的底牌。每次行动限时
           30 秒，超时能过牌就过牌，否则弃牌。一手结束后两人都点「下一手」或等 7
@@ -235,7 +261,7 @@ function Table({
               <div className="pt-outcome">
                 <strong>
                   {v.result.winners.length > 1
-                    ? `${v.result.winners.map((w) => (w === me ? '你' : v.seats[w].kind === 'ai' ? v.seats[w].name : '队友')).join('、')} 平分底池`
+                    ? `${v.result.winners.map((w) => (w === me ? '你' : v.seats[w].kind === 'ai' ? v.seats[w].name : '队友')).join('、')} 分别赢得底池`
                     : v.result.winners.includes(me)
                       ? '你赢下底池'
                       : v.result.winners.some(
@@ -322,7 +348,7 @@ function Actions({
         <div className="ph-sizer">
           <input
             type="range"
-            min={l.minTo}
+            min={Math.min(l.minTo, l.maxTo)}
             max={l.maxTo}
             step={1}
             value={raiseTo}

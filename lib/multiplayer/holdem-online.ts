@@ -23,6 +23,7 @@ export type HoldemOptions = {
   bots: 1 | 2 | 3;
   difficulty: AiDifficulty;
   stack: number;
+  styles: BotStyle[];
 };
 
 export const AI_PERSONAS: { name: string; style: BotStyle }[] = [
@@ -101,7 +102,7 @@ export type HoldemOnlineView = {
   difficulty: AiDifficulty;
 };
 
-function layout(bots: number) {
+function layout(bots: number, styles: BotStyle[]) {
   const size = bots + 2;
   const humanAt: [number, number] = [0, Math.floor(size / 2)];
   const seats: TableSeat[] = [];
@@ -112,7 +113,7 @@ function layout(bots: number) {
         ? { kind: 'human', player: 0 }
         : i === humanAt[1]
           ? { kind: 'human', player: 1 }
-          : { kind: 'ai', ...AI_PERSONAS[ai++] },
+          : { kind: 'ai', ...AI_PERSONAS[ai], style: styles[ai++] },
     );
   return { seats, humanAt };
 }
@@ -204,10 +205,19 @@ export const holdemOnline: GameModule<OnlineHoldemState, HoldemOptions> = {
     const stack = o.stack ?? 1000;
     if (stack !== 500 && stack !== 1000 && stack !== 2000)
       throw new Error('起始筹码只能是 500、1000 或 2000');
-    return { bots, difficulty, stack };
+    const styles = o.styles ?? AI_PERSONAS.slice(0, bots).map((s) => s.style);
+    if (
+      !Array.isArray(styles) ||
+      styles.length !== bots ||
+      !styles.every((s) =>
+        ['balanced', 'careful', 'active', 'tricky'].includes(s),
+      )
+    )
+      throw new Error('请为每位 AI 选择均衡、稳健、积极或灵活风格');
+    return { bots, difficulty, stack, styles: styles.slice() as BotStyle[] };
   },
   create(opts) {
-    const { seats, humanAt } = layout(opts.bots);
+    const { seats, humanAt } = layout(opts.bots, opts.styles);
     return {
       opts,
       seats,
@@ -228,6 +238,8 @@ export const holdemOnline: GameModule<OnlineHoldemState, HoldemOptions> = {
     return st;
   },
   act(st, seat, raw, rng, now) {
+    if (st.deadline !== null && now >= st.deadline)
+      return { error: '本次行动已超时，请等待牌桌更新' };
     const a = (raw ?? {}) as { type?: unknown };
     if (a.type === 'next') {
       if (!st.game?.result) return { error: '这一手还没结束' };
@@ -300,7 +312,7 @@ export const holdemOnline: GameModule<OnlineHoldemState, HoldemOptions> = {
           : null,
       rebuys: st.rebuys[i],
       label: showdown && !g!.folded[i] ? (g!.result!.labels[i] ?? null) : null,
-      won: g?.result ? g.result.payouts[i] + g.result.returned[i] : 0,
+      won: g?.result ? g.result.payouts[i] : 0,
     }));
     const legal =
       g && !g.result && me !== null && g.toAct === me ? legalActions(g) : null;
