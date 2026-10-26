@@ -25,6 +25,7 @@ export default defineConfig({
       'qa/music-control.check.tsx',
       'qa/go.check.tsx',
       'qa/chess.check.tsx',
+      'qa/prefs.check.tsx',
       'qa/timeloop.check.tsx',
       'qa/rulewords.check.tsx',
       'qa/maze.check.tsx',

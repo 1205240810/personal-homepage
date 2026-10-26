@@ -31,6 +31,7 @@ import {
   type Color,
 } from '@/lib/games/chess';
 import { useBoardViewport, useLocalRecords } from './kit';
+import { usePersistedSetting } from './prefs';
 // Vite provides a default URL export for the worker query.
 // oxlint-disable-next-line import/default
 import chessWorkerUrl from './chess-worker.ts?worker&url';
@@ -50,6 +51,9 @@ const GLYPH: Record<string, string> = {
 const COLOR_NAME: Record<Color, string> = { w: '白', b: '黑' };
 
 /** One search owns one worker so leaving a position also stops its CPU work. */
+const isChessLevel = (v: unknown): v is ChessLevel =>
+  typeof v === 'number' && v in CHESS_LEVELS;
+
 function askChessAi(fen: string, level: ChessLevel, history: string[] = []) {
   let worker: Worker | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -112,6 +116,7 @@ export function ChessGame() {
   const [moves, setMoves] = useState<string[]>([]);
   const [player, setPlayer] = useState<Color>('w');
   const [level, setLevel] = useState<ChessLevel>(2);
+  usePersistedSetting('chess-level', level, setLevel, isChessLevel);
   const [flipped, setFlipped] = useState(false);
   const [selected, setSelected] = useState<Square | null>(null);
   const [focus, setFocus] = useState<Square>('e2');
