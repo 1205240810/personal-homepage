@@ -41,7 +41,10 @@ export type GoOnlineState = {
   phase: 'play' | 'scoring' | 'over';
   dead: number[];
   confirmed: [boolean, boolean];
+  /** Monotonic revision of the position/dead-stone proposal being confirmed. */
+  scoringRevision: number;
   undoFrom: Seat | null;
+  undoRevision: number;
   result: GoResult | null;
   rematch: [boolean, boolean];
   lastError?: string;
@@ -61,7 +64,9 @@ export type GoOnlineView = {
   phase: GoOnlineState['phase'];
   dead: number[];
   confirmed: [boolean, boolean];
+  scoringRevision: number;
   undoFrom: Seat | null;
+  undoRevision: number;
   result: GoResult | null;
   rematch: [boolean, boolean];
   /** Live area count while scoring. */
@@ -78,7 +83,9 @@ function fresh(opts: GoOnlineOptions, colors: [Player, Player]): GoOnlineState {
     phase: 'play',
     dead: [],
     confirmed: [false, false],
+    scoringRevision: 0,
     undoFrom: null,
+    undoRevision: 0,
     result: null,
     rematch: [false, false],
   };
@@ -90,6 +97,10 @@ function replay(opts: GoOnlineOptions, moves: number[]): GoState {
     const r = play(g, m);
     if (!r.ok) break;
     g = r.state;
+    // Undo is only available during play. Every historical pair of passes
+    // therefore reached scoring and was resumed before the next move; replay
+    // must preserve that reset, including when undo ends at the resume point.
+    if (g.passes >= 2) g = { ...g, passes: 0 };
   }
   return g;
 }
@@ -135,7 +146,13 @@ export const goOnline: GameModule<GoOnlineState, GoOnlineOptions> = {
     return s;
   },
   act(s, seat, raw) {
-    const a = (raw ?? {}) as { type?: unknown; p?: unknown; accept?: unknown };
+    const a = (raw ?? {}) as {
+      type?: unknown;
+      p?: unknown;
+      accept?: unknown;
+      scoringRevision?: unknown;
+      undoRevision?: unknown;
+    };
     const me = s.colors[seat];
     const opp = (1 - seat) as Seat;
     switch (a.type) {
@@ -159,17 +176,22 @@ export const goOnline: GameModule<GoOnlineState, GoOnlineOptions> = {
           next.phase = 'scoring';
           next.dead = guessDead(r.state, 160);
           next.confirmed = [false, false];
+          next.scoringRevision = s.scoringRevision + 1;
         }
         return ok(next);
       }
       case 'undo-request': {
         if (s.phase !== 'play') return { error: '现在不能悔棋' };
+        if (s.undoFrom !== null) return { error: '请先处理当前悔棋请求' };
         const mine = movesBy(s, me);
         if (!mine) return { error: '你还没有落子' };
-        return ok({ ...s, undoFrom: seat });
+        return ok({ ...s, undoFrom: seat, undoRevision: s.undoRevision + 1 });
       }
       case 'undo-answer': {
+        if (s.phase !== 'play') return { error: '现在不能悔棋' };
         if (s.undoFrom !== opp) return { error: '对方没有请求悔棋' };
+        if (a.undoRevision !== s.undoRevision)
+          return { error: '悔棋请求已更新，请重新答复' };
         if (a.accept !== true) return ok({ ...s, undoFrom: null });
         const asker = s.colors[opp];
         const moves = s.game.moves.slice();
@@ -190,6 +212,7 @@ export const goOnline: GameModule<GoOnlineState, GoOnlineOptions> = {
         return ok({
           ...s,
           phase: 'over',
+          undoFrom: null,
           result: { winner: s.colors[opp], reason: 'resign' },
         });
       }
@@ -199,10 +222,17 @@ export const goOnline: GameModule<GoOnlineState, GoOnlineOptions> = {
         if (typeof p !== 'number' || !s.game.board[p])
           return { error: '这里没有棋子' };
         const dead = toggleDead(s.game, new Set(s.dead), p);
-        return ok({ ...s, dead: [...dead], confirmed: [false, false] });
+        return ok({
+          ...s,
+          dead: [...dead],
+          confirmed: [false, false],
+          scoringRevision: s.scoringRevision + 1,
+        });
       }
       case 'confirm': {
         if (s.phase !== 'scoring') return { error: '现在不是点目阶段' };
+        if (a.scoringRevision !== s.scoringRevision)
+          return { error: '点目结果已更新，请核对后重新确认' };
         const confirmed: [boolean, boolean] = [...s.confirmed];
         confirmed[seat] = true;
         if (!confirmed[0] || !confirmed[1]) return ok({ ...s, confirmed });
@@ -238,7 +268,12 @@ export const goOnline: GameModule<GoOnlineState, GoOnlineOptions> = {
         if (!rematch[0] || !rematch[1]) return ok({ ...s, rematch });
         // Swap colours for the next game.
         const next = fresh(s.opts, [s.colors[1], s.colors[0]]);
-        return ok({ ...next, started: true });
+        return ok({
+          ...next,
+          started: true,
+          scoringRevision: s.scoringRevision,
+          undoRevision: s.undoRevision,
+        });
       }
       default:
         return { error: '未知操作' };
@@ -266,7 +301,9 @@ export const goOnline: GameModule<GoOnlineState, GoOnlineOptions> = {
       phase: s.phase,
       dead: s.dead,
       confirmed: s.confirmed,
+      scoringRevision: s.scoringRevision,
       undoFrom: s.undoFrom,
+      undoRevision: s.undoRevision,
       result: s.result,
       rematch: s.rematch,
       tally,
