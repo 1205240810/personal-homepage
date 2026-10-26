@@ -566,8 +566,8 @@ html[data-theme='tech'] .room-game-copy > p {
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage {
-    border: 1px solid rgb(124 199 223 / 0.45);
-    background: #0a1520
+    border: 1px solid var(--line, rgb(124 199 223 / 0.45));
+    background: var(--surface-gradient, #0a1520)
 }
 html[data-theme='tech'] .room-circuit-grid {
     border: 1px solid rgb(124 199 223 / 0.45)
@@ -696,8 +696,8 @@ html[data-theme='tech'] .room-go-board .w {
 }
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
-    border: 1px solid rgb(124 199 223 / 0.45);
-    background: #0a1520
+    border: 1px solid var(--line, rgb(124 199 223 / 0.45));
+    background: var(--surface-gradient, #0a1520)
 }
 html[data-theme='tech'] .sweeper-heading {
     color: #93a8bc
@@ -709,11 +709,11 @@ html[data-theme='tech'] #sweeper-rule {
     color: #93a8bc
 }
 html[data-theme='tech'] .sweeper-console {
-    background: #0a1520;
-    border: 1px solid rgb(124 199 223 / 0.45)
+    background: var(--surface-sunk, #0a1520);
+    border: 1px solid var(--line, rgb(124 199 223 / 0.45))
 }
 html[data-theme='tech'] .sweeper-levels button {
-    border: 1px solid rgb(124 199 223 / 0.45);
+    border: 1px solid var(--line-strong, rgb(124 199 223 / 0.45));
     color: #93a8bc
 }
 html[data-theme='tech'] .sweeper-levels button[data-pressed] {
@@ -723,7 +723,7 @@ html[data-theme='tech'] .sweeper-board-switch {
     color: #93a8bc
 }
 html[data-theme='tech'] .sweeper-board-switch button {
-    border: 1px solid rgb(124 199 223 / 0.45) !important;
+    border: 1px solid var(--line-strong, rgb(124 199 223 / 0.45)) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .sweeper-board-switch button:hover:not(:disabled), html[data-theme='tech'] .sweeper-actions button:hover:not(:disabled) {
@@ -776,8 +776,8 @@ html[data-theme='tech'] .sweeper-storage {
 }
 /*  components/games/circuit-repair.css  */
 html[data-theme='tech'] .circuit-stage {
-    border: 1px solid rgb(124 199 223 / 0.45);
-    background: #0a1520
+    border: 1px solid var(--line, rgb(124 199 223 / 0.45));
+    background: var(--surface-gradient, #0a1520)
 }
 html[data-theme='tech'] .circuit-heading {
     color: #93a8bc
@@ -789,11 +789,11 @@ html[data-theme='tech'] #circuit-rule {
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-console {
-    background: #0a1520;
-    border: 1px solid rgb(124 199 223 / 0.45)
+    background: var(--surface-sunk, #0a1520);
+    border: 1px solid var(--line, rgb(124 199 223 / 0.45))
 }
 html[data-theme='tech'] .circuit-sizes button {
-    border: 1px solid rgb(124 199 223 / 0.45);
+    border: 1px solid var(--line-strong, rgb(124 199 223 / 0.45));
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-sizes button[data-pressed] {
@@ -803,7 +803,7 @@ html[data-theme='tech'] .circuit-board-switch {
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-board-switch button {
-    border: 1px solid rgb(124 199 223 / 0.45) !important;
+    border: 1px solid var(--line-strong, rgb(124 199 223 / 0.45)) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .circuit-board-switch button:hover:not(:disabled), html[data-theme='tech'] .circuit-actions button:hover:not(:disabled) {
@@ -857,8 +857,8 @@ html[data-theme='tech'] .circuit-storage {
 }
 /*  components/games/fault-finder.css  */
 html[data-theme='tech'] .fault-stage {
-    border: 1px solid rgb(124 199 223 / 0.45);
-    background: #0a1520
+    border: 1px solid var(--line, rgb(124 199 223 / 0.45));
+    background: var(--surface-gradient, #0a1520)
 }
 html[data-theme='tech'] .fault-heading {
     color: #93a8bc
@@ -870,11 +870,11 @@ html[data-theme='tech'] #fault-rule {
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-console {
-    background: #0a1520;
-    border: 1px solid rgb(124 199 223 / 0.45)
+    background: var(--surface-sunk, #0a1520);
+    border: 1px solid var(--line, rgb(124 199 223 / 0.45))
 }
 html[data-theme='tech'] .fault-levels button {
-    border: 1px solid rgb(124 199 223 / 0.45);
+    border: 1px solid var(--line-strong, rgb(124 199 223 / 0.45));
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-levels button[data-pressed] {
@@ -884,7 +884,7 @@ html[data-theme='tech'] .fault-board-switch {
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-board-switch button {
-    border: 1px solid rgb(124 199 223 / 0.45) !important;
+    border: 1px solid var(--line-strong, rgb(124 199 223 / 0.45)) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-board-switch button:hover:not(:disabled), html[data-theme='tech'] .fault-actions button:hover:not(:disabled) {
@@ -926,7 +926,7 @@ html[data-theme='tech'] .fault-feedback {
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-actions button {
-    border: 1px solid rgb(124 199 223 / 0.45) !important;
+    border: 1px solid var(--line-strong, rgb(124 199 223 / 0.45)) !important;
     color: #93a8bc
 }
 html[data-theme='tech'] .fault-actions .fault-submit {
@@ -955,11 +955,11 @@ html[data-theme='tech'] .signal-stage #pulse-rule {
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage .pulse-console {
-    background: #0a1520;
-    border: 1px solid rgb(124 199 223 / 0.45)
+    background: var(--surface-sunk, #0a1520);
+    border: 1px solid var(--line, rgb(124 199 223 / 0.45))
 }
 html[data-theme='tech'] .signal-stage .pulse-levels button {
-    border: 1px solid rgb(124 199 223 / 0.45);
+    border: 1px solid var(--line-strong, rgb(124 199 223 / 0.45));
     color: #93a8bc
 }
 html[data-theme='tech'] .signal-stage .pulse-levels button[data-pressed] {
