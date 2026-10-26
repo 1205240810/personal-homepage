@@ -15,6 +15,12 @@
   container-type: inline-size;
   box-sizing: border-box;
 }
+@media (min-width: 721px) {
+  .kit .go-board {
+    /* Leave 19-line boards usable when a short viewport still requires scrolling. */
+    width: min(100%, 620px, max(400px, var(--board-available-height, 620px)));
+  }
+}
 .kit .go-pt {
   position: relative;
   display: block;

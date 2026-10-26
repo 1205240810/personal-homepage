@@ -210,7 +210,7 @@ export function LaserMirrors() {
           <p className="kit-kicker">
             LASER · {width}×{height}
           </p>
-          <h2>光线反射</h2>
+          <h2 className="kit-sr">光线反射</h2>
         </div>
         <div className="kit-row">
           <button

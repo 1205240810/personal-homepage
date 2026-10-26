@@ -1,6 +1,9 @@
 .chess-layout {
   display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(140px, 220px);
+  /* Fit below the controls; short screens may scroll instead of shrinking cells. */
+  grid-template-columns:
+    minmax(0, min(560px, max(320px, var(--board-available-height, 560px))))
+    minmax(140px, 220px);
   gap: 16px;
   justify-content: center;
   align-items: start;

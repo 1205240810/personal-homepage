@@ -56,7 +56,7 @@ import {
   whiteReply,
   type ProblemSetup,
 } from '@/lib/games/go-problems';
-import { useLocalRecords } from './kit';
+import { useBoardViewport, useLocalRecords } from './kit';
 // Vite provides the default URL export for this worker asset.
 // oxlint-disable-next-line import/default
 import goWorkerUrl from './go-worker.ts?worker&url';
@@ -276,6 +276,7 @@ export function GoGame() {
   /** Black winrate after each AI move, keyed by move number (undo-safe). */
   const [trend, setTrend] = useState<{ n: number; w: number }[]>([]);
   const boardRef = useRef<HTMLFieldSetElement>(null);
+  useBoardViewport(boardRef);
   const aiRef = useRef(ai);
   useEffect(() => {
     aiRef.current = ai;
@@ -722,7 +723,7 @@ export function GoGame() {
               ? `死活题 · ${problem.name}`
               : `${n} 路 · ${GO_LEVELS[matchLevel].name} · 执${NAME[human]}`}
           </p>
-          <h2>围棋</h2>
+          <h2 className="kit-sr">围棋</h2>
         </div>
         <select
           aria-label="模式"

@@ -1,11 +1,54 @@
 'use client';
 // Shared client hooks for the newer games: hydration flag, reduced motion,
 // theme changes (for canvas colours) and validated local records.
-import { useSyncExternalStore } from 'react';
+import { useLayoutEffect, useSyncExternalStore, type RefObject } from 'react';
 import { loadJson, saveJson } from '@/lib/games/kit';
 import { THEME_EVENT } from '@/lib/theme';
 
 const noop = () => () => {};
+
+/** Keep desktop boards below the actual controls, including wrapped rows. */
+export function useBoardViewport(boardRef: RefObject<HTMLElement | null>) {
+  // Re-measure after each render: puzzle explanations and status rows can move
+  // the board without a window resize. The observer also covers font/layout changes.
+  useLayoutEffect(() => {
+    const board = boardRef.current;
+    const kit = board?.closest<HTMLElement>('.kit');
+    if (!board || !kit) return;
+
+    const measure = () => {
+      // Use the document position so scrolling never makes the board grow.
+      const top = board.getBoundingClientRect().top + window.scrollY;
+      kit.style.setProperty(
+        '--board-available-height',
+        `${Math.max(0, Math.floor(window.innerHeight - top - 16))}px`,
+      );
+    };
+    measure();
+
+    // Older browsers can still measure on render and window resize.
+    const observer =
+      typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    if (observer) {
+      // Only watch content before the board, avoiding a size-observer feedback loop.
+      for (let node: Element | null = board; node; node = node.parentElement) {
+        for (
+          let before = node.previousElementSibling;
+          before;
+          before = before.previousElementSibling
+        ) {
+          observer.observe(before);
+        }
+      }
+    }
+    window.addEventListener('resize', measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  });
+}
+
 export const useHydrated = () =>
   useSyncExternalStore(
     noop,

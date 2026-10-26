@@ -379,7 +379,7 @@ export function MazeRace() {
             MAZE · {MAZE_SIZES[game.size].name} ·{' '}
             {ALGORITHMS[game.alg].name.toUpperCase()}
           </p>
-          <h2>迷宫竞速</h2>
+          <h2 className="kit-sr">迷宫竞速</h2>
         </div>
         <button
           type="button"
