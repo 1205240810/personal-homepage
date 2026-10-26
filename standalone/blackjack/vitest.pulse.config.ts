@@ -18,6 +18,7 @@ export default defineConfig({
       'qa/circuit-repair.check.tsx',
       'qa/mech-sweeper.check.tsx',
       'qa/game-room.check.tsx',
+      'qa/game-shortcuts.check.tsx',
       'qa/fault-finder.check.tsx',
       'qa/life.check.tsx',
       'qa/theme-switcher.check.tsx',

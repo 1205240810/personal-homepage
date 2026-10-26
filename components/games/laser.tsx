@@ -334,6 +334,8 @@ export function LaserMirrors() {
           type="button"
           onClick={() => load(mode, level)}
           aria-label="重来"
+          title="重来 (R)"
+          data-shortcut="r"
         >
           <RotateCcw size={15} aria-hidden="true" />
         </button>
@@ -447,8 +449,8 @@ export function LaserMirrors() {
       </div>
       <p className="kit-help">
         点空格放镜子，再点一下旋转 90°；右键或 Delete
-        移除。键盘：方向键移动，回车/空格放置或旋转，M/S/E 切换工具，H
-        提示。光会穿过目标继续前进；分光镜让光一半直行、一半转弯。
+        移除。键盘：方向键移动，回车/空格放置或旋转，M/S/E 切换工具，H 提示，R
+        重来。光会穿过目标继续前进；分光镜让光一半直行、一半转弯。
         不用提示且用块数不超过参考解可得三星，更省的解同样有效。
       </p>
       <p className="kit-sr" aria-live="polite">

@@ -321,6 +321,8 @@ export function FlowConnect() {
           type="button"
           onClick={() => load(pick, puzzle)}
           aria-label="重来"
+          title="重来 (R)"
+          data-shortcut="r"
         >
           <RotateCcw size={15} aria-hidden="true" />
         </button>
@@ -423,7 +425,8 @@ export function FlowConnect() {
       </fieldset>
       <p className="kit-help">
         从同色圆点按住拖到另一个同色圆点，把整张棋盘铺满。拖回自己的线会回退，穿过别人的线会把它剪断。键盘：方向键移动，回车在圆点或线上开始画，再用方向键延伸，回车结束；H
-        提示。题目只保证有解，任何不重叠、同色相连且铺满棋盘的连法都算完成。
+        提示，R
+        重来。题目只保证有解，任何不重叠、同色相连且铺满棋盘的连法都算完成。
       </p>
       <p className="kit-sr" aria-live="polite">
         {announce}
