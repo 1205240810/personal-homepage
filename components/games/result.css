@@ -1,4 +1,5 @@
-.game-result {
+.game-result,
+output.game-result {
   --result-tone: var(--kit-ok, #15803d);
   display: flex;
   flex-wrap: wrap;
@@ -14,6 +15,7 @@
   );
   box-shadow: var(--shadow-2, none);
   color: var(--games-ink, #282d29);
+  font-weight: 400;
   animation: game-result-in var(--dur-slow, 420ms) var(--ease, ease-out);
 }
 .game-result.is-lose {

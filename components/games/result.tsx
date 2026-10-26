@@ -30,7 +30,10 @@ export function GameResult({
 }) {
   const Icon = tone === 'win' ? PartyPopper : CircleAlert;
   return (
-    <output className={`game-result is-${tone}`} aria-live="polite">
+    <output
+      className={`game-result is-${tone} ${tone === 'win' ? 'kit-ok' : 'kit-bad'}`}
+      aria-live="polite"
+    >
       <Icon className="game-result-icon" size={20} aria-hidden="true" />
       <span className="game-result-text">
         <strong>{title}</strong>
@@ -43,10 +46,11 @@ export function GameResult({
               key={a.label}
               type="button"
               className={a.primary ? 'kit-primary' : undefined}
+              aria-label={a.shortcut ? `${a.label} (${a.shortcut})` : a.label}
               onClick={a.onClick}
             >
               {a.label}
-              {a.shortcut && <kbd>{a.shortcut}</kbd>}
+              {a.shortcut && <kbd aria-hidden="true">{a.shortcut}</kbd>}
             </button>
           ))}
         </span>
