@@ -142,6 +142,7 @@
 }
 .arrival-header {
   position: absolute;
+  z-index: 1;
   top: 0;
   left: 0;
   right: 0;
@@ -341,6 +342,11 @@
   }
 }
 @media (max-width: 760px) {
+  .arrival-scene {
+    /* Keep the observation heads clear of the mobile controls. */
+    top: 48px;
+    mask-image: linear-gradient(to bottom, transparent, #000 28px);
+  }
   .arrival-art {
     object-position: var(--art-mobile, 69% 50%);
   }
