@@ -31,15 +31,21 @@ describe('改写规则', () => {
     play(level.solution.slice(-1));
     expect(document.querySelector('output.kit-ok')).toBeTruthy();
     fireEvent.keyDown(board(), { key: 'r' });
-    expect(screen.getByRole('button', { name: /撤销/ }).hasAttribute('disabled')).toBe(true);
-    expect(JSON.parse(localStorage.getItem(RULEWORDS_RECORDS_KEY)!).best[level.id]).toBe(level.solution.length);
+    expect(
+      screen.getByRole('button', { name: /撤销/ }).hasAttribute('disabled'),
+    ).toBe(true);
+    expect(
+      JSON.parse(localStorage.getItem(RULEWORDS_RECORDS_KEY)!).best[level.id],
+    ).toBe(level.solution.length);
   });
 
   it('浏览器组合键不会改变棋盘，刷新后保留已通关记录', () => {
     const view = render(<RuleWords />);
     for (const modifier of ['altKey', 'ctrlKey', 'metaKey'])
       fireEvent.keyDown(board(), { key: 'ArrowRight', [modifier]: true });
-    expect(screen.getByRole('button', { name: /撤销/ }).hasAttribute('disabled')).toBe(true);
+    expect(
+      screen.getByRole('button', { name: /撤销/ }).hasAttribute('disabled'),
+    ).toBe(true);
     play(LEVELS[0].solution);
     view.unmount();
     render(<RuleWords />);
@@ -57,10 +63,13 @@ describe('改写规则', () => {
         LEVELS[0].id
       ],
     ).toBe(LEVELS[0].solution.length);
-    fireEvent.click(screen.getByRole('button', { name: /下一关 \(N\)/ }));
+    const next = screen.getByRole('button', { name: /下一关 \(N\)/ });
+    next.focus();
+    fireEvent.click(next);
     expect(
       screen.getByRole('heading', { name: new RegExp(LEVELS[1].name) }),
     ).toBeTruthy();
+    expect(document.activeElement).toBe(board());
   });
 
   it('撤销与重来恢复步数；拆掉规则后列表更新', () => {
@@ -86,5 +95,10 @@ describe('改写规则', () => {
     });
     play('RRRR');
     expect(screen.getByText(/没有“你”了/)).toBeTruthy();
+    const retry = document.querySelector('.game-result button') as HTMLElement;
+    retry.focus();
+    fireEvent.keyDown(retry, { key: 'r' });
+    expect(document.querySelector('.game-result')).toBeNull();
+    expect(document.activeElement).toBe(board());
   });
 });

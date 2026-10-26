@@ -30,6 +30,7 @@ import {
 import { useLocalRecords, useReducedMotion } from './kit';
 import './kit.css';
 import './palette.css';
+import { focusResultBoard, GameResult } from './result';
 import './timeloop.css';
 
 const EMPTY = emptyTimeloopRecords();
@@ -81,6 +82,7 @@ export function TimeLoop() {
     !won && current.length > 0 && loops.length + 1 < lv.maxLoops;
 
   function load(i: number) {
+    focusResultBoard(rootRef.current?.querySelector<HTMLElement>('.tl-board'));
     const k = (i + LEVELS.length) % LEVELS.length;
     setLevel(k);
     setLoops([]);
@@ -320,16 +322,19 @@ export function TimeLoop() {
         ))}
       </div>
       {won && (
-        <output className="kit-ok">
-          逃出去了！用了 {loops.length + 1} 轮。
-          <button
-            type="button"
-            className="kit-primary"
-            onClick={() => load(level + 1)}
-          >
-            下一关 (N)
-          </button>
-        </output>
+        <GameResult
+          tone="win"
+          title={`逃出去了！用了 ${loops.length + 1} 轮`}
+          actions={[
+            { label: '重玩', shortcut: 'R', onClick: () => load(level) },
+            {
+              label: '下一关',
+              primary: true,
+              shortcut: 'N',
+              onClick: () => load(level + 1),
+            },
+          ]}
+        />
       )}
       {outOfTime && (
         <output className="kit-bad">
