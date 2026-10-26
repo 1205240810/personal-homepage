@@ -14,6 +14,7 @@ const IDLE: PlaySnapshot = {
   seats: [],
   view: null,
   version: 0,
+  clock: null,
   error: null,
 };
 

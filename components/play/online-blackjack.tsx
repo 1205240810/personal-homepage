@@ -3,6 +3,7 @@
 import { Hand, Layers, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import '@/components/games/kit.css';
+import { countdownSeconds, type PlayClock } from '@/lib/multiplayer/clock';
 import type { Card, DuelView } from '@/lib/multiplayer/blackjack-duel';
 import { Lobby } from './lobby';
 import { useRoom } from './use-room';
@@ -45,16 +46,14 @@ export function PlayingCard({ c }: { c: Card | null }) {
   );
 }
 
-export function useCountdown(deadline: number | null) {
-  const [now, setNow] = useState(() => Date.now());
+export function useCountdown(deadline: number | null, clock: PlayClock | null) {
+  const [now, setNow] = useState(() => performance.now());
   useEffect(() => {
-    if (deadline === null) return;
-    const id = setInterval(() => setNow(Date.now()), 250);
+    if (deadline === null || clock === null) return;
+    const id = setInterval(() => setNow(performance.now()), 250);
     return () => clearInterval(id);
-  }, [deadline]);
-  return deadline === null
-    ? null
-    : Math.max(0, Math.ceil((deadline - now) / 1000));
+  }, [deadline, clock]);
+  return countdownSeconds(deadline, clock, now);
 }
 
 export function BlackjackOnline() {
@@ -96,6 +95,7 @@ export function BlackjackOnline() {
         {v && (
           <Table
             v={v}
+            clock={snap.clock}
             names={snap.seats.map((s) => s.name)}
             act={(a) => client.act(a)}
           />
@@ -117,16 +117,18 @@ export function BlackjackOnline() {
 
 function Table({
   v,
+  clock,
   names,
   act,
 }: {
   v: DuelView;
+  clock: PlayClock | null;
   names: string[];
   act: (a: unknown) => void;
 }) {
   const me = v.you ?? 0;
   const opp = me === 0 ? 1 : 0;
-  const left = useCountdown(v.deadline);
+  const left = useCountdown(v.deadline, clock);
   const myTurn =
     (v.phase === 'player' && v.banker !== me) ||
     (v.phase === 'banker' && v.banker === me);

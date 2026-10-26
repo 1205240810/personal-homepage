@@ -7,6 +7,7 @@ import type {
   HoldemSeatView,
 } from '@/lib/multiplayer/holdem-online';
 import { Lobby } from './lobby';
+import type { PlayClock } from '@/lib/multiplayer/clock';
 import { PlayingCard, useCountdown } from './online-blackjack';
 import { useRoom } from './use-room';
 import './table.css';
@@ -116,6 +117,7 @@ export function HoldemOnline() {
         {v && (
           <Table
             v={v}
+            clock={snap.clock}
             names={snap.seats.map((s) => s.name)}
             act={(a) => client.act(a)}
           />
@@ -209,15 +211,17 @@ function Seat({
 
 function Table({
   v,
+  clock,
   names,
   act,
 }: {
   v: HoldemOnlineView;
+  clock: PlayClock | null;
   names: string[];
   act: (a: unknown) => void;
 }) {
-  const left = useCountdown(v.result ? null : v.deadline);
-  const nextIn = useCountdown(v.result ? v.deadline : null);
+  const left = useCountdown(v.result ? null : v.deadline, clock);
+  const nextIn = useCountdown(v.result ? v.deadline : null, clock);
   const order = v.seats.map((_, i) => i);
   const me = v.me ?? 0;
   const others = [...order.slice(me + 1), ...order.slice(0, me)];

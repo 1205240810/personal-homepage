@@ -18,6 +18,8 @@ export type ServerMsg =
   | {
       t: 'state';
       version: number;
+      /** Server wall-clock time when this state was projected. */
+      serverNow: number;
       seats: SeatInfo[];
       view: unknown;
     }

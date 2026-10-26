@@ -2,6 +2,7 @@
 // Node server, plus hub-level checks with fake connections.
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
+import { countdownSeconds } from '../lib/multiplayer/clock.ts';
 import { PlayClient } from '../lib/multiplayer/client.ts';
 import { RoomHub, type Conn } from '../lib/multiplayer/hub.ts';
 import { echoModule } from '../lib/multiplayer/echo.ts';
@@ -26,6 +27,60 @@ const fake = (ip = '1.1.1.1') => {
   const conn: Conn = { ip, send: (m) => got.push(m) };
   return { conn, got, last: () => got[got.length - 1] };
 };
+
+void describe('server-relative countdown', () => {
+  void it('shows the same remaining time with fast and slow client wall clocks', (t) => {
+    const serverNow = 1_790_000_000_000;
+    const sample = { serverNow, receivedAt: 5000 };
+    for (const skew of [-86_400_000, -29_213, 29_213, 86_400_000]) {
+      t.mock.method(Date, 'now', () => serverNow + skew);
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, 5000), 30);
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, 6000), 29);
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, 34_001), 1);
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, 35_000), 0);
+      t.mock.restoreAll();
+    }
+  });
+  void it('keeps ticking when the local wall clock changes, and refreshes from server samples', (t) => {
+    const serverNow = 1_790_000_000_000;
+    const sample = { serverNow, receivedAt: 1000 };
+    t.mock.method(Date, 'now', () => serverNow + 3_600_000);
+    assert.equal(countdownSeconds(serverNow + 30_000, sample, 11_000), 20);
+    t.mock.restoreAll();
+    t.mock.method(Date, 'now', () => serverNow - 3_600_000);
+    assert.equal(countdownSeconds(serverNow + 30_000, sample, 21_000), 10);
+    const rejoined = { serverNow: serverNow + 25_000, receivedAt: 50_000 };
+    assert.equal(countdownSeconds(serverNow + 30_000, rejoined, 50_000), 5);
+    assert.equal(countdownSeconds(serverNow + 30_000, rejoined, 56_000), 0);
+    assert.equal(countdownSeconds(null, rejoined, 56_000), null);
+    assert.equal(countdownSeconds(serverNow + 30_000, null, 56_000), null);
+    // A newly received sample may be newer than the hook's last animation tick.
+    assert.equal(countdownSeconds(serverNow + 30_000, rejoined, 49_900), 5);
+  });
+  void it('anchors real relay messages to monotonic receipt time despite server clock skew', async () => {
+    const serverNow = 1_790_000_000_000;
+    const hub = new RoomHub([echoModule], { now: () => serverNow });
+    const server = await startPlayServer({ port: 0, hub });
+    const client = new PlayClient({ url: `ws://127.0.0.1:${server.port}/play/ws` });
+    try {
+      const start = performance.now();
+      client.create('echo');
+      await until(() => client.snapshot.view);
+      const sample = client.snapshot.clock;
+      assert.ok(sample);
+      assert.equal(sample.serverNow, serverNow);
+      assert.ok(sample.receivedAt >= start && sample.receivedAt <= performance.now());
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, sample.receivedAt), 30);
+      client.create('echo');
+      assert.equal(client.snapshot.clock, null, 'new room must clear the old clock sample');
+      await until(() => client.snapshot.view);
+      assert.ok(client.snapshot.clock);
+    } finally {
+      client.close();
+      await server.close();
+    }
+  });
+});
 
 void describe('RoomHub', () => {
   void it('creates, seats two players and rejects a third', () => {

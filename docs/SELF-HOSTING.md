@@ -36,6 +36,8 @@ sudo install -d -o mecha -g mecha /srv/personal-homepage /srv/personal-homepage/
 
 根目录的 `npm run check` 包含 21 点、梭哈和灯阵组件回归，使用 `standalone/blackjack` 与 `standalone/stud` 锁定的测试依赖。全新源码目录需先安装根目录及这两款独立游戏的依赖，再执行检查和构建；只运行根目录的 `npm ci` 不足以完成检查。
 
+构建结束还会校验 RSC 预加载清单中的所有 JS/CSS 文件及 standalone 副本，防止页面引用已被构建器移除的空脚本。升级 Vite 或 RSC 插件时，需重新检查 `scripts/rsc-assets-after-css.ts` 中的构建顺序兼容处理。
+
 ```bash
 mecha_revision='填写审核过的完整提交 SHA'
 mecha_short="${mecha_revision:0:7}"
