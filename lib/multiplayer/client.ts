@@ -159,6 +159,8 @@ export class PlayClient<V = unknown> {
         name: this.o.name,
       };
       this.set({ status: 'open', code: m.code, seat: m.seat });
+      const queued = this.pending.splice(0);
+      for (const q of queued) this.send(q);
     } else if (m.t === 'state') {
       if (m.version < this.snapshot.version && this.snapshot.status === 'open')
         return;
@@ -172,8 +174,12 @@ export class PlayClient<V = unknown> {
     }
   }
 
+  private pending: ClientMsg[] = [];
   private send(m: ClientMsg) {
-    if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(m));
+    // While reconnecting, hold actions and replay them once seated again.
+    if (this.ws && this.ws.readyState === 1 && this.snapshot.status === 'open')
+      this.ws.send(JSON.stringify(m));
+    else if (this.pending.length < 8) this.pending.push(m);
   }
 
   private set(p: Partial<PlaySnapshot<V>>) {
