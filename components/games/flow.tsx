@@ -29,7 +29,7 @@ import {
 } from '@/lib/games/flow';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
-import { GameResult } from './result';
+import { focusResultBoard, GameResult } from './result';
 import './flow.css';
 
 export const FLOW_COLOURS = [
@@ -102,6 +102,7 @@ export function FlowConnect() {
   }, [startedAt, doneIn]);
 
   function load(next: Pick, replay?: FlowPuzzle) {
+    focusResultBoard(boardRef.current?.querySelector<HTMLElement>('button'));
     const p = replay ?? puzzleFor(next, ready);
     setPick(next);
     setPuzzle(p);

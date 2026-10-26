@@ -33,7 +33,7 @@ import {
 } from '@/lib/games/rulewords';
 import { useLocalRecords, useReducedMotion } from './kit';
 import './kit.css';
-import { GameResult } from './result';
+import { focusResultBoard, GameResult } from './result';
 import './rulewords.css';
 
 const EMPTY = emptyRulewordsRecords();
@@ -92,6 +92,7 @@ export function RuleWords() {
   );
 
   function load(i: number) {
+    focusResultBoard(rootRef.current?.querySelector<HTMLElement>('.rw-board'));
     const k = (i + LEVELS.length) % LEVELS.length;
     setLevel(k);
     setHistory([start(LEVELS[k].rows)]);

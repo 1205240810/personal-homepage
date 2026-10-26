@@ -12,8 +12,14 @@ export type ResultAction = {
   primary?: boolean;
 };
 
+/** Keep keyboard play inside the game when a result action removes its button. */
+export function focusResultBoard(board: HTMLElement | null | undefined) {
+  if (document.activeElement?.closest('.game-result'))
+    board?.focus({ preventScroll: true });
+}
+
 /**
- * One result card for every game: win, loss or a neutral note, with the same
+ * One result card for every game: win or loss, with the same
  * title / detail / actions layout. Inline (never a modal) so the finished
  * board stays visible for review.
  */

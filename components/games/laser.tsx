@@ -32,7 +32,7 @@ import {
 } from '@/lib/games/laser';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
-import { GameResult } from './result';
+import { focusResultBoard, GameResult } from './result';
 import './laser.css';
 
 type Mode =
@@ -93,6 +93,7 @@ export function LaserMirrors() {
   const dailyDone = !!today && records.daily.includes(dailyKey(today));
 
   function load(next: Mode, replay?: Level) {
+    focusResultBoard(gridRef.current?.querySelector<HTMLElement>('button'));
     setMode(next);
     setLevel(replay ?? levelFor(next, ready));
     setPlaced(new Map());

@@ -26,7 +26,7 @@ import {
 } from '@/lib/games/hashi';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
-import { GameResult } from './result';
+import { focusResultBoard, GameResult } from './result';
 import './hashi.css';
 
 const EMPTY = emptyHashiRecords();
@@ -109,6 +109,7 @@ export function HashiBridges() {
   }, [startedAt, doneIn]);
 
   function load(next: Pick) {
+    focusResultBoard(boardRef.current?.querySelector<HTMLElement>('button'));
     const p = puzzleFor(next, ready);
     setPick(next);
     setBridges(p.edges.map(() => 0));

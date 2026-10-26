@@ -33,6 +33,11 @@ describe('数桥', () => {
     expect(
       JSON.parse(localStorage.getItem(HASHI_RECORDS_KEY)!).best.small,
     ).toBeGreaterThanOrEqual(1);
+    const next = document.querySelector('.game-result button') as HTMLElement;
+    next.focus();
+    fireEvent.click(next);
+    expect(document.querySelector('.game-result')).toBeNull();
+    expect(document.activeElement).toBe(island(0));
   });
 
   it('键盘：方向键加桥循环、超数标红、Shift+方向键跳岛', () => {

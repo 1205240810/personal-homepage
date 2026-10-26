@@ -48,7 +48,7 @@ import {
   useThemeName,
 } from './kit';
 import './kit.css';
-import { GameResult } from './result';
+import { focusResultBoard, GameResult } from './result';
 
 const EMPTY = emptyMazeRecords();
 const clock = () => performance.now();
@@ -265,6 +265,7 @@ export function MazeRace() {
   }, [theme]);
 
   function load(next: Pick) {
+    focusResultBoard(canvasRef.current);
     const g = build(next, ready);
     setPick(next);
     setPos(0);

@@ -29,7 +29,7 @@ import {
 } from '@/lib/games/timeloop';
 import { useLocalRecords, useReducedMotion } from './kit';
 import './kit.css';
-import { GameResult } from './result';
+import { focusResultBoard, GameResult } from './result';
 import './timeloop.css';
 
 const EMPTY = emptyTimeloopRecords();
@@ -81,6 +81,7 @@ export function TimeLoop() {
     !won && current.length > 0 && loops.length + 1 < lv.maxLoops;
 
   function load(i: number) {
+    focusResultBoard(rootRef.current?.querySelector<HTMLElement>('.tl-board'));
     const k = (i + LEVELS.length) % LEVELS.length;
     setLevel(k);
     setLoops([]);
