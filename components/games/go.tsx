@@ -826,6 +826,8 @@ export function GoGame() {
         <button
           type="button"
           onClick={undo}
+          data-shortcut="z"
+          title="悔棋 (Z)"
           disabled={history.length < 2 || aiToMove || phase === 'over'}
         >
           <Undo2 size={15} aria-hidden="true" /> 悔棋
@@ -1032,8 +1034,9 @@ export function GoGame() {
         })}
       </fieldset>
       <p className="kit-help">
-        棋盘、难度和让子在重新开局后生效。点交叉点落子；键盘用方向键移动、回车落子。中国规则数子（子
-        + 围住的空），提子、禁止自杀、劫（不能立即提回）。
+        棋盘、难度和让子在重新开局后生效。点交叉点落子；键盘用方向键移动、回车落子，Z
+        悔棋。中国规则数子（子 +
+        围住的空），提子、禁止自杀、劫（不能立即提回）。
         双方连续虚手后进入数子：AI 先估计死子，你可以点棋块修改再确认。AI
         用蒙特卡洛树搜索（RAVE + 3×3 棋形模拟 +
         搜索树复用）在后台线程思考，共十档；9 路最强，13/19 路明显变弱。

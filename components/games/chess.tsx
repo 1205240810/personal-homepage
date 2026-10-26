@@ -530,7 +530,13 @@ export function ChessGame() {
             重试 AI
           </button>
         )}
-        <button type="button" onClick={undo} disabled={!moves.length}>
+        <button
+          type="button"
+          onClick={undo}
+          disabled={!moves.length}
+          data-shortcut="z"
+          title="悔棋 (Z)"
+        >
           <Undo2 size={15} aria-hidden="true" /> 悔棋
         </button>
         <button type="button" onClick={() => setFlipped(!flipped)}>
@@ -683,7 +689,8 @@ export function ChessGame() {
         </fieldset>
       )}
       <p className="kit-help">
-        点己方棋子再点目标格走子；键盘用方向键移动焦点、回车选择。支持王车易位、吃过路兵、升变，
+        点己方棋子再点目标格走子；键盘用方向键移动焦点、回车选择，Z
+        悔棋。支持王车易位、吃过路兵、升变，
         以及将死、逼和、三次重复、五十回合与子力不足判和。AI
         在后台线程思考；不支持后台线程时使用初级强度。
       </p>
