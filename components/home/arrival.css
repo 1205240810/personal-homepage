@@ -142,6 +142,7 @@
 }
 .arrival-header {
   position: absolute;
+  z-index: 1;
   top: 0;
   left: 0;
   right: 0;
@@ -151,6 +152,8 @@
   justify-content: space-between;
 }
 .arrival-brand {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 18px;
   letter-spacing: 0.08em;
   font-weight: 500;
@@ -339,6 +342,11 @@
   }
 }
 @media (max-width: 760px) {
+  .arrival-scene {
+    /* Keep the observation heads clear of the mobile controls. */
+    top: 48px;
+    mask-image: linear-gradient(to bottom, transparent, #000 28px);
+  }
   .arrival-art {
     object-position: var(--art-mobile, 69% 50%);
   }
@@ -421,6 +429,24 @@
     display: none;
   }
 }
+@media (max-width: 600px) {
+  .arrival-brand > span,
+  .arrival-light-switch span {
+    display: none;
+  }
+  .arrival-controls {
+    gap: 7px;
+  }
+  .arrival-controls button {
+    flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  .arrival-light-switch {
+    padding: 7px 9px;
+  }
+}
 @media (max-width: 420px) {
   .arrival-copy {
     padding-top: clamp(185px, 30dvh, 280px);
@@ -439,16 +465,12 @@
   .arrival-header {
     padding: 22px 20px;
   }
-  .arrival-brand > span {
-    display: none;
+}
+@media (max-width: 360px) {
+  .arrival-header {
+    padding-inline: 16px;
   }
-  .arrival-controls {
-    gap: 7px;
-  }
-  .arrival-light-switch {
-    padding: 7px 9px;
-  }
-  .arrival-light-switch span {
+  .arrival-controls .theme-switcher > span {
     display: none;
   }
 }
