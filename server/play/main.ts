@@ -1,7 +1,8 @@
 // 联机对战 relay: a tiny WebSocket server on 127.0.0.1:3100 behind Nginx's
 // /play/ws. Run with `npm run play:server` (see docs/SELF-HOSTING.md).
 import { createServer } from 'node:http';
-import { pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { RoomHub, type Conn } from '../../lib/multiplayer/hub.ts';
 import { GAME_MODULES } from '../../lib/multiplayer/games.ts';
@@ -76,7 +77,12 @@ export function startPlayServer({
   });
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Node resolves the module URL through release symlinks, while argv retains
+// the path used by systemd (for example current/play-server.mjs).
+if (
+  process.argv[1] &&
+  realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1])
+) {
   const s = await startPlayServer();
   console.log(`play server on 127.0.0.1:${s.port}/play/ws`);
   const stop = () => void s.close().then(() => process.exit(0));

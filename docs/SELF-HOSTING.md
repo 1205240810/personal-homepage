@@ -38,6 +38,8 @@ sudo install -d -o mecha -g mecha /srv/personal-homepage /srv/personal-homepage/
 
 构建结束还会校验 RSC 预加载清单中的所有 JS/CSS 文件及 standalone 副本，防止页面引用已被构建器移除的空脚本。升级 Vite 或 RSC 插件时，需重新检查 `scripts/rsc-assets-after-css.ts` 中的构建顺序兼容处理。
 
+`build:play` 会实际启动打包后的联机服务，验证中文空格路径、`current` 目录软链接和文件软链接均能响应健康检查，并确认仅导入模块不会自动监听端口。
+
 ```bash
 mecha_revision='填写审核过的完整提交 SHA'
 mecha_short="${mecha_revision:0:7}"

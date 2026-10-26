@@ -16,7 +16,7 @@
     "prebuild": "node scripts/sync-blackjack.mjs && node scripts/sync-standalone-games.mjs && node scripts/compile-content.mjs && node --experimental-strip-types scripts/validate-world.ts",
     "build:preview": "CONTENT_PREVIEW=1 npm run build",
     "build:node": "CONTENT_PREVIEW=0 DEPLOY_TARGET=node npm run build && node scripts/check-holdem-worker-build.mjs && npm run build:play",
-    "build:play": "node scripts/build-play.mjs",
+    "build:play": "node scripts/build-play.mjs && node scripts/check-play-entrypoint.mjs",
     "play:server": "node --experimental-strip-types server/play/main.ts",
     "start:node": "HOST=127.0.0.1 node dist/standalone/server.js",
     "precheck": "node scripts/sync-blackjack.mjs && node scripts/sync-standalone-games.mjs && node scripts/compile-content.mjs",
