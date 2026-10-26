@@ -203,4 +203,22 @@ void describe('play server (two real clients)', () => {
       a.close();
     }
   });
+
+  void it('does not replay an offline action against the state received after reconnecting', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo');
+      await until(() => a.snapshot.view);
+      (a as unknown as { ws: WebSocket }).ws.close();
+      await until(() => a.snapshot.status === 'reconnecting');
+      a.act({ add: 2 });
+      await until(() => a.snapshot.status === 'open');
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      assert.equal(a.snapshot.view?.total, 0);
+      a.act({ add: 1 });
+      await until(() => a.snapshot.view?.total === 1);
+    } finally {
+      a.close();
+    }
+  });
 });

@@ -169,9 +169,7 @@ export class PlayClient<V = unknown> {
         name: this.o.name,
         game: this.o.game,
       };
-      this.set({ status: 'open', code: m.code, seat: m.seat });
-      const queued = this.pending.splice(0);
-      for (const q of queued) this.send(q);
+      this.set({ status: 'open', code: m.code, seat: m.seat, error: null });
     } else if (m.t === 'state') {
       if (m.version < this.snapshot.version && this.snapshot.status === 'open')
         return;
@@ -188,12 +186,12 @@ export class PlayClient<V = unknown> {
     }
   }
 
-  private pending: ClientMsg[] = [];
   private send(m: ClientMsg) {
-    // While reconnecting, hold actions and replay them once seated again.
+    // An offline action belongs to the old board/turn. Never replay it against
+    // the next state after rejoining (e.g. a new hand or scoring revision).
     if (this.ws && this.ws.readyState === 1 && this.snapshot.status === 'open')
       this.ws.send(JSON.stringify(m));
-    else if (this.pending.length < 8) this.pending.push(m);
+    else this.set({ error: '连接恢复后请重新操作' });
   }
 
   private set(p: Partial<PlaySnapshot<V>>) {
