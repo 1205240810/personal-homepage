@@ -4,6 +4,7 @@ import { echoModule } from './echo.ts';
 import { goOnline } from './go-online.ts';
 import { blackjackDuel } from './blackjack-duel.ts';
 import { holdemOnline } from './holdem-online.ts';
+import { gomokuOnline } from './gomoku-online.ts';
 
 // oxlint-disable-next-line typescript/no-explicit-any
 export const GAME_MODULES: GameModule<any, any>[] = [
@@ -11,4 +12,5 @@ export const GAME_MODULES: GameModule<any, any>[] = [
   goOnline,
   blackjackDuel,
   holdemOnline,
+  gomokuOnline,
 ];
