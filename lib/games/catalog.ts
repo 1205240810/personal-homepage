@@ -33,6 +33,8 @@ export type GameDefinition = {
   estimatedDuration: string;
   /** Set for games with a date-seeded puzzle; shown in the game room's「今日挑战」. */
   daily?: string;
+  /** Online room mode, listed in the game room's「联机对战」section. */
+  online?: { href: string; title: string; format: string; pitch: string };
 };
 
 // Stable game IDs and routes keep homepage and world entrances independent
@@ -47,6 +49,12 @@ export const GAMES: readonly GameDefinition[] = [
     category: '策略练习',
     controls: '鼠标或触控选择行动',
     estimatedDuration: '每手约 1–3 分钟',
+    online: {
+      href: '/games/holdem-lab/online',
+      title: '德州联机',
+      format: '2 人 + AI',
+      pitch: '和朋友坐同一张桌，联手对抗 1–3 位 AI；底牌只有自己看得到。',
+    },
   },
   {
     id: 'blackjack',
@@ -57,6 +65,12 @@ export const GAMES: readonly GameDefinition[] = [
     category: '牌桌推演',
     controls: '鼠标或触控；支持要牌、停牌、加倍、分牌与投降',
     estimatedDuration: '每局约 1 分钟',
+    online: {
+      href: '/games/blackjack/online',
+      title: '21 点单挑',
+      format: '1 对 1',
+      pitch: '轮流坐庄，服务器洗牌发牌，暗牌只给自己看。',
+    },
   },
   {
     id: 'sudoku',
@@ -249,6 +263,12 @@ export const GAMES: readonly GameDefinition[] = [
     category: '棋类对弈',
     controls: '点交叉点落子；键盘方向键移动、回车落子',
     estimatedDuration: '9 路一局约 10–20 分钟',
+    online: {
+      href: '/games/go/online',
+      title: '围棋联机',
+      format: '1 对 1',
+      pitch: '9 / 13 / 19 路，悔棋请求，双方确认点目。',
+    },
   },
   {
     id: 'gomoku',
@@ -259,6 +279,12 @@ export const GAMES: readonly GameDefinition[] = [
     category: '棋类对弈',
     controls: '点交叉点落子',
     estimatedDuration: '一局约 5–15 分钟',
+    online: {
+      href: '/games/gomoku/online',
+      title: '五子棋联机',
+      format: '1 对 1',
+      pitch: '可选禁手，悔棋需对方同意，再来一局交换黑白。',
+    },
   },
 ] as const;
 

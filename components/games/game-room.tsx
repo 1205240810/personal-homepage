@@ -12,6 +12,8 @@ import {
   ScanSearch,
   CalendarDays,
   Stethoscope,
+  User,
+  Users,
 } from 'lucide-react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { RecentGameMark, RecentGames } from '@/components/games/recent-games';
@@ -799,6 +801,8 @@ const previews = {
   gomoku: GomokuPreview,
 };
 
+const ONLINE = GAMES.filter((game) => game.online);
+
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
   const daily = GAMES.filter((game) => game.daily);
   if (!daily.length) return null;
@@ -837,39 +841,114 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
           打牌、掷骰、接线路、排查故障，或者安静解一道数独。选一个喜欢的，随时开始。
         </p>
       </div>
+      <nav className="room-modes" aria-label="游戏模式">
+        <a href="#solo">
+          <User size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span>
+            <strong>单机</strong>
+            <small>{GAMES.length} 款 · 打开就玩，AI 陪练</small>
+          </span>
+          <ArrowRight size={16} strokeWidth={1.5} aria-hidden="true" />
+        </a>
+        <a href="#online">
+          <Users size={18} strokeWidth={1.5} aria-hidden="true" />
+          <span>
+            <strong>联机对战</strong>
+            <small>{ONLINE.length} 款 · 房间码邀请朋友，无需注册</small>
+          </span>
+          <ArrowRight size={16} strokeWidth={1.5} aria-hidden="true" />
+        </a>
+      </nav>
       <div className="room-shortcuts">
         <DailyChallenges fromExplore={fromExplore} />
         <RecentGames fromExplore={fromExplore} />
       </div>
-      <section className="game-room-selection" aria-label="选择游戏">
-        {GAMES.map((game, index) => {
-          const Preview = previews[game.id];
-          return (
-            <a
-              className={`room-game room-game-${game.id}`}
-              href={`${game.href}${fromExplore ? '?from=explore' : ''}`}
-              key={game.id}
-            >
-              <div className="room-game-preview">
-                <Preview />
-              </div>
-              <div className="room-game-copy">
-                <div className="room-game-meta">
-                  <span>
-                    {String(index + 1).padStart(2, '0')} / {game.category}
-                  </span>
-                  <span>{game.estimatedDuration}</span>
-                </div>
-                <h2>{game.title}</h2>
-                <p>{game.description}</p>
-                <span className="room-game-play">
-                  开始游戏{' '}
-                  <ArrowRight size={18} strokeWidth={1.5} aria-hidden="true" />
+      <section
+        id="online"
+        className="room-section room-online"
+        aria-labelledby="room-online-title"
+      >
+        <header className="room-section-head">
+          <h2 id="room-online-title">
+            <Users size={16} strokeWidth={1.6} aria-hidden="true" /> 联机对战
+          </h2>
+          <p>
+            开一个房间，把邀请链接发给朋友，对方打开就入座；断线会自动回到原座位。
+          </p>
+        </header>
+        <ul className="room-online-list">
+          {ONLINE.map((game) => (
+            <li key={game.id}>
+              <a href={game.online!.href}>
+                <span className="room-online-format">
+                  {game.online!.format}
                 </span>
-              </div>
-            </a>
-          );
-        })}
+                <strong>{game.online!.title}</strong>
+                <span>{game.online!.pitch}</span>
+                <span className="room-online-go">
+                  开房间{' '}
+                  <ArrowRight size={15} strokeWidth={1.5} aria-hidden="true" />
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section
+        id="solo"
+        className="room-section"
+        aria-labelledby="room-solo-title"
+      >
+        <header className="room-section-head">
+          <h2 id="room-solo-title">
+            <User size={16} strokeWidth={1.6} aria-hidden="true" /> 单机
+          </h2>
+          <p>不用等人，打开就玩；棋牌类都配有分档 AI。</p>
+        </header>
+        <div className="game-room-selection">
+          {GAMES.map((game, index) => {
+            const Preview = previews[game.id];
+            return (
+              <a
+                className={`room-game room-game-${game.id}`}
+                href={`${game.href}${fromExplore ? '?from=explore' : ''}`}
+                key={game.id}
+              >
+                <div className="room-game-preview">
+                  <Preview />
+                </div>
+                <div className="room-game-copy">
+                  <div className="room-game-meta">
+                    <span>
+                      {String(index + 1).padStart(2, '0')} / {game.category}
+                    </span>
+                    <span>{game.estimatedDuration}</span>
+                  </div>
+                  <h2>
+                    {game.title}
+                    {game.online && (
+                      <span
+                        className="room-game-badge"
+                        title="也可以和朋友联机"
+                      >
+                        可联机
+                      </span>
+                    )}
+                  </h2>
+                  <p>{game.description}</p>
+                  <span className="room-game-play">
+                    开始游戏{' '}
+                    <ArrowRight
+                      size={18}
+                      strokeWidth={1.5}
+                      aria-hidden="true"
+                    />
+                  </span>
+                </div>
+              </a>
+            );
+          })}
+        </div>
       </section>
       <div className="game-room-bottom">
         <p>不用注册，点击或轻触即可操作。离开时可以随时返回游戏室。</p>
