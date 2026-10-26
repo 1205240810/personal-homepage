@@ -72,6 +72,9 @@ export function BlackjackRoom({
       )}
       <footer className="blackjack-room-footer">
         <span>随时开一局，也随时回来。</span>
+        <a className="blackjack-room-online" href="/games/blackjack/online">
+          和朋友单挑 →
+        </a>
         <IcpFilingLink />
       </footer>
     </div>

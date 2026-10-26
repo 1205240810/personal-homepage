@@ -97,6 +97,7 @@ export class RoomHub {
     const { room, seat } = at;
     if (seat === null) room.spectators.delete(conn);
     else room.seats[seat].conns.delete(conn);
+    if (!this.rooms.has(room.code)) return;
     room.touched = this.now();
     this.presence(room);
     this.broadcast(room);
