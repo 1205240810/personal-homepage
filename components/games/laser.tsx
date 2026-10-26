@@ -32,6 +32,7 @@ import {
 } from '@/lib/games/laser';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
+import { GameResult } from './result';
 import './laser.css';
 
 type Mode =
@@ -286,14 +287,13 @@ export function LaserMirrors() {
           </span>
         </p>
         {t.solved && (
-          <output className="kit-ok laser-done">
-            全部点亮！{'★'.repeat(stars)}
-            {'☆'.repeat(3 - stars)}（用了 {used} 块
-            {hints ? `，${hints} 次提示` : ''}）
-            <button type="button" className="kit-primary" onClick={nextLevel}>
-              下一关
-            </button>
-          </output>
+          <GameResult
+            tone="win"
+            title={`全部点亮！${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`}
+            actions={[{ label: '下一关', primary: true, onClick: nextLevel }]}
+          >
+            用了 {used} 块{hints ? `，${hints} 次提示` : ''}
+          </GameResult>
         )}
       </div>
 
