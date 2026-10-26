@@ -1,5 +1,6 @@
 // Browser/Node client for the play relay: connects, creates or joins a room,
 // keeps the seat token and transparently reconnects after drops.
+import type { PlayClock } from './clock.ts';
 import type { ClientMsg, SeatInfo, ServerMsg } from './protocol.ts';
 
 export type PlayStatus =
@@ -16,6 +17,7 @@ export type PlaySnapshot<V = unknown> = {
   seats: SeatInfo[];
   view: V | null;
   version: number;
+  clock: PlayClock | null;
   error: string | null;
 };
 
@@ -66,6 +68,7 @@ export class PlayClient<V = unknown> {
     seats: [],
     view: null,
     version: 0,
+    clock: null,
     error: null,
   };
   private ws: WebSocket | null = null;
@@ -127,7 +130,10 @@ export class PlayClient<V = unknown> {
   private start(intent: ClientMsg) {
     this.intent = intent;
     this.stopped = false;
-    this.set({ error: null, code: null, seat: null, seats: [], view: null, version: 0 });
+    this.set({
+      error: null, code: null, seat: null, seats: [],
+      view: null, version: 0, clock: null,
+    });
     this.connect();
   }
 
@@ -173,11 +179,20 @@ export class PlayClient<V = unknown> {
     } else if (m.t === 'state') {
       if (m.version < this.snapshot.version && this.snapshot.status === 'open')
         return;
-      this.set({ seats: m.seats, view: m.view as V, version: m.version });
+      this.set({
+        seats: m.seats,
+        view: m.view as V,
+        version: m.version,
+        clock: Number.isFinite(m.serverNow)
+          ? { serverNow: m.serverNow, receivedAt: performance.now() }
+          : null,
+      });
     } else if (m.t === 'error') {
       if (!this.snapshot.code || m.code === 'no-room' || m.code === 'room-full' || m.code === 'wrong-game') {
         this.close();
-        this.set({ code: null, seat: null, seats: [], view: null, version: 0 });
+        this.set({
+          code: null, seat: null, seats: [], view: null, version: 0, clock: null,
+        });
       }
       this.set({
         error: m.message,

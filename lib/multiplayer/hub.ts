@@ -226,12 +226,12 @@ export class RoomHub {
       if (!s.conns.size) return;
       const view = room.game.view(room.state, i, t);
       for (const c of s.conns)
-        c.send({ t: 'state', version: room.version, seats, view });
+        c.send({ t: 'state', version: room.version, serverNow: t, seats, view });
     });
     if (room.spectators.size) {
       const view = room.game.view(room.state, null, t);
       for (const c of room.spectators)
-        c.send({ t: 'state', version: room.version, seats, view });
+        c.send({ t: 'state', version: room.version, serverNow: t, seats, view });
     }
     this.schedule(room);
   }
