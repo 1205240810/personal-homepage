@@ -19,7 +19,9 @@ import { GAMES, type GameDefinition } from '@/lib/games/catalog';
 import { PULSE_LEVELS } from '@/lib/pulse-puzzle';
 import type { ReactNode } from 'react';
 import { SiteHeader } from '@/components/site/site-header';
+import { GameStage } from '@/components/games/shortcuts';
 import './games.css';
+import './backdrop.css';
 
 function GamesHeader({
   fromExplore = false,
@@ -872,7 +874,7 @@ export function GamePageFrame({
         <h1>{game.title}</h1>
         <p>{game.description}</p>
       </header>
-      <div className="game-stage">{children}</div>
+      <GameStage>{children}</GameStage>
       <p className="game-page-note">
         {game.controls}。键盘也可以用 Tab 选择按钮、Enter 或空格操作。
       </p>
