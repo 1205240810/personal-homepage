@@ -29,6 +29,7 @@ import {
 } from '@/lib/games/timeloop';
 import { useLocalRecords, useReducedMotion } from './kit';
 import './kit.css';
+import './palette.css';
 import './timeloop.css';
 
 const EMPTY = emptyTimeloopRecords();

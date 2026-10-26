@@ -24,40 +24,39 @@
   font-size: calc(40cqi / var(--w));
 }
 .tl-cell.is-wall {
-  background: var(--games-ink, #282d29);
-  opacity: 0.85;
+  background: var(--piece-wall);
 }
 .tl-cell.is-start {
   background: repeating-linear-gradient(
     45deg,
     transparent 0 4px,
-    rgb(0 0 0 / 0.06) 4px 8px
+    color-mix(in srgb, var(--games-ink, #282d29) 7%, transparent) 4px 8px
   );
 }
 .tl-cell.is-exit {
-  color: #fff;
-  background: #15803d;
+  color: var(--piece-hero-ink);
+  background: var(--piece-exit);
 }
 .tl-cell.is-plate {
   margin: 18%;
   border-radius: 50%;
-  border: 2px solid #ca8a04;
-  color: #ca8a04;
+  border: 2px solid var(--piece-goal);
+  color: var(--piece-goal);
   font-size: calc(26cqi / var(--w));
 }
 .tl-cell.is-plate.is-down {
-  background: #ca8a04;
-  color: #fff;
+  background: var(--piece-goal);
+  color: var(--piece-hero-ink);
 }
 .tl-cell.is-door {
-  border: 3px solid #2563eb;
-  background: rgb(37 99 235 / 0.3);
-  color: #1e3a8a;
+  border: 3px solid var(--piece-water);
+  background: color-mix(in srgb, var(--piece-water) 26%, transparent);
+  color: var(--games-ink, #282d29);
 }
 .tl-cell.is-door.is-inverse {
-  border-color: #dc2626;
-  background: rgb(220 38 38 / 0.25);
-  color: #7f1d1d;
+  border-color: var(--piece-danger);
+  background: color-mix(in srgb, var(--piece-danger) 22%, transparent);
+  color: var(--games-ink, #282d29);
 }
 .tl-cell.is-door.is-open {
   background: transparent;
@@ -88,22 +87,22 @@
   z-index: -1;
 }
 .tl-self.is-me {
-  color: #fff;
+  color: var(--piece-hero-ink);
   z-index: 3;
 }
 .tl-self.is-me::before {
-  background: #c2410c;
+  background: var(--piece-hero);
 }
 .tl-self.is-past {
-  color: #4b5563;
+  color: var(--piece-ghost-ink);
   z-index: 2;
 }
 .tl-self.is-past::before {
-  background: rgb(107 114 128 / 0.35);
-  border: 2px dashed #6b7280;
+  background: color-mix(in srgb, var(--piece-ghost) 30%, transparent);
+  border: 2px dashed var(--piece-ghost);
 }
 .tl-self.is-stuck::before {
-  border-color: #dc2626;
+  border-color: var(--piece-danger);
 }
 .tl-timeline {
   display: flex;
@@ -122,23 +121,4 @@
   grid-column: 3;
   grid-row: 1;
   justify-content: center;
-}
-html[data-theme='tech'] .tl-self.is-me::before {
-  background: #ffb454;
-}
-html[data-theme='tech'] .tl-self.is-me {
-  color: #0b0f0c;
-}
-html[data-theme='tech'] .tl-cell.is-door {
-  color: #bfdbfe;
-}
-html[data-theme='tech'] .tl-cell.is-door.is-inverse {
-  color: #fecaca;
-}
-html[data-theme='tech'] .tl-cell.is-wall {
-  background: #24323d;
-  opacity: 1;
-}
-html[data-theme='tech'] .tl-self.is-past {
-  color: #e5e7eb;
 }
