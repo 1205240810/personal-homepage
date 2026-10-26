@@ -26,6 +26,7 @@ import {
 } from '@/lib/games/hashi';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
+import { focusResultBoard, GameResult } from './result';
 import './hashi.css';
 
 const EMPTY = emptyHashiRecords();
@@ -108,6 +109,7 @@ export function HashiBridges() {
   }, [startedAt, doneIn]);
 
   function load(next: Pick) {
+    focusResultBoard(boardRef.current?.querySelector<HTMLElement>('button'));
     const p = puzzleFor(next, ready);
     setPick(next);
     setBridges(p.edges.map(() => 0));
@@ -305,10 +307,28 @@ export function HashiBridges() {
         )}
       </div>
       {doneIn !== null && (
-        <output className="kit-ok">
-          全部连通！用时 {fmt(doneIn)}
-          {hints ? `（${hints} 次提示）` : ''}
-        </output>
+        <GameResult
+          tone="win"
+          title={`全部连通！用时 ${fmt(doneIn)}`}
+          actions={
+            pick.kind === 'random'
+              ? [
+                  {
+                    label: '换一题',
+                    primary: true,
+                    onClick: () =>
+                      load({
+                        kind: 'random',
+                        size: pick.size,
+                        seed: Math.floor(Math.random() * 1e9),
+                      }),
+                  },
+                ]
+              : []
+          }
+        >
+          {hints ? `用了 ${hints} 次提示` : '没用提示'}
+        </GameResult>
       )}
 
       <fieldset

@@ -29,6 +29,7 @@ import {
 } from '@/lib/games/flow';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
+import { focusResultBoard, GameResult } from './result';
 import './flow.css';
 
 export const FLOW_COLOURS = [
@@ -101,6 +102,7 @@ export function FlowConnect() {
   }, [startedAt, doneIn]);
 
   function load(next: Pick, replay?: FlowPuzzle) {
+    focusResultBoard(boardRef.current?.querySelector<HTMLElement>('button'));
     const p = replay ?? puzzleFor(next, ready);
     setPick(next);
     setPuzzle(p);
@@ -338,10 +340,29 @@ export function FlowConnect() {
         )}
       </div>
       {doneIn !== null && (
-        <output className="kit-ok flow-done">
-          完成！用时 {fmt(doneIn)}
-          {hints ? `（用了 ${hints} 次提示）` : ''}
-        </output>
+        <GameResult
+          tone="win"
+          title={`完成！用时 ${fmt(doneIn)}`}
+          actions={[
+            { label: '再玩一次', onClick: () => load(pick, puzzle) },
+            ...(pick.kind === 'random'
+              ? [
+                  {
+                    label: '换一题',
+                    primary: true,
+                    onClick: () =>
+                      load({
+                        kind: 'random' as const,
+                        size: n,
+                        seed: Math.floor(Math.random() * 1e9),
+                      }),
+                  },
+                ]
+              : []),
+          ]}
+        >
+          {hints ? `用了 ${hints} 次提示` : '没用提示'}
+        </GameResult>
       )}
 
       <fieldset

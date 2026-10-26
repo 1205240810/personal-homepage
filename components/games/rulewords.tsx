@@ -33,6 +33,7 @@ import {
 } from '@/lib/games/rulewords';
 import { useLocalRecords, useReducedMotion } from './kit';
 import './kit.css';
+import { focusResultBoard, GameResult } from './result';
 import './palette.css';
 import './rulewords.css';
 
@@ -92,6 +93,7 @@ export function RuleWords() {
   );
 
   function load(i: number) {
+    focusResultBoard(rootRef.current?.querySelector<HTMLElement>('.rw-board'));
     const k = (i + LEVELS.length) % LEVELS.length;
     setLevel(k);
     setHistory([start(LEVELS[k].rows)]);
@@ -223,19 +225,35 @@ export function RuleWords() {
         </button>
       </div>
       {won && (
-        <output className="kit-ok">
-          过关！{moves} 步。
-          <button
-            type="button"
-            className="kit-primary"
-            onClick={() => load(level + 1)}
-          >
-            下一关 (N)
-          </button>
-        </output>
+        <GameResult
+          tone="win"
+          title={`过关！${moves} 步`}
+          actions={[
+            { label: '重玩', shortcut: 'R', onClick: () => load(level) },
+            {
+              label: '下一关',
+              primary: true,
+              shortcut: 'N',
+              onClick: () => load(level + 1),
+            },
+          ]}
+        />
       )}
       {!won && !hasYou && (
-        <output className="kit-bad">场上没有“你”了，撤销或重来吧。</output>
+        <GameResult
+          tone="lose"
+          title="场上没有“你”了"
+          actions={[
+            {
+              label: '重来',
+              primary: true,
+              shortcut: 'R',
+              onClick: () => load(level),
+            },
+          ]}
+        >
+          撤销（Z）或重来。
+        </GameResult>
       )}
       <div
         className={`rw-board${reduced ? ' is-still' : ''}`}
