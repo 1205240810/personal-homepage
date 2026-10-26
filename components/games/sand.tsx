@@ -361,7 +361,7 @@ export function FallingSand() {
           <p className="kit-kicker">
             FALLING SAND · {SAND_W}×{SAND_H}
           </p>
-          <h2>落沙模拟</h2>
+          <h2 className="kit-sr">落沙模拟</h2>
         </div>
         <div className="kit-row" role="toolbar" aria-label="运行控制">
           <button

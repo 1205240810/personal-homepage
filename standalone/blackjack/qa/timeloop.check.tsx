@@ -27,12 +27,20 @@ describe('时间回溯', () => {
     });
     for (const [i, recording] of level.solution.entries()) {
       play(recording);
-      expect(screen.getByTestId('tl-time').textContent).toBe(String(recording.length));
-      if (i < level.solution.length - 1) fireEvent.keyDown(board(), { key: 't' });
+      expect(screen.getByTestId('tl-time').textContent).toBe(
+        String(recording.length),
+      );
+      if (i < level.solution.length - 1)
+        fireEvent.keyDown(board(), { key: 't' });
     }
     expect(document.querySelector('output.kit-ok')).toBeTruthy();
-    const record = JSON.parse(localStorage.getItem(TIMELOOP_RECORDS_KEY)!).best[level.id];
-    expect(record).toEqual({ loops: level.solution.length, moves: level.solution.join('').length });
+    const record = JSON.parse(localStorage.getItem(TIMELOOP_RECORDS_KEY)!).best[
+      level.id
+    ];
+    expect(record).toEqual({
+      loops: level.solution.length,
+      moves: level.solution.join('').length,
+    });
     fireEvent.keyDown(board(), { key: 'z' });
     expect(document.querySelector('output.kit-ok')).toBeNull();
     play(level.solution.at(-1)!.slice(-1));
@@ -43,7 +51,9 @@ describe('时间回溯', () => {
     render(<TimeLoop />);
     for (const modifier of ['altKey', 'ctrlKey', 'metaKey'])
       fireEvent.keyDown(board(), { key: 'ArrowRight', [modifier]: true });
-    fireEvent.keyDown(screen.getByRole('button', { name: /重来/ }), { key: ' ' });
+    fireEvent.keyDown(screen.getByRole('button', { name: /重来/ }), {
+      key: ' ',
+    });
     expect(screen.getByTestId('tl-time').textContent).toBe('0');
   });
 
@@ -60,6 +70,14 @@ describe('时间回溯', () => {
     expect(
       JSON.parse(localStorage.getItem(TIMELOOP_RECORDS_KEY)!).best.door.loops,
     ).toBe(2);
+    const replay = screen.getByRole('button', { name: '重玩 (R)' });
+    replay.focus();
+    fireEvent.click(replay);
+    expect(document.querySelector('.game-result')).toBeNull();
+    expect(document.activeElement).toBe(board());
+    expect(screen.getByTestId('tl-time').textContent).toBe('0');
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
+    expect(screen.getByTestId('tl-time').textContent).toBe('1');
   });
 
   it('门关着时走不通；撤销能跨轮撤回', () => {

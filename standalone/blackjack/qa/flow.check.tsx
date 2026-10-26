@@ -44,6 +44,14 @@ describe('连线解谜', () => {
     expect(
       JSON.parse(localStorage.getItem(FLOW_RECORDS_KEY)!).best['6'],
     ).toBeGreaterThanOrEqual(1);
+    const replay = screen.getByRole('button', { name: '再玩一次' });
+    replay.focus();
+    fireEvent.click(replay);
+    expect(document.querySelector('.game-result')).toBeNull();
+    expect(document.activeElement).toBe(cell(0));
+    expect(connected()).toBe('0');
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(cell(1));
   });
 
   it('端点标签可读；空格不能开始画；提示画好一种颜色', () => {

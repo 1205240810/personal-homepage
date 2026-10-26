@@ -35,8 +35,13 @@ describe('光线反射', () => {
     expect(JSON.parse(localStorage.getItem(LASER_RECORDS_KEY)!).stars.h1).toBe(
       3,
     );
-    fireEvent.click(screen.getByRole('button', { name: '下一关' }));
+    const next = screen.getByRole('button', { name: '下一关' });
+    next.focus();
+    fireEvent.click(next);
     expect(screen.getByText(/第 2 关 · 绕开墙/)).toBeTruthy();
+    expect(document.activeElement).toBe(cell(1, 1));
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(cell(1, 2));
   });
 
   it('固定格不能放，道具用完有提示；右键移除', () => {
