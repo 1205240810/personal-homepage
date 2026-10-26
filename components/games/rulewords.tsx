@@ -34,6 +34,7 @@ import {
 import { useLocalRecords, useReducedMotion } from './kit';
 import './kit.css';
 import { focusResultBoard, GameResult } from './result';
+import './palette.css';
 import './rulewords.css';
 
 const EMPTY = emptyRulewordsRecords();
