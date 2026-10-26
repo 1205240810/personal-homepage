@@ -64,8 +64,14 @@ html[data-theme='tech'] .life-stage {
   gap: 12px;
 }
 .life-heading h2 {
+  /* The page header already shows the title; keep this one for screen readers. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
   margin: 0;
-  font-size: 1.4rem;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 .life-kicker {
   margin: 0;

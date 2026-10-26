@@ -408,7 +408,7 @@ export function LangtonAnt() {
       <header className="kit-head">
         <div>
           <p className="kit-kicker">TURMITE · {ruleText}</p>
-          <h2>朗顿蚂蚁</h2>
+          <h2 className="kit-sr">朗顿蚂蚁</h2>
         </div>
         <fieldset className="kit-row" aria-label="预设规则">
           <select
