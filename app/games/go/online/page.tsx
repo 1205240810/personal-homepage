@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <GamePageFrame game={getGame('go')}>
+    <GamePageFrame game={{ ...getGame('go'), title: '围棋联机', description: metadata.description, controls: '点击落子；支持协商悔棋、停一手、认输与双方点目确认' }}>
       <GoOnline />
     </GamePageFrame>
   );
