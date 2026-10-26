@@ -94,7 +94,7 @@
   background: var(--piece-hero);
 }
 .tl-self.is-past {
-  color: var(--piece-ghost);
+  color: var(--piece-ghost-ink);
   z-index: 2;
 }
 .tl-self.is-past::before {
