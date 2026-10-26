@@ -20,6 +20,7 @@ import { PULSE_LEVELS } from '@/lib/pulse-puzzle';
 import type { ReactNode } from 'react';
 import { SiteHeader } from '@/components/site/site-header';
 import './games.css';
+import './backdrop.css';
 
 function GamesHeader({
   fromExplore = false,
