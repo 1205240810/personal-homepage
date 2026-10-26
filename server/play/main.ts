@@ -79,10 +79,20 @@ export function startPlayServer({
 
 // Node resolves the module URL through release symlinks, while argv retains
 // the path used by systemd (for example current/play-server.mjs).
-if (
-  process.argv[1] &&
-  realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1])
-) {
+function isMainEntrypoint() {
+  if (!process.argv[1]) return false;
+  try {
+    return (
+      realpathSync(fileURLToPath(import.meta.url)) ===
+      realpathSync(process.argv[1])
+    );
+  } catch {
+    // stdin/eval callers may supply '-' or another non-file argv value.
+    return false;
+  }
+}
+
+if (isMainEntrypoint()) {
   const s = await startPlayServer();
   console.log(`play server on 127.0.0.1:${s.port}/play/ws`);
   const stop = () => void s.close().then(() => process.exit(0));

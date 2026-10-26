@@ -31,12 +31,13 @@ async function deadline(promise, milliseconds, message) {
   }
 }
 
-function launch(entry) {
-  const child = spawn(process.execPath, [entry], {
+function launch(args, input = '') {
+  const child = spawn(process.execPath, args, {
     cwd: fixture,
     env: { ...process.env, PLAY_HOST: '127.0.0.1', PLAY_PORT: '0' },
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['pipe', 'pipe', 'pipe'],
   });
+  child.stdin.end(input);
   let output = '';
   let errors = '';
   let announcePort;
@@ -74,7 +75,7 @@ function launch(entry) {
 }
 
 async function checkStartup(label, entry) {
-  const relay = launch(entry);
+  const relay = launch([entry]);
   try {
     const port = await deadline(
       Promise.race([
@@ -124,25 +125,28 @@ try {
   }
 
   const importer = join(fixture, 'import-only.mjs');
-  await writeFile(
-    importer,
-    `import ${JSON.stringify(pathToFileURL(bundle).href)};\nconsole.log('import-only');\n`,
-  );
-  const imported = launch(importer);
-  try {
-    const exit = await deadline(
-      imported.done,
-      5_000,
-      'Importing relay started a server',
-    );
-    assert.equal(exit.code, 0, imported.errors());
-    assert.equal(imported.output().trim(), 'import-only');
-    assert.equal(imported.errors(), '');
-    console.log('PASS import only: no automatic server startup');
-  } finally {
-    await imported.stop();
+  const importSource = `import ${JSON.stringify(pathToFileURL(bundle).href)};\nconsole.log('import-only');\n`;
+  await writeFile(importer, importSource);
+  for (const [label, args, input] of [
+    ['file import only', [importer]],
+    ['stdin import only', ['--input-type=module', '-'], importSource],
+  ]) {
+    const imported = launch(args, input);
+    try {
+      const exit = await deadline(
+        imported.done,
+        5_000,
+        'Importing relay started a server',
+      );
+      assert.equal(exit.code, 0, imported.errors());
+      assert.equal(imported.output().trim(), 'import-only');
+      assert.equal(imported.errors(), '');
+      console.log(`PASS ${label}: no automatic server startup`);
+    } finally {
+      await imported.stop();
+    }
   }
-  console.log('Built play entrypoint: 4/4 checks passed');
+  console.log('Built play entrypoint: 5/5 checks passed');
 } finally {
   await rm(fixture, { recursive: true, force: true });
 }
