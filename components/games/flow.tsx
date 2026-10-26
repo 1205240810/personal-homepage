@@ -263,7 +263,7 @@ export function FlowConnect() {
           <p className="kit-kicker">
             FLOW · {n}×{n} · {puzzle.pairs.length} COLOURS
           </p>
-          <h2>连线解谜</h2>
+          <h2 className="kit-sr">连线解谜</h2>
         </div>
         <div className="kit-row">
           <button

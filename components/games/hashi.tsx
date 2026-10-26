@@ -239,7 +239,7 @@ export function HashiBridges() {
           <p className="kit-kicker">
             HASHIWOKAKERO · {n}×{n} · {puzzle.islands.length} ISLANDS
           </p>
-          <h2>数桥</h2>
+          <h2 className="kit-sr">数桥</h2>
         </div>
         <div className="kit-row">
           <button

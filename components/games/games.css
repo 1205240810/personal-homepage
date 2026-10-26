@@ -1,19 +1,27 @@
 /* The game's own board can be dark; navigation retains the workbench's paper,
    ink and restrained rust accent. Hardware has 8px corners, controls 4px. */
 .games-shell {
-  --games-paper: #f6f5f1;
-  --games-ink: #282d29;
-  --games-muted: #626b61;
-  --games-rule: #cfd3c9;
-  --games-accent: #a34e2b;
+  /* Bound to the shared design tokens (app/tokens.css) so every game inherits
+     the site's paper, ink and rust; the 科技 theme remaps them below. */
+  --games-paper: var(--paper, #f6f5f1);
+  --games-ink: var(--ink, #282d29);
+  --games-muted: var(--ink-soft, #626b61);
+  --games-rule: var(--line-strong, #cfd3c9);
+  --games-accent: var(--rust, #a34e2b);
   box-sizing: border-box;
   min-height: 100dvh;
   padding: 0 max(24px, calc((100vw - 1220px) / 2)) 24px;
   color: var(--games-ink);
   background: var(--games-paper);
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Microsoft YaHei', sans-serif;
+  font-family: var(
+    --font-sans,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif
+  );
   font-size: 16px;
   line-height: 1.6;
 }
@@ -721,10 +729,10 @@
   max-width: 520px;
   margin: 0 auto;
   padding: 28px;
-  border: 1px solid #bbc4b1;
-  background: #edf0e5;
-  border-radius: 8px;
-  box-shadow: inset 0 1px #fff;
+  border: 1px solid var(--line, #bbc4b1);
+  background: var(--surface-gradient, #edf0e5);
+  border-radius: var(--radius-lg, 8px);
+  box-shadow: var(--shadow-2, inset 0 1px #fff);
 }
 @media (max-width: 760px) {
   .games-shell {
