@@ -26,20 +26,24 @@ export function useBoardViewport(boardRef: RefObject<HTMLElement | null>) {
     };
     measure();
 
-    const observer = new ResizeObserver(measure);
-    // Only watch content before the board, avoiding a size-observer feedback loop.
-    for (let node: Element | null = board; node; node = node.parentElement) {
-      for (
-        let before = node.previousElementSibling;
-        before;
-        before = before.previousElementSibling
-      ) {
-        observer.observe(before);
+    // Older browsers can still measure on render and window resize.
+    const observer =
+      typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    if (observer) {
+      // Only watch content before the board, avoiding a size-observer feedback loop.
+      for (let node: Element | null = board; node; node = node.parentElement) {
+        for (
+          let before = node.previousElementSibling;
+          before;
+          before = before.previousElementSibling
+        ) {
+          observer.observe(before);
+        }
       }
     }
     window.addEventListener('resize', measure);
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
       window.removeEventListener('resize', measure);
     };
   });
