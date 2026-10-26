@@ -58,7 +58,7 @@ export function useCountdown(deadline: number | null) {
 }
 
 export function BlackjackOnline() {
-  const [snap, client] = useRoom<DuelView>();
+  const [snap, client] = useRoom<DuelView>('blackjack-duel');
   const stake = useRef<HTMLSelectElement>(null);
   const v = snap.view;
   return (
