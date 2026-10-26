@@ -1,0 +1,33 @@
+/* Semantic piece colours for the grid puzzles (规则改写 / 时间回溯 / 朗顿蚂蚁).
+   Muted to sit on the shared paper; the 科技 theme only swaps values. */
+.kit {
+  --piece-hero: var(--rust, #ac562f);
+  --piece-hero-ink: #fffdf8;
+  --piece-wall: color-mix(
+    in srgb,
+    var(--ink, #23302a) 82%,
+    var(--paper, #f6f5ee)
+  );
+  --piece-goal: #b8862b;
+  --piece-exit: #3f7a52;
+  --piece-water: #3f6f9e;
+  --piece-danger: #b4483c;
+  --piece-earth: #8b6f47;
+  --piece-metal: #6d6a63;
+  --piece-ghost: #7b8079;
+  /* The round number needs stronger contrast than the translucent outline. */
+  --piece-ghost-ink: var(--ink, #23302a);
+  --piece-word-off: var(--ink-faint, #8a958b);
+}
+html[data-theme='tech'] .kit {
+  --piece-hero: #f0a868;
+  --piece-hero-ink: #0b1117;
+  --piece-wall: #22303b;
+  --piece-goal: #e0b45c;
+  --piece-exit: #5fbf86;
+  --piece-water: #79aee0;
+  --piece-danger: #ef7b6e;
+  --piece-earth: #c6a477;
+  --piece-metal: #9aa3a8;
+  --piece-ghost: #a9b4bc;
+}
