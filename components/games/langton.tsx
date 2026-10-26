@@ -37,6 +37,7 @@ import {
   useThemeName,
 } from './kit';
 import './kit.css';
+import './palette.css';
 
 export const LANGTON_SIZE = 256;
 const SPEEDS = [
@@ -181,6 +182,7 @@ export function LangtonAnt() {
       'games-paper': '#f6f5f1',
       'games-ink': '#282d29',
       'games-accent': '#6f7f2e',
+      'piece-hero': '#ac562f',
     });
     const initial =
       worldRef.current ?? (worldRef.current = freshWorld(ruleText));
@@ -193,10 +195,10 @@ export function LangtonAnt() {
       palette.push(
         toRgb(
           octx,
-          `hsl(${HUES[(s - 2) % HUES.length]} 60% ${tech ? 58 : 44}%)`,
+          `hsl(${HUES[(s - 2) % HUES.length]} 38% ${tech ? 62 : 46}%)`,
         ),
       );
-    const antRgb = toRgb(octx, tech ? '#ffb454' : '#c2410c');
+    const antRgb = toRgb(octx, c['piece-hero']);
     const img = octx.createImageData(LANGTON_SIZE, LANGTON_SIZE);
     const resize = () => {
       const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -408,7 +410,7 @@ export function LangtonAnt() {
       <header className="kit-head">
         <div>
           <p className="kit-kicker">TURMITE · {ruleText}</p>
-          <h2>朗顿蚂蚁</h2>
+          <h2 className="kit-sr">朗顿蚂蚁</h2>
         </div>
         <fieldset className="kit-row" aria-label="预设规则">
           <select

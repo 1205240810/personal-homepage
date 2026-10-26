@@ -48,6 +48,7 @@ import {
   useThemeName,
 } from './kit';
 import './kit.css';
+import { focusResultBoard, GameResult } from './result';
 
 const EMPTY = emptyMazeRecords();
 const clock = () => performance.now();
@@ -264,6 +265,7 @@ export function MazeRace() {
   }, [theme]);
 
   function load(next: Pick) {
+    focusResultBoard(canvasRef.current);
     const g = build(next, ready);
     setPick(next);
     setPos(0);
@@ -379,7 +381,7 @@ export function MazeRace() {
             MAZE · {MAZE_SIZES[game.size].name} ·{' '}
             {ALGORITHMS[game.alg].name.toUpperCase()}
           </p>
-          <h2>迷宫竞速</h2>
+          <h2 className="kit-sr">迷宫竞速</h2>
         </div>
         <button
           type="button"
@@ -465,10 +467,38 @@ export function MazeRace() {
         </button>
       </div>
       {phase === 'done' && result !== null && (
-        <output className="kit-ok">到达终点！用时 {fmt(result)}</output>
+        <GameResult
+          tone="win"
+          title={`到达终点！用时 ${fmt(result)}`}
+          actions={[
+            {
+              label: '再来一局',
+              primary: true,
+              shortcut: 'R',
+              onClick: () => load(pick),
+            },
+          ]}
+        >
+          {best !== undefined && result <= best
+            ? '本档最快纪录'
+            : `本档最快 ${best !== undefined ? fmt(best) : '—'}`}
+        </GameResult>
       )}
       {phase === 'gave-up' && (
-        <output className="kit-bad">已显示最短路，这局不计成绩。</output>
+        <GameResult
+          tone="lose"
+          title="已显示最短路"
+          actions={[
+            {
+              label: '再来一局',
+              primary: true,
+              shortcut: 'R',
+              onClick: () => load(pick),
+            },
+          ]}
+        >
+          这局不计成绩。
+        </GameResult>
       )}
       <canvas
         ref={canvasRef}

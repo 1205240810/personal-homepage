@@ -32,6 +32,7 @@ import {
 } from '@/lib/games/laser';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
+import { focusResultBoard, GameResult } from './result';
 import './laser.css';
 
 type Mode =
@@ -92,6 +93,7 @@ export function LaserMirrors() {
   const dailyDone = !!today && records.daily.includes(dailyKey(today));
 
   function load(next: Mode, replay?: Level) {
+    focusResultBoard(gridRef.current?.querySelector<HTMLElement>('button'));
     setMode(next);
     setLevel(replay ?? levelFor(next, ready));
     setPlaced(new Map());
@@ -210,7 +212,7 @@ export function LaserMirrors() {
           <p className="kit-kicker">
             LASER · {width}×{height}
           </p>
-          <h2>光线反射</h2>
+          <h2 className="kit-sr">光线反射</h2>
         </div>
         <div className="kit-row">
           <button
@@ -286,14 +288,13 @@ export function LaserMirrors() {
           </span>
         </p>
         {t.solved && (
-          <output className="kit-ok laser-done">
-            全部点亮！{'★'.repeat(stars)}
-            {'☆'.repeat(3 - stars)}（用了 {used} 块
-            {hints ? `，${hints} 次提示` : ''}）
-            <button type="button" className="kit-primary" onClick={nextLevel}>
-              下一关
-            </button>
-          </output>
+          <GameResult
+            tone="win"
+            title={`全部点亮！${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`}
+            actions={[{ label: '下一关', primary: true, onClick: nextLevel }]}
+          >
+            用了 {used} 块{hints ? `，${hints} 次提示` : ''}
+          </GameResult>
         )}
       </div>
 

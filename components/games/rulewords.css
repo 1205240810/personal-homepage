@@ -41,7 +41,7 @@
   border-radius: 4px;
   font-weight: 800;
   font-size: calc(36cqi / var(--w)) !important;
-  color: #8a8f86;
+  color: var(--piece-word-off);
   background: var(--games-paper, #f6f5f1);
   z-index: 2;
 }
@@ -52,34 +52,33 @@
   color: var(--games-accent, #6f7f2e);
 }
 .rw-word:is(.is-you, .is-win, .is-stop, .is-push, .is-sink, .is-hot).is-on {
-  color: #fff;
+  color: var(--piece-hero-ink);
   background: var(--games-ink, #282d29);
   border-color: var(--games-ink, #282d29);
 }
 .rw-thing.is-bot {
-  color: #c2410c;
+  color: var(--piece-hero);
   z-index: 3;
 }
 .rw-thing.is-wall {
-  background: var(--games-ink, #282d29);
-  opacity: 0.82;
+  background: var(--piece-wall);
 }
 .rw-thing.is-rock {
-  color: #8b6f47;
+  color: var(--piece-earth);
 }
 .rw-thing.is-flag {
-  color: #ca8a04;
+  color: var(--piece-goal);
 }
 .rw-thing.is-water {
-  color: #2563eb;
-  background: rgb(37 99 235 / 0.18);
+  color: var(--piece-water);
+  background: color-mix(in srgb, var(--piece-water) 16%, transparent);
 }
 .rw-thing.is-lava {
-  color: #dc2626;
-  background: rgb(220 38 38 / 0.2);
+  color: var(--piece-danger);
+  background: color-mix(in srgb, var(--piece-danger) 16%, transparent);
 }
 .rw-thing.is-gear {
-  color: #57534e;
+  color: var(--piece-metal);
 }
 .rw-rules {
   display: flex;
@@ -100,15 +99,4 @@
   padding: 1px 8px;
   border: 1px solid var(--games-rule, #cfd3c9);
   border-radius: 999px;
-}
-html[data-theme='tech'] .rw-thing.is-bot {
-  color: #ffb454;
-}
-html[data-theme='tech']
-  .rw-word:is(.is-you, .is-win, .is-stop, .is-push, .is-sink, .is-hot).is-on {
-  color: #0b0f0c;
-}
-html[data-theme='tech'] .rw-thing.is-wall {
-  background: #24323d;
-  opacity: 1;
 }

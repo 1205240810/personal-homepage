@@ -30,7 +30,7 @@ import {
   validateChessRecords,
   type Color,
 } from '@/lib/games/chess';
-import { useLocalRecords } from './kit';
+import { useBoardViewport, useLocalRecords } from './kit';
 import { usePersistedSetting } from './prefs';
 // Vite provides a default URL export for the worker query.
 // oxlint-disable-next-line import/default
@@ -139,6 +139,7 @@ export function ChessGame() {
     [],
   );
   const boardRef = useRef<HTMLFieldSetElement>(null);
+  useBoardViewport(boardRef);
 
   const game = replay(startFen, moves);
   const end = gameEnd(game);
@@ -462,7 +463,7 @@ export function ChessGame() {
               ? `残局 · ${puzzle.name}`
               : `${CHESS_LEVELS[level].name} · 执${COLOR_NAME[player]}`}
           </p>
-          <h2>国际象棋</h2>
+          <h2 className="kit-sr">国际象棋</h2>
         </div>
         <select
           aria-label="残局模式"
