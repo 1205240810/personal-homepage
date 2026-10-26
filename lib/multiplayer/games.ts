@@ -3,10 +3,12 @@ import type { GameModule } from './protocol.ts';
 import { echoModule } from './echo.ts';
 import { goOnline } from './go-online.ts';
 import { blackjackDuel } from './blackjack-duel.ts';
+import { holdemOnline } from './holdem-online.ts';
 
 // oxlint-disable-next-line typescript/no-explicit-any
 export const GAME_MODULES: GameModule<any, any>[] = [
   echoModule,
   goOnline,
   blackjackDuel,
+  holdemOnline,
 ];

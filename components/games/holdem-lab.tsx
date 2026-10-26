@@ -2324,6 +2324,9 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
       </main>
       <footer className="poker-footer">
         <span>虚拟筹码 · 本地 AI</span>
+        <a className="poker-online-entry" href="/games/holdem-lab/online">
+          和朋友联手打 AI →
+        </a>
         <button
           type="button"
           className="poker-guide-entry"
