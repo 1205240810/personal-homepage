@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import '@/components/play/play.css';
 import { GamePageFrame } from '@/components/games/game-room';
 import { GoGame } from '@/components/games/go';
 import { getGame } from '@/lib/games/catalog';
@@ -17,6 +19,9 @@ export default async function Page({
   return (
     <GamePageFrame game={getGame('go')} fromExplore={from === 'explore'}>
       <GoGame />
+      <p className="play-entry">
+        <Link href="/games/go/online">和朋友联机对弈 →</Link>
+      </p>
     </GamePageFrame>
   );
 }

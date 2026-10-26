@@ -187,6 +187,21 @@ void describe('play server (two real clients)', () => {
     assert.equal(((await r.json()) as { ok: boolean }).ok, true);
   });
 
+  void it('can retry creating a room after the server rejects its options', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo', { target: -1 });
+      await until(() => a.snapshot.error);
+      assert.equal(a.snapshot.status, 'closed');
+      a.create('echo', { target: 5 });
+      await until(() => a.snapshot.view);
+      assert.equal(a.snapshot.status, 'open');
+      assert.equal(a.snapshot.error, null);
+    } finally {
+      a.close();
+    }
+  });
+
   void it('can create another room after playing without keeping the old version or view', async () => {
     const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
     try {
@@ -199,6 +214,24 @@ void describe('play server (two real clients)', () => {
       assert.equal(a.snapshot.view, null);
       await until(() => a.snapshot.code && a.snapshot.code !== first && a.snapshot.view);
       assert.equal(a.getSnapshot().view?.total, 0);
+    } finally {
+      a.close();
+    }
+  });
+
+  void it('does not replay an offline action against the state received after reconnecting', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo');
+      await until(() => a.snapshot.view);
+      (a as unknown as { ws: WebSocket }).ws.close();
+      await until(() => a.snapshot.status === 'reconnecting');
+      a.act({ add: 2 });
+      await until(() => a.snapshot.status === 'open');
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      assert.equal(a.snapshot.view?.total, 0);
+      a.act({ add: 1 });
+      await until(() => a.snapshot.view?.total === 1);
     } finally {
       a.close();
     }

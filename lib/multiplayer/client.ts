@@ -169,13 +169,13 @@ export class PlayClient<V = unknown> {
         name: this.o.name,
         game: this.o.game,
       };
-      this.set({ status: 'open', code: m.code, seat: m.seat });
+      this.set({ status: 'open', code: m.code, seat: m.seat, error: null });
     } else if (m.t === 'state') {
       if (m.version < this.snapshot.version && this.snapshot.status === 'open')
         return;
       this.set({ seats: m.seats, view: m.view as V, version: m.version });
     } else if (m.t === 'error') {
-      if (m.code === 'no-room' || m.code === 'room-full' || m.code === 'wrong-game') {
+      if (!this.snapshot.code || m.code === 'no-room' || m.code === 'room-full' || m.code === 'wrong-game') {
         this.close();
         this.set({ code: null, seat: null, seats: [], view: null, version: 0 });
       }
@@ -187,7 +187,11 @@ export class PlayClient<V = unknown> {
   }
 
   private send(m: ClientMsg) {
-    if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(m));
+    // An offline action belongs to the old board/turn. Never replay it against
+    // the next state after rejoining (e.g. a new hand or scoring revision).
+    if (this.ws && this.ws.readyState === 1 && this.snapshot.status === 'open')
+      this.ws.send(JSON.stringify(m));
+    else this.set({ error: '连接恢复后请重新操作' });
   }
 
   private set(p: Partial<PlaySnapshot<V>>) {
