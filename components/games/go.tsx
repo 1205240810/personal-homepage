@@ -57,6 +57,7 @@ import {
   type ProblemSetup,
 } from '@/lib/games/go-problems';
 import { useBoardViewport, useLocalRecords } from './kit';
+import { usePersistedSetting } from './prefs';
 // Vite provides the default URL export for this worker asset.
 // oxlint-disable-next-line import/default
 import goWorkerUrl from './go-worker.ts?worker&url';
@@ -64,6 +65,14 @@ import './kit.css';
 import './go.css';
 
 const EMPTY_RECORDS = emptyGoRecords();
+
+const isGoSize = (v: unknown): v is GoSize =>
+  (GO_SIZES as readonly unknown[]).includes(v);
+const isGoLevel = (v: unknown): v is GoLevel =>
+  typeof v === 'number' && v in GO_LEVELS;
+const isHandicap = (v: unknown): v is number =>
+  Number.isInteger(v) &&
+  (v === 0 || ((v as number) >= 2 && (v as number) <= 9));
 
 /** 「AI 自动认输」 persists in localStorage. Read through an external store so
  *  the server render and hydration use the default (on), then the saved value. */
@@ -247,6 +256,12 @@ export function GoGame() {
   const [matchLevel, setMatchLevel] = useState<GoLevel>(2);
   const [human, setHuman] = useState<Player>(BLACK);
   const [handicap, setHandicap] = useState(0);
+  usePersistedSetting('go-size', size, setSize, isGoSize);
+  usePersistedSetting('go-level', level, setLevel, isGoLevel);
+  usePersistedSetting('go-handicap', handicap, setHandicap, isHandicap);
+  useEffect(() => {
+    if (size === 9 && handicap > 5) setHandicap(5);
+  }, [size, handicap]);
   const [history, setHistory] = useState<GoState[]>(() => [newGame(9)]);
   const [komi, setKomi] = useState(7.5);
   const [phase, setPhase] = useState<Phase>('play');
@@ -326,9 +341,12 @@ export function GoGame() {
   const sizeSel = useRef<HTMLSelectElement>(null);
   const levelSel = useRef<HTMLSelectElement>(null);
   const handicapSel = useRef<HTMLSelectElement>(null);
+  const capturedNativeSettings = useRef(false);
   // Capture native choices before external-store hydration causes a rerender
   // and controlled selects restore their initial React values.
   useLayoutEffect(() => {
+    if (capturedNativeSettings.current) return;
+    capturedNativeSettings.current = true;
     const sz = Number(sizeSel.current?.value) as GoSize;
     const lv = Number(levelSel.current?.value) as GoLevel;
     const hc = Number(handicapSel.current?.value);
