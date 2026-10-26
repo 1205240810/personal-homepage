@@ -36,10 +36,8 @@ export type HubOptions = {
   rate?: number;
 };
 
-const randomToken = (rnd: () => number) =>
-  Array.from({ length: 24 }, () => Math.floor(rnd() * 36).toString(36)).join(
-    '',
-  );
+// Seat credentials must not share the predictable game/test random stream.
+const randomToken = () => crypto.randomUUID();
 
 export class RoomHub {
   private games = new Map<string, GameModule>();
@@ -83,12 +81,16 @@ export class RoomHub {
     if (!m) return this.fail(conn, 'bad-message', '无法识别的消息');
     if (m.t === 'ping') return conn.send({ t: 'pong' });
     if (m.t === 'create') return this.create(conn, m.game, m.options, m.name);
-    if (m.t === 'join') return this.join(conn, m.code, m.token, m.name);
+    if (m.t === 'join') return this.join(conn, m.code, m.token, m.name, m.game);
     return this.act(conn, m.action);
   }
 
   disconnect(conn: Conn) {
     this.budget.delete(conn);
+    this.leaveCurrent(conn);
+  }
+
+  private leaveCurrent(conn: Conn) {
     const at = this.where.get(conn);
     this.where.delete(conn);
     if (!at) return;
@@ -167,16 +169,18 @@ export class RoomHub {
     this.join(conn, code, undefined, name);
   }
 
-  private join(conn: Conn, code: string, token?: string, name?: string) {
+  private join(conn: Conn, code: string, token?: string, name?: string, game?: string) {
     const room = isRoomCode(code) ? this.rooms.get(code) : undefined;
     if (!room) return this.fail(conn, 'no-room', '房间不存在或已过期');
-    this.leaveCurrent(conn);
+    if (game && room.game.id !== game)
+      return this.fail(conn, 'wrong-game', '房间属于另一款游戏，请检查邀请码');
     let seat = token ? room.seats.findIndex((s) => s.token === token) : -1;
     if (seat < 0) {
       seat = room.seats.findIndex((s) => !s.token);
       if (seat < 0) return this.fail(conn, 'room-full', '房间已满');
-      room.seats[seat].token = randomToken(this.rnd);
+      room.seats[seat].token = randomToken();
     }
+    this.leaveCurrent(conn);
     const s = room.seats[seat];
     if (name) s.name = name;
     else if (!s.name) s.name = `玩家 ${seat + 1}`;
@@ -186,10 +190,6 @@ export class RoomHub {
     conn.send({ t: 'joined', code, seat, token: s.token, game: room.game.id });
     this.presence(room);
     this.broadcast(room);
-  }
-
-  private leaveCurrent(conn: Conn) {
-    if (this.where.has(conn)) this.disconnect(conn);
   }
 
   private act(conn: Conn, action: unknown) {

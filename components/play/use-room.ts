@@ -18,8 +18,8 @@ const IDLE: PlaySnapshot = {
 };
 
 /** One PlayClient per mounted game; closes on unmount. */
-export function useRoom<V>() {
-  const [client] = useState(() => new PlayClient<V>({ tokens: browserTokens }));
+export function useRoom<V>(game?: string) {
+  const [client] = useState(() => new PlayClient<V>({ tokens: browserTokens, game }));
   useEffect(() => () => client.close(), [client]);
   const snap = useSyncExternalStore(
     client.subscribe,

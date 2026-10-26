@@ -213,7 +213,8 @@ location = /play/ws {
 ```
 
 ```bash
-sudoedit /etc/nginx/sites-available/personal-homepage
+# 本站使用实际域名站点；保留旧 IP 站点与证书配置。
+sudoedit /etc/nginx/sites-available/tscjj-domain
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
@@ -225,6 +226,8 @@ curl -fsS http://127.0.0.1:3100/play/health
 ```
 
 3100 端口只监听本机，不需要在防火墙放行。查看日志：`sudo journalctl -u personal-homepage-play.service -n 80 --no-pager`。本地开发时另开一个终端运行 `npm run play:server`；开发模式下页面直接连 `ws://localhost:3100/play/ws`。
+
+启用联机后的版本更新与回滚都要同时重启两个服务。若回滚到没有 `play-server.mjs` 的旧版本，应先停止联机服务，再回滚主站；重新启用前确认目标目录包含此文件。围棋尚无计时与观战；德州掉线期间行动计时继续，重启联机服务会清空所有房间。
 
 ## 域名与 HTTPS
 

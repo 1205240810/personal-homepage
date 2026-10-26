@@ -55,6 +55,7 @@ export type PlayClientOptions = {
   tokens?: TokenStore;
   WebSocketImpl?: typeof WebSocket;
   name?: string;
+  game?: string;
 };
 
 export class PlayClient<V = unknown> {
@@ -98,6 +99,7 @@ export class PlayClient<V = unknown> {
       code: c,
       token: this.token ?? undefined,
       name: this.o.name,
+      game: this.o.game,
     });
   }
   act(action: unknown) {
@@ -106,7 +108,10 @@ export class PlayClient<V = unknown> {
   close() {
     this.stopped = true;
     if (this.timer) clearTimeout(this.timer);
-    this.ws?.close();
+    this.timer = null;
+    const ws = this.ws;
+    this.ws = null;
+    ws?.close();
     this.set({ status: 'closed' });
   }
 
@@ -122,22 +127,27 @@ export class PlayClient<V = unknown> {
   private start(intent: ClientMsg) {
     this.intent = intent;
     this.stopped = false;
-    this.set({ error: null });
+    this.set({ error: null, code: null, seat: null, seats: [], view: null, version: 0 });
     this.connect();
   }
 
   private connect() {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
     this.ws?.close();
     const WS = this.o.WebSocketImpl ?? globalThis.WebSocket;
     this.set({ status: this.snapshot.code ? 'reconnecting' : 'connecting' });
     const ws = new WS(this.o.url ?? defaultPlayUrl());
     this.ws = ws;
     ws.onopen = () => {
+      if (this.ws !== ws || this.stopped) return;
       this.retry = 0;
       if (this.intent) ws.send(JSON.stringify(this.intent));
     };
-    ws.onmessage = (ev) =>
+    ws.onmessage = (ev) => {
+      if (this.ws !== ws || this.stopped) return;
       this.receive(JSON.parse(String(ev.data)) as ServerMsg);
+    };
     ws.onclose = () => {
       if (this.ws !== ws || this.stopped) return;
       this.set({ status: 'reconnecting' });
@@ -157,6 +167,7 @@ export class PlayClient<V = unknown> {
         code: m.code,
         token: m.token,
         name: this.o.name,
+        game: this.o.game,
       };
       this.set({ status: 'open', code: m.code, seat: m.seat });
     } else if (m.t === 'state') {
@@ -164,7 +175,10 @@ export class PlayClient<V = unknown> {
         return;
       this.set({ seats: m.seats, view: m.view as V, version: m.version });
     } else if (m.t === 'error') {
-      if (m.code === 'no-room' || m.code === 'room-full') this.stopped = true;
+      if (m.code === 'no-room' || m.code === 'room-full' || m.code === 'wrong-game') {
+        this.close();
+        this.set({ code: null, seat: null, seats: [], view: null, version: 0 });
+      }
       this.set({
         error: m.message,
         status: this.stopped ? 'closed' : this.snapshot.status,

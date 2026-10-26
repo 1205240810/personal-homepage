@@ -92,6 +92,52 @@ void describe('RoomHub', () => {
     hub.sweep();
     assert.equal(hub.roomCount, 0);
   });
+
+  void it('keeps seat credentials independent of the game random stream', () => {
+    const hub = new RoomHub([echoModule], { random: () => 0 });
+    const a = fake();
+    const b = fake();
+    hub.message(a.conn, JSON.stringify({ t: 'create', game: 'echo' }));
+    const joined = a.got.find((m) => m.t === 'joined');
+    assert.ok(joined && joined.t === 'joined');
+    hub.message(b.conn, JSON.stringify({ t: 'join', code: joined.code }));
+    const second = b.got.find((m) => m.t === 'joined');
+    assert.ok(second && second.t === 'joined');
+    assert.notEqual(joined.token, second.token);
+    hub.close();
+  });
+
+  void it('does not reset the message budget when a seated client rejoins', () => {
+    const hub = new RoomHub([echoModule], { now: () => 0, rate: 3 });
+    const a = fake();
+    hub.message(a.conn, JSON.stringify({ t: 'create', game: 'echo' }));
+    const joined = a.got.find((m) => m.t === 'joined');
+    assert.ok(joined && joined.t === 'joined');
+    const message = JSON.stringify({ t: 'join', code: joined.code, token: joined.token });
+    for (let i = 0; i < 3; i++) hub.message(a.conn, message);
+    assert.equal((a.last() as { code: string }).code, 'rate-limited');
+    hub.close();
+  });
+
+  void it('rejects a different game before leaving or claiming a seat', () => {
+    const hub = new RoomHub([echoModule]);
+    const a = fake();
+    const b = fake();
+    hub.message(a.conn, JSON.stringify({ t: 'create', game: 'echo' }));
+    const joined = a.got.find((m) => m.t === 'joined');
+    assert.ok(joined && joined.t === 'joined');
+    hub.message(b.conn, JSON.stringify({ t: 'join', code: joined.code, game: 'go' }));
+    assert.equal((b.last() as { code: string }).code, 'wrong-game');
+    hub.message(b.conn, JSON.stringify({ t: 'join', code: joined.code, game: 'echo' }));
+    assert.ok(b.got.some((m) => m.t === 'joined' && m.seat === 1));
+    const c = fake();
+    hub.message(c.conn, JSON.stringify({ t: 'create', game: 'echo' }));
+    hub.message(c.conn, JSON.stringify({ t: 'join', code: joined.code }));
+    assert.equal((c.last() as { code: string }).code, 'room-full');
+    hub.message(c.conn, JSON.stringify({ t: 'act', action: { add: 1 } }));
+    assert.equal((c.last() as { t: string }).t, 'state');
+    hub.close();
+  });
 });
 
 void describe('play server (two real clients)', () => {
@@ -139,5 +185,22 @@ void describe('play server (two real clients)', () => {
     const r = await fetch(`http://127.0.0.1:${server.port}/play/health`);
     assert.equal(r.status, 200);
     assert.equal(((await r.json()) as { ok: boolean }).ok, true);
+  });
+
+  void it('can create another room after playing without keeping the old version or view', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo');
+      await until(() => a.snapshot.view);
+      a.act({ add: 1 });
+      await until(() => a.snapshot.view?.total === 1);
+      const first = a.snapshot.code;
+      a.create('echo');
+      assert.equal(a.snapshot.view, null);
+      await until(() => a.snapshot.code && a.snapshot.code !== first && a.snapshot.view);
+      assert.equal(a.getSnapshot().view?.total, 0);
+    } finally {
+      a.close();
+    }
   });
 });
