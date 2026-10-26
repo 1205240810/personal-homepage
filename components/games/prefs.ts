@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 
 const PREFIX = 'tscjj-pref:';
 
@@ -12,29 +18,38 @@ const PREFIX = 'tscjj-pref:';
 export function usePersistedSetting<T>(
   key: string,
   value: T,
-  setValue: (v: T) => void,
+  setValue: Dispatch<SetStateAction<T>>,
   isValid: (v: unknown) => v is T,
 ) {
-  const loaded = useRef(false);
+  const readKey = useRef<string | null>(null);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   useEffect(() => {
+    // Effect replay must not reread a value that this mount has already restored.
+    if (readKey.current === key) return;
+    readKey.current = key;
     try {
       const raw = localStorage.getItem(PREFIX + key);
       if (raw !== null) {
         const parsed: unknown = JSON.parse(raw);
-        if (isValid(parsed)) setValue(parsed);
+        if (isValid(parsed)) {
+          // A layout effect may already have captured a pre-hydration choice.
+          // Preserve that newer value instead of replacing it with an old setting.
+          setValue((current) => (Object.is(current, value) ? parsed : current));
+        }
       }
     } catch {
       /* storage unavailable or corrupt: keep the default */
     }
-    loaded.current = true;
-    // Only on mount (per key): callers pass stable setters and validators.
-  }, [key]);
+    // Wait for the restored state to render before enabling writes. A ref flag
+    // would let the following effect overwrite storage with the server default.
+    setLoadedKey(key);
+  }, [key, value, setValue, isValid]);
   useEffect(() => {
-    if (!loaded.current) return;
+    if (loadedKey !== key) return;
     try {
       localStorage.setItem(PREFIX + key, JSON.stringify(value));
     } catch {
       /* ignore quota / private mode */
     }
-  }, [key, value]);
+  }, [key, value, loadedKey]);
 }
