@@ -184,6 +184,48 @@ sudo systemctl restart personal-homepage.service
 
 回滚前确认目标目录内有完整 `server.js` 及其运行依赖；回滚后重新验证本机和公网页面。构建源码可以在发布稳定后按需清理，当前与上一版运行目录应保留。
 
+## 联机对战服务
+
+联机对战（围棋、21 点单挑、德州双人对 AI）由一个独立的小进程负责：`build:node` 会把它打包成发布目录里的 `play-server.mjs`，只监听 `127.0.0.1:3100`，Nginx 把 `/play/ws` 的 WebSocket 转给它。它和主站进程互不影响；房间只存在内存里，重启会结束进行中的对局。
+
+首次启用（每台服务器一次）：
+
+```bash
+sudo install -m 644 "$mecha_build/deploy/personal-homepage-play.service" /etc/systemd/system/personal-homepage-play.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now personal-homepage-play.service
+curl -fsS http://127.0.0.1:3100/play/health
+```
+
+最后一条应返回 `{"ok":true,"rooms":0}`。然后在站点的 Nginx 配置里，在 `location / {` 之前加入下面这一段（样例 [nginx.conf.example](../deploy/nginx.conf.example) 和 [nginx.https.conf.example](../deploy/nginx.https.conf.example) 已包含）。主站的 `location /` 把 `Connection` 清空，所以 WebSocket 必须单独一个 location：
+
+```nginx
+location = /play/ws {
+    proxy_pass http://127.0.0.1:3100;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 1h;
+    proxy_send_timeout 1h;
+}
+```
+
+```bash
+sudoedit /etc/nginx/sites-available/personal-homepage
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+日常更新：切换 `current` 后，除了重启主站，也重启联机服务：
+
+```bash
+sudo systemctl restart personal-homepage.service personal-homepage-play.service
+curl -fsS http://127.0.0.1:3100/play/health
+```
+
+3100 端口只监听本机，不需要在防火墙放行。查看日志：`sudo journalctl -u personal-homepage-play.service -n 80 --no-pager`。本地开发时另开一个终端运行 `npm run play:server`，`npm run dev` 会把 `/play/ws` 代理过去。
+
 ## 域名与 HTTPS
 
 正式入口为 [tscjj.com](https://tscjj.com/)，`www` 统一跳转到根域。2026-09-28 已确认备案通过，编号为「晋ICP备2026014170号-1」，HTTPS、公网跳转及包含 Nginx 重载的续期演练均已验证。备案链接由 `components/icp-filing-link.tsx` 统一维护；复制本站部署时应换成自己的备案信息。

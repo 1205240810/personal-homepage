@@ -44,7 +44,12 @@ export default defineConfig(async () => {
           name: 'node-public-vault-boundary',
           enforce: 'pre',
           load(id: string) {
-            if (id.split('?')[0] === fileURLToPath(new URL('./lib/private-vault/server.ts', import.meta.url))) {
+            if (
+              id.split('?')[0] ===
+              fileURLToPath(
+                new URL('./lib/private-vault/server.ts', import.meta.url),
+              )
+            ) {
               return "export * from './disabled-server';";
             }
           },
@@ -64,9 +69,15 @@ export default defineConfig(async () => {
 
   return {
     css: { postcss: { plugins: [tailwindcss()] } },
-    server: isCodexSeatbeltSandbox
-      ? { watch: { useFsEvents: false, usePolling: true } }
-      : undefined,
+    server: {
+      // 联机对战: `npm run play:server` in another terminal.
+      proxy: {
+        '/play/ws': { target: 'ws://127.0.0.1:3100', ws: true },
+      },
+      ...(isCodexSeatbeltSandbox
+        ? { watch: { useFsEvents: false, usePolling: true } }
+        : {}),
+    },
     plugins: [
       vinext(),
       sites(),
