@@ -8,10 +8,16 @@ export const metadata = {
     '和朋友在线 21 点单挑：轮流坐庄，服务器洗牌发牌，暗牌只有自己能看到。房间码或邀请链接即可入座，无需注册。',
 };
 
-export default function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const fromExplore = (await searchParams).from === 'explore';
   return (
     <GamePageFrame
       online
+      fromExplore={fromExplore}
       game={{
         ...getGame('blackjack'),
         title: '21 点单挑',
@@ -20,7 +26,7 @@ export default function Page() {
         controls: '鼠标或触控；每次行动限时 30 秒，超时自动停牌',
       }}
     >
-      <BlackjackOnline />
+      <BlackjackOnline fromExplore={fromExplore} />
     </GamePageFrame>
   );
 }

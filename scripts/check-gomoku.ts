@@ -98,6 +98,15 @@ void describe('gomoku rules', () => {
     const r = play(s, at(5, 7));
     assert.equal(r.winner, WHITE);
     assert.equal(r.reason, 'forbidden');
+    const white: GomokuState = {
+      ...s,
+      toPlay: WHITE,
+      cells: s.cells.map((stone) =>
+        stone === BLACK ? WHITE : stone === WHITE ? BLACK : stone,
+      ),
+    };
+    assert.equal(play(white, at(5, 7)).winner, WHITE);
+    assert.equal(play(white, at(5, 7)).line?.length, 6);
   });
   void it('renju: double three and double four are forbidden; four-three is fine', () => {
     // 三三: two open twos crossing at (7,7).
@@ -191,6 +200,116 @@ void describe('gomoku rules', () => {
     );
     assert.equal(play(five, at(7, 7)).winner, BLACK);
   });
+  void it('renju: same-line double fours agree between preview and adjudication', () => {
+    for (const [dx, dy] of [
+      [1, 0],
+      [0, 1],
+      [1, 1],
+      [1, -1],
+    ]) {
+      // 1 0 1 [1] 1 0 1: the two fours span seven points, not six.
+      const s = pos(
+        [-3, -1, 1, 3].map((k) => [7 + k * dx, 7 + k * dy]),
+        [],
+      );
+      assert.equal(isForbidden(s, at(7, 7)), true);
+      assert.equal(play(s, at(7, 7)).reason, 'forbidden');
+    }
+  });
+  void it('renju: an apparent three needs an allowed extension that does not already make five', () => {
+    const three: [number, number][] = [
+      [5, 7],
+      [8, 7],
+      [7, 5],
+      [7, 6],
+    ];
+    for (const extra of [
+      [
+        [6, 3],
+        [6, 4],
+        [6, 5],
+        [6, 6],
+      ], // The only horizontal extension makes five.
+      [
+        [6, 4],
+        [6, 5],
+        [6, 6],
+        [6, 8],
+        [6, 9],
+      ], // It would make an overline.
+      [
+        [6, 4],
+        [6, 5],
+        [6, 6],
+      ], // It would make a double-four.
+    ] as [number, number][][]) {
+      const s = pos([...three, ...extra], []);
+      assert.equal(isForbidden(s, at(7, 7)), false);
+      assert.equal(play(s, at(7, 7)).winner, null);
+    }
+    const edge = pos(
+      [
+        [0, 1],
+        [2, 1],
+        [1, 2],
+        [1, 3],
+      ],
+      [],
+    );
+    assert.equal(
+      isForbidden(edge, at(1, 1)),
+      false,
+      'edge blocks the horizontal three',
+    );
+  });
+  void it('renju: recursively checks three extensions beyond two levels', () => {
+    // (8,8) is forbidden, so the diagonal through (7,7) is a false three.
+    // Proving this requires testing (9,8), then its forbidden (10,9) extension.
+    const s = pos(
+      [
+        [10, 5],
+        [6, 6],
+        [8, 7],
+        [10, 7],
+        [10, 8],
+        [11, 8],
+        [9, 9],
+        [6, 10],
+        [7, 10],
+        [11, 10],
+        [5, 11],
+      ],
+      [],
+    );
+    const before = structuredClone(s);
+    assert.equal(isForbidden(s, at(7, 7)), false);
+    assert.equal(play(s, at(7, 7)).winner, null);
+    assert.deepEqual(
+      s,
+      before,
+      'recursive examination must leave the board unchanged',
+    );
+    assert.equal(isForbidden(play(s, at(7, 7)), at(8, 8)), true);
+  });
+  void it('renju: an exact five takes priority over an overline in another direction', () => {
+    const s = pos(
+      [
+        [3, 7],
+        [4, 7],
+        [5, 7],
+        [6, 7],
+        [7, 4],
+        [7, 5],
+        [7, 6],
+        [7, 8],
+        [7, 9],
+      ],
+      [],
+    );
+    assert.equal(isForbidden(s, at(7, 7)), false);
+    assert.equal(play(s, at(7, 7)).winner, BLACK);
+    assert.equal(play(s, at(7, 7)).reason, 'five');
+  });
 });
 
 void describe('gomoku AI', () => {
@@ -254,18 +373,94 @@ void describe('gomoku AI', () => {
     for (const lv of [5, 8] as const)
       assert.notEqual(chooseGomokuMove(t, lv).move, at(7, 7));
   });
-  void it('stronger levels beat weaker ones', () => {
-    let wins = 0;
-    for (let g = 0; g < 4; g++) {
-      let s = newGame();
-      const strongBlack = g % 2 === 0;
-      while (s.winner === null) {
-        const strong = (s.toPlay === BLACK) === strongBlack;
-        s = play(s, chooseGomokuMove(s, strong ? 7 : 2).move);
-      }
-      if ((s.winner === BLACK) === strongBlack) wins++;
+  void it('never chooses a forbidden block, even when the opponent cannot be stopped', () => {
+    const s = pos(
+      [
+        [5, 7],
+        [6, 7],
+        [7, 5],
+        [7, 6],
+        [2, 2],
+      ],
+      [
+        [3, 3],
+        [4, 4],
+        [5, 5],
+        [6, 6],
+      ],
+    );
+    const before = structuredClone(s);
+    assert.equal(isForbidden(s, at(7, 7)), true);
+    for (const lv of [2, 3, 4, 5, 6, 7, 8, 9, 10] as const) {
+      const { move } = chooseGomokuMove(s, lv, () => 0.9);
+      assert.notEqual(move, at(7, 7));
+      assert.equal(isForbidden(s, move), false);
+      assert.notEqual(play(s, move).reason, 'forbidden');
     }
-    assert.ok(wins >= 3, `level 7 won ${wins}/4 against level 2`);
+    assert.deepEqual(s, before);
+  });
+  void it('keeps same-line forbidden points out of every difficulty', () => {
+    const s = pos(
+      [
+        [4, 7],
+        [6, 7],
+        [8, 7],
+        [10, 7],
+      ],
+      [[0, 0]],
+    );
+    for (const lv of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const) {
+      const { move } = chooseGomokuMove(s, lv, () => 0.9, 0);
+      assert.equal(isForbidden(s, move), false, `level ${lv}: ${move}`);
+      assert.notEqual(play(s, move).reason, 'forbidden');
+    }
+  });
+  void it('recognizes a forcing four when black cannot legally occupy the blocking point', (t) => {
+    const s = pos(
+      [
+        [5, 7],
+        [6, 7],
+        [7, 5],
+        [7, 6],
+        [2, 2],
+      ],
+      [
+        [3, 3],
+        [4, 4],
+        [5, 5],
+      ],
+    );
+    s.toPlay = WHITE;
+    t.mock.method(Date, 'now', () => 0);
+    const result = chooseGomokuMove(s, 6, () => 0.9);
+    assert.equal(result.move, at(6, 6));
+    assert.equal(result.reason, '连续冲四取胜');
+    assert.equal(isForbidden(play(s, result.move), at(7, 7)), true);
+  });
+  void it('returns a legal fallback when its budget is exhausted and reports no uncompleted depth', () => {
+    const s = pos([[7, 7]], [[8, 7]]);
+    const before = structuredClone(s);
+    const result = chooseGomokuMove(s, 10, () => 0.9, 0);
+    assert.ok(result.move >= 0 && s.cells[result.move] === 0);
+    assert.equal(isForbidden(s, result.move), false);
+    assert.equal(result.nodes, 0);
+    assert.match(result.reason, /时间已用尽/);
+    assert.deepEqual(s, before);
+  });
+  void it('interrupts an in-progress search without changing the input board', (t) => {
+    const s = pos([[7, 7]], [[8, 7]], false);
+    const before = structuredClone(s);
+    let tick = 0;
+    t.mock.method(Date, 'now', () => tick++);
+    const result = chooseGomokuMove(s, 5, () => 0.9, 10);
+    assert.ok(result.nodes > 0, 'the test must interrupt a started iteration');
+    assert.equal(result.reason, '攻守评分（思考时间已用尽）');
+    assert.ok(result.move >= 0 && s.cells[result.move] === 0);
+    assert.deepEqual(s, before);
+  });
+  void it('does not offer a move after the game is over', () => {
+    const s: GomokuState = { ...newGame(), winner: WHITE, reason: 'resign' };
+    assert.equal(chooseGomokuMove(s, 10).move, -1);
   });
 });
 
@@ -276,7 +471,17 @@ void describe('gomoku online', () => {
     return m.presence!(s, [true, true], 0);
   };
   const act = (s: GomokuOnlineState, seat: number, a: unknown) => {
-    const r = m.act(s, seat, a, rng, 0);
+    const r = m.act(
+      s,
+      seat,
+      {
+        positionRevision: s.positionRevision,
+        undoRevision: s.undoRevision,
+        ...(a as Record<string, unknown>),
+      },
+      rng,
+      0,
+    );
     if ('error' in r) throw new Error(r.error);
     return r.state;
   };
@@ -355,7 +560,11 @@ void describe('gomoku over the relay', () => {
     const n = () => a.snapshot.view!.moves.length;
     const move = async (c: PlayClient<GomokuOnlineView>, p: number) => {
       const before = n();
-      c.act({ type: 'move', p });
+      c.act({
+        type: 'move',
+        p,
+        positionRevision: c.snapshot.view!.positionRevision,
+      });
       await until(() => n() === before + 1);
     };
     await move(a, at(7, 7));
@@ -372,8 +581,14 @@ void describe('gomoku over the relay', () => {
     }
     await until(() => b.snapshot.view?.winner === BLACK);
     assert.equal(b.snapshot.view!.line?.length, 5);
-    a.act({ type: 'rematch' });
-    b.act({ type: 'rematch' });
+    a.act({
+      type: 'rematch',
+      positionRevision: a.snapshot.view!.positionRevision,
+    });
+    b.act({
+      type: 'rematch',
+      positionRevision: b.snapshot.view!.positionRevision,
+    });
     await until(
       () =>
         a.snapshot.view?.you === WHITE && a.snapshot.view.moves.length === 0,

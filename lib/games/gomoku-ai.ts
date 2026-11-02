@@ -1,5 +1,5 @@
 // 五子棋 AI：五元组评分 + 候选裁剪的 α-β 搜索，高档加连续冲四（VCF）检索。
-// 十档强度用搜索深度、候选宽度、随机扰动与失误率控制；档位间实测胜率见检查脚本。
+// 十档用搜索上限、候选宽度、随机扰动与失误率区分；不是棋力段位认证。
 import {
   BLACK,
   EMPTY,
@@ -59,8 +59,8 @@ export const GOMOKU_LEVELS: Record<GomokuLevel, LevelCfg> = {
     vcf: 0,
   },
   5: {
-    name: '5 · 业余',
-    note: '看两步，能防住大部分简单进攻',
+    name: '5 · 进阶',
+    note: '减少随手落子，兼顾进攻和防守',
     depth: 2,
     width: 8,
     noise: 0.08,
@@ -68,8 +68,8 @@ export const GOMOKU_LEVELS: Record<GomokuLevel, LevelCfg> = {
     vcf: 0,
   },
   6: {
-    name: '6 · 业余中级',
-    note: '看两步 + 短冲四',
+    name: '6 · 熟练',
+    note: '优先寻找连续进攻机会',
     depth: 2,
     width: 10,
     noise: 0.03,
@@ -77,8 +77,8 @@ export const GOMOKU_LEVELS: Record<GomokuLevel, LevelCfg> = {
     vcf: 5,
   },
   7: {
-    name: '7 · 业余高级',
-    note: '看三步 + 冲四杀',
+    name: '7 · 挑战',
+    note: '进一步考虑对手的应对',
     depth: 3,
     width: 10,
     noise: 0.01,
@@ -86,8 +86,8 @@ export const GOMOKU_LEVELS: Record<GomokuLevel, LevelCfg> = {
     vcf: 9,
   },
   8: {
-    name: '8 · 强业余',
-    note: '看四步，会主动做杀',
+    name: '8 · 高难',
+    note: '更仔细地寻找进攻机会',
     depth: 4,
     width: 9,
     noise: 0,
@@ -95,8 +95,8 @@ export const GOMOKU_LEVELS: Record<GomokuLevel, LevelCfg> = {
     vcf: 13,
   },
   9: {
-    name: '9 · 业余高段',
-    note: '更宽的候选，适合有经验的玩家',
+    name: '9 · 进阶挑战',
+    note: '考虑更多落点',
     depth: 4,
     width: 12,
     noise: 0,
@@ -105,7 +105,7 @@ export const GOMOKU_LEVELS: Record<GomokuLevel, LevelCfg> = {
   },
   10: {
     name: '10 · 全力',
-    note: '看五步 + 深冲四杀，全力以赴',
+    note: '在思考时间内尽量深入判断',
     depth: 5,
     width: 10,
     noise: 0,
@@ -201,10 +201,22 @@ function ranked(cells: Stone[], ctx: Ctx, p: Player, width: number) {
     if (out.length >= width) break;
     if (legal(cells, ctx, m.i, p)) out.push(m);
   }
+  // Candidate pruning must not report a loss if a distant legal move remains.
+  if (!out.length) {
+    const i = cells.findIndex(
+      (stone, i) => stone === EMPTY && legal(cells, ctx, i, p),
+    );
+    if (i >= 0) out.push({ i, s: pointScore(cells, ctx.size, i, p) });
+  }
   return out;
 }
 
 const WIN = 1e9;
+const SEARCH_TIMEOUT = Symbol('gomoku search timeout');
+
+function checkDeadline(ctx: Ctx) {
+  if (Date.now() >= ctx.deadline) throw SEARCH_TIMEOUT;
+}
 
 /** Total five-tuple balance from p's point of view. */
 function evaluate(cells: Stone[], size: number, p: Player) {
@@ -242,12 +254,13 @@ function negamax(
   beta: number,
   width: number,
 ): number {
+  checkDeadline(ctx);
   ctx.nodes++;
   if (winsNow(cells, ctx, p).length) return WIN + depth;
   const threats = winsNow(cells, ctx, other(p));
   if (threats.length >= 2) return -WIN - depth;
-  if (depth === 0 || Date.now() > ctx.deadline)
-    return evaluate(cells, ctx.size, p);
+  if (!cells.includes(EMPTY)) return 0;
+  if (depth === 0) return evaluate(cells, ctx.size, p);
   const moves = threats.length
     ? legal(cells, ctx, threats[0], p)
       ? [{ i: threats[0], s: 0 }]
@@ -256,11 +269,16 @@ function negamax(
   if (!moves.length) return -WIN - depth;
   let best = -Infinity;
   for (const { i } of moves) {
+    checkDeadline(ctx);
     cells[i] = p;
-    const v = fiveAt(cells, ctx.size, i, ctx.renju)
-      ? WIN + depth
-      : -negamax(cells, ctx, other(p), depth - 1, -beta, -alpha, width);
-    cells[i] = EMPTY;
+    let v: number;
+    try {
+      v = fiveAt(cells, ctx.size, i, ctx.renju)
+        ? WIN + depth
+        : -negamax(cells, ctx, other(p), depth - 1, -beta, -alpha, width);
+    } finally {
+      cells[i] = EMPTY;
+    }
     if (v > best) best = v;
     if (v > alpha) alpha = v;
     if (alpha >= beta) break;
@@ -281,9 +299,11 @@ function winsNow(cells: Stone[], ctx: Ctx, p: Player) {
 
 /** Victory by continuous fours: returns the first move or -1. */
 function vcf(cells: Stone[], ctx: Ctx, p: Player, depth: number): number {
-  if (depth <= 0 || Date.now() > ctx.deadline) return -1;
+  if (depth <= 0 || Date.now() >= ctx.deadline) return -1;
   const o = other(p);
   for (const { i } of ranked(cells, ctx, p, 40)) {
+    if (Date.now() >= ctx.deadline) return -1;
+    ctx.nodes++;
     cells[i] = p;
     const threats = winsNow(cells, ctx, p);
     let ok = false;
@@ -291,11 +311,14 @@ function vcf(cells: Stone[], ctx: Ctx, p: Player, depth: number): number {
     else if (threats.length >= 2 && !winsNow(cells, ctx, o).length) ok = true;
     else if (threats.length === 1 && !winsNow(cells, ctx, o).length) {
       const b = threats[0];
-      cells[b] = o;
-      ok =
-        !fiveAt(cells, ctx.size, b, ctx.renju) &&
-        vcf(cells, ctx, p, depth - 1) >= 0;
-      cells[b] = EMPTY;
+      if (!legal(cells, ctx, b, o)) ok = true;
+      else {
+        cells[b] = o;
+        ok =
+          !fiveAt(cells, ctx.size, b, ctx.renju) &&
+          vcf(cells, ctx, p, depth - 1) >= 0;
+        cells[b] = EMPTY;
+      }
     }
     cells[i] = EMPTY;
     if (ok) return i;
@@ -311,6 +334,7 @@ export function chooseGomokuMove(
   rand: () => number = Math.random,
   timeMs = 1500,
 ): GomokuAiResult {
+  if (s.winner !== null) return { move: -1, nodes: 0, reason: '对局已结束' };
   const cfg = GOMOKU_LEVELS[level];
   const p = s.toPlay;
   const cells = s.cells.slice();
@@ -333,8 +357,10 @@ export function chooseGomokuMove(
   if (win.length) return { move: win[0], nodes: 0, reason: '成五' };
   const block = winsNow(cells, ctx, other(p));
   if (block.length && level >= 2) {
-    const b = block.find((i) => legal(cells, ctx, i, p)) ?? block[0];
-    return { move: b, nodes: 0, reason: '挡住冲四' };
+    const b = block.find((i) => legal(cells, ctx, i, p));
+    return b === undefined
+      ? { move: pool[0].i, nodes: 0, reason: '无合法挡点，继续行棋' }
+      : { move: b, nodes: 0, reason: '挡住冲四' };
   }
   if (cfg.vcf) {
     const m = vcf(cells, ctx, p, cfg.vcf);
@@ -346,26 +372,56 @@ export function chooseGomokuMove(
     const pick = near[Math.floor(rand() * near.length)];
     return { move: pick.i, nodes: 0, reason: '攻守评分' };
   }
+  if (Date.now() >= ctx.deadline)
+    return {
+      move: pool[0].i,
+      nodes: ctx.nodes,
+      reason: '攻守评分（思考时间已用尽）',
+    };
   const moves = ranked(cells, ctx, p, cfg.width);
   let best = moves[0].i;
-  let bestV = -Infinity;
-  for (const { i } of moves) {
-    cells[i] = p;
-    const v =
-      -negamax(
-        cells,
-        ctx,
-        other(p),
-        cfg.depth - 1,
-        -Infinity,
-        -bestV,
-        cfg.width,
-      ) + (cfg.noise ? rand() * cfg.noise * 2000 : 0);
-    cells[i] = EMPTY;
-    if (v > bestV) {
-      bestV = v;
-      best = i;
+  let completedDepth = 0;
+  // Keep the last fully searched iteration. A timeout in one branch must not
+  // compare a shallow estimate with completed, deeper alternatives.
+  for (let depth = 1; depth <= cfg.depth; depth++) {
+    let iterationBest = best;
+    let bestV = -Infinity;
+    try {
+      for (const { i } of moves) {
+        checkDeadline(ctx);
+        cells[i] = p;
+        let v: number;
+        try {
+          v =
+            -negamax(
+              cells,
+              ctx,
+              other(p),
+              depth - 1,
+              -Infinity,
+              -bestV,
+              cfg.width,
+            ) + (cfg.noise ? rand() * cfg.noise * 2000 : 0);
+        } finally {
+          cells[i] = EMPTY;
+        }
+        if (v > bestV) {
+          bestV = v;
+          iterationBest = i;
+        }
+      }
+    } catch (error) {
+      if (error !== SEARCH_TIMEOUT) throw error;
+      break;
     }
+    best = iterationBest;
+    completedDepth = depth;
   }
-  return { move: best, nodes: ctx.nodes, reason: `搜索 ${cfg.depth} 步` };
+  return {
+    move: best,
+    nodes: ctx.nodes,
+    reason: completedDepth
+      ? `搜索 ${completedDepth} 步`
+      : '攻守评分（思考时间已用尽）',
+  };
 }
