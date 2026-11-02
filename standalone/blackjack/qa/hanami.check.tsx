@@ -103,7 +103,7 @@ describe('花街七席本机', () => {
       '轮到你',
     );
     expect(document.querySelector('.kit-kicker')!.textContent).toContain(
-      '5 · 大师',
+      '5 · 全力',
     );
     fireEvent.click(textButton('重新开局'));
     expect(document.querySelector('.kit-kicker')!.textContent).toContain(
@@ -210,7 +210,7 @@ describe('花街七席本机', () => {
     ).toBe('4');
     start();
     expect(document.querySelector('.kit-kicker')!.textContent).toContain(
-      '4 · 高手',
+      '4 · 挑战',
     );
   });
 
