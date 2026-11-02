@@ -1,0 +1,459 @@
+'use client';
+
+import { useCallback, useRef, useState } from 'react';
+import {
+  ACTIONS,
+  ACTION_NAMES,
+  ACTION_SIZE,
+  PATRONS,
+  PATRON_TITLES,
+  VALUES,
+  scoreOf,
+  type ActionKind,
+  type Card,
+  type HanamiView,
+  type LogEntry,
+  type Move,
+  type Side,
+} from '@/lib/games/hanami';
+import './hanami.css';
+
+const ACTION_HELP: Record<ActionKind, string> = {
+  secret: '暗置 1 张，轮末亮出计入自己',
+  discard: '暗弃 2 张，本轮不计',
+  gift: '亮出 3 张，对方挑 1 张，其余归你',
+  contest: '亮出两组各 2 张，对方挑一组，另一组归你',
+};
+
+export function Blossom({
+  c,
+  small,
+  back,
+}: {
+  c?: Card;
+  small?: boolean;
+  back?: boolean;
+}) {
+  if (back || c === undefined)
+    return (
+      <span
+        className={`hn-card is-back${small ? ' is-small' : ''}`}
+        aria-label="背面"
+      />
+    );
+  return (
+    <span
+      className={`hn-card hn-p${c}${small ? ' is-small' : ''}`}
+      aria-label={`${PATRON_TITLES[c]}（${VALUES[c]} 分）`}
+    >
+      <b aria-hidden="true">{PATRONS[c]}</b>
+      <i aria-hidden="true">{VALUES[c]}</i>
+    </span>
+  );
+}
+
+function Tokens({
+  used,
+  mine,
+  active,
+  onPick,
+}: {
+  used: ActionKind[];
+  mine?: boolean;
+  active?: ActionKind | null;
+  onPick?: (a: ActionKind) => void;
+}) {
+  return (
+    <div
+      className="hn-tokens"
+      role={mine ? 'toolbar' : undefined}
+      aria-label={mine ? '选择行动' : '对手行动'}
+    >
+      {ACTIONS.map((a) => {
+        const done = used.includes(a);
+        return mine ? (
+          <button
+            key={a}
+            type="button"
+            className={`hn-token${done ? ' is-used' : ''}${active === a ? ' is-active' : ''}`}
+            disabled={done || !onPick}
+            aria-pressed={active === a}
+            title={ACTION_HELP[a]}
+            onClick={() => onPick?.(a)}
+          >
+            <b>{ACTION_NAMES[a]}</b>
+            <small>{ACTION_SIZE[a]}</small>
+          </button>
+        ) : (
+          <span
+            key={a}
+            className={`hn-token${done ? ' is-used' : ''}`}
+            title={ACTION_HELP[a]}
+          >
+            <b>{ACTION_NAMES[a]}</b>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function Pips({ n, p }: { n: number; p: number }) {
+  return (
+    <span className="hn-pips" aria-label={`${n} 张`}>
+      {Array.from({ length: n }, (_, i) => (
+        <i key={i} className={`hn-p${p}`} />
+      ))}
+    </span>
+  );
+}
+
+function logText(l: LogEntry, me: Side) {
+  const who = l.side === me ? '你' : '对方';
+  if (!('cards' in l))
+    return `${who}${l.kind === 'secret' ? '藏了 1 张' : '舍了 2 张'}`;
+  const names = (cs: Card[]) => cs.map((c) => PATRONS[c]).join('');
+  return `${who}${ACTION_NAMES[l.kind]}出 ${names(l.cards)}，${l.side === me ? '对方' : '你'}挑走 ${names(l.picked)}`;
+}
+
+type TableProps = {
+  v: HanamiView;
+  names: [string, string];
+  /** false releases the submission guard for a rejected or server-owned move. */
+  onMove: (m: Move) => void | boolean;
+  thinking?: string | null;
+  footer?: React.ReactNode;
+  disabled?: boolean;
+};
+
+export function HanamiTable(props: TableProps) {
+  const { v, disabled } = props;
+  // Selections refer to indices in one visible position. A new hand, response,
+  // round, seat or connection state must never reuse those indices.
+  const position = JSON.stringify([
+    v.you,
+    v.round,
+    v.phase,
+    v.toAct,
+    v.decider,
+    v.hand,
+    v.used,
+    v.offer,
+    !!disabled,
+  ]);
+  return <HanamiPosition key={position} {...props} />;
+}
+
+function HanamiPosition({
+  v,
+  names,
+  onMove,
+  thinking,
+  footer,
+  disabled = false,
+}: TableProps) {
+  const me: Side = v.you ?? 0;
+  const opp: Side = me === 0 ? 1 : 0;
+  const [action, setAction] = useState<ActionKind | null>(null);
+  const [sel, setSel] = useState<number[]>([]);
+  const submitted = useRef(false);
+  const [sending, setSending] = useState(false);
+  const myTurn =
+    !disabled &&
+    !sending &&
+    v.you !== null &&
+    v.phase === 'play' &&
+    v.decider === me;
+  const responding =
+    !disabled &&
+    !sending &&
+    v.you !== null &&
+    v.phase === 'respond' &&
+    v.decider === me;
+  const need = action ? ACTION_SIZE[action] : 0;
+  const reset = () => {
+    setAction(null);
+    setSel([]);
+  };
+  const toggle = (i: number) => {
+    if (!myTurn || !action) return;
+    setSel((s) =>
+      s.includes(i)
+        ? s.filter((x) => x !== i)
+        : s.length < need
+          ? [...s, i]
+          : s,
+    );
+  };
+  const submit = useCallback(
+    (move: Move) => {
+      if (disabled || submitted.current) return;
+      submitted.current = true;
+      setSending(true);
+      if (onMove(move) === false) {
+        submitted.current = false;
+        setSending(false);
+        return;
+      }
+      setAction(null);
+      setSel([]);
+    },
+    [disabled, onMove],
+  );
+  const confirm = () => {
+    if (!myTurn || !action || sel.length !== need) return;
+    submit({ type: action, cards: sel.map((i) => v.hand[i]) } as Move);
+  };
+  const choose = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (responding)
+      submit({
+        type: 'pick',
+        index: Number(event.currentTarget.dataset.index),
+      });
+  };
+  const sMe = scoreOf(v.favour, me);
+  const sOpp = scoreOf(v.favour, opp);
+  const status = thinking
+    ? thinking
+    : sending
+      ? '已提交，等待牌局更新…'
+      : v.phase === 'respond'
+        ? responding
+          ? v.offer!.kind === 'gift'
+            ? '对方赠出 3 张：挑 1 张归你'
+            : '对方提出比试：挑一组归你'
+          : '等对方挑选…'
+        : v.phase === 'play'
+          ? myTurn
+            ? action
+              ? `${ACTION_NAMES[action]}：选 ${need} 张${action === 'contest' ? '（前两张为一组，后两张为一组）' : ''}`
+              : '轮到你：先选一种行动'
+            : '等对方行动…'
+          : '';
+  const lastLog = v.log[v.log.length - 1];
+  return (
+    <div className="hn-table" aria-busy={sending}>
+      <section className="hn-side is-opp" aria-label="对手">
+        <div className="hn-who">
+          <strong>{names[opp]}</strong>
+          <span>
+            {sOpp.patrons} 位 · {sOpp.points} 分
+          </span>
+        </div>
+        <div
+          className="hn-hand is-hidden"
+          aria-label={`对手手牌 ${v.handCounts[opp]} 张`}
+        >
+          {Array.from({ length: v.handCounts[opp] }, (_, i) => (
+            <Blossom key={i} back small />
+          ))}
+        </div>
+        <Tokens used={v.used[opp]} />
+        <div className="hn-hidden-info">
+          {v.hasSecret[opp] && <span>藏 1 张</span>}
+          {v.used[opp].includes('discard') && <span>舍 2 张</span>}
+        </div>
+      </section>
+
+      <section className="hn-patrons" aria-label="七席花客">
+        {VALUES.map((val, p) => {
+          const f = v.favour[p];
+          return (
+            <div
+              key={p}
+              className={`hn-col${f === me ? ' is-mine' : f === opp ? ' is-theirs' : ''}`}
+            >
+              <Pips n={v.played[opp][p]} p={p} />
+              <div className={`hn-patron hn-p${p}`}>
+                <span
+                  className={`hn-marker${f === me ? ' to-me' : f === opp ? ' to-opp' : ''}`}
+                  aria-hidden="true"
+                />
+                <b>{PATRONS[p]}</b>
+                <small>{PATRON_TITLES[p]}</small>
+                <i>{val}</i>
+              </div>
+              <Pips n={v.played[me][p]} p={p} />
+              <span className="hn-sr">
+                {PATRON_TITLES[p]}：你 {v.played[me][p]} 张，对手{' '}
+                {v.played[opp][p]} 张，花签
+                {f === me ? '在你这边' : f === opp ? '在对手那边' : '在中间'}
+              </span>
+            </div>
+          );
+        })}
+      </section>
+
+      <div className="hn-status" aria-live="polite">
+        <span>
+          第 {v.round} 轮 · 牌堆 {v.deckCount}
+        </span>
+        <strong>{status}</strong>
+        {lastLog && <small>{logText(lastLog, me)}</small>}
+      </div>
+
+      {v.phase === 'respond' && v.offer && (
+        <div
+          className={`hn-offer${responding ? ' is-mine' : ''}`}
+          aria-label="对方的出牌"
+        >
+          {v.offer.kind === 'gift'
+            ? v.offer.cards.map((c, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className="hn-pick"
+                  aria-label={`选择${PATRON_TITLES[c]}（${VALUES[c]} 分），第 ${i + 1} 张`}
+                  disabled={!responding}
+                  data-index={i}
+                  onClick={choose}
+                >
+                  <Blossom c={c} />
+                </button>
+              ))
+            : [0, 1].map((i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className="hn-pick is-pair"
+                  aria-label={`选择第 ${i + 1} 组：${v
+                    .offer!.cards.slice(i * 2, i * 2 + 2)
+                    .map((c) => PATRON_TITLES[c])
+                    .join(' / ')}`}
+                  disabled={!responding}
+                  data-index={i}
+                  onClick={choose}
+                >
+                  <Blossom c={v.offer!.cards[i * 2]} />
+                  <Blossom c={v.offer!.cards[i * 2 + 1]} />
+                </button>
+              ))}
+        </div>
+      )}
+
+      {v.summary && (v.phase === 'round-end' || v.phase === 'over') && (
+        <div className="hn-summary">
+          <span>
+            第 {v.summary.round} 轮结束 · 亮出藏牌：你{' '}
+            {v.summary.secrets[me] !== null
+              ? PATRONS[v.summary.secrets[me]!]
+              : '—'}
+            ，对方{' '}
+            {v.summary.secrets[opp] !== null
+              ? PATRONS[v.summary.secrets[opp]!]
+              : '—'}
+          </span>
+          <span>
+            你 {sMe.patrons} 位 {sMe.points} 分 · 对方 {sOpp.patrons} 位{' '}
+            {sOpp.points} 分
+          </span>
+        </div>
+      )}
+      {footer}
+
+      <section className="hn-side is-me" aria-label="你">
+        <div className="hn-who">
+          <strong>{names[me]}</strong>
+          <span>
+            {sMe.patrons} 位 · {sMe.points} 分
+          </span>
+          {v.mySecret !== null && (
+            <span className="hn-mine-hidden">
+              藏 <Blossom c={v.mySecret} small />
+            </span>
+          )}
+          {v.mySecretDiscards.length > 0 && (
+            <span className="hn-mine-hidden">
+              舍{' '}
+              {v.mySecretDiscards.map((c, i) => (
+                <Blossom key={i} c={c} small />
+              ))}
+            </span>
+          )}
+        </div>
+        <Tokens
+          used={v.used[me]}
+          mine
+          active={action}
+          onPick={
+            myTurn
+              ? (a) => {
+                  setAction(a === action ? null : a);
+                  setSel([]);
+                }
+              : undefined
+          }
+        />
+        <div className="hn-hand" aria-label="你的手牌">
+          {v.hand.map((c, i) => {
+            const k = sel.indexOf(i);
+            return (
+              <button
+                key={i}
+                type="button"
+                className={`hn-slot${k >= 0 ? ' is-sel' : ''}${action === 'contest' && k >= 2 ? ' is-pair-b' : ''}`}
+                disabled={!myTurn || !action}
+                aria-label={`${PATRON_TITLES[c]}（${VALUES[c]} 分），第 ${i + 1} 张${action === 'contest' && k >= 0 ? (k < 2 ? '，甲组' : '，乙组') : ''}`}
+                aria-pressed={k >= 0}
+                onClick={() => toggle(i)}
+              >
+                <Blossom c={c} />
+                {k >= 0 && action === 'contest' && (
+                  <em>{k < 2 ? '甲' : '乙'}</em>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {myTurn && action && (
+          <div className="hn-confirm">
+            <span>{ACTION_HELP[action]}</span>
+            <button type="button" onClick={reset}>
+              取消
+            </button>
+            <button
+              type="button"
+              className="kit-primary"
+              disabled={sel.length !== need}
+              onClick={confirm}
+            >
+              确认{ACTION_NAMES[action]}（{sel.length}/{need}）
+            </button>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+export function HanamiRules() {
+  return (
+    <details className="hn-rules">
+      <summary>玩法说明</summary>
+      <ul>
+        <li>
+          七位花客：兰、竹、菊各 2 分，荷、桂各 3 分，梅 4 分，牡丹 5
+          分。每位花客的花笺张数等于分值，共 21 张。
+        </li>
+        <li>
+          每轮洗牌后暗抽 1 张不用，双方各拿 6 张。每回合先摸 1
+          张，再从下面四种行动里选一种本轮还没用过的：
+        </li>
+        <li>
+          <b>藏</b>：把 1 张暗置，轮末亮出算自己的；<b>舍</b>：暗弃 2
+          张，本轮不计；<b>赠</b>：亮出 3 张，对手挑 1 张拿走，剩下 2 张归你；
+          <b>比</b>：亮出两组各 2 张，对手挑一组，另一组归你。
+        </li>
+        <li>
+          双方四种行动都用完后（共 8
+          回合），亮出藏牌，逐位比张数：多的一方拿到这位花客的花签；一样多时花签不动，留在上一轮的位置。
+        </li>
+        <li>
+          拿到 4 位花客，或花签分值合计达到 11
+          分即获胜（同时达到时以分值为准）。没人达标就再开一轮，先手交换，最多 3
+          轮；3 轮后按分值、再按人数决胜。
+        </li>
+      </ul>
+    </details>
+  );
+}

@@ -1679,3 +1679,60 @@
     font-size: 20px;
   }
 }
+
+.room-hanami-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #c9bfa6;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #5c4a3a;
+  background: linear-gradient(180deg, #f7f1e3, #ece3cf);
+}
+.room-hanami-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 14px 0;
+}
+.room-hanami-row i {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 42px;
+  border-radius: 4px;
+  background: #fffdf7;
+  box-shadow: inset 0 0 0 1px #d8cdb4;
+  font-style: normal;
+  font-size: 13px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+}
+.room-hanami-row i.is-won {
+  transform: translateY(8px);
+  box-shadow:
+    inset 0 0 0 1px #b4532a,
+    0 4px 8px -4px #0004;
+}
+.room-hanami-row .p0 {
+  color: #5b6fa3;
+}
+.room-hanami-row .p1 {
+  color: #4f7a4f;
+}
+.room-hanami-row .p2 {
+  color: #a8831f;
+}
+.room-hanami-row .p3 {
+  color: #c0607a;
+}
+.room-hanami-row .p4 {
+  color: #c7782a;
+}
+.room-hanami-row .p5 {
+  color: #a33d3d;
+}
+.room-hanami-row .p6 {
+  color: #84386f;
+}

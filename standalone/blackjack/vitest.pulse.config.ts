@@ -27,6 +27,8 @@ export default defineConfig({
       'qa/music-control.check.tsx',
       'qa/go.check.tsx',
       'qa/gomoku.check.tsx',
+      'qa/hanami.check.tsx',
+      'qa/online-hanami.check.tsx',
       'qa/online-gomoku.check.tsx',
       'qa/online-navigation.check.tsx',
       'qa/chess.check.tsx',

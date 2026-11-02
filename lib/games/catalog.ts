@@ -21,7 +21,8 @@ export type GameId =
   | 'timeloop'
   | 'chess'
   | 'go'
-  | 'gomoku';
+  | 'gomoku'
+  | 'hanami';
 
 export type GameDefinition = {
   id: GameId;
@@ -285,6 +286,22 @@ export const GAMES: readonly GameDefinition[] = [
       title: '五子棋联机',
       format: '1 对 1',
       pitch: '可选禁手，悔棋需对方同意，再来一局交换黑白。',
+    },
+  },
+  {
+    id: 'hanami',
+    title: '花街七席',
+    description:
+      '两人卡牌对局：七位花客、四种行动（藏、舍、赠、比），每轮每种只用一次，争夺花签。五档 AI，高档会推演上百种可能的牌局。',
+    href: '/games/hanami',
+    category: '卡牌策略',
+    controls: '先点行动，再点手牌，确认出牌',
+    estimatedDuration: '一局约 10–20 分钟',
+    online: {
+      href: '/games/hanami/online',
+      title: '花街七席联机',
+      format: '1 对 1',
+      pitch: '服务器发牌，对手的手牌、藏牌和弃牌永远看不到。',
     },
   },
 ] as const;

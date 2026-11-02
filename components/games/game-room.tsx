@@ -779,6 +779,28 @@ function GomokuPreview() {
   );
 }
 
+function HanamiPreview() {
+  return (
+    <div className="room-hanami-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>SEVEN SEATS</span>
+        <span>2 PLAYERS</span>
+      </div>
+      <div className="room-hanami-row">
+        {['兰', '竹', '菊', '荷', '桂', '梅', '牡丹'].map((n, i) => (
+          <i key={n} className={`p${i}${i === 6 || i === 3 ? ' is-won' : ''}`}>
+            {n}
+          </i>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>藏 · 舍 · 赠 · 比</span>
+        <span>五档 AI · 可联机</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -801,6 +823,7 @@ const previews = {
   chess: ChessPreview,
   go: GoPreview,
   gomoku: GomokuPreview,
+  hanami: HanamiPreview,
 };
 
 const ONLINE = GAMES.filter((game) => game.online);
