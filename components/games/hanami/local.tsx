@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
   apply,
   decider,
@@ -43,8 +42,12 @@ function validateRecords(v: unknown): Records | null {
     const rec = r as { won?: unknown; played?: unknown };
     if (
       isLevel(lv) &&
-      Number.isSafeInteger(rec?.won) &&
-      Number.isSafeInteger(rec?.played)
+      typeof rec?.won === 'number' &&
+      typeof rec.played === 'number' &&
+      Number.isSafeInteger(rec.won) &&
+      Number.isSafeInteger(rec.played) &&
+      rec.won >= 0 &&
+      rec.played >= rec.won
     )
       out[lv] = { won: rec.won as number, played: rec.played as number };
   }
@@ -67,46 +70,82 @@ function shapeFor(s: HanamiState, side: Side): HanamiState {
   };
 }
 
-function useAi() {
-  const worker = useRef<Worker | null>(null);
-  const seq = useRef(0);
-  useEffect(() => () => worker.current?.terminate(), []);
-  return (s: HanamiState, level: HanamiLevel) =>
-    new Promise<HanamiAiResult>((resolve, reject) => {
-      worker.current ??= new Worker(hanamiWorkerUrl, { type: 'module' });
-      const id = ++seq.current;
-      worker.current.onmessage = (e) => {
-        if (e.data.id !== id) return;
-        if (e.data.error) reject(new Error(e.data.error));
-        else resolve(e.data.result);
-      };
-      worker.current.postMessage({
-        id,
-        shape: shapeFor(s, AI),
-        view: viewFor(s, AI),
-        side: AI,
-        level,
-      });
+function requestAi(
+  state: HanamiState,
+  level: HanamiLevel,
+  resolve: (result: HanamiAiResult) => void,
+  reject: () => void,
+) {
+  let worker: Worker | undefined;
+  let live = true;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const cancel = () => {
+    live = false;
+    clearTimeout(timeout);
+    worker?.terminate();
+  };
+  const fail = () => {
+    if (!live) return;
+    cancel();
+    reject();
+  };
+  try {
+    worker = new Worker(hanamiWorkerUrl, { type: 'module' });
+    worker.onmessage = (e) => {
+      if (!live || e.data?.id !== 1) return;
+      if (e.data.error || !e.data.result?.move) {
+        fail();
+        return;
+      }
+      cancel();
+      resolve(e.data.result);
+    };
+    worker.onerror = (e) => {
+      e.preventDefault();
+      fail();
+    };
+    worker.onmessageerror = fail;
+    timeout = setTimeout(fail, 8000);
+    worker.postMessage({
+      id: 1,
+      shape: shapeFor(state, AI),
+      view: viewFor(state, AI),
+      side: AI,
+      level,
     });
+  } catch {
+    fail();
+  }
+  return cancel;
 }
 
-export function HanamiGame() {
-  const [settings, saveSettings] = useLocalRecords(
+export function HanamiGame({ fromExplore = false }: { fromExplore?: boolean }) {
+  const [storedSettings, saveSettings] = useLocalRecords(
     'tscjj:hanami-settings:v1',
     validateSettings,
     { level: 3 as HanamiLevel },
   );
-  const [records, saveRecords] = useLocalRecords(
+  const [storedRecords, saveRecords] = useLocalRecords<Records>(
     'tscjj:hanami-records:v1',
     validateRecords,
     {},
   );
+  const [sessionSettings, setSessionSettings] = useState<Settings | null>(null);
+  const [sessionRecords, setSessionRecords] = useState<Records | null>(null);
+  const settings = sessionSettings ?? storedSettings;
+  const records = sessionRecords ?? storedRecords;
+  const levelSelect = useRef<HTMLSelectElement>(null);
+  const [matchId, setMatchId] = useState(0);
+  const [aiError, setAiError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const saveLevel = (next: Settings) => {
+    setSessionSettings(saveSettings(next) === 'unavailable' ? next : null);
+  };
   const [game, setGame] = useState<{
     level: HanamiLevel;
     state: HanamiState;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ai = useAi();
   const level = game?.level ?? settings.level;
   const state = game?.state ?? null;
   const aiTurn = !!state && decider(state) === AI;
@@ -115,44 +154,67 @@ export function HanamiGame() {
     setGame({ level, state: next });
     if (next.phase === 'over' && state?.phase !== 'over') {
       const cur = records[level] ?? { won: 0, played: 0 };
-      saveRecords({
+      const updated: Records = {
         ...records,
         [level]: {
           won: cur.won + (next.result?.winner === ME ? 1 : 0),
           played: cur.played + 1,
         },
-      });
+      };
+      setSessionRecords(
+        saveRecords(updated) === 'unavailable' ? updated : null,
+      );
     }
   };
 
+  const commitAi = useEffectEvent(commit);
   useEffect(() => {
     if (!aiTurn || !state) return;
-    let live = true;
     const t0 = Date.now();
-    void ai(state, level).then(async (r) => {
-      const wait = 600 - (Date.now() - t0);
-      if (wait > 0) await new Promise((res) => setTimeout(res, wait));
-      if (live) commit(apply(state, AI, r.move));
-    });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const fail = () => setAiError(true);
+    const cancel = requestAi(
+      state,
+      level,
+      (r) => {
+        try {
+          const next = apply(state, AI, r.move);
+          timer = setTimeout(
+            () => commitAi(next),
+            Math.max(0, 600 - (Date.now() - t0)),
+          );
+        } catch {
+          fail();
+        }
+      },
+      fail,
+    );
     return () => {
-      live = false;
+      cancel();
+      clearTimeout(timer);
     };
-  });
+  }, [aiTurn, state, level, retry]);
 
   const start = () => {
+    const shownLevel = Number(levelSelect.current?.value);
+    const nextLevel = isLevel(shownLevel) ? shownLevel : settings.level;
+    saveLevel({ level: nextLevel });
+    setMatchId((id) => id + 1);
     setError(null);
+    setAiError(false);
     setGame({
-      level: settings.level,
+      level: nextLevel,
       state: newGame(Math.random, Math.random() < 0.5 ? 0 : 1),
     });
   };
   const onMove = (m: Move) => {
-    if (!state) return;
+    if (!state || decider(state) !== ME) return false;
     try {
       setError(null);
       commit(apply(state, ME, m));
     } catch (e) {
       setError(e instanceof Error ? e.message : '出牌无效');
+      return false;
     }
   };
   const stats = records[level];
@@ -168,16 +230,20 @@ export function HanamiGame() {
           </p>
           <h2 className="kit-sr">花街七席</h2>
         </div>
-        <Link className="hn-online-link" href="/games/hanami/online">
+        <a
+          className="hn-online-link"
+          href={`/games/hanami/online${fromExplore ? '?from=explore' : ''}`}
+        >
           和朋友联机 →
-        </Link>
+        </a>
       </header>
       <div className="kit-row">
         <select
+          ref={levelSelect}
           aria-label="AI 难度（下局生效）"
           value={settings.level}
           onChange={(e) =>
-            saveSettings({ level: Number(e.target.value) as HanamiLevel })
+            saveLevel({ level: Number(e.target.value) as HanamiLevel })
           }
         >
           {(Object.keys(HANAMI_LEVELS) as unknown as HanamiLevel[]).map((l) => (
@@ -194,13 +260,32 @@ export function HanamiGame() {
           {state ? '重新开局' : '开局'}
         </button>
       </div>
+      {aiError && (
+        <div className="kit-row">
+          <output className="kit-brief kit-bad">
+            AI 计算失败，请重试或重新开局。
+          </output>
+          <button
+            type="button"
+            onClick={() => {
+              setAiError(false);
+              setRetry((n) => n + 1);
+            }}
+          >
+            重试 AI
+          </button>
+        </div>
+      )}
       {error && <p className="kit-brief kit-bad">{error}</p>}
       {view ? (
         <HanamiTable
+          key={matchId}
           v={view}
           names={['你', `AI · ${HANAMI_LEVELS[level].name.split(' · ')[1]}`]}
           onMove={onMove}
-          thinking={aiTurn ? 'AI 思考中…' : null}
+          thinking={
+            aiTurn ? (aiError ? 'AI 计算失败，请重试' : 'AI 思考中…') : null
+          }
           footer={
             state!.phase === 'round-end' ? (
               <div className="hn-next">
