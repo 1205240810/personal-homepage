@@ -8,7 +8,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GomokuGame } from '../../../components/games/gomoku';
 import { GomokuBoard } from '../../../components/games/gomoku-board';
-import { newGame } from '../../../lib/games/gomoku';
+import { isForbidden, newGame } from '../../../lib/games/gomoku';
 
 vi.mock('next/link', () => ({
   default: (props: React.ComponentProps<'a'>) => <a {...props} />,
@@ -41,6 +41,8 @@ class TestWorker {
   }
 }
 const latest = () => TestWorker.instances.at(-1)!;
+const button = (name: string) =>
+  screen.getByText<HTMLButtonElement>(name, { selector: 'button' });
 const point = (i: number) =>
   document.querySelector<HTMLButtonElement>(`[data-pt="${i}"]`)!;
 const reply = async (worker: TestWorker, move: number) =>
@@ -62,6 +64,41 @@ afterEach(() => {
 });
 
 describe('五子棋客户端', () => {
+  it.each(['ai', 'local'])(
+    'allows white %s searches to use a point forbidden only to black',
+    async (mode) => {
+      render(<GomokuGame />);
+      fireEvent.click(screen.getByLabelText('黑棋禁手（下局生效）'));
+      fireEvent.change(screen.getByLabelText('模式（下局生效）'), {
+        target: { value: mode },
+      });
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: mode === 'ai' ? '执黑开局' : '新开一局',
+        }),
+      );
+      for (const [black, white] of [
+        [111, 0],
+        [113, 2],
+        [97, 4],
+      ]) {
+        fireEvent.click(point(black));
+        if (mode === 'ai') await reply(latest(), white);
+        else fireEvent.click(point(white));
+      }
+      fireEvent.click(point(127));
+      if (mode === 'local') fireEvent.click(button('提示'));
+      const job = latest();
+      expect(job.message!.state.toPlay).toBe(2);
+      expect(isForbidden(job.message!.state, 112)).toBe(true);
+      await reply(job, 112);
+      if (mode === 'ai')
+        expect(point(112).getAttribute('aria-label')).toBe('H8 白');
+      else expect(document.querySelector('.is-hint')).toBe(point(112));
+      expect(screen.queryByText(/计算失败/)).toBeNull();
+    },
+  );
+
   it('AI replies, paired undo, and white openings preserve the current match', async () => {
     render(<GomokuGame />);
     fireEvent.click(point(112));
@@ -74,9 +111,9 @@ describe('五子棋客户端', () => {
     expect(worker.message!.level).toBe(4);
     await reply(worker, 113);
     expect(document.querySelectorAll('.go-stone')).toHaveLength(2);
-    fireEvent.click(screen.getByRole('button', { name: '悔棋' }));
+    fireEvent.click(button('悔棋'));
     expect(document.querySelectorAll('.go-stone')).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    fireEvent.click(button('执白开局'));
     expect(latest().message!.level).toBe(10);
     await reply(latest(), 112);
     expect(screen.getByText('轮到你（白）')).toBeTruthy();
@@ -84,12 +121,9 @@ describe('五子棋客户端', () => {
 
   it('cancels a pending hint when playing and ignores its late reply', async () => {
     render(<GomokuGame />);
-    fireEvent.click(screen.getByRole('button', { name: '提示' }));
+    fireEvent.click(button('提示'));
     const hint = latest();
-    expect(
-      screen.getByRole<HTMLButtonElement>('button', { name: '提示计算中…' })
-        .disabled,
-    ).toBe(true);
+    expect(button('提示计算中…').disabled).toBe(true);
     fireEvent.click(point(112));
     expect(hint.terminated).toBe(true);
     const ai = latest();
@@ -101,21 +135,21 @@ describe('五子棋客户端', () => {
 
   it('new games, resignation, and unmount cancel pending jobs', async () => {
     const view = render(<GomokuGame />);
-    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    fireEvent.click(button('执白开局'));
     const old = latest();
-    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    fireEvent.click(button('执白开局'));
     expect(old.terminated).toBe(true);
     await reply(old, 111);
     expect(document.querySelectorAll('.go-stone')).toHaveLength(0);
     await reply(latest(), 112);
     fireEvent.click(point(113));
     const pending = latest();
-    fireEvent.click(screen.getByRole('button', { name: '认输' }));
+    fireEvent.click(button('认输'));
     expect(pending.terminated).toBe(true);
     await reply(pending, 114);
     expect(document.querySelectorAll('.go-stone')).toHaveLength(2);
     expect(screen.getByText('你认输了')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '执白开局' }));
+    fireEvent.click(button('执白开局'));
     const unmounted = latest();
     view.unmount();
     expect(unmounted.terminated).toBe(true);
@@ -134,11 +168,8 @@ describe('五子棋客户端', () => {
         if (failure === 'timeout') await vi.advanceTimersByTimeAsync(8000);
       });
       expect(screen.getByText('AI 计算失败，请重试或悔棋')).toBeTruthy();
-      expect(
-        screen.getByRole<HTMLButtonElement>('button', { name: '悔棋' })
-          .disabled,
-      ).toBe(false);
-      fireEvent.click(screen.getByRole('button', { name: '重试 AI' }));
+      expect(button('悔棋').disabled).toBe(false);
+      fireEvent.click(button('重试 AI'));
       await reply(latest(), 113);
       expect(screen.getByText('轮到你（黑）')).toBeTruthy();
     },
@@ -146,17 +177,17 @@ describe('五子棋客户端', () => {
 
   it('hint failure can retry; resets clear both pending and visible hints', async () => {
     render(<GomokuGame />);
-    fireEvent.click(screen.getByRole('button', { name: '提示' }));
+    fireEvent.click(button('提示'));
     act(() => latest().onerror?.({ preventDefault() {} }));
     expect(screen.getByText('提示计算失败，可以重新请求提示。')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '提示' }));
+    fireEvent.click(button('提示'));
     await reply(latest(), 112);
     expect(document.querySelector('.is-hint')).toBe(point(112));
-    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+    fireEvent.click(button('执黑开局'));
     expect(document.querySelector('.is-hint')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: '提示' }));
+    fireEvent.click(button('提示'));
     const pending = latest();
-    fireEvent.click(screen.getByRole('button', { name: '执黑开局' }));
+    fireEvent.click(button('执黑开局'));
     await reply(pending, 113);
     expect(document.querySelector('.is-hint')).toBeNull();
   });
@@ -169,15 +200,15 @@ describe('五子棋客户端', () => {
     fireEvent.change(screen.getByLabelText('模式（下局生效）'), {
       target: { value: 'local' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '新开一局' }));
+    fireEvent.click(button('新开一局'));
     fireEvent.click(point(112));
     fireEvent.click(point(113));
     expect(screen.getByText('轮到黑')).toBeTruthy();
     expect(TestWorker.instances).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: '悔棋' }));
+    fireEvent.click(button('悔棋'));
     expect(document.querySelectorAll('.go-stone')).toHaveLength(1);
     expect(screen.getByText('轮到白')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '新开一局' }));
+    fireEvent.click(button('新开一局'));
     expect(document.querySelectorAll('.go-stone')).toHaveLength(0);
   });
 

@@ -89,7 +89,9 @@ function requestAi(
       const noLegalMove =
         move === -1 &&
         !state.cells.some(
-          (cell, i) => cell === EMPTY && !isForbidden(state, i),
+          (cell, i) =>
+            cell === EMPTY &&
+            (state.toPlay !== BLACK || !isForbidden(state, i)),
         );
       if (
         e.data.error ||
@@ -98,7 +100,7 @@ function requestAi(
           (move < 0 ||
             move >= state.cells.length ||
             state.cells[move] !== EMPTY ||
-            isForbidden(state, move)))
+            (state.toPlay === BLACK && isForbidden(state, move))))
       ) {
         fail();
         return;
