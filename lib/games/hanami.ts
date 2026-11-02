@@ -1,26 +1,49 @@
 // 花街七席：两人卡牌对局（原创主题与文字）。
 //
-// 七位花客，分值 2、2、2、3、3、4、5；每位花客的花笺张数等于其分值，共 21 张。
+// 花街茶楼里坐着七位宾客，分值 2、2、2、3、3、4、5。手牌是礼物：每位宾客只喜欢
+// 一种礼物，这种礼物的张数等于其分值，共 21 张。
 // 每轮：洗牌后暗抽 1 张不用，各发 6 张；双方轮流，每回合先摸 1 张，再从四种行动中
 // 选一种尚未用过的：
 //   藏 —— 暗置 1 张，轮末才亮出，计入自己；
 //   舍 —— 暗弃 2 张，本轮不计分；
 //   赠 —— 亮出 3 张，对手挑 1 张归对手，其余 2 张归自己；
 //   比 —— 亮出两组各 2 张，对手挑一组归对手，另一组归自己。
-// 双方各用完四种行动（共 8 回合）后亮出藏牌，逐位比较：张数多者得到这位花客的
-// 花签；持平则花签留在原处。得到 4 位花客或花签分值合计 ≥ 11 即获胜（同时满足时
-// 分值优先）。最多 3 轮；3 轮后仍无人达标，按分值、再按人数比较。
+// 双方各用完四种行动（共 8 回合）后亮出藏牌，逐位比较：送出礼物多者得到这位宾客的
+// 青睐（彩绸）；持平则彩绸留在原处。得到 4 位宾客青睐或青睐分值合计 ≥ 11 即获胜
+// （同时满足时分值优先）。最多 3 轮；3 轮后仍无人达标，按分值、再按人数比较。
 export const VALUES = [2, 2, 2, 3, 3, 4, 5] as const;
-export const PATRONS = ['兰', '竹', '菊', '荷', '桂', '梅', '牡丹'] as const;
-export const PATRON_TITLES = [
-  '幽兰',
-  '修竹',
-  '霜菊',
-  '清荷',
-  '丹桂',
-  '寒梅',
-  '牡丹',
+/** 宾客身份（短名）。 */
+export const PATRONS = [
+  '琴师',
+  '书生',
+  '隐士',
+  '画师',
+  '舞者',
+  '剑客',
+  '名伶',
 ] as const;
+/** 宾客全称。 */
+export const PATRON_TITLES = [
+  '琴师 素音',
+  '书生 子衿',
+  '隐士 松翁',
+  '画师 青岚',
+  '舞者 绯衣',
+  '剑客 霜行',
+  '名伶 云裳',
+] as const;
+/** 每位宾客偏爱的礼物；手牌就是这些礼物。名字与宾客不重字。 */
+export const GIFTS = [
+  '冰弦',
+  '徽墨',
+  '团茶',
+  '纨扇',
+  '玉簪',
+  '酒壶',
+  '明珠',
+] as const;
+/** 礼物单字，用在牌面与日志里。 */
+export const GIFT_GLYPHS = ['弦', '墨', '茶', '扇', '簪', '酒', '珠'] as const;
 export const ACTIONS = ['secret', 'discard', 'gift', 'contest'] as const;
 export type ActionKind = (typeof ACTIONS)[number];
 export const ACTION_NAMES: Record<ActionKind, string> = {
@@ -173,7 +196,7 @@ function clone(s: HanamiState): HanamiState {
 function take(hand: Card[], cards: readonly Card[]) {
   for (const c of cards) {
     const i = hand.indexOf(c);
-    if (i < 0) throw new Error('手里没有这些花笺');
+    if (i < 0) throw new Error('手里没有这些礼物');
     hand.splice(i, 1);
   }
 }
@@ -305,7 +328,7 @@ export function apply(prev: HanamiState, side: Side, move: Move): HanamiState {
       `${ACTION_NAMES[move.type]}需要 ${ACTION_SIZE[move.type]} 张`,
     );
   if (cards.some((c) => !Number.isInteger(c) || c < 0 || c > 6))
-    throw new Error('花笺无效');
+    throw new Error('礼物无效');
   take(s.hands[side], cards);
   s.used[side].push(move.type);
   if (move.type === 'secret') {

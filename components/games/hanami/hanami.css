@@ -2,11 +2,63 @@
 .hn-table {
   display: grid;
   gap: 14px;
-  padding: clamp(12px, 2.5vw, 24px);
+  padding: 40px clamp(12px, 2.5vw, 24px) clamp(12px, 2.5vw, 24px);
   border: 1px solid var(--line, #d6d3c4);
   border-radius: var(--radius-lg, 14px);
-  background: var(--surface-gradient, #f7f4ea);
+  background:
+    radial-gradient(circle at 8% 0, rgb(226 92 60 / 0.16), transparent 22%),
+    radial-gradient(circle at 92% 0, rgb(226 92 60 / 0.16), transparent 22%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 23px,
+      color-mix(in srgb, var(--rust, #ac562f) 6%, transparent) 23px 24px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 23px,
+      color-mix(in srgb, var(--rust, #ac562f) 6%, transparent) 23px 24px
+    ),
+    var(--surface-gradient, #f7f4ea);
   box-shadow: var(--shadow-1, none);
+  position: relative;
+  overflow: hidden;
+}
+/* Eaves and two lanterns over the gallery. */
+.hn-table::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--rust, #ac562f) 70%, #3a1d12) 0 18px,
+    color-mix(in srgb, var(--rust, #ac562f) 45%, #3a1d12) 18px 20px
+  );
+  opacity: 0.85;
+}
+.hn-table::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 18px;
+  right: 18px;
+  height: 34px;
+  background:
+    radial-gradient(ellipse 9px 12px at 9px 20px, #e0523a 0 92%, transparent),
+    radial-gradient(
+      ellipse 9px 12px at calc(100% - 9px) 20px,
+      #e0523a 0 92%,
+      transparent
+    ),
+    linear-gradient(#7a3a22, #7a3a22) 8px 0 / 2px 9px no-repeat,
+    linear-gradient(#7a3a22, #7a3a22) calc(100% - 8px) 0 / 2px 9px no-repeat;
+  filter: drop-shadow(0 0 8px rgb(255 140 80 / 0.55));
+  pointer-events: none;
+  opacity: 0.9;
+}
+.hn-table > * {
+  position: relative;
+  z-index: 1;
 }
 .hn-side {
   display: flex;
@@ -54,96 +106,137 @@
   border: 1px dashed var(--line-strong, #aaa);
   border-radius: 999px;
 }
-/* ---- cards ---- */
-:where(.hn-card, .hn-patron) {
+/* ---- cards: gift cards (礼物) ---- */
+:where(.hn-card, .hn-col, .hn-pips i) {
   --c: #777;
 }
 .hn-card {
   position: relative;
   display: inline-grid;
-  place-items: center;
-  width: 54px;
-  height: 78px;
-  border-radius: 7px;
-  background:
-    radial-gradient(
-      circle at 50% 42%,
-      color-mix(in srgb, var(--c) 16%, transparent) 0 38%,
-      transparent 40%
-    ),
-    linear-gradient(180deg, #fffdf7, #f3eee1);
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  width: 58px;
+  height: 82px;
+  padding: 6px 4px 7px;
+  border-radius: 8px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c) 14%, #fffdf7) 0 58%,
+    #fffdf7 58%
+  );
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--c) 35%, #e7e0cf),
-    inset 0 0 0 4px #fffdf7,
-    inset 0 0 0 5px color-mix(in srgb, var(--c) 30%, transparent),
-    0 1px 2px rgb(0 0 0 / 0.12),
-    0 8px 16px -12px rgb(0 0 0 / 0.4);
+    inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, #e7e0cf),
+    inset 0 0 0 3px #fffdf7,
+    inset 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent),
+    0 1px 2px rgb(0 0 0 / 0.14),
+    0 10px 18px -12px rgb(0 0 0 / 0.45);
   color: var(--c);
   font-family: var(--font-serif, 'Songti SC', 'Noto Serif SC', serif);
+  box-sizing: border-box;
+}
+.hn-gift-art {
+  width: 42px;
+  height: 42px;
+  align-self: center;
 }
 .hn-card b {
-  font-size: 22px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--c) 80%, #222);
 }
 .hn-card i {
   position: absolute;
-  top: 6px;
-  left: 8px;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  background: var(--c);
+  color: #fff;
   font-style: normal;
-  font-size: 11px;
+  font-size: 10px;
   font-family: var(--font-mono, monospace);
 }
 .hn-card.is-small {
-  width: 26px;
-  height: 36px;
-  border-radius: 4px;
+  width: 28px;
+  height: 38px;
+  padding: 2px;
+  border-radius: 5px;
+  grid-template-rows: 1fr;
 }
-.hn-card.is-small b {
-  font-size: 12px;
+.hn-card.is-small .hn-gift-art {
+  width: 22px;
+  height: 22px;
 }
+.hn-card.is-small b,
 .hn-card.is-small i {
   display: none;
 }
+/* Gift-box back: wrapped paper and a ribbon cross. */
 .hn-card.is-back {
-  background: repeating-linear-gradient(45deg, #b9a789 0 2px, #c9b898 2px 6px);
+  background:
+    linear-gradient(90deg, transparent 44%, #c8323c 44% 56%, transparent 56%),
+    linear-gradient(0deg, transparent 44%, #c8323c 44% 56%, transparent 56%),
+    repeating-linear-gradient(45deg, #b9895a 0 3px, #c79a68 3px 7px);
   box-shadow:
-    inset 0 0 0 3px #f3ecdc,
-    0 1px 2px rgb(0 0 0 / 0.15);
+    inset 0 0 0 2px #f3ecdc,
+    0 1px 2px rgb(0 0 0 / 0.18);
 }
 .hn-p0 {
-  --c: #5b6fa3;
+  --c: #4f6aa8;
 }
 .hn-p1 {
-  --c: #4f7a4f;
+  --c: #3f6f55;
 }
 .hn-p2 {
-  --c: #a8831f;
+  --c: #8c7a2a;
 }
 .hn-p3 {
   --c: #c0607a;
 }
 .hn-p4 {
-  --c: #c7782a;
+  --c: #2f8c8c;
 }
 .hn-p5 {
   --c: #a33d3d;
 }
 .hn-p6 {
-  --c: #84386f;
+  --c: #7d3c8c;
 }
-/* ---- patrons ---- */
+/* ---- the teahouse: seven guests along the gallery ---- */
 .hn-patrons {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: clamp(4px, 1.2vw, 12px);
+  gap: clamp(3px, 1.1vw, 12px);
+  padding: 10px clamp(4px, 1.2vw, 14px);
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      ellipse 60% 40% at 50% 50%,
+      rgb(255 196 120 / 0.16),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 0 calc(50% - 1px),
+      color-mix(in srgb, var(--rust, #ac562f) 35%, transparent) calc(50% - 1px)
+        calc(50% + 1px),
+      transparent calc(50% + 1px)
+    );
 }
 .hn-col {
   display: grid;
   grid-template-rows: 1fr auto 1fr;
   justify-items: center;
   gap: 6px;
-  min-height: 210px;
+  min-height: 250px;
+  min-width: 0;
 }
 .hn-col .hn-pips:first-child {
   align-self: end;
@@ -155,98 +248,150 @@
   position: relative;
   display: grid;
   justify-items: center;
-  align-content: center;
-  gap: 2px;
+  align-content: start;
+  gap: 1px;
   width: 100%;
-  max-width: 96px;
-  aspect-ratio: 3 / 4;
-  border-radius: 10px;
+  max-width: 104px;
+  padding: 6px 4px 8px;
+  box-sizing: border-box;
+  border-radius: 48px 48px 10px 10px;
   background:
     radial-gradient(
-      circle at 50% 38%,
-      color-mix(in srgb, var(--c) 20%, transparent) 0 34%,
-      transparent 36%
+      circle at 50% 30%,
+      color-mix(in srgb, var(--c) 22%, #fffaf0) 0 34%,
+      transparent 35%
     ),
-    linear-gradient(180deg, #fffdf7, #f1ebdc);
+    linear-gradient(180deg, #fffcf4, #f2ead8);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, #e7e0cf),
-    0 2px 6px -2px rgb(0 0 0 / 0.2);
+    inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, #e2d8c2),
+    inset 0 0 0 4px #fffcf4,
+    inset 0 0 0 5px color-mix(in srgb, var(--c) 25%, transparent),
+    0 6px 14px -8px rgb(0 0 0 / 0.4);
   color: var(--c);
   font-family: var(--font-serif, 'Songti SC', 'Noto Serif SC', serif);
-  transition: transform var(--dur, 0.25s) var(--ease, ease);
+  transition:
+    transform var(--dur, 0.3s) var(--ease, ease),
+    box-shadow var(--dur, 0.3s);
+}
+.hn-portrait {
+  margin-bottom: 3px;
+  width: 76%;
+  max-width: 64px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
 }
 .hn-patron b {
-  font-size: clamp(18px, 3.2vw, 30px);
+  font-size: clamp(13px, 1.7vw, 16px);
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--c) 82%, #222);
 }
 .hn-patron small {
   font-size: 11px;
-  color: color-mix(in srgb, var(--c) 70%, #555);
-  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--c) 60%, #666);
+  letter-spacing: 0.12em;
+  line-height: 1.2;
 }
-.hn-patron i {
-  position: absolute;
-  top: 6px;
-  right: 8px;
+.hn-likes {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+  padding: 1px 6px 1px 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+}
+.hn-likes svg {
+  width: 16px;
+  height: 16px;
+}
+.hn-likes i {
   font-style: normal;
   font-family: var(--font-mono, monospace);
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
 }
+/* 彩绸：轮末滑向赢得青睐的一方。 */
 .hn-marker {
   position: absolute;
   left: 50%;
-  top: calc(100% - 9px);
-  width: 16px;
-  height: 16px;
-  margin-left: -8px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff6d6, #d9a93b 60%, #a3761b);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  top: calc(100% - 10px);
+  width: 34px;
+  height: 20px;
+  margin-left: -17px;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.3));
   opacity: 0;
+  transform: scale(0.6);
   transition:
-    top var(--dur-slow, 0.45s) var(--ease, ease),
-    opacity var(--dur, 0.25s);
+    top var(--dur-slow, 0.6s) cubic-bezier(0.3, 1.4, 0.5, 1),
+    opacity var(--dur, 0.25s),
+    transform var(--dur-slow, 0.6s);
+  z-index: 2;
 }
 .hn-marker.to-me {
   opacity: 1;
-  top: calc(100% - 9px);
+  transform: none;
+  top: calc(100% - 10px);
 }
 .hn-marker.to-opp {
   opacity: 1;
-  top: -7px;
+  transform: rotate(180deg);
+  top: -10px;
 }
 .hn-col.is-mine .hn-patron {
-  transform: translateY(6px);
+  transform: translateY(8px);
   box-shadow:
-    inset 0 0 0 2px color-mix(in srgb, var(--c) 70%, transparent),
-    0 4px 10px -4px rgb(0 0 0 / 0.3);
+    inset 0 0 0 2px color-mix(in srgb, var(--c) 75%, transparent),
+    inset 0 0 0 4px #fffcf4,
+    0 10px 18px -8px color-mix(in srgb, var(--c) 60%, transparent);
 }
 .hn-col.is-theirs .hn-patron {
-  transform: translateY(-6px);
-  opacity: 0.85;
+  transform: translateY(-8px);
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--c) 45%, transparent),
+    0 -6px 14px -8px rgb(0 0 0 / 0.35);
 }
+/* Gifts already delivered, fanned on each side of the guest. */
 .hn-pips {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 3px;
-  max-width: 60px;
-  min-height: 14px;
+  gap: 2px;
+  max-width: 66px;
+  min-height: 22px;
 }
 .hn-pips i {
-  display: block;
-  width: 14px;
-  height: 20px;
-  border-radius: 3px;
-  background: var(--c);
-  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.55);
-  animation: hn-in var(--dur-slow, 0.4s) var(--ease, ease-out);
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 22px;
+  border-radius: 4px;
+  background: #fffdf7;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--c) 50%, transparent),
+    0 1px 2px rgb(0 0 0 / 0.2);
 }
-@keyframes hn-in {
+.hn-pips i svg {
+  width: 17px;
+  height: 17px;
+}
+.hn-pips.is-me i {
+  animation: hn-fly-up 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.hn-pips.is-opp i {
+  animation: hn-fly-down 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes hn-fly-up {
   from {
     opacity: 0;
-    transform: translateY(-6px) scale(0.8);
+    transform: translateY(60px) scale(1.6) rotate(-8deg);
+  }
+}
+@keyframes hn-fly-down {
+  from {
+    opacity: 0;
+    transform: translateY(-60px) scale(1.6) rotate(8deg);
   }
 }
 .hn-sr {
@@ -344,7 +489,7 @@ button.hn-token:not(:disabled):hover {
 .hn-slot em {
   position: absolute;
   top: -8px;
-  right: -4px;
+  left: -4px;
   padding: 0 5px;
   border-radius: 999px;
   background: var(--rust, #ac562f);
@@ -387,6 +532,14 @@ button.hn-token:not(:disabled):hover {
   font-weight: 600;
 }
 .hn-offer {
+  position: relative;
+  background:
+    radial-gradient(
+      ellipse at 50% 120%,
+      rgb(200 50 60 / 0.12),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--surface, #fffdf7) 70%, transparent);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -394,6 +547,31 @@ button.hn-token:not(:disabled):hover {
   padding: 12px;
   border: 1px dashed var(--line-strong, #aaa);
   border-radius: var(--radius-md, 10px);
+}
+.hn-offer-title {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--rust, #ac562f);
+}
+.hn-offer .hn-pick {
+  animation: hn-offer-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+.hn-offer .hn-pick:nth-of-type(2) {
+  animation-delay: 0.08s;
+}
+.hn-offer .hn-pick:nth-of-type(3) {
+  animation-delay: 0.16s;
+}
+@keyframes hn-offer-in {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) rotate(-6deg);
+  }
+}
+.hn-offer.is-mine .hn-pick:not(:disabled) {
+  cursor: grab;
 }
 .hn-offer.is-mine {
   border-style: solid;
@@ -430,39 +608,77 @@ button.hn-token:not(:disabled):hover {
 @media (max-width: 600px) {
   .hn-table {
     gap: 10px;
-    padding: 10px;
+    padding: 34px 8px 10px;
   }
   .hn-card {
-    width: 42px;
-    height: 60px;
+    width: 44px;
+    height: 64px;
+    padding: 4px 2px 5px;
+  }
+  .hn-gift-art {
+    width: 34px;
+    height: 34px;
   }
   .hn-card b {
-    font-size: 18px;
+    font-size: 10px;
+    letter-spacing: 0;
   }
   .hn-card i {
+    width: 13px;
+    height: 13px;
     top: 3px;
-    left: 5px;
+    right: 3px;
     font-size: 9px;
   }
+  .hn-patrons {
+    padding: 8px 0;
+    gap: 3px;
+  }
   .hn-col {
-    min-height: 168px;
+    min-height: 196px;
     gap: 4px;
+  }
+  .hn-patron {
+    padding: 4px 1px 6px;
+    border-radius: 24px 24px 8px 8px;
+  }
+  .hn-portrait {
+    width: 88%;
+  }
+  .hn-patron b {
+    font-size: 12px;
   }
   .hn-patron small {
     display: none;
   }
-  .hn-patron i {
-    top: 3px;
-    right: 4px;
-    font-size: 9px;
+  .hn-likes {
+    padding: 0 3px 0 1px;
+    gap: 1px;
   }
-  .hn-pips i {
-    width: 9px;
+  .hn-likes svg {
+    width: 13px;
     height: 13px;
   }
+  .hn-likes i {
+    font-size: 10px;
+  }
+  .hn-marker {
+    width: 26px;
+    height: 16px;
+    margin-left: -13px;
+  }
   .hn-pips {
-    gap: 2px;
-    max-width: 40px;
+    gap: 1px;
+    max-width: 44px;
+  }
+  .hn-pips i {
+    width: 14px;
+    height: 16px;
+    border-radius: 3px;
+  }
+  .hn-pips i svg {
+    width: 12px;
+    height: 12px;
   }
   .hn-hand {
     gap: 4px;
@@ -479,6 +695,21 @@ button.hn-token:not(:disabled):hover {
   }
   .hn-who {
     min-width: 0;
+  }
+  .hn-table::after {
+    left: 6px;
+    right: 6px;
+    transform: scale(0.8);
+    transform-origin: top;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hn-pips i,
+  .hn-offer .hn-pick {
+    animation: none;
+  }
+  .hn-marker {
+    transition: none;
   }
 }
 .hn-online-link {

@@ -291,7 +291,7 @@ export const GAMES: readonly GameDefinition[] = [
     id: 'hanami',
     title: '花街七席',
     description:
-      '两人卡牌对局：七位花客、四种行动（藏、舍、赠、比），每轮每种只用一次，争夺花签。五档 AI，高档会推演上百种可能的牌局。',
+      '两人卡牌对局：给茶楼七位宾客送礼，四种行动（藏、舍、赠、比）每轮各用一次，你送我抢，争夺宾客青睐。五档 AI，高档会推演上百种可能的牌局。',
     href: '/games/hanami',
     category: '卡牌策略',
     controls: '先点行动，再点手牌，确认出牌',
