@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import '@/components/games/kit.css';
 import { GameResult } from '@/components/games/result';
-import { HanamiRules, HanamiTable } from '@/components/games/hanami/table';
+import { HanamiTable } from '@/components/games/hanami/table';
 import type { Move, Side } from '@/lib/games/hanami';
 import type { HanamiOnlineView } from '@/lib/multiplayer/hanami-online';
 import { Lobby } from './lobby';
@@ -38,7 +38,6 @@ export function HanamiOnline() {
           />
         )}
       </Lobby>
-      <HanamiRules />
     </div>
   );
 }

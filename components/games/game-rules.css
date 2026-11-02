@@ -1,0 +1,225 @@
+.game-rules {
+  position: relative;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.game-rules-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.35rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-gradient);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-1);
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+.game-rules-trigger:hover {
+  border-color: var(--rust);
+}
+.game-rules-trigger:active {
+  transform: translateY(1px);
+}
+.game-rules-trigger:focus-visible,
+.game-rules-close:focus-visible {
+  outline: 2px solid var(--rust);
+  outline-offset: 2px;
+}
+.game-rules-mark {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: var(--rust);
+  color: var(--paper);
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+.game-rules-scrim {
+  display: none;
+}
+.game-rules-panel {
+  margin-top: 0.6rem;
+  padding: 1rem 1.15rem 1.1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--surface-gradient);
+  box-shadow: var(--shadow-2);
+  text-align: left;
+  max-width: 980px;
+  animation: game-rules-in 0.18s ease-out;
+}
+.game-rules-panel:focus {
+  outline: none;
+}
+@keyframes game-rules-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.game-rules-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+.game-rules-panel header strong {
+  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+}
+.game-rules-close {
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.game-rules-close:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+.game-rules-goal {
+  margin: 0.7rem 0 0.2rem;
+}
+.game-rules-goal b,
+.game-rules-panel h3 {
+  color: var(--rust);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.game-rules-goal b {
+  margin-right: 0.6rem;
+}
+.game-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.25rem 1.6rem;
+}
+.game-rules-panel h3 {
+  margin: 0.75rem 0 0.25rem;
+}
+.game-rules-panel ul {
+  margin: 0;
+  padding-left: 1.05rem;
+  color: var(--ink-soft);
+}
+.game-rules-panel li + li {
+  margin-top: 0.2rem;
+}
+.game-rules-panel li::marker {
+  color: var(--rust);
+}
+.game-rules-keys {
+  margin: 0;
+  display: grid;
+  gap: 0.3rem;
+  color: var(--ink-soft);
+}
+.game-rules-keys div {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+.game-rules-keys dt {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+}
+.game-rules-keys dd {
+  margin: 0;
+}
+.game-rules-keys kbd {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+/* 独立牌桌页：按钮放在页眉下方的一条细栏里。 */
+.game-rules-bar {
+  max-width: 1200px;
+  margin: 0.75rem auto 0;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 5;
+}
+@media (max-width: 640px) {
+  .game-rules.is-open .game-rules-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    border: 0;
+    background: rgb(0 0 0 / 0.32);
+  }
+  .game-rules-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 61;
+    margin: 0;
+    max-height: 72vh;
+    overflow-y: auto;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: calc(1.1rem + env(safe-area-inset-bottom));
+    animation-name: game-rules-up;
+  }
+  .game-rules-panel header {
+    position: sticky;
+    top: -1rem;
+    padding-top: 0.2rem;
+    background: inherit;
+  }
+  @keyframes game-rules-up {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-rules-panel {
+    animation: none;
+  }
+}
+/* 游戏页眉里：按钮靠右，面板展开成整行。 */
+.game-page-head {
+  flex-wrap: wrap;
+}
+.game-page-head > .game-rules {
+  display: contents;
+}
+.game-page-head .game-rules-trigger {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.game-page-head .game-rules-panel {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+@media (max-width: 640px) {
+  .game-page-head .game-rules-trigger {
+    margin-left: 0;
+    margin-top: 6px;
+  }
+}

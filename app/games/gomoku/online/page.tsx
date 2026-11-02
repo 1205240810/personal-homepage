@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <GamePageFrame game={getGame('gomoku')}>
+    <GamePageFrame online game={getGame('gomoku')}>
       <GomokuOnline />
     </GamePageFrame>
   );

@@ -20,7 +20,7 @@ import {
 import { GameResult } from '../result';
 import { useLocalRecords } from '../kit';
 import '../kit.css';
-import { HanamiRules, HanamiTable } from './table';
+import { HanamiTable } from './table';
 // Vite provides the default URL export for this worker asset.
 // oxlint-disable-next-line import/default
 import hanamiWorkerUrl from '../hanami-worker.ts?worker&url';
@@ -245,7 +245,6 @@ export function HanamiGame() {
           </button>
         </div>
       )}
-      <HanamiRules />
     </div>
   );
 }

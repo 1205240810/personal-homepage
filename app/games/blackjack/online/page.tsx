@@ -11,6 +11,7 @@ export const metadata = {
 export default function Page() {
   return (
     <GamePageFrame
+      online
       game={{
         ...getGame('blackjack'),
         title: '21 点单挑',

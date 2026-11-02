@@ -178,14 +178,6 @@
 .pt-actions {
   justify-content: center;
 }
-.play-rules {
-  font-size: var(--text-sm, 13.5px);
-  color: var(--games-muted, #626b61);
-}
-.play-rules summary {
-  cursor: pointer;
-  color: var(--games-ink, #282d29);
-}
 @media (prefers-reduced-motion: reduce) {
   .pc {
     animation: none;

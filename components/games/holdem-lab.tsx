@@ -1,4 +1,6 @@
 'use client';
+
+import { GameRules } from './game-rules';
 import {
   useCallback,
   useEffect,
@@ -1997,6 +1999,9 @@ export function HoldemLab({ fromExplore = false }: { fromExplore?: boolean }) {
           </button>
         </div>
       </header>
+      <div className="game-rules-bar">
+        <GameRules gameId="holdem-lab" />
+      </div>
       <main className="poker-main">
         <section
           className={`poker-arena seat-count-${currentConfig.tableSize} ${paused ? 'is-paused' : ''}`}

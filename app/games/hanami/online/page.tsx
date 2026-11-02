@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <GamePageFrame game={getGame('hanami')}>
+    <GamePageFrame online game={getGame('hanami')}>
       <HanamiOnline />
     </GamePageFrame>
   );
