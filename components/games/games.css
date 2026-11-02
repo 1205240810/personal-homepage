@@ -1517,3 +1517,11 @@
   background: #fff;
   box-shadow: 0 0 0 1px #333;
 }
+.room-gomoku-preview .room-go-board i {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+}
+.room-gomoku-preview .room-go-board .win {
+  box-shadow: 0 0 0 2px #b4532a;
+}

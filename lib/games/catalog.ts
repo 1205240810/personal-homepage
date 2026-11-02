@@ -20,7 +20,8 @@ export type GameId =
   | 'rulewords'
   | 'timeloop'
   | 'chess'
-  | 'go';
+  | 'go'
+  | 'gomoku';
 
 export type GameDefinition = {
   id: GameId;
@@ -248,6 +249,16 @@ export const GAMES: readonly GameDefinition[] = [
     category: '棋类对弈',
     controls: '点交叉点落子；键盘方向键移动、回车落子',
     estimatedDuration: '9 路一局约 10–20 分钟',
+  },
+  {
+    id: 'gomoku',
+    title: '五子棋',
+    description:
+      '15 路棋盘，十档 AI 或双人同屏，可选黑棋禁手（连珠规则）；也能开房间和朋友联机对弈。',
+    href: '/games/gomoku',
+    category: '棋类对弈',
+    controls: '点交叉点落子',
+    estimatedDuration: '一局约 5–15 分钟',
   },
 ] as const;
 

@@ -742,6 +742,41 @@ function GoPreview() {
   );
 }
 
+function GomokuPreview() {
+  const stones: [number, number, string][] = [
+    [0, 4, 'b win'],
+    [1, 3, 'b win'],
+    [2, 2, 'b win'],
+    [3, 1, 'b win'],
+    [4, 0, 'b win'],
+    [1, 2, 'w'],
+    [2, 1, 'w'],
+    [3, 3, 'w'],
+    [2, 3, 'w'],
+  ];
+  return (
+    <div className="room-go-preview room-gomoku-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>GOMOKU / 15×15</span>
+        <span>10 LEVELS</span>
+      </div>
+      <div className="room-go-board">
+        {stones.map(([x, y, c]) => (
+          <i
+            key={`${x}${y}`}
+            className={c}
+            style={{ left: `${x * 25}%`, top: `${y * 25}%` }}
+          />
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>RENJU OPTIONAL</span>
+        <span>人机 · 同屏 · 联机</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -763,6 +798,7 @@ const previews = {
   timeloop: TimeLoopPreview,
   chess: ChessPreview,
   go: GoPreview,
+  gomoku: GomokuPreview,
 };
 
 function DailyChallenges({ fromExplore }: { fromExplore: boolean }) {
