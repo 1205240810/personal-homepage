@@ -21,7 +21,7 @@ function starPoints(n: number) {
   return s;
 }
 
-export function GoOnline() {
+export function GoOnline({ fromExplore = false }: { fromExplore?: boolean }) {
   const [snap, client] = useRoom<GoOnlineView>('go');
   const [size, setSize] = useState(9);
   const color = useRef<HTMLSelectElement>(null);
@@ -37,7 +37,10 @@ export function GoOnline() {
           </p>
           <h2 className="kit-sr">围棋联机</h2>
         </div>
-        <a className="play-back" href="/games/go">
+        <a
+          className="play-back"
+          href={`/games/go${fromExplore ? '?from=explore' : ''}`}
+        >
           返回单机
         </a>
       </header>

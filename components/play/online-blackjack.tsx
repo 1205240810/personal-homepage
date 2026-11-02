@@ -56,7 +56,11 @@ export function useCountdown(deadline: number | null, clock: PlayClock | null) {
   return countdownSeconds(deadline, clock, now);
 }
 
-export function BlackjackOnline() {
+export function BlackjackOnline({
+  fromExplore = false,
+}: {
+  fromExplore?: boolean;
+}) {
   const [snap, client] = useRoom<DuelView>('blackjack-duel');
   const stake = useRef<HTMLSelectElement>(null);
   const v = snap.view;
@@ -69,7 +73,10 @@ export function BlackjackOnline() {
           </p>
           <h2 className="kit-sr">21 点单挑</h2>
         </div>
-        <a className="play-back" href="/games/blackjack">
+        <a
+          className="play-back"
+          href={`/games/blackjack${fromExplore ? '?from=explore' : ''}`}
+        >
           返回单机
         </a>
       </header>

@@ -1,7 +1,9 @@
 'use client';
 
+// Use native navigation: the current Vinext production Link router fails here.
+/* oxlint-disable next/no-html-link-for-pages */
+
 import { Flag, Undo2 } from 'lucide-react';
-import Link from 'next/link';
 import { useMemo, useRef } from 'react';
 import '@/components/games/kit.css';
 import { GomokuBoard } from '@/components/games/gomoku-board';
@@ -19,8 +21,12 @@ import { useRoom } from './use-room';
 
 const NAME = { [BLACK]: '黑', [WHITE]: '白' } as const;
 
-export function GomokuOnline() {
-  const [snap, client] = useRoom<GomokuOnlineView>();
+export function GomokuOnline({
+  fromExplore = false,
+}: {
+  fromExplore?: boolean;
+}) {
+  const [snap, client] = useRoom<GomokuOnlineView>('gomoku');
   const color = useRef<HTMLSelectElement>(null);
   const renju = useRef<HTMLInputElement>(null);
   const v = snap.view;
@@ -33,9 +39,12 @@ export function GomokuOnline() {
           </p>
           <h2 className="kit-sr">五子棋联机</h2>
         </div>
-        <Link className="play-back" href="/games/gomoku">
+        <a
+          className="play-back"
+          href={`/games/gomoku${fromExplore ? '?from=explore' : ''}`}
+        >
           返回单机
-        </Link>
+        </a>
       </header>
       <Lobby
         snap={snap}
@@ -64,7 +73,20 @@ export function GomokuOnline() {
           }),
         }}
       >
-        {v && <Table v={v} seat={snap.seat} act={(a) => client.act(a)} />}
+        {v && (
+          <Table
+            v={v}
+            seat={snap.seat}
+            connected={snap.status === 'open'}
+            act={(a) =>
+              client.act({
+                ...a,
+                positionRevision: v.positionRevision,
+                undoRevision: v.undoRevision,
+              })
+            }
+          />
+        )}
       </Lobby>
       <p className="kit-help">
         开一个房间，把邀请链接发给朋友，对方打开就入座，不需要注册；断线或刷新后会自动回到原来的座位。黑先，连成五子即胜。开启禁手后黑棋的三三、四四、长连判负（棋盘上以红叉提示）。悔棋需要对方同意，再来一局会交换黑白。
@@ -76,15 +98,19 @@ export function GomokuOnline() {
 function Table({
   v,
   seat,
+  connected,
   act,
 }: {
   v: GomokuOnlineView;
   seat: number | null;
-  act: (a: unknown) => void;
+  connected: boolean;
+  act: (a: Record<string, unknown>) => void;
 }) {
   const opp = seat === null ? null : 1 - seat;
   const over = v.winner !== null;
-  const myTurn = v.started && !over && v.toPlay === v.you;
+  const canAct = connected && seat !== null;
+  const myTurn = canAct && v.started && !over && v.toPlay === v.you;
+  const canUndo = v.you === BLACK ? v.moves.length > 0 : v.moves.length >= 2;
   const last = v.moves[v.moves.length - 1];
   const forbidden = useMemo(() => {
     const out = new Set<number>();
@@ -99,13 +125,15 @@ function Table({
     });
     return out;
   }, [v.cells, v.renju, v.size, v.you, myTurn]);
-  const status = !v.started
-    ? '等待对手入座…'
-    : over
-      ? '对局结束'
-      : myTurn
-        ? `轮到你（${NAME[v.you!]}）`
-        : `等对方落子（${NAME[v.toPlay]}）`;
+  const status = !connected
+    ? '连接恢复后可继续操作…'
+    : !v.started
+      ? '等待对手入座…'
+      : over
+        ? '对局结束'
+        : myTurn
+          ? `轮到你（${NAME[v.you!]}）`
+          : `等对方落子（${NAME[v.toPlay]}）`;
   return (
     <>
       <p className="kit-stats">
@@ -129,12 +157,14 @@ function Table({
           <button
             type="button"
             className="kit-primary"
+            disabled={!canAct}
             onClick={() => act({ type: 'undo-answer', accept: true })}
           >
             同意
           </button>
           <button
             type="button"
+            disabled={!canAct}
             onClick={() => act({ type: 'undo-answer', accept: false })}
           >
             拒绝
@@ -159,7 +189,11 @@ function Table({
           </strong>
           <span>
             {v.reason === 'resign'
-              ? '对方认输'
+              ? v.winner === v.you
+                ? '对方认输'
+                : v.you
+                  ? '你已认输'
+                  : `${NAME[v.winner === BLACK ? WHITE : BLACK]}认输`
               : v.reason === 'forbidden'
                 ? '黑棋落在禁手点'
                 : v.reason === 'five'
@@ -170,7 +204,7 @@ function Table({
           <button
             type="button"
             className="kit-primary"
-            disabled={seat !== null && v.rematch[seat]}
+            disabled={!canAct || (seat !== null && v.rematch[seat])}
             onClick={() => act({ type: 'rematch' })}
           >
             {seat !== null && v.rematch[seat]
@@ -194,7 +228,7 @@ function Table({
           type="button"
           data-shortcut="z"
           disabled={
-            over || !v.started || v.undoFrom !== null || !v.moves.length
+            !canAct || over || !v.started || v.undoFrom !== null || !canUndo
           }
           onClick={() => act({ type: 'undo-request' })}
         >
@@ -202,7 +236,7 @@ function Table({
         </button>
         <button
           type="button"
-          disabled={over || !v.started}
+          disabled={!canAct || over || !v.started}
           onClick={() => {
             if (confirm('确定认输吗？')) act({ type: 'resign' });
           }}

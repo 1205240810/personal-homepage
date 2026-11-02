@@ -1,8 +1,8 @@
-.kit .gomoku-board .go-pt:disabled {
+.kit .gomoku-board .go-pt[aria-disabled='true'] {
   cursor: default;
   opacity: 1;
 }
-.kit .gomoku-board .go-pt:not(:disabled):hover {
+.kit .gomoku-board .go-pt:not([aria-disabled='true']):hover {
   background: radial-gradient(circle, rgb(0 0 0 / 0.14) 0 30%, transparent 32%);
 }
 .go-stone.is-win {
@@ -29,7 +29,10 @@
   font-size: 12px;
   color: var(--muted, #6b6b6b);
 }
-html[data-theme='tech'] .kit .gomoku-board .go-pt:not(:disabled):hover {
+html[data-theme='tech']
+  .kit
+  .gomoku-board
+  .go-pt:not([aria-disabled='true']):hover {
   background: radial-gradient(
     circle,
     rgb(103 232 249 / 0.25) 0 30%,

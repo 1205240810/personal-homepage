@@ -1,5 +1,6 @@
-// 五子棋规则：15 路棋盘，黑先。可选「禁手」（连珠规则）：黑棋长连、四四、三三
+// 五子棋规则：15 路棋盘，黑先。可选连珠禁手（不含比赛开局规则）：黑棋长连、四四、三三
 // 为禁手，落子即判负；白棋无禁手，长连也算胜。默认自由规则（五连及以上即胜）。
+// 禁手依据 RIF 定义 3、9.2、9.3：https://www.renju.net/rifrules/
 export const SIZE = 15;
 export const EMPTY = 0;
 export const BLACK = 1;
@@ -90,8 +91,7 @@ export function fiveAt(
 }
 
 // ---- 禁手判定 ----
-// Line pattern around i in one direction: 9 cells each side, chars '1' own,
-// '0' empty, 'x' blocked (opponent or edge).
+// Points up to five intersections from i; -1 marks an edge.
 function lineCells(
   cells: Stone[],
   size: number,
@@ -110,7 +110,7 @@ function lineCells(
   return out; // index 5 is i
 }
 
-/** Does placing black at `i` (already placed) make an exact five along this line? */
+/** Does adding black at empty j make an exact five along this line? */
 function exactFiveWith(
   cells: Stone[],
   size: number,
@@ -125,7 +125,7 @@ function exactFiveWith(
   return ok;
 }
 
-/** Number of distinct fours (positions completing an exact five) through i in direction. */
+/** Count distinct sets of four stones, not their possible winning endpoints. */
 function foursInDir(
   cells: Stone[],
   size: number,
@@ -134,24 +134,16 @@ function foursInDir(
   dy: number,
 ) {
   const idx = lineCells(cells, size, i, dx, dy);
-  const wins = new Set<number>();
-  for (const j of idx)
-    if (j >= 0 && j !== i && exactFiveWith(cells, size, j, dx, dy)) {
-      // must form five containing i
-      cells[j] = BLACK;
-      if (run(cells, size, j, dx, dy, BLACK).includes(i)) wins.add(j);
-      cells[j] = EMPTY;
-    }
-  if (wins.size === 0) return 0;
-  const arr = [...wins].sort((a, b) => a - b);
-  if (arr.length >= 2) {
-    const step = Math.abs(dy * size + dx);
-    const gap = (arr[arr.length - 1] - arr[0]) / step;
-    // 0 1111 0 (straight four) has its two points exactly 5 apart; any
-    // other spacing means two separate fours on one line (e.g. 1 0 111 0 1).
-    return gap === 5 ? 1 : 2;
+  const fours = new Set<string>();
+  for (const j of idx) {
+    if (j < 0 || cells[j] !== EMPTY) continue;
+    cells[j] = BLACK;
+    const line = run(cells, size, j, dx, dy, BLACK);
+    if (line.length === 5 && line.includes(i))
+      fours.add(line.filter((k) => k !== j).join(','));
+    cells[j] = EMPTY;
   }
-  return 1;
+  return fours.size;
 }
 
 /** Open three through i in direction: some empty j makes a straight (open) four. */
@@ -161,7 +153,7 @@ function threeInDir(
   i: number,
   dx: number,
   dy: number,
-  depth: number,
+  memo: Map<string, boolean>,
 ) {
   const idx = lineCells(cells, size, i, dx, dy);
   for (const j of idx) {
@@ -189,7 +181,10 @@ function threeInDir(
           ok(b, l[3]) &&
           exactFiveWith(cells, size, a, dx, dy) &&
           exactFiveWith(cells, size, b, dx, dy) &&
-          (depth > 1 || !forbiddenAt(cells, size, j, depth + 1));
+          // RIF definitions 3 / 9.3: a three must extend without making
+          // five, overline, double-four or a recursively forbidden double-three.
+          !fiveAt(cells, size, j, true) &&
+          !forbiddenAt(cells, size, j, memo);
       }
     }
     cells[j] = EMPTY;
@@ -202,43 +197,50 @@ function forbiddenAt(
   cells: Stone[],
   size: number,
   i: number,
-  depth: number,
+  memo: Map<string, boolean>,
 ): boolean {
   // cells[i] is BLACK already
   if (fiveAt(cells, size, i, true)) return false;
+  if (!maybeForbidden(cells, size, i)) return false;
+  const key = `${i}:${cells.join('')}`;
+  const cached = memo.get(key);
+  if (cached !== undefined) return cached;
   let fours = 0;
-  let threes = 0;
+  const threeDirs: [number, number][] = [];
   for (const [dx, dy] of DIRS) {
     if (run(cells, size, i, dx, dy, BLACK).length > 5) return true;
     const f = foursInDir(cells, size, i, dx, dy);
     fours += f;
-    if (f === 0 && threeInDir(cells, size, i, dx, dy, depth)) threes++;
+    if (fours >= 2) return true;
+    if (f === 0) threeDirs.push([dx, dy]);
   }
-  return fours >= 2 || threes >= 2;
+  let threes = 0;
+  for (const [dx, dy] of threeDirs) {
+    if (threeInDir(cells, size, i, dx, dy, memo)) threes++;
+    if (threes >= 2) break;
+  }
+  const forbidden = threes >= 2;
+  memo.set(key, forbidden);
+  return forbidden;
 }
 
-/** Cheap pre-check: a forbidden move needs a dense black line in two directions
- * (or an overline). Windows of 5 through i with ≥3 black (counting i). */
+/** Necessary conditions only: two threes need two directions with three
+ * stones; same-line double-fours need five stones across up to nine points.
+ * A six-point window misses the pattern 1 0 1 1 1 0 1. */
 function maybeForbidden(cells: Stone[], size: number, i: number) {
   const x0 = i % size;
   const y0 = Math.floor(i / size);
   let dense = 0;
   for (const [dx, dy] of DIRS) {
-    let best = 0;
-    for (let k = -5; k <= 0; k++) {
-      let n = 0;
-      for (let t = k; t < k + 6; t++) {
-        const x = x0 + dx * t;
-        const y = y0 + dy * t;
-        if (x < 0 || y < 0 || x >= size || y >= size) continue;
-        const c = t === 0 ? BLACK : cells[y * size + x];
-        if (c === WHITE) n -= 9;
-        else if (c === BLACK) n++;
-      }
-      best = Math.max(best, n);
+    let n = 0;
+    for (let t = -4; t <= 4; t++) {
+      const x = x0 + dx * t;
+      const y = y0 + dy * t;
+      if (x < 0 || y < 0 || x >= size || y >= size) continue;
+      if (cells[y * size + x] === BLACK) n++;
     }
-    if (best >= 5) return true;
-    if (best >= 3) dense++;
+    if (n >= 5) return true;
+    if (n >= 3) dense++;
   }
   return dense >= 2;
 }
@@ -246,10 +248,9 @@ function maybeForbidden(cells: Stone[], size: number, i: number) {
 /** Is black at empty point i a forbidden move (renju)? */
 export function isForbidden(s: GomokuState, i: number) {
   if (!s.renju || s.cells[i] !== EMPTY) return false;
-  if (!maybeForbidden(s.cells, s.size, i)) return false;
   const cells = s.cells.slice();
   cells[i] = BLACK;
-  return forbiddenAt(cells, s.size, i, 0);
+  return forbiddenAt(cells, s.size, i, new Map());
 }
 
 export function play(s: GomokuState, i: number): GomokuState {
@@ -271,7 +272,7 @@ export function play(s: GomokuState, i: number): GomokuState {
   };
   const line = fiveAt(cells, s.size, i, s.renju);
   if (line) return { ...next, winner: s.toPlay, line, reason: 'five' };
-  if (s.renju && s.toPlay === BLACK && forbiddenAt(cells, s.size, i, 0))
+  if (s.renju && s.toPlay === BLACK && forbiddenAt(cells, s.size, i, new Map()))
     return { ...next, winner: WHITE, line: [i], reason: 'forbidden' };
   if (next.moves.length === cells.length)
     return { ...next, winner: 0, reason: 'draw' };

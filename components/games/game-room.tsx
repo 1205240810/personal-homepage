@@ -904,7 +904,9 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
         <ul className="room-online-list">
           {ONLINE.map((game) => (
             <li key={game.id}>
-              <a href={game.online!.href}>
+              <a
+                href={`${game.online!.href}${fromExplore ? '?from=explore' : ''}`}
+              >
                 <span className="room-online-format">
                   {game.online!.format}
                 </span>
@@ -928,7 +930,7 @@ export function GameRoom({ fromExplore = false }: { fromExplore?: boolean }) {
           <h2 id="room-solo-title">
             <User size={16} strokeWidth={1.6} aria-hidden="true" /> 单机
           </h2>
-          <p>不用等人，打开就玩；棋牌类都配有分档 AI。</p>
+          <p>不用等人，打开就玩；部分棋类提供分档 AI 陪练。</p>
         </header>
         <div className="game-room-selection">
           {GAMES.map((game, index) => {
