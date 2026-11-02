@@ -258,6 +258,9 @@ export const blackjackDuel: GameModule<DuelState, DuelOptions> = {
       return { state: deal({ ...base, banker: other(st0.banker) }, rng, now) };
     }
     if (actor(st0) !== seat) return { error: '还没轮到你' };
+    // A delayed event-loop timer must not extend the server's action window.
+    if (st0.deadline !== null && now >= st0.deadline)
+      return { error: '本次行动已超时，请等待自动停牌' };
     const st: DuelState = {
       ...st0,
       hands: [st0.hands[0].slice(), st0.hands[1].slice()],

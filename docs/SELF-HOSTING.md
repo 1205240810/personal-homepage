@@ -36,6 +36,10 @@ sudo install -d -o mecha -g mecha /srv/personal-homepage /srv/personal-homepage/
 
 根目录的 `npm run check` 包含 21 点、梭哈和灯阵组件回归，使用 `standalone/blackjack` 与 `standalone/stud` 锁定的测试依赖。全新源码目录需先安装根目录及这两款独立游戏的依赖，再执行检查和构建；只运行根目录的 `npm ci` 不足以完成检查。
 
+构建结束还会校验 RSC 预加载清单中的所有 JS/CSS 文件及 standalone 副本，防止页面引用已被构建器移除的空脚本。升级 Vite 或 RSC 插件时，需重新检查 `scripts/rsc-assets-after-css.ts` 中的构建顺序兼容处理。
+
+`build:play` 会实际启动打包后的联机服务，验证中文空格路径、`current` 目录软链接和文件软链接均能响应健康检查，并确认仅导入模块不会自动监听端口。
+
 ```bash
 mecha_revision='填写审核过的完整提交 SHA'
 mecha_short="${mecha_revision:0:7}"
@@ -213,7 +217,8 @@ location = /play/ws {
 ```
 
 ```bash
-sudoedit /etc/nginx/sites-available/personal-homepage
+# 本站使用实际域名站点；保留旧 IP 站点与证书配置。
+sudoedit /etc/nginx/sites-available/tscjj-domain
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
@@ -225,6 +230,8 @@ curl -fsS http://127.0.0.1:3100/play/health
 ```
 
 3100 端口只监听本机，不需要在防火墙放行。查看日志：`sudo journalctl -u personal-homepage-play.service -n 80 --no-pager`。本地开发时另开一个终端运行 `npm run play:server`；开发模式下页面直接连 `ws://localhost:3100/play/ws`。
+
+启用联机后的版本更新与回滚都要同时重启两个服务。若回滚到没有 `play-server.mjs` 的旧版本，应先停止联机服务，再回滚主站；重新启用前确认目标目录包含此文件。围棋尚无计时与观战；德州掉线期间行动计时继续，重启联机服务会清空所有房间。
 
 ## 域名与 HTTPS
 

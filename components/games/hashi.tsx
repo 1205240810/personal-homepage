@@ -26,6 +26,7 @@ import {
 } from '@/lib/games/hashi';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
+import { focusResultBoard, GameResult } from './result';
 import './hashi.css';
 
 const EMPTY = emptyHashiRecords();
@@ -108,6 +109,7 @@ export function HashiBridges() {
   }, [startedAt, doneIn]);
 
   function load(next: Pick) {
+    focusResultBoard(boardRef.current?.querySelector<HTMLElement>('button'));
     const p = puzzleFor(next, ready);
     setPick(next);
     setBridges(p.edges.map(() => 0));
@@ -286,7 +288,13 @@ export function HashiBridges() {
         <button type="button" onClick={hint} disabled={doneIn !== null}>
           <Lightbulb size={15} aria-hidden="true" /> 提示 (H)
         </button>
-        <button type="button" onClick={() => load(pick)} aria-label="重来">
+        <button
+          type="button"
+          onClick={() => load(pick)}
+          aria-label="重来"
+          title="重来 (R)"
+          data-shortcut="r"
+        >
           <RotateCcw size={15} aria-hidden="true" />
         </button>
         {pick.kind === 'random' && (
@@ -305,10 +313,28 @@ export function HashiBridges() {
         )}
       </div>
       {doneIn !== null && (
-        <output className="kit-ok">
-          全部连通！用时 {fmt(doneIn)}
-          {hints ? `（${hints} 次提示）` : ''}
-        </output>
+        <GameResult
+          tone="win"
+          title={`全部连通！用时 ${fmt(doneIn)}`}
+          actions={
+            pick.kind === 'random'
+              ? [
+                  {
+                    label: '换一题',
+                    primary: true,
+                    onClick: () =>
+                      load({
+                        kind: 'random',
+                        size: pick.size,
+                        seed: Math.floor(Math.random() * 1e9),
+                      }),
+                  },
+                ]
+              : []
+          }
+        >
+          {hints ? `用了 ${hints} 次提示` : '没用提示'}
+        </GameResult>
       )}
 
       <fieldset
@@ -382,7 +408,7 @@ export function HashiBridges() {
       <p className="kit-help">
         先点一座岛，再点同行或同列看得见的另一座岛，桥数按 0→1→2→0
         循环；也可以从岛上往某个方向滑一下。岛上的数字是它连出去的桥数，桥不能交叉，最后所有岛要连成一片。键盘：方向键在该方向加桥，Shift+方向键跳到那边的岛，H
-        提示。
+        提示，R 重来。
       </p>
       <p className="kit-sr" aria-live="polite">
         {announce}

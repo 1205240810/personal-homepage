@@ -39,6 +39,26 @@ afterEach(() => {
 });
 
 describe('迷宫竞速', () => {
+  it.each(['click', 'shortcut'])(
+    '结算卡通过 %s 重玩后焦点回到迷宫并可继续移动',
+    (method) => {
+      render(<MazeRace />);
+      fireEvent.click(screen.getByLabelText('动画生成'));
+      fireEvent.click(screen.getByRole('button', { name: /看答案/ }));
+      const replay = screen.getByRole('button', { name: '再来一局 (R)' });
+      replay.focus();
+      if (method === 'click') fireEvent.click(replay);
+      else fireEvent.keyDown(replay, { key: 'r' });
+      expect(document.querySelector('.game-result')).toBeNull();
+      expect(document.activeElement).toBe(canvas());
+      const { maze } = generateMaze('backtracker', 'small', 20261013);
+      const open = DIRS.find((d) => move(maze, 0, d) !== 0)!;
+      fireEvent.keyDown(document.activeElement!, { key: KEY[open] });
+      expect(canvas().getAttribute('aria-label')).not.toMatch(/第 1 行第 1 列/);
+      expect(localStorage.getItem(MAZE_RECORDS_KEY)).toBeNull();
+    },
+  );
+
   it('按最短路一步步走到终点，记录最快用时', () => {
     render(<MazeRace />);
     const { maze } = generateMaze('backtracker', 'small', 20261013);
