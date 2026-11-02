@@ -35,7 +35,11 @@ const Card = ({ n }: { n: number | null }) => (
   <PlayingCard c={n === null ? null : toCard(n)} />
 );
 
-export function HoldemOnline() {
+export function HoldemOnline({
+  fromExplore = false,
+}: {
+  fromExplore?: boolean;
+}) {
   const [snap, client] = useRoom<HoldemOnlineView>('holdem');
   const [bots, setBots] = useState(2);
   const [styles, setStyles] = useState(['careful', 'active', 'tricky']);
@@ -46,14 +50,17 @@ export function HoldemOnline() {
       <header className="kit-head">
         <div>
           <p className="kit-kicker">
-            {"HOLD'EM · 双人联手"}
+            {"HOLD'EM · 双人同桌"}
             {v?.hand
               ? ` · 盲注 ${v.blinds[0]}/${v.blinds[1]} · 第 ${v.hand} 手`
               : ''}
           </p>
           <h2 className="kit-sr">德州联机</h2>
         </div>
-        <a className="play-back" href="/games/holdem-lab">
+        <a
+          className="play-back"
+          href={`/games/holdem-lab${fromExplore ? '?from=explore' : ''}`}
+        >
           返回单机
         </a>
       </header>
@@ -126,8 +133,8 @@ export function HoldemOnline() {
       <details className="play-rules">
         <summary>联机规则</summary>
         <p>
-          你和朋友坐在同一张桌上，一起对抗单机练习桌里的 AI 性格；每位 AI
-          可分别选均衡、稳健、积极或灵活风格。每人起始 1000 筹码，盲注
+          你和朋友坐在同一张桌上，各自争夺底池，与单机练习桌里的 AI 对局；每位
+          AI 可分别选均衡、稳健、积极或灵活风格。每人起始 1000 筹码，盲注
           5/10，庄位每手顺移。牌由服务器洗发，AI
           也在服务器上思考，它们和你的朋友都看不到你的底牌；只有摊牌时才公开未弃牌玩家的底牌。每次行动限时
           30 秒，超时能过牌就过牌，否则弃牌。一手结束后两人都点「下一手」或等 7

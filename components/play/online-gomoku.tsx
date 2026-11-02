@@ -19,7 +19,11 @@ import { useRoom } from './use-room';
 
 const NAME = { [BLACK]: '黑', [WHITE]: '白' } as const;
 
-export function GomokuOnline() {
+export function GomokuOnline({
+  fromExplore = false,
+}: {
+  fromExplore?: boolean;
+}) {
   const [snap, client] = useRoom<GomokuOnlineView>('gomoku');
   const color = useRef<HTMLSelectElement>(null);
   const renju = useRef<HTMLInputElement>(null);
@@ -33,7 +37,10 @@ export function GomokuOnline() {
           </p>
           <h2 className="kit-sr">五子棋联机</h2>
         </div>
-        <Link className="play-back" href="/games/gomoku">
+        <Link
+          className="play-back"
+          href={`/games/gomoku${fromExplore ? '?from=explore' : ''}`}
+        >
           返回单机
         </Link>
       </header>
