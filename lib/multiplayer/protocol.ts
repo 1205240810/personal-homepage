@@ -9,7 +9,7 @@ export type SeatInfo = { name: string; online: boolean; taken: boolean };
 
 export type ClientMsg =
   | { t: 'create'; game: string; options?: unknown; name?: string }
-  | { t: 'join'; code: string; token?: string; name?: string }
+  | { t: 'join'; code: string; token?: string; name?: string; game?: string }
   | { t: 'act'; action: unknown }
   | { t: 'ping' };
 
@@ -18,6 +18,8 @@ export type ServerMsg =
   | {
       t: 'state';
       version: number;
+      /** Server wall-clock time when this state was projected. */
+      serverNow: number;
       seats: SeatInfo[];
       view: unknown;
     }
@@ -29,6 +31,7 @@ export type ErrorCode =
   | 'no-game'
   | 'no-room'
   | 'room-full'
+  | 'wrong-game'
   | 'not-seated'
   | 'illegal'
   | 'rate-limited'
@@ -95,6 +98,7 @@ export function parseClientMsg(raw: string): ClientMsg | null {
             code: o.code.toUpperCase(),
             token: typeof o.token === 'string' ? o.token : undefined,
             name,
+            game: typeof o.game === 'string' ? o.game : undefined,
           }
         : null;
     case 'act':

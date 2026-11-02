@@ -6,6 +6,7 @@ import { useEffect, useState, type ComponentType } from 'react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import type { BlackjackGameProps } from './generated/BlackjackGame';
 import './blackjack-room.css';
+import '../tables.css';
 
 export function BlackjackRoom({
   fromExplore = false,

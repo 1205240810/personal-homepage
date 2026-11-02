@@ -2,6 +2,7 @@
 // Node server, plus hub-level checks with fake connections.
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
+import { countdownSeconds } from '../lib/multiplayer/clock.ts';
 import { PlayClient } from '../lib/multiplayer/client.ts';
 import { RoomHub, type Conn } from '../lib/multiplayer/hub.ts';
 import { echoModule } from '../lib/multiplayer/echo.ts';
@@ -26,6 +27,60 @@ const fake = (ip = '1.1.1.1') => {
   const conn: Conn = { ip, send: (m) => got.push(m) };
   return { conn, got, last: () => got[got.length - 1] };
 };
+
+void describe('server-relative countdown', () => {
+  void it('shows the same remaining time with fast and slow client wall clocks', (t) => {
+    const serverNow = 1_790_000_000_000;
+    const sample = { serverNow, receivedAt: 5000 };
+    for (const skew of [-86_400_000, -29_213, 29_213, 86_400_000]) {
+      t.mock.method(Date, 'now', () => serverNow + skew);
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, 5000), 30);
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, 6000), 29);
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, 34_001), 1);
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, 35_000), 0);
+      t.mock.restoreAll();
+    }
+  });
+  void it('keeps ticking when the local wall clock changes, and refreshes from server samples', (t) => {
+    const serverNow = 1_790_000_000_000;
+    const sample = { serverNow, receivedAt: 1000 };
+    t.mock.method(Date, 'now', () => serverNow + 3_600_000);
+    assert.equal(countdownSeconds(serverNow + 30_000, sample, 11_000), 20);
+    t.mock.restoreAll();
+    t.mock.method(Date, 'now', () => serverNow - 3_600_000);
+    assert.equal(countdownSeconds(serverNow + 30_000, sample, 21_000), 10);
+    const rejoined = { serverNow: serverNow + 25_000, receivedAt: 50_000 };
+    assert.equal(countdownSeconds(serverNow + 30_000, rejoined, 50_000), 5);
+    assert.equal(countdownSeconds(serverNow + 30_000, rejoined, 56_000), 0);
+    assert.equal(countdownSeconds(null, rejoined, 56_000), null);
+    assert.equal(countdownSeconds(serverNow + 30_000, null, 56_000), null);
+    // A newly received sample may be newer than the hook's last animation tick.
+    assert.equal(countdownSeconds(serverNow + 30_000, rejoined, 49_900), 5);
+  });
+  void it('anchors real relay messages to monotonic receipt time despite server clock skew', async () => {
+    const serverNow = 1_790_000_000_000;
+    const hub = new RoomHub([echoModule], { now: () => serverNow });
+    const server = await startPlayServer({ port: 0, hub });
+    const client = new PlayClient({ url: `ws://127.0.0.1:${server.port}/play/ws` });
+    try {
+      const start = performance.now();
+      client.create('echo');
+      await until(() => client.snapshot.view);
+      const sample = client.snapshot.clock;
+      assert.ok(sample);
+      assert.equal(sample.serverNow, serverNow);
+      assert.ok(sample.receivedAt >= start && sample.receivedAt <= performance.now());
+      assert.equal(countdownSeconds(serverNow + 30_000, sample, sample.receivedAt), 30);
+      client.create('echo');
+      assert.equal(client.snapshot.clock, null, 'new room must clear the old clock sample');
+      await until(() => client.snapshot.view);
+      assert.ok(client.snapshot.clock);
+    } finally {
+      client.close();
+      await server.close();
+    }
+  });
+});
 
 void describe('RoomHub', () => {
   void it('creates, seats two players and rejects a third', () => {
@@ -92,6 +147,52 @@ void describe('RoomHub', () => {
     hub.sweep();
     assert.equal(hub.roomCount, 0);
   });
+
+  void it('keeps seat credentials independent of the game random stream', () => {
+    const hub = new RoomHub([echoModule], { random: () => 0 });
+    const a = fake();
+    const b = fake();
+    hub.message(a.conn, JSON.stringify({ t: 'create', game: 'echo' }));
+    const joined = a.got.find((m) => m.t === 'joined');
+    assert.ok(joined && joined.t === 'joined');
+    hub.message(b.conn, JSON.stringify({ t: 'join', code: joined.code }));
+    const second = b.got.find((m) => m.t === 'joined');
+    assert.ok(second && second.t === 'joined');
+    assert.notEqual(joined.token, second.token);
+    hub.close();
+  });
+
+  void it('does not reset the message budget when a seated client rejoins', () => {
+    const hub = new RoomHub([echoModule], { now: () => 0, rate: 3 });
+    const a = fake();
+    hub.message(a.conn, JSON.stringify({ t: 'create', game: 'echo' }));
+    const joined = a.got.find((m) => m.t === 'joined');
+    assert.ok(joined && joined.t === 'joined');
+    const message = JSON.stringify({ t: 'join', code: joined.code, token: joined.token });
+    for (let i = 0; i < 3; i++) hub.message(a.conn, message);
+    assert.equal((a.last() as { code: string }).code, 'rate-limited');
+    hub.close();
+  });
+
+  void it('rejects a different game before leaving or claiming a seat', () => {
+    const hub = new RoomHub([echoModule]);
+    const a = fake();
+    const b = fake();
+    hub.message(a.conn, JSON.stringify({ t: 'create', game: 'echo' }));
+    const joined = a.got.find((m) => m.t === 'joined');
+    assert.ok(joined && joined.t === 'joined');
+    hub.message(b.conn, JSON.stringify({ t: 'join', code: joined.code, game: 'go' }));
+    assert.equal((b.last() as { code: string }).code, 'wrong-game');
+    hub.message(b.conn, JSON.stringify({ t: 'join', code: joined.code, game: 'echo' }));
+    assert.ok(b.got.some((m) => m.t === 'joined' && m.seat === 1));
+    const c = fake();
+    hub.message(c.conn, JSON.stringify({ t: 'create', game: 'echo' }));
+    hub.message(c.conn, JSON.stringify({ t: 'join', code: joined.code }));
+    assert.equal((c.last() as { code: string }).code, 'room-full');
+    hub.message(c.conn, JSON.stringify({ t: 'act', action: { add: 1 } }));
+    assert.equal((c.last() as { t: string }).t, 'state');
+    hub.close();
+  });
 });
 
 void describe('play server (two real clients)', () => {
@@ -139,5 +240,55 @@ void describe('play server (two real clients)', () => {
     const r = await fetch(`http://127.0.0.1:${server.port}/play/health`);
     assert.equal(r.status, 200);
     assert.equal(((await r.json()) as { ok: boolean }).ok, true);
+  });
+
+  void it('can retry creating a room after the server rejects its options', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo', { target: -1 });
+      await until(() => a.snapshot.error);
+      assert.equal(a.snapshot.status, 'closed');
+      a.create('echo', { target: 5 });
+      await until(() => a.snapshot.view);
+      assert.equal(a.snapshot.status, 'open');
+      assert.equal(a.snapshot.error, null);
+    } finally {
+      a.close();
+    }
+  });
+
+  void it('can create another room after playing without keeping the old version or view', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo');
+      await until(() => a.snapshot.view);
+      a.act({ add: 1 });
+      await until(() => a.snapshot.view?.total === 1);
+      const first = a.snapshot.code;
+      a.create('echo');
+      assert.equal(a.snapshot.view, null);
+      await until(() => a.snapshot.code && a.snapshot.code !== first && a.snapshot.view);
+      assert.equal(a.getSnapshot().view?.total, 0);
+    } finally {
+      a.close();
+    }
+  });
+
+  void it('does not replay an offline action against the state received after reconnecting', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo');
+      await until(() => a.snapshot.view);
+      (a as unknown as { ws: WebSocket }).ws.close();
+      await until(() => a.snapshot.status === 'reconnecting');
+      a.act({ add: 2 });
+      await until(() => a.snapshot.status === 'open');
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      assert.equal(a.snapshot.view?.total, 0);
+      a.act({ add: 1 });
+      await until(() => a.snapshot.view?.total === 1);
+    } finally {
+      a.close();
+    }
   });
 });

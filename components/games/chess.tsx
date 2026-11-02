@@ -31,6 +31,7 @@ import {
   type Color,
 } from '@/lib/games/chess';
 import { useBoardViewport, useLocalRecords } from './kit';
+import { usePersistedSetting } from './prefs';
 // Vite provides a default URL export for the worker query.
 // oxlint-disable-next-line import/default
 import chessWorkerUrl from './chess-worker.ts?worker&url';
@@ -50,6 +51,9 @@ const GLYPH: Record<string, string> = {
 const COLOR_NAME: Record<Color, string> = { w: '白', b: '黑' };
 
 /** One search owns one worker so leaving a position also stops its CPU work. */
+const isChessLevel = (v: unknown): v is ChessLevel =>
+  typeof v === 'number' && v in CHESS_LEVELS;
+
 function askChessAi(fen: string, level: ChessLevel, history: string[] = []) {
   let worker: Worker | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -112,6 +116,7 @@ export function ChessGame() {
   const [moves, setMoves] = useState<string[]>([]);
   const [player, setPlayer] = useState<Color>('w');
   const [level, setLevel] = useState<ChessLevel>(2);
+  usePersistedSetting('chess-level', level, setLevel, isChessLevel);
   const [flipped, setFlipped] = useState(false);
   const [selected, setSelected] = useState<Square | null>(null);
   const [focus, setFocus] = useState<Square>('e2');
@@ -530,7 +535,13 @@ export function ChessGame() {
             重试 AI
           </button>
         )}
-        <button type="button" onClick={undo} disabled={!moves.length}>
+        <button
+          type="button"
+          onClick={undo}
+          disabled={!moves.length}
+          data-shortcut="z"
+          title="悔棋 (Z)"
+        >
           <Undo2 size={15} aria-hidden="true" /> 悔棋
         </button>
         <button type="button" onClick={() => setFlipped(!flipped)}>
@@ -683,7 +694,8 @@ export function ChessGame() {
         </fieldset>
       )}
       <p className="kit-help">
-        点己方棋子再点目标格走子；键盘用方向键移动焦点、回车选择。支持王车易位、吃过路兵、升变，
+        点己方棋子再点目标格走子；键盘用方向键移动焦点、回车选择，Z
+        悔棋。支持王车易位、吃过路兵、升变，
         以及将死、逼和、三次重复、五十回合与子力不足判和。AI
         在后台线程思考；不支持后台线程时使用初级强度。
       </p>

@@ -10,7 +10,15 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <GamePageFrame game={getGame('blackjack')}>
+    <GamePageFrame
+      game={{
+        ...getGame('blackjack'),
+        title: '21 点单挑',
+        description:
+          '和朋友轮流坐庄，各自保管暗牌，练习要牌、停牌和加倍。所有筹码均为虚拟数值。',
+        controls: '鼠标或触控；每次行动限时 30 秒，超时自动停牌',
+      }}
+    >
       <BlackjackOnline />
     </GamePageFrame>
   );

@@ -1,5 +1,6 @@
 // Browser/Node client for the play relay: connects, creates or joins a room,
 // keeps the seat token and transparently reconnects after drops.
+import type { PlayClock } from './clock.ts';
 import type { ClientMsg, SeatInfo, ServerMsg } from './protocol.ts';
 
 export type PlayStatus =
@@ -16,6 +17,7 @@ export type PlaySnapshot<V = unknown> = {
   seats: SeatInfo[];
   view: V | null;
   version: number;
+  clock: PlayClock | null;
   error: string | null;
 };
 
@@ -55,6 +57,7 @@ export type PlayClientOptions = {
   tokens?: TokenStore;
   WebSocketImpl?: typeof WebSocket;
   name?: string;
+  game?: string;
 };
 
 export class PlayClient<V = unknown> {
@@ -65,6 +68,7 @@ export class PlayClient<V = unknown> {
     seats: [],
     view: null,
     version: 0,
+    clock: null,
     error: null,
   };
   private ws: WebSocket | null = null;
@@ -98,6 +102,7 @@ export class PlayClient<V = unknown> {
       code: c,
       token: this.token ?? undefined,
       name: this.o.name,
+      game: this.o.game,
     });
   }
   act(action: unknown) {
@@ -106,7 +111,10 @@ export class PlayClient<V = unknown> {
   close() {
     this.stopped = true;
     if (this.timer) clearTimeout(this.timer);
-    this.ws?.close();
+    this.timer = null;
+    const ws = this.ws;
+    this.ws = null;
+    ws?.close();
     this.set({ status: 'closed' });
   }
 
@@ -122,22 +130,30 @@ export class PlayClient<V = unknown> {
   private start(intent: ClientMsg) {
     this.intent = intent;
     this.stopped = false;
-    this.set({ error: null });
+    this.set({
+      error: null, code: null, seat: null, seats: [],
+      view: null, version: 0, clock: null,
+    });
     this.connect();
   }
 
   private connect() {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
     this.ws?.close();
     const WS = this.o.WebSocketImpl ?? globalThis.WebSocket;
     this.set({ status: this.snapshot.code ? 'reconnecting' : 'connecting' });
     const ws = new WS(this.o.url ?? defaultPlayUrl());
     this.ws = ws;
     ws.onopen = () => {
+      if (this.ws !== ws || this.stopped) return;
       this.retry = 0;
       if (this.intent) ws.send(JSON.stringify(this.intent));
     };
-    ws.onmessage = (ev) =>
+    ws.onmessage = (ev) => {
+      if (this.ws !== ws || this.stopped) return;
       this.receive(JSON.parse(String(ev.data)) as ServerMsg);
+    };
     ws.onclose = () => {
       if (this.ws !== ws || this.stopped) return;
       this.set({ status: 'reconnecting' });
@@ -157,16 +173,27 @@ export class PlayClient<V = unknown> {
         code: m.code,
         token: m.token,
         name: this.o.name,
+        game: this.o.game,
       };
-      this.set({ status: 'open', code: m.code, seat: m.seat });
-      const queued = this.pending.splice(0);
-      for (const q of queued) this.send(q);
+      this.set({ status: 'open', code: m.code, seat: m.seat, error: null });
     } else if (m.t === 'state') {
       if (m.version < this.snapshot.version && this.snapshot.status === 'open')
         return;
-      this.set({ seats: m.seats, view: m.view as V, version: m.version });
+      this.set({
+        seats: m.seats,
+        view: m.view as V,
+        version: m.version,
+        clock: Number.isFinite(m.serverNow)
+          ? { serverNow: m.serverNow, receivedAt: performance.now() }
+          : null,
+      });
     } else if (m.t === 'error') {
-      if (m.code === 'no-room' || m.code === 'room-full') this.stopped = true;
+      if (!this.snapshot.code || m.code === 'no-room' || m.code === 'room-full' || m.code === 'wrong-game') {
+        this.close();
+        this.set({
+          code: null, seat: null, seats: [], view: null, version: 0, clock: null,
+        });
+      }
       this.set({
         error: m.message,
         status: this.stopped ? 'closed' : this.snapshot.status,
@@ -174,12 +201,12 @@ export class PlayClient<V = unknown> {
     }
   }
 
-  private pending: ClientMsg[] = [];
   private send(m: ClientMsg) {
-    // While reconnecting, hold actions and replay them once seated again.
+    // An offline action belongs to the old board/turn. Never replay it against
+    // the next state after rejoining (e.g. a new hand or scoring revision).
     if (this.ws && this.ws.readyState === 1 && this.snapshot.status === 'open')
       this.ws.send(JSON.stringify(m));
-    else if (this.pending.length < 8) this.pending.push(m);
+    else this.set({ error: '连接恢复后请重新操作' });
   }
 
   private set(p: Partial<PlaySnapshot<V>>) {
