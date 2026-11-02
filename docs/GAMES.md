@@ -27,6 +27,8 @@
 | `/games/timeloop`       | 时间回溯：录像重演的过去的自己、压力板与正/反向门，10 关，撤销/重来         |
 | `/games/chess`          | 国际象棋：完整规则、十档 Web Worker AI、悔棋/翻转/棋谱、28 道带解析与错着反击的残局            |
 | `/games/go`             | 围棋：三种棋盘、劫与禁着、数子与死子标记、十档 MCTS Worker AI、让子、29 道带解析的死活题 |
+| `/games/hanami`         | 花街七席：四种行动、跨轮好感、五档隐藏信息 Worker AI |
+| `/games/hanami/online`  | 花街七席联机：私密手牌、对方挑牌、双方确认下一轮和再局 |
 | `/games/gomoku`         | 五子棋：15 路、十档 Worker AI / 双人同屏、可选黑棋禁手、悔棋与提示 |
 | `/games/gomoku/online`  | 五子棋联机：房间码 / 邀请链接、协商悔棋、认输与再局换色 |
 | `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲                                        |
@@ -199,6 +201,7 @@ AI 依据来自实际策略分支与数值诊断，例如范围权益、跟注�
 - 规则改写：12 关参考解逐关回放必在最后一步获胜、规则横竖解析与变身、推动链/挡/沉/烫、步进不改原状态、记录校验（`scripts/check-rulewords.ts`、`standalone/blackjack/qa/rulewords.check.tsx`）。
 - 时间回溯：10 关参考解逐关回放到达出口且不超限、每关单独一轮到不了出口、多轮关去掉第一个过去的自己即不可解、门与反向门、录像重演与卡住、记录校验（`scripts/check-timeloop.ts`、`standalone/blackjack/qa/timeloop.check.tsx`）。
 - 国际象棋：易位/过路兵/升变、五种终局判定、所有杀题主线以将死结束且关键着法与穷举一致、每个错着的反击经穷举（杀题）或固定深度引擎（得子题）复核、得子题正解确实得子、清空置换表后分析可复现、练习残局合法、AI 抓一步杀与躲吃后、低难度随机、引擎 perft 四个标准局面、记录校验。题库由 `scripts/gen-chess-puzzles.ts` 从 `scripts/chess-puzzle-spec.ts` 生成；`scripts/bench/chess-match.ts` 做新旧引擎与相邻难度自对弈（`scripts/check-chess.ts`、`standalone/blackjack/qa/chess.check.tsx`）。
+- 花街七席：牌数守恒、四种行动、跨轮好感与胜负、隐藏信息 AI、联机座位视图和真实 WebSocket 重连（`scripts/check-hanami.ts`、`scripts/check-hanami-online-regressions.ts`）；构建检查 AI Worker 地址与 standalone 文件一致。
 - 五子棋：连五、长连与可选黑棋禁手、合法 AI 着法、协商悔棋、换色和真实 WebSocket 重连（`scripts/check-gomoku.ts`）；构建额外检查五子棋 Worker 地址与 standalone 文件一致。
 - 围棋：提子与禁止自杀、劫、数子/贴目/死子切换、让子摆放、29 道题正解与有界穷举一致且主线回放成立、每个错着都有反击、AI 开局与合法着法、死子估计、记录校验（`scripts/check-go.ts`、`standalone/blackjack/qa/go.check.tsx`）。
 - 往返：从街机离开时停步，带来路参数选择游戏，返回原位；浏览器后退恢复页面时不冻结输入。

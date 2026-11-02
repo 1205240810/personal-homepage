@@ -146,6 +146,7 @@ if (
     checkGameWorkerBuild(directory, 'chess', 'chess-worker');
     checkGameWorkerBuild(directory, 'go', 'go-worker');
     checkGameWorkerBuild(directory, 'gomoku', 'gomoku-worker');
+    checkGameWorkerBuild(directory, 'local', 'hanami-worker');
   } catch (error) {
     console.error(
       `Worker build check failed: ${error instanceof Error ? error.message : String(error)}`,
