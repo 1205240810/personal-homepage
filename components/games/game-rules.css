@@ -5,6 +5,7 @@
   color: var(--ink);
 }
 .game-rules-trigger {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -43,15 +44,14 @@
   font-weight: 700;
   font-size: 0.75rem;
 }
-.game-rules-scrim {
-  display: none;
-}
 .game-rules-panel {
   margin-top: 0.6rem;
   padding: 1rem 1.15rem 1.1rem;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg, 14px);
   background: var(--surface-gradient);
+  color: var(--ink);
+  font: inherit;
   box-shadow: var(--shadow-2);
   text-align: left;
   max-width: 980px;
@@ -78,8 +78,8 @@
   letter-spacing: 0.04em;
 }
 .game-rules-close {
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 50%;
   background: transparent;
@@ -107,7 +107,7 @@
 }
 .game-rules-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: 0.25rem 1.6rem;
 }
 .game-rules-panel h3 {
@@ -163,23 +163,24 @@
   z-index: 5;
 }
 @media (max-width: 640px) {
-  .game-rules.is-open .game-rules-scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    border: 0;
+  .game-rules-panel::backdrop {
     background: rgb(0 0 0 / 0.32);
   }
   .game-rules-panel {
     position: fixed;
+    top: auto;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 61;
     margin: 0;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
     max-height: 72vh;
+    max-height: 72dvh;
     overflow-y: auto;
+    overscroll-behavior: contain;
     border-radius: 18px 18px 0 0;
     padding-bottom: calc(1.1rem + env(safe-area-inset-bottom));
     animation-name: game-rules-up;

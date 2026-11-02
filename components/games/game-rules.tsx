@@ -28,23 +28,54 @@ export function GameRules({
   const entry = GAME_RULES[gameId];
   const data = (online && entry.online) || entry;
   const [open, setOpen] = useState(false);
+  const [mobile, setMobile] = useState(false);
   const panelId = useId();
-  const panel = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLElement | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const close = () => {
+    const current = panel.current;
+    if (current instanceof HTMLDialogElement && current.open) current.close();
+    setOpen(false);
+    trigger.current?.focus({ preventScroll: true });
+  };
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia('(max-width: 640px)');
+    const update = () => setMobile(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+      if (
+        e.defaultPrevented ||
+        e.repeat ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        e.isComposing ||
+        // oxlint-disable-next-line typescript/no-deprecated -- IMEs may omit isComposing on their final key event.
+        e.keyCode === 229
+      )
+        return;
       const t = e.target;
       if (
         t instanceof HTMLElement &&
-        (t.isContentEditable || t.closest('input, textarea, select'))
+        (t.isContentEditable ||
+          t.closest(
+            'input, textarea, select, [contenteditable]:not([contenteditable="false"]), dialog, [role="dialog"], [aria-modal="true"]',
+          ))
       )
         return;
       if (e.key === '?') {
         e.preventDefault();
         setOpen((v) => !v);
+        if (open) trigger.current?.focus({ preventScroll: true });
       } else if (e.key === 'Escape' && open) {
+        e.preventDefault();
         setOpen(false);
         trigger.current?.focus({ preventScroll: true });
       }
@@ -54,8 +85,24 @@ export function GameRules({
   }, [open]);
 
   useEffect(() => {
-    if (open) panel.current?.focus({ preventScroll: true });
-  }, [open]);
+    const current = panel.current;
+    if (!open || !current) return;
+    const dialog = current instanceof HTMLDialogElement ? current : null;
+    const overflow = document.body.style.overflow;
+    if (dialog) {
+      dialog.showModal();
+      document.body.style.overflow = 'hidden';
+    }
+    current.focus({ preventScroll: true });
+    return () => {
+      if (dialog) {
+        if (dialog.open) dialog.close();
+        document.body.style.overflow = overflow;
+      }
+    };
+  }, [open, mobile]);
+
+  const Panel = mobile ? 'dialog' : 'div';
 
   return (
     <div className={`game-rules${open ? ' is-open' : ''} ${className ?? ''}`}>
@@ -74,77 +121,97 @@ export function GameRules({
         规则与玩法
       </button>
       {open && (
-        <>
-          <button
-            type="button"
-            className="game-rules-scrim"
-            aria-label="收起规则"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-          />
-          <div
-            id={panelId}
-            ref={panel}
-            className="game-rules-panel"
-            role="region"
-            aria-label={`${online ? '联机' : ''}规则与玩法`}
-            tabIndex={-1}
-          >
-            <header>
-              <strong>
-                规则与玩法{online && entry.online ? ' · 联机' : ''}
-              </strong>
-              <button
-                type="button"
-                className="game-rules-close"
-                aria-label="收起规则"
-                onClick={() => {
-                  setOpen(false);
-                  trigger.current?.focus({ preventScroll: true });
-                }}
-              >
-                ×
-              </button>
-            </header>
-            <p className="game-rules-goal">
-              <b>目标</b>
-              {data.goal}
-            </p>
-            <div className="game-rules-grid">
-              {SECTIONS.map(([key, label]) => (
-                <section key={key}>
-                  <h3>{label}</h3>
-                  <ul>
-                    {data[key].map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-              {data.keys && data.keys.length > 0 && (
-                <section>
-                  <h3>快捷键</h3>
-                  <dl className="game-rules-keys">
-                    {data.keys.map(([k, v]) => (
-                      <div key={k}>
-                        <dt>
-                          <kbd>{k}</kbd>
-                        </dt>
-                        <dd>{v}</dd>
-                      </div>
-                    ))}
-                    <div>
+        <Panel
+          id={panelId}
+          ref={(node: HTMLDivElement | HTMLDialogElement | null) => {
+            panel.current = node;
+          }}
+          className="game-rules-panel"
+          role={mobile ? undefined : 'region'}
+          aria-modal={mobile ? true : undefined}
+          aria-label={`${online ? '联机' : ''}规则与玩法`}
+          tabIndex={-1}
+          onCancel={(e) => {
+            e.preventDefault();
+            close();
+          }}
+          onClick={(e) => {
+            if (!mobile || e.target !== e.currentTarget) return;
+            const bounds = e.currentTarget.getBoundingClientRect();
+            if (
+              e.clientX < bounds.left ||
+              e.clientX > bounds.right ||
+              e.clientY < bounds.top ||
+              e.clientY > bounds.bottom
+            )
+              close();
+          }}
+          onKeyDown={(e) => {
+            // Reading the rules must not trigger game actions underneath.
+            e.stopPropagation();
+            if (
+              e.repeat ||
+              e.ctrlKey ||
+              e.metaKey ||
+              e.altKey ||
+              e.nativeEvent.isComposing
+            )
+              return;
+            if (e.key === '?' || e.key === 'Escape') {
+              e.preventDefault();
+              close();
+            }
+          }}
+        >
+          <header>
+            <strong>规则与玩法{online && entry.online ? ' · 联机' : ''}</strong>
+            <button
+              type="button"
+              className="game-rules-close"
+              aria-label="收起规则"
+              onClick={close}
+            >
+              ×
+            </button>
+          </header>
+          <p className="game-rules-goal">
+            <b>目标</b>
+            {data.goal}
+          </p>
+          <div className="game-rules-grid">
+            {SECTIONS.map(([key, label]) => (
+              <section key={key}>
+                <h3>{label}</h3>
+                <ul>
+                  {data[key].map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+            {data.keys && data.keys.length > 0 && (
+              <section>
+                <h3>快捷键</h3>
+                <dl className="game-rules-keys">
+                  {data.keys.map(([k, v]) => (
+                    <div key={k}>
                       <dt>
-                        <kbd>?</kbd>
+                        <kbd>{k}</kbd>
                       </dt>
-                      <dd>打开 / 收起本说明</dd>
+                      <dd>{v}</dd>
                     </div>
-                  </dl>
-                </section>
-              )}
-            </div>
+                  ))}
+                  <div>
+                    <dt>
+                      <kbd>?</kbd>
+                    </dt>
+                    <dd>打开 / 收起本说明</dd>
+                  </div>
+                </dl>
+              </section>
+            )}
           </div>
-        </>
+        </Panel>
       )}
     </div>
   );
