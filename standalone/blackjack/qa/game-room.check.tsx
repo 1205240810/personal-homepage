@@ -3,13 +3,43 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { GameRoom, GamePageFrame } from '../../../components/games/game-room';
 import { RecentGames } from '../../../components/games/recent-games';
-import { getGame } from '../../../lib/games/catalog';
+import { GAMES, getGame } from '../../../lib/games/catalog';
 import { RECENT_GAMES_KEY } from '../../../lib/games/recent';
 
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
 
 describe('game room shortcuts', () => {
+  it.each([false, true])(
+    'lists playable online rooms separately and preserves explore=%s',
+    (fromExplore) => {
+      render(<GameRoom fromExplore={fromExplore} />);
+      const online = screen.getByRole('region', { name: '联机对战' });
+      const solo = screen.getByRole('region', { name: '单机' });
+      const suffix = fromExplore ? '?from=explore' : '';
+      expect(
+        within(online)
+          .getAllByRole('link')
+          .map((link) => link.getAttribute('href')),
+      ).toEqual(
+        GAMES.filter((game) => game.online).map(
+          (game) => `${game.online!.href}${suffix}`,
+        ),
+      );
+      expect(
+        within(solo)
+          .getAllByRole('link')
+          .map((link) => link.getAttribute('href')),
+      ).toEqual(GAMES.map((game) => `${game.href}${suffix}`));
+      const modes = screen.getByRole('navigation', { name: '游戏模式' });
+      expect(
+        within(modes)
+          .getAllByRole('link')
+          .map((link) => link.getAttribute('href')),
+      ).toEqual(['#solo', '#online']);
+    },
+  );
+
   it('lists the date-seeded games under 今日挑战 and keeps the explore return path', () => {
     render(<GameRoom fromExplore />);
     const daily = screen.getByRole('region', { name: '今日挑战' });

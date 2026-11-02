@@ -53,7 +53,8 @@ export const GAMES: readonly GameDefinition[] = [
       href: '/games/holdem-lab/online',
       title: '德州联机',
       format: '2 人 + AI',
-      pitch: '和朋友坐同一张桌，联手对抗 1–3 位 AI；底牌只有自己看得到。',
+      pitch:
+        '和朋友同桌，与 1–3 位 AI 对弈，各自争夺底池；底牌只有自己看得到。',
     },
   },
   {
