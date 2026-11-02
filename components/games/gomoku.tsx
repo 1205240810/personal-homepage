@@ -1,7 +1,6 @@
 'use client';
 
 import { Flag, Lightbulb, RotateCcw, Undo2 } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import {
   BLACK,
@@ -274,12 +273,12 @@ export function GomokuGame({ fromExplore = false }: { fromExplore?: boolean }) {
           </p>
           <h2 className="kit-sr">五子棋</h2>
         </div>
-        <Link
+        <a
           className="gomoku-online-link"
           href={`/games/gomoku/online${fromExplore ? '?from=explore' : ''}`}
         >
           和朋友联机 →
-        </Link>
+        </a>
       </header>
       <div className="kit-row">
         <select

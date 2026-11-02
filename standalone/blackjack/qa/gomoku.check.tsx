@@ -10,10 +10,6 @@ import { GomokuGame } from '../../../components/games/gomoku';
 import { GomokuBoard } from '../../../components/games/gomoku-board';
 import { isForbidden, newGame } from '../../../lib/games/gomoku';
 
-vi.mock('next/link', () => ({
-  default: (props: React.ComponentProps<'a'>) => <a {...props} />,
-}));
-
 class TestWorker {
   static instances: TestWorker[] = [];
   onmessage: ((e: { data: unknown }) => void) | null = null;

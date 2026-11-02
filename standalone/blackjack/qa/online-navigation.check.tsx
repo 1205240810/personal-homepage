@@ -1,4 +1,3 @@
-import type { AnchorHTMLAttributes } from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import GoPage from '../../../app/games/go/online/page';
@@ -22,9 +21,6 @@ vi.mock('../../../components/play/use-room', () => ({
   ],
   roomFromUrl: () => null,
   inviteLink: () => '',
-}));
-vi.mock('next/link', () => ({
-  default: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props} />,
 }));
 afterEach(() => {
   cleanup();
