@@ -2,7 +2,7 @@
 
 import { Flag, Lightbulb, RotateCcw, Undo2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import {
   BLACK,
   EMPTY,
@@ -60,24 +60,68 @@ function validateRecords(v: unknown): Records | null {
   return out;
 }
 
-function useAi() {
-  const worker = useRef<Worker | null>(null);
-  const seq = useRef(0);
-  useEffect(() => () => worker.current?.terminate(), []);
-  return (state: GomokuState, level: GomokuLevel) =>
-    new Promise<GomokuAiResult>((resolve, reject) => {
-      worker.current ??= new Worker(gomokuWorkerUrl, { type: 'module' });
-      const id = ++seq.current;
-      worker.current.onmessage = (e) => {
-        if (e.data.id !== id) return;
-        if (e.data.error) reject(new Error(e.data.error));
-        else resolve(e.data.result);
-      };
-      worker.current.postMessage({ id, state, level });
-    });
+function requestAi(
+  state: GomokuState,
+  level: GomokuLevel,
+  resolve: (result: GomokuAiResult) => void,
+  reject: () => void,
+) {
+  let worker: Worker | undefined;
+  let live = true;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const cancel = () => {
+    live = false;
+    clearTimeout(timeout);
+    worker?.terminate();
+  };
+  const fail = () => {
+    if (!live) return;
+    cancel();
+    reject();
+  };
+  try {
+    // Each search owns its worker, so hints and replaced games cannot queue
+    // stale work ahead of the current turn or replace another reply handler.
+    worker = new Worker(gomokuWorkerUrl, { type: 'module' });
+    worker.onmessage = (e) => {
+      if (!live || e.data.id !== 1) return;
+      const move = e.data.result?.move;
+      const noLegalMove =
+        move === -1 &&
+        !state.cells.some(
+          (cell, i) =>
+            cell === EMPTY &&
+            (state.toPlay !== BLACK || !isForbidden(state, i)),
+        );
+      if (
+        e.data.error ||
+        !Number.isInteger(move) ||
+        (!noLegalMove &&
+          (move < 0 ||
+            move >= state.cells.length ||
+            state.cells[move] !== EMPTY ||
+            (state.toPlay === BLACK && isForbidden(state, move))))
+      ) {
+        fail();
+        return;
+      }
+      cancel();
+      resolve(e.data.result);
+    };
+    worker.onerror = (e) => {
+      e.preventDefault();
+      fail();
+    };
+    worker.onmessageerror = fail;
+    timeout = setTimeout(fail, 8000);
+    worker.postMessage({ id: 1, state, level });
+  } catch {
+    fail();
+  }
+  return cancel;
 }
 
-export function GomokuGame() {
+export function GomokuGame({ fromExplore = false }: { fromExplore?: boolean }) {
   const [settings, saveSettings] = useLocalRecords(
     SETTINGS,
     validateSettings,
@@ -90,15 +134,26 @@ export function GomokuGame() {
     state: GomokuState;
   } | null>(null);
   const [hint, setHint] = useState<number | null>(null);
-  const ai = useAi();
+  const [hintRequest, setHintRequest] = useState<{ state: GomokuState } | null>(
+    null,
+  );
+  const [hintError, setHintError] = useState(false);
+  const [aiError, setAiError] = useState(false);
+  const [retry, setRetry] = useState(0);
   const match = started?.match ?? settings;
-  const state = started?.state ?? newGame(settings.renju);
+  const empty = useMemo(() => newGame(settings.renju), [settings.renju]);
+  const state = started?.state ?? empty;
 
   const aiTurn =
     match.mode === 'ai' && state.winner === null && state.toPlay !== human;
-  const thinking = aiTurn;
+  const thinking = aiTurn && !aiError;
+  const hinting = hintRequest?.state === state && hint === null && !hintError;
 
   const commit = (next: GomokuState) => {
+    setHint(null);
+    setHintRequest(null);
+    setHintError(false);
+    setAiError(false);
     setStarted({ match, state: next });
     if (next.winner !== null && state.winner === null && match.mode === 'ai') {
       const cur = records[match.level] ?? { won: 0, played: 0 };
@@ -111,21 +166,41 @@ export function GomokuGame() {
       });
     }
   };
+  const commitAi = useEffectEvent(commit);
 
   useEffect(() => {
     if (!aiTurn) return;
-    let live = true;
     const t0 = Date.now();
-    void ai(state, match.level).then(async (r) => {
-      // Keep a short beat so instant replies don't feel mechanical.
-      const wait = 350 - (Date.now() - t0);
-      if (wait > 0) await new Promise((res) => setTimeout(res, wait));
-      if (live) commit(play(state, r.move));
-    });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cancel = requestAi(
+      state,
+      match.level,
+      (r) => {
+        const next =
+          r.move === -1 ? resign(state, state.toPlay) : play(state, r.move);
+        // Keep a short beat so instant replies don't feel mechanical.
+        timer = setTimeout(
+          () => commitAi(next),
+          Math.max(0, 350 - (Date.now() - t0)),
+        );
+      },
+      () => setAiError(true),
+    );
     return () => {
-      live = false;
+      cancel();
+      clearTimeout(timer);
     };
-  });
+  }, [aiTurn, state, match.level, retry]);
+
+  useEffect(() => {
+    if (hintRequest?.state !== state || aiTurn || state.winner !== null) return;
+    return requestAi(
+      state,
+      7,
+      (r) => setHint(r.move),
+      () => setHintError(true),
+    );
+  }, [hintRequest, state, aiTurn]);
 
   const forbidden = useMemo(() => {
     if (!state.renju || state.toPlay !== BLACK || state.winner !== null)
@@ -142,6 +217,9 @@ export function GomokuGame() {
   const start = (color: Player) => {
     setHuman(color);
     setHint(null);
+    setHintRequest(null);
+    setHintError(false);
+    setAiError(false);
     setStarted({ match: settings, state: newGame(settings.renju) });
   };
   const onPlay = (i: number) => {
@@ -155,7 +233,10 @@ export function GomokuGame() {
     commit(undoMoves(state, Math.min(n, state.moves.length)));
   };
   const askHint = () => {
-    void ai(state, 7).then((r) => setHint(r.move));
+    setHint(null);
+    setHintError(false);
+    // A failed request can be retried without changing the position.
+    setHintRequest({ state });
   };
 
   const stats = match.mode === 'ai' ? records[match.level] : undefined;
@@ -173,11 +254,13 @@ export function GomokuGame() {
                 ? '你认输了'
                 : 'AI 连成五子'
           : `${NAME[state.winner]}胜${state.reason === 'forbidden' ? '（黑棋禁手）' : state.reason === 'resign' ? '（认输）' : ''}`
-      : thinking
-        ? 'AI 思考中…'
-        : match.mode === 'ai'
-          ? `轮到你（${NAME[human]}）`
-          : `轮到${NAME[state.toPlay]}`;
+      : aiTurn && aiError
+        ? 'AI 计算失败，请重试或悔棋'
+        : thinking
+          ? 'AI 思考中…'
+          : match.mode === 'ai'
+            ? `轮到你（${NAME[human]}）`
+            : `轮到${NAME[state.toPlay]}`;
 
   return (
     <div className="kit gomoku">
@@ -191,13 +274,16 @@ export function GomokuGame() {
           </p>
           <h2 className="kit-sr">五子棋</h2>
         </div>
-        <Link className="gomoku-online-link" href="/games/gomoku/online">
+        <Link
+          className="gomoku-online-link"
+          href={`/games/gomoku/online${fromExplore ? '?from=explore' : ''}`}
+        >
           和朋友联机 →
         </Link>
       </header>
       <div className="kit-row">
         <select
-          aria-label="模式"
+          aria-label="模式（下局生效）"
           value={settings.mode}
           onChange={(e) => save({ ...settings, mode: e.target.value as Mode })}
         >
@@ -230,7 +316,7 @@ export function GomokuGame() {
             checked={settings.renju}
             onChange={(e) => save({ ...settings, renju: e.target.checked })}
           />{' '}
-          黑棋禁手
+          黑棋禁手（下局生效）
         </label>
         <button
           type="button"
@@ -279,10 +365,22 @@ export function GomokuGame() {
         <button
           type="button"
           onClick={askHint}
-          disabled={state.winner !== null || aiTurn}
+          disabled={state.winner !== null || aiTurn || hinting}
         >
-          <Lightbulb size={15} aria-hidden="true" /> 提示
+          <Lightbulb size={15} aria-hidden="true" />{' '}
+          {hinting ? '提示计算中…' : '提示'}
         </button>
+        {aiTurn && aiError && (
+          <button
+            type="button"
+            onClick={() => {
+              setAiError(false);
+              setRetry((n) => n + 1);
+            }}
+          >
+            重试 AI
+          </button>
+        )}
         <button
           type="button"
           onClick={() =>
@@ -315,10 +413,18 @@ export function GomokuGame() {
         disabled={aiTurn || state.winner !== null}
         onPlay={onPlay}
       />
-      {hint !== null && (
+      {hint !== null && hint >= 0 && (
         <p className="kit-brief">
           提示：可以考虑 {coord(hint)}（棋盘上的蓝点）
         </p>
+      )}
+      {hint === -1 && (
+        <output className="kit-brief">
+          当前没有合法落点，可以认输或重开。
+        </output>
+      )}
+      {hintError && (
+        <output className="kit-brief">提示计算失败，可以重新请求提示。</output>
       )}
       <p className="kit-help">
         黑先，横、竖、斜任意方向连成五子即胜。勾选「黑棋禁手」后按连珠规则：黑棋的三三、四四、长连为禁手（棋盘上以红叉标出），白棋没有禁手。AI
