@@ -28,6 +28,7 @@ export default defineConfig({
       'qa/go.check.tsx',
       'qa/gomoku.check.tsx',
       'qa/online-gomoku.check.tsx',
+      'qa/online-navigation.check.tsx',
       'qa/chess.check.tsx',
       'qa/prefs.check.tsx',
       'qa/timeloop.check.tsx',
