@@ -694,6 +694,35 @@ html[data-theme='tech'] .room-go-board {
 html[data-theme='tech'] .room-go-board .w {
     background: #0a1520
 }
+html[data-theme='tech'] .room-hanami-preview {
+    border: 1px solid rgb(124 199 223 / 0.45);
+    color: #93a8bc;
+    background: linear-gradient(180deg, #0a1520, #0f1f2e)
+}
+html[data-theme='tech'] .room-hanami-row i {
+    background: #0a1520
+}
+html[data-theme='tech'] .room-hanami-row .p0 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-hanami-row .p1 {
+    color: #93a8bc
+}
+html[data-theme='tech'] .room-hanami-row .p2 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-hanami-row .p3 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-hanami-row .p4 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-hanami-row .p5 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-hanami-row .p6 {
+    color: #7cc7df
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid var(--line, rgb(124 199 223 / 0.45));
