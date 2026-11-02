@@ -6,7 +6,15 @@ export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   esbuild: { jsx: 'automatic' },
   resolve: {
-    alias: { '@': fileURLToPath(new URL('../../', import.meta.url)) },
+    alias: {
+      '@': fileURLToPath(new URL('../../', import.meta.url)),
+      'next/link': fileURLToPath(
+        new URL(
+          '../../node_modules/vinext/dist/shims/link.js',
+          import.meta.url,
+        ),
+      ),
+    },
     dedupe: ['react', 'react-dom'],
   },
   test: {
@@ -24,6 +32,8 @@ export default defineConfig({
       'qa/theme-switcher.check.tsx',
       'qa/music-control.check.tsx',
       'qa/go.check.tsx',
+      'qa/gomoku.check.tsx',
+      'qa/online-gomoku.check.tsx',
       'qa/chess.check.tsx',
       'qa/prefs.check.tsx',
       'qa/timeloop.check.tsx',
