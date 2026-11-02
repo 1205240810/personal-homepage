@@ -1,0 +1,41 @@
+/* Card-table rooms (21点 / 梭哈 / 快艇骰子): one family of deep, muted room
+   tones — pine, slate and plum all pulled toward the same low-chroma dark —
+   so every table reads as the same quiet club rather than three venues.
+   Cards, chips and dice keep their real colours. */
+.blackjack-room-shell {
+  background: #0b1512;
+}
+.standalone-room-yahtzee {
+  --arcade-bg: #0d1820;
+}
+.standalone-room-stud {
+  --arcade-bg: #151214;
+}
+.standalone-room .yd-game {
+  background:
+    radial-gradient(ellipse at 30% 0%, #1f2f3b 0%, transparent 60%), #0d1820;
+}
+.standalone-room .stud-game {
+  background:
+    radial-gradient(ellipse at 35% 15%, #2a2024, transparent 58%), #151214;
+}
+/* Felt: the same fine woven texture on every table, over a deeper, lower-
+   chroma cloth. */
+.standalone-room .stud-game .st-table {
+  background:
+    repeating-linear-gradient(
+      25deg,
+      transparent 0 2px,
+      rgb(255 240 220 / 0.025) 2px 3px
+    ),
+    radial-gradient(ellipse at center, #46282f 0, #36202a 50%, #281920 100%);
+}
+.standalone-room .yd-game .yd-felt {
+  background:
+    repeating-linear-gradient(
+      25deg,
+      transparent 0 2px,
+      rgb(220 240 255 / 0.025) 2px 3px
+    ),
+    radial-gradient(ellipse, #22394a, #142534);
+}

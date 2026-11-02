@@ -90,12 +90,146 @@ void describe('blackjack duel rules', () => {
     assert.equal(s.result?.winner, 0);
     assert.deepEqual(s.chips, [1030, 970]);
   });
-  void it('times out to an automatic stand', () => {
+  void it('keeps both hole cards private in every active phase and for spectators', () => {
+    let s = rigged([C(3), C(4)], [C(2, 1), C(5, 1)], [C(6), C(7)]);
+    const check = () => {
+      for (const seat of [0, 1, null]) {
+        const view = JSON.parse(JSON.stringify(m.view(s, seat, 0))) as DuelView;
+        assert.ok(!('shoe' in view));
+        assert.equal(view.result, null);
+        for (const who of [0, 1]) {
+          assert.deepEqual(view.hands[who].slice(1), s.hands[who].slice(1));
+          if (seat === who) {
+            assert.deepEqual(view.hands[who][0], s.hands[who][0]);
+            assert.equal(view.totals[who], total(s.hands[who]));
+          } else {
+            assert.equal(view.hands[who][0], null);
+            assert.equal(view.totals[who], null);
+          }
+        }
+      }
+    };
+    check();
+    s = act(s, 0, { type: 'hit' });
+    check();
+    s = act(s, 0, { type: 'stand' });
+    check();
+    s = act(s, 1, { type: 'hit' });
+    check();
+    s = act(s, 1, { type: 'stand' });
+    for (const seat of [0, 1, null]) {
+      const view = m.view(s, seat, 0) as DuelView;
+      assert.deepEqual(view.hands, s.hands);
+      assert.deepEqual(view.totals, s.result!.totals);
+      assert.ok(
+        !('shoe' in view),
+        'even showdown must not reveal future cards',
+      );
+    }
+  });
+  void it('rejects illegal actions without changing the state or consuming cards', () => {
+    const s = rigged([C(3), C(4)], [C(2), C(5)], [C(2)]);
+    const before = structuredClone(s);
+    for (const [seat, action] of [
+      [1, { type: 'hit' }],
+      [1, { type: 'double' }],
+      [0, { type: 'next' }],
+      [0, { type: 'rematch' }],
+      [0, { type: 'set-chips', chips: 9000 }],
+      [0, null],
+      [0, []],
+    ] as const) {
+      assert.ok(m.act(s, seat, action, rng, 0).error);
+      assert.deepEqual(s, before);
+    }
+    const hit = act(s, 0, { type: 'hit' });
+    assert.equal((m.view(hit, 0, 0) as DuelView).canDouble, false);
+    assert.ok(m.act(hit, 0, { type: 'double' }, rng, 0).error);
+    assert.deepEqual(
+      s,
+      before,
+      'legal actions must not mutate previous state either',
+    );
+  });
+  void it('requires both stacks to cover a double and compounds two doubles', () => {
+    const s = rigged([C(5), C(6)], [C(4), C(5)], [C(9), C(9)]);
+    for (const chips of [
+      [39, 1961],
+      [1961, 39],
+    ] as [number, number][]) {
+      const poor = { ...s, chips };
+      assert.equal((m.view(poor, 0, 0) as DuelView).canDouble, false);
+      assert.ok(m.act(poor, 0, { type: 'double' }, rng, 0).error);
+    }
+    const doubled = act(s, 0, { type: 'double' });
+    assert.equal(
+      (m.view({ ...doubled, chips: [79, 1921] }, 1, 0) as DuelView).canDouble,
+      false,
+    );
+    const done = act(doubled, 1, { type: 'double' });
+    assert.equal(done.phase, 'done');
+    assert.deepEqual(done.doubled, [true, true]);
+    assert.deepEqual(
+      done.hands.map((h) => h.length),
+      [3, 3],
+    );
+    assert.deepEqual(done.chips, [1080, 920]);
+  });
+  void it('enforces each 30-second deadline, including actions that arrive before a delayed timer', () => {
     const s = rigged([C(10), C(7)], [C(9), C(8)]);
     assert.equal(m.nextTick!(s), TURN_MS);
-    const t = m.tick!(s, rng, TURN_MS + 1);
+    assert.equal(m.tick!(s, rng, TURN_MS - 1), s);
+    for (const type of ['hit', 'stand', 'double']) {
+      assert.ok(
+        m.act(s, 0, { type }, rng, TURN_MS).error,
+        `${type} at deadline must be rejected`,
+      );
+      assert.ok(m.act(s, 0, { type }, rng, TURN_MS + 1000).error);
+    }
+    const t = m.tick!(s, rng, TURN_MS);
     assert.equal(t.phase, 'banker');
-    assert.match(t.log.join(), /超时/);
+    assert.equal(t.deadline, 2 * TURN_MS);
+    assert.match(t.log.join(), /闲家超时/);
+    assert.equal(m.tick!(t, rng, 2 * TURN_MS - 1), t);
+    const done = m.tick!(t, rng, 2 * TURN_MS);
+    assert.equal(done.phase, 'done');
+    assert.equal(done.deadline, null);
+    assert.match(done.log.join(), /庄家超时/);
+    assert.equal(m.tick!(done, rng, 3 * TURN_MS), done);
+    assert.ok(m.act(done, 0, { type: 'hit' }, rng, 3 * TURN_MS).error);
+  });
+  void it('new decisions get 30 seconds, but reconnects do not reset the clock or hand', () => {
+    const s = rigged([C(3), C(4)], [C(2), C(5)], [C(2)]);
+    const hit = act(s, 0, { type: 'hit' }, 1000);
+    assert.equal(hit.deadline, TURN_MS + 1000);
+    const disconnected = m.presence!(hit, [false, true], 2000);
+    const rejoined = m.presence!(disconnected, [true, true], 3000);
+    assert.equal(rejoined, hit);
+    const banker = act(rejoined, 0, { type: 'stand' }, 4000);
+    assert.equal(banker.deadline, TURN_MS + 4000);
+  });
+  void it('rematches require both players and restore stacks while exchanging roles', () => {
+    const bankrupt = act(
+      { ...rigged([C(10), C(9)], [C(2), C(3)], [C(5)]), chips: [20, 1980] },
+      0,
+      { type: 'hit' },
+    );
+    assert.equal(bankrupt.phase, 'over');
+    assert.deepEqual(bankrupt.chips, [0, 2000]);
+    assert.ok(m.act(bankrupt, 0, { type: 'next' }, rng, 0).error);
+    const ready = act(bankrupt, 0, { type: 'rematch' });
+    assert.equal(ready.phase, 'over');
+    assert.deepEqual(ready.ready, [true, false]);
+    assert.equal(act(ready, 0, { type: 'rematch' }).phase, 'over');
+    const fresh = act(ready, 1, { type: 'rematch' });
+    assert.equal(fresh.banker, 0);
+    assert.equal(fresh.round, 1);
+    assert.deepEqual(fresh.ready, [false, false]);
+    assert.equal(
+      fresh.chips.reduce((a, b) => a + b),
+      2000,
+    );
+    assert.ok(fresh.chips.every((c) => c >= 970 && c <= 1030));
   });
   void it('next round swaps banker; match ends when a stack can’t cover the stake', () => {
     let s = act(
@@ -136,6 +270,55 @@ void describe('blackjack duel over the relay', () => {
       await new Promise((r) => setTimeout(r, 10));
     }
   };
+  void it('keeps disconnected seats private and restores the same hand and deadline on rejoin', async () => {
+    const saved = new Map<string, string>();
+    const tokens = {
+      get: (code: string) => saved.get(code) ?? null,
+      set: (code: string, token: string) => {
+        saved.set(code, token);
+      },
+    };
+    const a = new PlayClient<DuelView>({ url, tokens });
+    const b = new PlayClient<DuelView>({ url });
+    const outsider = new PlayClient<DuelView>({ url });
+    const resumed = new PlayClient<DuelView>({ url, tokens });
+    try {
+      a.create('blackjack-duel', { stake: 10 });
+      await until(() => a.snapshot.code);
+      const code = a.snapshot.code!;
+      b.join(code);
+      await until(() => a.snapshot.view?.started && b.snapshot.view?.started);
+      const before = structuredClone(a.snapshot.view!);
+      a.close();
+      await until(() => !b.snapshot.seats[0].online);
+      outsider.join(code);
+      await until(() => outsider.snapshot.error);
+      assert.match(outsider.snapshot.error!, /房间已满/);
+      assert.equal(outsider.snapshot.view, null);
+      assert.equal(outsider.snapshot.seat, null);
+      resumed.join(code);
+      await until(
+        () => resumed.snapshot.view?.started && b.snapshot.seats[0].online,
+      );
+      const after = resumed.snapshot.view!;
+      assert.equal(resumed.snapshot.seat, 0);
+      assert.equal(after.round, before.round);
+      assert.equal(after.deadline, before.deadline);
+      assert.deepEqual(after.hands, before.hands);
+      assert.deepEqual(after.chips, before.chips);
+      assert.ok(!JSON.stringify(after).includes('"shoe"'));
+      if (after.phase === 'player') {
+        assert.equal(after.hands[1][0], null);
+        assert.equal(b.snapshot.view!.hands[0][0], null);
+      }
+      assert.ok(!JSON.stringify(b.snapshot).includes(saved.get(code)!));
+    } finally {
+      a.close();
+      b.close();
+      outsider.close();
+      resumed.close();
+    }
+  });
   void it('two clients finish rounds and never see each other’s hole card', async () => {
     const a = new PlayClient<DuelView>({ url });
     a.create('blackjack-duel', { stake: 10 });

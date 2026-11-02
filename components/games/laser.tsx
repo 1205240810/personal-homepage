@@ -32,6 +32,7 @@ import {
 } from '@/lib/games/laser';
 import { useHydrated, useLocalRecords } from './kit';
 import './kit.css';
+import { focusResultBoard, GameResult } from './result';
 import './laser.css';
 
 type Mode =
@@ -92,6 +93,7 @@ export function LaserMirrors() {
   const dailyDone = !!today && records.daily.includes(dailyKey(today));
 
   function load(next: Mode, replay?: Level) {
+    focusResultBoard(gridRef.current?.querySelector<HTMLElement>('button'));
     setMode(next);
     setLevel(replay ?? levelFor(next, ready));
     setPlaced(new Map());
@@ -286,14 +288,13 @@ export function LaserMirrors() {
           </span>
         </p>
         {t.solved && (
-          <output className="kit-ok laser-done">
-            全部点亮！{'★'.repeat(stars)}
-            {'☆'.repeat(3 - stars)}（用了 {used} 块
-            {hints ? `，${hints} 次提示` : ''}）
-            <button type="button" className="kit-primary" onClick={nextLevel}>
-              下一关
-            </button>
-          </output>
+          <GameResult
+            tone="win"
+            title={`全部点亮！${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`}
+            actions={[{ label: '下一关', primary: true, onClick: nextLevel }]}
+          >
+            用了 {used} 块{hints ? `，${hints} 次提示` : ''}
+          </GameResult>
         )}
       </div>
 
@@ -333,6 +334,8 @@ export function LaserMirrors() {
           type="button"
           onClick={() => load(mode, level)}
           aria-label="重来"
+          title="重来 (R)"
+          data-shortcut="r"
         >
           <RotateCcw size={15} aria-hidden="true" />
         </button>
@@ -446,8 +449,8 @@ export function LaserMirrors() {
       </div>
       <p className="kit-help">
         点空格放镜子，再点一下旋转 90°；右键或 Delete
-        移除。键盘：方向键移动，回车/空格放置或旋转，M/S/E 切换工具，H
-        提示。光会穿过目标继续前进；分光镜让光一半直行、一半转弯。
+        移除。键盘：方向键移动，回车/空格放置或旋转，M/S/E 切换工具，H 提示，R
+        重来。光会穿过目标继续前进；分光镜让光一半直行、一半转弯。
         不用提示且用块数不超过参考解可得三星，更省的解同样有效。
       </p>
       <p className="kit-sr" aria-live="polite">

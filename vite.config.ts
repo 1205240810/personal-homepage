@@ -4,6 +4,7 @@ import vinext from 'vinext';
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
 import hostingConfig from './.openai/hosting.json';
+import { rscAssetsAfterCss } from './scripts/rsc-assets-after-css';
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   '00000000-0000-4000-8000-000000000000';
@@ -50,6 +51,7 @@ export default defineConfig(async () => {
           },
         },
         vinext(),
+        rscAssetsAfterCss(),
       ],
     };
   }
@@ -69,6 +71,7 @@ export default defineConfig(async () => {
       : undefined,
     plugins: [
       vinext(),
+      rscAssetsAfterCss(),
       sites(),
       cloudflare({
         viteEnvironment: { name: 'rsc', childEnvironments: ['ssr'] },

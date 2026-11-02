@@ -6,6 +6,7 @@ import { useEffect, useState, type ComponentType } from 'react';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import { getGame, type GameId } from '@/lib/games/catalog';
 import './standalone-game-room.css';
+import './tables.css';
 
 type ImportedGameId = Extract<GameId, 'sudoku' | 'yahtzee' | 'stud'>;
 type EmbeddedGameProps = {

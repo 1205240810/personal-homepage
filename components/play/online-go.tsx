@@ -1,7 +1,7 @@
 'use client';
 
 import { Flag, Hand, Undo2 } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import '@/components/games/kit.css';
 import '@/components/games/go.css';
 import { BLACK, WHITE, coordName } from '@/lib/games/go';
@@ -22,10 +22,10 @@ function starPoints(n: number) {
 }
 
 export function GoOnline() {
-  const [snap, client] = useRoom<GoOnlineView>();
-  const size = useRef<HTMLSelectElement>(null);
+  const [snap, client] = useRoom<GoOnlineView>('go');
+  const [size, setSize] = useState(9);
   const color = useRef<HTMLSelectElement>(null);
-  const handicap = useRef<HTMLSelectElement>(null);
+  const [handicap, setHandicap] = useState(0);
   const v = snap.view;
 
   return (
@@ -50,7 +50,15 @@ export function GoOnline() {
             <div className="kit-row">
               <label>
                 棋盘
-                <select ref={size} defaultValue="9" aria-label="棋盘大小">
+                <select
+                  value={size}
+                  onChange={(event) => {
+                    const next = Number(event.target.value);
+                    setSize(next);
+                    if (next === 9 && handicap > 5) setHandicap(5);
+                  }}
+                  aria-label="棋盘大小"
+                >
                   <option value="9">9 路</option>
                   <option value="13">13 路</option>
                   <option value="19">19 路</option>
@@ -60,15 +68,24 @@ export function GoOnline() {
                 我执
                 <select ref={color} defaultValue="random" aria-label="执色">
                   <option value="random">随机</option>
-                  <option value="black">黑（先手）</option>
+                  <option value="black">
+                    {handicap >= 2 ? '黑（受让）' : '黑（先手）'}
+                  </option>
                   <option value="white">白</option>
                 </select>
               </label>
               <label>
                 让子
-                <select ref={handicap} defaultValue="0" aria-label="让子">
+                <select
+                  value={handicap}
+                  onChange={(event) => setHandicap(Number(event.target.value))}
+                  aria-label="让子"
+                >
                   <option value="0">不让子</option>
-                  {[2, 3, 4, 5].map((n) => (
+                  {Array.from(
+                    { length: size === 9 ? 4 : 8 },
+                    (_, i) => i + 2,
+                  ).map((n) => (
                     <option key={n} value={n}>
                       让 {n} 子
                     </option>
@@ -78,9 +95,9 @@ export function GoOnline() {
             </div>
           ),
           value: () => ({
-            size: Number(size.current?.value ?? 9),
+            size,
             creator: color.current?.value ?? 'random',
-            handicap: Number(handicap.current?.value ?? 0),
+            handicap,
           }),
         }}
       >
@@ -139,13 +156,25 @@ function Table({
           <button
             type="button"
             className="kit-primary"
-            onClick={() => act({ type: 'undo-answer', accept: true })}
+            onClick={() =>
+              act({
+                type: 'undo-answer',
+                accept: true,
+                undoRevision: v.undoRevision,
+              })
+            }
           >
             同意
           </button>
           <button
             type="button"
-            onClick={() => act({ type: 'undo-answer', accept: false })}
+            onClick={() =>
+              act({
+                type: 'undo-answer',
+                accept: false,
+                undoRevision: v.undoRevision,
+              })
+            }
           >
             拒绝
           </button>
@@ -161,7 +190,9 @@ function Table({
             type="button"
             className="kit-primary"
             disabled={seat === null || v.confirmed[seat]}
-            onClick={() => act({ type: 'confirm' })}
+            onClick={() =>
+              act({ type: 'confirm', scoringRevision: v.scoringRevision })
+            }
           >
             {seat !== null && v.confirmed[seat] ? '已确认' : '确认结果'}
           </button>
