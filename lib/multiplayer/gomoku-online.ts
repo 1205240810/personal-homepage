@@ -21,7 +21,10 @@ export type GomokuOnlineState = {
   colors: [Player, Player];
   game: GomokuState;
   started: boolean;
+  /** Monotonic position/round revision; never reused after undo or rematch. */
+  positionRevision: number;
   undoFrom: Seat | null;
+  undoRevision: number;
   rematch: [boolean, boolean];
   score: [number, number];
 };
@@ -37,7 +40,9 @@ export type GomokuOnlineView = {
   line: number[] | null;
   reason: GomokuState['reason'];
   started: boolean;
+  positionRevision: number;
   undoFrom: Seat | null;
+  undoRevision: number;
   rematch: [boolean, boolean];
   score: [number, number];
 };
@@ -46,7 +51,13 @@ const ok = (state: GomokuOnlineState) => ({ state });
 const finish = (s: GomokuOnlineState, game: GomokuState): GomokuOnlineState => {
   const score: [number, number] = [...s.score];
   if (game.winner) score[s.colors[0] === game.winner ? 0 : 1]++;
-  return { ...s, game, undoFrom: null, score };
+  return {
+    ...s,
+    game,
+    positionRevision: s.positionRevision + 1,
+    undoFrom: null,
+    score,
+  };
 };
 
 export const gomokuOnline: GameModule<GomokuOnlineState, GomokuOnlineOptions> =
@@ -54,6 +65,8 @@ export const gomokuOnline: GameModule<GomokuOnlineState, GomokuOnlineOptions> =
     id: 'gomoku',
     seats: 2,
     options(raw) {
+      if (raw != null && (typeof raw !== 'object' || Array.isArray(raw)))
+        throw new Error('房间选项无效');
       const o = (raw ?? {}) as Record<string, unknown>;
       const renju = o.renju ?? false;
       if (typeof renju !== 'boolean') throw new Error('禁手选项无效');
@@ -76,7 +89,9 @@ export const gomokuOnline: GameModule<GomokuOnlineState, GomokuOnlineOptions> =
         colors: [first, first === BLACK ? WHITE : BLACK],
         game: newGame(opts.renju),
         started: false,
+        positionRevision: 0,
         undoFrom: null,
+        undoRevision: 0,
         rematch: [false, false],
         score: [0, 0],
       };
@@ -90,10 +105,22 @@ export const gomokuOnline: GameModule<GomokuOnlineState, GomokuOnlineOptions> =
         type?: unknown;
         p?: unknown;
         accept?: unknown;
+        positionRevision?: unknown;
+        undoRevision?: unknown;
       };
       const me = s.colors[seat];
       const opp = (1 - seat) as Seat;
       const over = s.game.winner !== null;
+      // Bind commands to the board the sender actually saw. Turn checks alone
+      // cannot reject a delayed command once that same colour gets a new turn.
+      if (
+        (a.type === 'move' ||
+          a.type === 'undo-request' ||
+          a.type === 'resign' ||
+          a.type === 'rematch') &&
+        a.positionRevision !== s.positionRevision
+      )
+        return { error: '棋局已更新，请核对后重新操作' };
       switch (a.type) {
         case 'move': {
           if (!s.started) return { error: '等对手入座后再开始' };
@@ -107,14 +134,20 @@ export const gomokuOnline: GameModule<GomokuOnlineState, GomokuOnlineOptions> =
           }
         }
         case 'undo-request': {
+          if (!s.started) return { error: '等对手入座后再开始' };
           if (over) return { error: '对局已结束' };
+          if (s.undoFrom !== null) return { error: '请先处理当前悔棋请求' };
           const first = s.game.moves.length > 0 && me === BLACK;
           if (!first && s.game.moves.length < 2)
             return { error: '你还没有落子' };
-          return ok({ ...s, undoFrom: seat });
+          return ok({ ...s, undoFrom: seat, undoRevision: s.undoRevision + 1 });
         }
         case 'undo-answer': {
+          if (!s.started || over) return { error: '现在不能悔棋' };
           if (s.undoFrom !== opp) return { error: '对方没有请求悔棋' };
+          if (a.undoRevision !== s.undoRevision)
+            return { error: '悔棋请求已更新，请重新答复' };
+          if (typeof a.accept !== 'boolean') return { error: '悔棋答复无效' };
           if (a.accept !== true) return ok({ ...s, undoFrom: null });
           // Take back to just before the asker's last stone.
           const asker = s.colors[opp];
@@ -123,6 +156,7 @@ export const gomokuOnline: GameModule<GomokuOnlineState, GomokuOnlineOptions> =
           return ok({
             ...s,
             game: undo(s.game, Math.min(n, lastByAsker)),
+            positionRevision: s.positionRevision + 1,
             undoFrom: null,
           });
         }
@@ -139,6 +173,7 @@ export const gomokuOnline: GameModule<GomokuOnlineState, GomokuOnlineOptions> =
             ...s,
             colors: [s.colors[1], s.colors[0]],
             game: newGame(s.opts.renju),
+            positionRevision: s.positionRevision + 1,
             undoFrom: null,
             rematch: [false, false],
           });
@@ -160,7 +195,9 @@ export const gomokuOnline: GameModule<GomokuOnlineState, GomokuOnlineOptions> =
         line: s.game.line,
         reason: s.game.reason,
         started: s.started,
+        positionRevision: s.positionRevision,
         undoFrom: s.undoFrom,
+        undoRevision: s.undoRevision,
         rematch: s.rematch,
         score: s.score,
       } satisfies GomokuOnlineView;
