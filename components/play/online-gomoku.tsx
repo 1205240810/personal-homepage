@@ -1,7 +1,9 @@
 'use client';
 
+// Use native navigation: the current Vinext production Link router fails here.
+/* oxlint-disable next/no-html-link-for-pages */
+
 import { Flag, Undo2 } from 'lucide-react';
-import Link from 'next/link';
 import { useMemo, useRef } from 'react';
 import '@/components/games/kit.css';
 import { GomokuBoard } from '@/components/games/gomoku-board';
@@ -33,9 +35,9 @@ export function GomokuOnline() {
           </p>
           <h2 className="kit-sr">五子棋联机</h2>
         </div>
-        <Link className="play-back" href="/games/gomoku">
+        <a className="play-back" href="/games/gomoku">
           返回单机
-        </Link>
+        </a>
       </header>
       <Lobby
         snap={snap}

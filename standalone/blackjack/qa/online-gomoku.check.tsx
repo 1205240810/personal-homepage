@@ -1,4 +1,3 @@
-import type { AnchorHTMLAttributes } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GomokuOnline } from '../../../components/play/online-gomoku';
@@ -16,10 +15,6 @@ vi.mock('../../../components/play/use-room', () => ({
   inviteLink: (code: string) =>
     `http://localhost/games/gomoku/online?room=${code}`,
 }));
-vi.mock('next/link', () => ({
-  default: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props} />,
-}));
-
 let snap: PlaySnapshot<GomokuOnlineView>;
 beforeEach(() => {
   mocks.act.mockClear();
