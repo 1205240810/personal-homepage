@@ -3,6 +3,7 @@ import { SiteHeader } from '@/components/site/site-header';
 
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation releases game audio, timers and Worker ownership. */
 import { useEffect, useState, type ComponentType } from 'react';
+import { GameRules } from '../game-rules';
 import { IcpFilingLink } from '@/components/icp-filing-link';
 import type { BlackjackGameProps } from './generated/BlackjackGame';
 import './blackjack-room.css';
@@ -44,6 +45,9 @@ export function BlackjackRoom({
         fromExplore={fromExplore}
         label="暗牌 21 导航"
       />
+      <div className="game-rules-bar">
+        <GameRules gameId="blackjack" />
+      </div>
       {Game ? (
         <Game
           persist

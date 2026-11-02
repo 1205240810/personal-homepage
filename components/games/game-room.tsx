@@ -1,4 +1,5 @@
 /* oxlint-disable nextjs/no-html-link-for-pages -- Full-document navigation isolates game/Phaser lifecycles and avoids the current Vinext production prefetch error. */
+import { GameRules } from './game-rules';
 import {
   ArrowLeft,
   ArrowRight,
@@ -994,10 +995,13 @@ export function GamePageFrame({
   game,
   children,
   fromExplore = false,
+  online = false,
 }: {
   game: GameDefinition;
   children: ReactNode;
   fromExplore?: boolean;
+  /** 联机页显示联机版规则。 */
+  online?: boolean;
 }) {
   return (
     <main className="games-shell game-page">
@@ -1013,6 +1017,7 @@ export function GamePageFrame({
       <header className="game-page-head">
         <h1>{game.title}</h1>
         <p>{game.description}</p>
+        <GameRules gameId={game.id} online={online} />
       </header>
       <GameStage>{children}</GameStage>
       <p className="game-page-note">

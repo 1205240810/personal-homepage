@@ -16,6 +16,7 @@ export default async function Page({
   const { from } = await searchParams;
   return (
     <GamePageFrame
+      online
       game={{
         ...getGame('gomoku'),
         title: '五子棋联机',

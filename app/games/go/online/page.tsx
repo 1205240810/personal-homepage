@@ -16,6 +16,7 @@ export default async function Page({
   const fromExplore = (await searchParams).from === 'explore';
   return (
     <GamePageFrame
+      online
       game={{
         ...getGame('go'),
         title: '围棋联机',

@@ -16,6 +16,7 @@ export default async function Page({
   const fromExplore = (await searchParams).from === 'explore';
   return (
     <GamePageFrame
+      online
       game={{
         ...getGame('hanami'),
         title: '花街七席联机',

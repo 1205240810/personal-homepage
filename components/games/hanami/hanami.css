@@ -422,19 +422,6 @@ button.hn-token:not(:disabled):hover {
   font-size: 13px;
   color: var(--ink-soft, #666);
 }
-.hn-rules {
-  margin-top: 14px;
-  font-size: 14px;
-  line-height: 1.8;
-}
-.hn-rules summary {
-  cursor: pointer;
-  font-weight: 600;
-}
-.hn-rules ul {
-  margin: 8px 0 0;
-  padding-left: 1.2em;
-}
 .hn-next {
   display: flex;
   justify-content: center;
