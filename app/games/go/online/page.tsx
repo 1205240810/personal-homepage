@@ -8,7 +8,12 @@ export const metadata = {
     '和朋友在线下围棋：房间码或邀请链接即可入座，无需注册。支持 9 / 13 / 19 路、让子、悔棋请求、停一手与双方确认点目，断线自动重连。',
 };
 
-export default function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const fromExplore = (await searchParams).from === 'explore';
   return (
     <GamePageFrame
       online
@@ -18,8 +23,9 @@ export default function Page() {
         description: metadata.description,
         controls: '点击落子；支持协商悔棋、停一手、认输与双方点目确认',
       }}
+      fromExplore={fromExplore}
     >
-      <GoOnline />
+      <GoOnline fromExplore={fromExplore} />
     </GamePageFrame>
   );
 }

@@ -16,7 +16,7 @@ export default async function Page({
   const { from } = await searchParams;
   return (
     <GamePageFrame game={getGame('gomoku')} fromExplore={from === 'explore'}>
-      <GomokuGame />
+      <GomokuGame fromExplore={from === 'explore'} />
     </GamePageFrame>
   );
 }

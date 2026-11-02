@@ -35,7 +35,11 @@ const Card = ({ n }: { n: number | null }) => (
   <PlayingCard c={n === null ? null : toCard(n)} />
 );
 
-export function HoldemOnline() {
+export function HoldemOnline({
+  fromExplore = false,
+}: {
+  fromExplore?: boolean;
+}) {
   const [snap, client] = useRoom<HoldemOnlineView>('holdem');
   const [bots, setBots] = useState(2);
   const [styles, setStyles] = useState(['careful', 'active', 'tricky']);
@@ -46,14 +50,17 @@ export function HoldemOnline() {
       <header className="kit-head">
         <div>
           <p className="kit-kicker">
-            {"HOLD'EM · 双人联手"}
+            {"HOLD'EM · 双人同桌"}
             {v?.hand
               ? ` · 盲注 ${v.blinds[0]}/${v.blinds[1]} · 第 ${v.hand} 手`
               : ''}
           </p>
           <h2 className="kit-sr">德州联机</h2>
         </div>
-        <a className="play-back" href="/games/holdem-lab">
+        <a
+          className="play-back"
+          href={`/games/holdem-lab${fromExplore ? '?from=explore' : ''}`}
+        >
           返回单机
         </a>
       </header>

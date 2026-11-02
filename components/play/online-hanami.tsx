@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import '@/components/games/kit.css';
 import { GameResult } from '@/components/games/result';
 import { HanamiTable } from '@/components/games/hanami/table';
@@ -9,8 +8,12 @@ import type { HanamiOnlineView } from '@/lib/multiplayer/hanami-online';
 import { Lobby } from './lobby';
 import { useRoom } from './use-room';
 
-export function HanamiOnline() {
-  const [snap, client] = useRoom<HanamiOnlineView>();
+export function HanamiOnline({
+  fromExplore = false,
+}: {
+  fromExplore?: boolean;
+}) {
+  const [snap, client] = useRoom<HanamiOnlineView>('hanami');
   const v = snap.view;
   return (
     <div className="kit hanami">
@@ -19,9 +22,12 @@ export function HanamiOnline() {
           <p className="kit-kicker">SEVEN SEATS · 联机 1 对 1</p>
           <h2 className="kit-sr">花街七席联机</h2>
         </div>
-        <Link className="hn-online-link" href="/games/hanami">
+        <a
+          className="hn-online-link"
+          href={`/games/hanami${fromExplore ? '?from=explore' : ''}`}
+        >
           返回单机
-        </Link>
+        </a>
       </header>
       <Lobby
         snap={snap}
@@ -33,8 +39,11 @@ export function HanamiOnline() {
           <Table
             v={v}
             seat={snap.seat}
+            connected={snap.status === 'open'}
             names={snap.seats.map((s) => s.name)}
-            act={(a) => client.act(a)}
+            act={(a) =>
+              client.act({ ...a, positionRevision: v.positionRevision })
+            }
           />
         )}
       </Lobby>
@@ -45,13 +54,15 @@ export function HanamiOnline() {
 function Table({
   v,
   seat,
+  connected,
   names,
   act,
 }: {
   v: HanamiOnlineView;
   seat: number | null;
+  connected: boolean;
   names: string[];
-  act: (a: unknown) => void;
+  act: (a: Record<string, unknown>) => void;
 }) {
   if (!v.started || !v.round)
     return (
@@ -60,17 +71,26 @@ function Table({
   const me = (seat ?? 0) as Side;
   const opp = (1 - me) as Side;
   const r = v.result;
+  const canAct = connected && seat !== null;
   return (
     <HanamiTable
+      key={`${v.positionRevision}:${connected}`}
       v={v}
+      disabled={!canAct}
       names={
         [names[0] || '玩家 1', names[1] || '玩家 2'].map((n, i) =>
           i === me ? `${n}（你）` : n,
         ) as [string, string]
       }
-      onMove={(m: Move) => act({ type: 'move', move: m })}
+      onMove={(m: Move) => {
+        if (canAct) act({ type: 'move', move: m });
+        // The relay acknowledges asynchronously; its revision guard rejects
+        // replays. Do not keep the shared table's synchronous submission lock.
+        return false;
+      }}
       footer={
         <>
+          {!connected && <p className="kit-help">连接恢复后可继续操作…</p>}
           <p className="hn-score kit-help">
             比分 {v.score[me]} : {v.score[opp]}
           </p>
@@ -79,7 +99,7 @@ function Table({
               <button
                 type="button"
                 className="kit-primary"
-                disabled={v.ready[me]}
+                disabled={!canAct || v.ready[me]}
                 onClick={() => act({ type: 'next' })}
               >
                 {v.ready[me] ? '等对方…' : '下一轮（交换先手）'}
@@ -99,13 +119,17 @@ function Table({
                     ? '平局'
                     : '对方赢了'
               }
-              actions={[
-                {
-                  label: v.ready[me] ? '等对方同意…' : '再来一局',
-                  onClick: () => !v.ready[me] && act({ type: 'rematch' }),
-                  primary: true,
-                },
-              ]}
+              actions={
+                canAct && !v.ready[me]
+                  ? [
+                      {
+                        label: '再来一局',
+                        onClick: () => act({ type: 'rematch' }),
+                        primary: true,
+                      },
+                    ]
+                  : []
+              }
             >
               {r.reason === 'points'
                 ? '青睐分值达到 11'
@@ -113,7 +137,7 @@ function Table({
                   ? '赢得 4 位宾客青睐'
                   : '三轮后按分值决胜'}
               ：你 {r.patrons[me]} 位 {r.points[me]} 分，对方 {r.patrons[opp]}{' '}
-              位 {r.points[opp]} 分
+              位 {r.points[opp]} 分{v.ready[me] && ' · 已准备，等待对方…'}
               {v.ready[opp] && !v.ready[me] ? ' · 对方想再来一局' : ''}
             </GameResult>
           )}

@@ -34,15 +34,15 @@ export const HANAMI_LEVELS: Record<
   },
   3: { name: '3 · 熟练', note: '一步攻守判断', worlds: 0, noise: 0, timeMs: 0 },
   4: {
-    name: '4 · 高手',
-    note: '推演约 60 个可能的牌局',
+    name: '4 · 挑战',
+    note: '结合多种可能的牌局判断',
     worlds: 60,
     noise: 0,
     timeMs: 900,
   },
   5: {
-    name: '5 · 大师',
-    note: '推演约 240 个可能的牌局',
+    name: '5 · 全力',
+    note: '增加推演，仔细比较选择',
     worlds: 240,
     noise: 0,
     timeMs: 1800,
@@ -149,17 +149,24 @@ function withCards(played: [number[], number[]], side: Side, cards: Card[]) {
   return p;
 }
 
+/** The actor knows their own secret, including during sampled rollouts. */
+function knownPlayed(s: HanamiState, side: Side) {
+  const secret = s.secret[side];
+  return secret === null ? s.played : withCards(s.played, side, [secret]);
+}
+
 /** Value of a move for the actor, assuming the responder answers greedily. */
 function greedyValue(s: HanamiState, side: Side, m: Move): number {
   const opp = other(side);
-  const base = evaluate(s.played, s.favour, side);
+  const played = knownPlayed(s, side);
+  const base = evaluate(played, s.favour, side);
   if (m.type === 'secret')
-    return evaluate(withCards(s.played, side, m.cards), s.favour, side) - base;
+    return evaluate(withCards(played, side, m.cards), s.favour, side) - base;
   if (m.type === 'discard') {
     // Discarding throws away potential; prefer low-impact cards.
     let loss = 0;
     for (const c of m.cards)
-      loss += evaluate(withCards(s.played, side, [c]), s.favour, side) - base;
+      loss += evaluate(withCards(played, side, [c]), s.favour, side) - base;
     return -loss * 0.5 + 0.2;
   }
   if (m.type === 'pick') return 0;
@@ -175,7 +182,7 @@ function greedyValue(s: HanamiState, side: Side, m: Move): number {
         }));
   let worst = Infinity;
   for (const o of options) {
-    const p = withCards(withCards(s.played, side, o.mine), opp, o.theirs);
+    const p = withCards(withCards(played, side, o.mine), opp, o.theirs);
     worst = Math.min(worst, evaluate(p, s.favour, side) - base);
   }
   return worst;
@@ -183,6 +190,7 @@ function greedyValue(s: HanamiState, side: Side, m: Move): number {
 
 function greedyPick(s: HanamiState, side: Side): Move {
   const o = s.offer!;
+  const played = knownPlayed(s, side);
   let best = 0;
   let bestV = -Infinity;
   const n = o.kind === 'gift' ? 3 : 2;
@@ -193,7 +201,7 @@ function greedyPick(s: HanamiState, side: Side): Move {
       o.kind === 'gift'
         ? o.cards.filter((_, k) => k !== i)
         : o.cards.slice((1 - i) * 2, (1 - i) * 2 + 2);
-    const p = withCards(withCards(s.played, side, mine), o.from, theirs);
+    const p = withCards(withCards(played, side, mine), o.from, theirs);
     const v = evaluate(p, s.favour, side);
     if (v > bestV) {
       bestV = v;
@@ -243,7 +251,7 @@ function greedyMove(
 
 // ---------- determinization ----------
 /** Cards `me` cannot see, as a multiset. */
-function unseen(v: HanamiView, me: Side): Card[] {
+function unseen(v: HanamiView): Card[] {
   const count = Array(7).fill(0);
   for (const c of fullDeck()) count[c]++;
   const drop = (c: Card) => count[c]--;
@@ -259,25 +267,24 @@ function unseen(v: HanamiView, me: Side): Card[] {
   count.forEach((n, p) => {
     for (let i = 0; i < n; i++) out.push(p);
   });
-  void me;
   return out;
 }
 
 /** One possible full state consistent with what `me` sees. */
-function determinize(
-  v: HanamiView,
-  me: Side,
-  base: HanamiState,
-  rng: () => number,
-): HanamiState {
-  const pool = unseen(v, me);
+function determinize(v: HanamiView, me: Side, rng: () => number): HanamiState {
+  const pool = unseen(v);
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   const opp = other(me);
   const s: HanamiState = {
-    ...base,
+    round: v.round,
+    starter: v.starter,
+    toAct: v.toAct,
+    phase: v.phase,
+    deck: [],
+    removed: null,
     hands: [[], []],
     secret: [null, null],
     discarded: [[], []],
@@ -286,6 +293,8 @@ function determinize(
     favour: v.favour.slice(),
     log: [],
     offer: v.offer && { ...v.offer, cards: v.offer.cards.slice() },
+    summary: null,
+    result: null,
   };
   s.hands[me] = v.hand.slice();
   s.secret[me] = v.mySecret;
@@ -298,13 +307,24 @@ function determinize(
   return s;
 }
 
-function rollout(s0: HanamiState, me: Side, rng: () => number): number {
+const SEARCH_TIMEOUT = Symbol('hanami search timeout');
+function checkDeadline(deadline: number) {
+  if (Date.now() >= deadline) throw SEARCH_TIMEOUT;
+}
+
+function rollout(
+  s0: HanamiState,
+  me: Side,
+  rng: () => number,
+  deadline: number,
+): number {
   let s = s0;
   for (
     let guard = 0;
     guard < 40 && (s.phase === 'play' || s.phase === 'respond');
     guard++
   ) {
+    checkDeadline(deadline);
     const who = decider(s)!;
     s = apply(s, who, greedyMove(s, who, rng, 0.15));
   }
@@ -315,9 +335,8 @@ function rollout(s0: HanamiState, me: Side, rng: () => number): number {
 export type HanamiAiResult = { move: Move; worlds: number; reason: string };
 
 /**
- * Choose a move for `side`. Only `viewFor(state, side)`-level information is
- * used: the real state is passed so turn structure is available, but hidden
- * cards are re-dealt from `view` before any search.
+ * Choose a move using only this side's view. The state parameter is retained
+ * for compatibility with existing Worker callers; none of its fields are read.
  */
 export function chooseHanamiMove(
   state: HanamiState,
@@ -326,12 +345,20 @@ export function chooseHanamiMove(
   level: HanamiLevel,
   rng: () => number = Math.random,
 ): HanamiAiResult {
+  void state;
+  if (
+    view.you !== side ||
+    view.decider !== side ||
+    (view.phase !== 'play' && view.phase !== 'respond')
+  )
+    throw new Error('当前没有轮到这一方的决策');
   const cfg = HANAMI_LEVELS[level];
-  // Strip hidden information before doing anything with the state.
-  const visible = determinize(view, side, state, rng);
+  const deadline = Date.now() + cfg.timeMs;
+  const visible = determinize(view, side, rng);
+  const fallback = greedyMove(visible, side, rng, cfg.noise);
   if (!cfg.worlds)
     return {
-      move: greedyMove(visible, side, rng, cfg.noise),
+      move: fallback,
       worlds: 0,
       reason: '启发式',
     };
@@ -351,18 +378,28 @@ export function chooseHanamiMove(
       .map((x) => x.m);
   }
   const total = cands.map(() => 0);
-  const deadline = Date.now() + cfg.timeMs;
   let worlds = 0;
   for (; worlds < cfg.worlds && Date.now() < deadline; worlds++) {
-    const w = determinize(view, side, state, rng);
+    const w = determinize(view, side, rng);
     const seed = rng();
-    cands.forEach((m, i) => {
-      // Common random numbers: same world and same rollout seed for every candidate.
-      let x = seed * 2147483646 + 1;
-      const r = () => ((x = (x * 16807) % 2147483647) - 1) / 2147483646;
-      total[i] += rollout(apply(w, side, m), side, r);
-    });
+    const scores: number[] = [];
+    try {
+      for (const m of cands) {
+        checkDeadline(deadline);
+        // Common random numbers: same world and rollout seed for every candidate.
+        let x = seed * 2147483646 + 1;
+        const r = () => ((x = (x * 16807) % 2147483647) - 1) / 2147483646;
+        scores.push(rollout(apply(w, side, m), side, r, deadline));
+      }
+    } catch (error) {
+      if (error !== SEARCH_TIMEOUT) throw error;
+      break;
+    }
+    // An interrupted world must not give earlier candidates extra samples.
+    scores.forEach((score, i) => (total[i] += score));
   }
+  if (!worlds)
+    return { move: fallback, worlds: 0, reason: '启发式（思考时间已用尽）' };
   let best = 0;
   for (let i = 1; i < cands.length; i++) if (total[i] > total[best]) best = i;
   return { move: cands[best], worlds, reason: `推演 ${worlds} 个可能的牌局` };

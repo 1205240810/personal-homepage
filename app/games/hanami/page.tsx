@@ -16,7 +16,7 @@ export default async function Page({
   const { from } = await searchParams;
   return (
     <GamePageFrame game={getGame('hanami')} fromExplore={from === 'explore'}>
-      <HanamiGame />
+      <HanamiGame fromExplore={from === 'explore'} />
     </GamePageFrame>
   );
 }

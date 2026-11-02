@@ -394,7 +394,11 @@ export function viewFor(s: HanamiState, side: Side | null): HanamiView {
     hasSecret: [s.secret[0] !== null, s.secret[1] !== null],
     favour: s.favour.slice(),
     offer: s.offer && { ...s.offer, cards: s.offer.cards.slice() },
-    log: s.log.map((l) => ({ ...l })),
+    log: s.log.map((l) =>
+      l.kind === 'gift' || l.kind === 'contest'
+        ? { ...l, cards: l.cards.slice(), picked: l.picked.slice() }
+        : { ...l },
+    ),
     // Round summary reveals both secrets, but never discards or the removed card.
     summary: s.summary && {
       ...s.summary,
@@ -402,6 +406,10 @@ export function viewFor(s: HanamiState, side: Side | null): HanamiView {
       counts: [s.summary.counts[0].slice(), s.summary.counts[1].slice()],
       favour: s.summary.favour.slice(),
     },
-    result: s.result,
+    result: s.result && {
+      ...s.result,
+      points: [...s.result.points],
+      patrons: [...s.result.patrons],
+    },
   };
 }

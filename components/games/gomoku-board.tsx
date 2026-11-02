@@ -1,6 +1,8 @@
 'use client';
 
 import { coord } from '@/lib/games/gomoku';
+import { useRef, useState, type KeyboardEvent } from 'react';
+import { useBoardViewport } from './kit';
 import './go.css';
 import './gomoku.css';
 
@@ -33,13 +35,39 @@ export function GomokuBoard({
   label?: string;
   hint?: number | null;
 }) {
+  const board = useRef<HTMLFieldSetElement>(null);
+  const [focus, setFocus] = useState(Math.floor(cells.length / 2));
+  useBoardViewport(board);
   const win = new Set(line ?? []);
+  const onKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    const x = i % size;
+    const y = Math.floor(i / size);
+    const next =
+      e.key === 'ArrowLeft'
+        ? y * size + Math.max(0, x - 1)
+        : e.key === 'ArrowRight'
+          ? y * size + Math.min(size - 1, x + 1)
+          : e.key === 'ArrowUp'
+            ? Math.max(0, y - 1) * size + x
+            : e.key === 'ArrowDown'
+              ? Math.min(size - 1, y + 1) * size + x
+              : e.key === 'Home'
+                ? y * size
+                : e.key === 'End'
+                  ? y * size + size - 1
+                  : null;
+    if (next === null) return;
+    e.preventDefault();
+    board.current
+      ?.querySelector<HTMLButtonElement>(`[data-pt="${next}"]`)
+      ?.focus();
+  };
   return (
-    <div
+    <fieldset
+      ref={board}
       className="go-board gomoku-board"
       style={{ '--n': size } as React.CSSProperties}
-      role="grid"
-      aria-label={label}
+      aria-label={`${label}。方向键移动，回车或空格落子。`}
     >
       {cells.map((c, i) => {
         const x = i % size;
@@ -60,19 +88,28 @@ export function GomokuBoard({
           <button
             key={i}
             type="button"
+            data-pt={i}
             className={cls}
-            disabled={disabled || c !== 0 || forbidden?.has(i)}
+            tabIndex={focus === i ? 0 : -1}
+            aria-disabled={
+              disabled || c !== 0 || forbidden?.has(i) || undefined
+            }
             aria-label={`${coord(i, size)}${c === 1 ? ' 黑' : c === 2 ? ' 白' : ''}${!c && forbidden?.has(i) ? ' 禁手' : ''}`}
-            onClick={() => onPlay(i)}
+            onClick={() => {
+              if (!disabled && c === 0 && !forbidden?.has(i)) onPlay(i);
+            }}
+            onKeyDown={(e) => onKey(e, i)}
+            onFocus={() => setFocus(i)}
           >
             {c !== 0 && (
               <span
                 className={`go-stone ${c === 1 ? 'is-black' : 'is-white'}${i === last && !win.size ? ' is-last' : ''}${win.has(i) ? ' is-win' : ''}`}
+                aria-hidden="true"
               />
             )}
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }
