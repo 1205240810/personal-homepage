@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import GoPage from '../../../app/games/go/online/page';
 import BlackjackPage from '../../../app/games/blackjack/online/page';
 import HoldemPage from '../../../app/games/holdem-lab/online/page';
-import { GomokuOnline } from '../../../components/play/online-gomoku';
+import GomokuPage from '../../../app/games/gomoku/online/page';
 
 vi.mock('../../../components/play/use-room', () => ({
   useRoom: () => [
@@ -36,6 +36,7 @@ describe('online game return navigation', () => {
     ['go', GoPage],
     ['blackjack', BlackjackPage],
     ['holdem-lab', HoldemPage],
+    ['gomoku', GomokuPage],
   ] as const) {
     for (const fromExplore of [false, true]) {
       it(`${game} ${fromExplore ? 'preserves the explore return path' : 'keeps direct visits untagged'}`, async () => {
@@ -60,17 +61,4 @@ describe('online game return navigation', () => {
       });
     }
   }
-
-  it('Gomoku keeps direct visits untagged by default', () => {
-    render(<GomokuOnline />);
-    expect(
-      screen.getByRole('link', { name: '返回单机' }).getAttribute('href'),
-    ).toBe('/games/gomoku');
-  });
-  it('Gomoku preserves explore when its route passes the origin', () => {
-    render(<GomokuOnline fromExplore />);
-    expect(
-      screen.getByRole('link', { name: '返回单机' }).getAttribute('href'),
-    ).toBe('/games/gomoku?from=explore');
-  });
 });

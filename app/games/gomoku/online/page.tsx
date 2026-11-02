@@ -24,7 +24,7 @@ export default async function Page({
       }}
       fromExplore={from === 'explore'}
     >
-      <GomokuOnline />
+      <GomokuOnline fromExplore={from === 'explore'} />
     </GamePageFrame>
   );
 }
