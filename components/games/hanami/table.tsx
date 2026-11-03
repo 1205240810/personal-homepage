@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ACTIONS,
   ACTION_NAMES,
   ACTION_SIZE,
+  GIFTS,
   PATRONS,
   PATRON_TITLES,
   VALUES,
@@ -16,15 +17,21 @@ import {
   type Move,
   type Side,
 } from '@/lib/games/hanami';
+import { GiftIcon, GuestPortrait, Ribbon } from './art';
 import './hanami.css';
 
 const ACTION_HELP: Record<ActionKind, string> = {
-  secret: '暗置 1 张，轮末亮出计入自己',
-  discard: '暗弃 2 张，本轮不计',
-  gift: '亮出 3 张，对方挑 1 张，其余归你',
-  contest: '亮出两组各 2 张，对方挑一组，另一组归你',
+  secret: '藏起 1 份礼物，轮末亮出算你送的',
+  discard: '悄悄舍掉 2 份礼物，本轮谁也不算',
+  gift: '奉上 3 份礼物，对方先挑 1 份抢走，其余 2 份算你送的',
+  contest: '摆出两盘各 2 份礼物，对方挑走一盘，另一盘算你送的',
 };
 
+const giftLabel = (c: Card) =>
+  `${GIFTS[c]}（${PATRON_TITLES[c]}偏爱，${VALUES[c]} 分）`;
+
+// A card combines CSS, inline SVG and text; it has no single image URL for <img>.
+/* oxlint-disable jsx-a11y/prefer-tag-over-role */
 export function Blossom({
   c,
   small,
@@ -38,19 +45,23 @@ export function Blossom({
     return (
       <span
         className={`hn-card is-back${small ? ' is-small' : ''}`}
-        aria-label="背面"
+        role="img"
+        aria-label="礼盒背面"
       />
     );
   return (
     <span
       className={`hn-card hn-p${c}${small ? ' is-small' : ''}`}
-      aria-label={`${PATRON_TITLES[c]}（${VALUES[c]} 分）`}
+      role="img"
+      aria-label={giftLabel(c)}
     >
-      <b aria-hidden="true">{PATRONS[c]}</b>
+      <GiftIcon g={c} className="hn-gift-art" />
+      <b aria-hidden="true">{GIFTS[c]}</b>
       <i aria-hidden="true">{VALUES[c]}</i>
     </span>
   );
 }
+/* oxlint-enable jsx-a11y/prefer-tag-over-role */
 
 function Tokens({
   used,
@@ -98,11 +109,13 @@ function Tokens({
   );
 }
 
-function Pips({ n, p }: { n: number; p: number }) {
+function Pips({ n, p, side }: { n: number; p: number; side: 'me' | 'opp' }) {
   return (
-    <span className="hn-pips" aria-label={`${n} 张`}>
+    <span className={`hn-pips is-${side}`} aria-label={`${n} 份`}>
       {Array.from({ length: n }, (_, i) => (
-        <i key={i} className={`hn-p${p}`} />
+        <i key={i} className={`hn-p${p}`}>
+          <GiftIcon g={p} />
+        </i>
       ))}
     </span>
   );
@@ -111,9 +124,9 @@ function Pips({ n, p }: { n: number; p: number }) {
 function logText(l: LogEntry, me: Side) {
   const who = l.side === me ? '你' : '对方';
   if (!('cards' in l))
-    return `${who}${l.kind === 'secret' ? '藏了 1 张' : '舍了 2 张'}`;
-  const names = (cs: Card[]) => cs.map((c) => PATRONS[c]).join('');
-  return `${who}${ACTION_NAMES[l.kind]}出 ${names(l.cards)}，${l.side === me ? '对方' : '你'}挑走 ${names(l.picked)}`;
+    return `${who}${l.kind === 'secret' ? '藏起 1 份礼物' : '舍掉 2 份礼物'}`;
+  const names = (cs: Card[]) => cs.map((c) => GIFTS[c]).join('、');
+  return `${who}${l.kind === 'gift' ? '奉上' : '摆出'} ${names(l.cards)}，${l.side === me ? '对方' : '你'}抢走 ${names(l.picked)}`;
 }
 
 type TableProps = {
@@ -124,10 +137,11 @@ type TableProps = {
   thinking?: string | null;
   footer?: React.ReactNode;
   disabled?: boolean;
+  positionKey?: string | number;
 };
 
 export function HanamiTable(props: TableProps) {
-  const { v, disabled } = props;
+  const { v, disabled, positionKey } = props;
   // Selections refer to indices in one visible position. A new hand, response,
   // round, seat or connection state must never reuse those indices.
   const position = JSON.stringify([
@@ -140,9 +154,25 @@ export function HanamiTable(props: TableProps) {
     v.used,
     v.offer,
     !!disabled,
+    positionKey,
   ]);
-  return <HanamiPosition key={position} {...props} />;
+  return <HanamiPosition position={position} {...props} />;
 }
+
+type Draft = {
+  position: string;
+  generation: number;
+  action: ActionKind | null;
+  sel: number[];
+  sending: boolean;
+};
+const emptyDraft = (position: string, generation = 0): Draft => ({
+  position,
+  generation,
+  action: null,
+  sel: [],
+  sending: false,
+});
 
 function HanamiPosition({
   v,
@@ -151,13 +181,20 @@ function HanamiPosition({
   thinking,
   footer,
   disabled = false,
-}: TableProps) {
+  position,
+}: TableProps & { position: string }) {
   const me: Side = v.you ?? 0;
   const opp: Side = me === 0 ? 1 : 0;
-  const [action, setAction] = useState<ActionKind | null>(null);
-  const [sel, setSel] = useState<number[]>([]);
-  const submitted = useRef(false);
-  const [sending, setSending] = useState(false);
+  const [draft, setDraft] = useState(() => emptyDraft(position));
+  // Invalidate index-based choices immediately while keeping the illustrated
+  // table mounted: only newly delivered gifts should play their entry motion.
+  let current = draft;
+  if (draft.position !== position) {
+    current = emptyDraft(position, draft.generation + 1);
+    setDraft(current);
+  }
+  const { action, sel, sending, generation } = current;
+  const submitted = useRef<number | null>(null);
   const myTurn =
     !disabled &&
     !sending &&
@@ -172,34 +209,35 @@ function HanamiPosition({
     v.decider === me;
   const need = action ? ACTION_SIZE[action] : 0;
   const reset = () => {
-    setAction(null);
-    setSel([]);
+    setDraft(emptyDraft(position, generation));
   };
   const toggle = (i: number) => {
     if (!myTurn || !action) return;
-    setSel((s) =>
-      s.includes(i)
-        ? s.filter((x) => x !== i)
-        : s.length < need
-          ? [...s, i]
-          : s,
-    );
+    setDraft((previous) => {
+      const current =
+        previous.position === position
+          ? previous
+          : emptyDraft(position, generation);
+      const s = current.sel;
+      return {
+        ...current,
+        sel: s.includes(i)
+          ? s.filter((x) => x !== i)
+          : s.length < need
+            ? [...s, i]
+            : s,
+      };
+    });
   };
-  const submit = useCallback(
-    (move: Move) => {
-      if (disabled || submitted.current) return;
-      submitted.current = true;
-      setSending(true);
-      if (onMove(move) === false) {
-        submitted.current = false;
-        setSending(false);
-        return;
-      }
-      setAction(null);
-      setSel([]);
-    },
-    [disabled, onMove],
-  );
+  const submit = (move: Move) => {
+    if (disabled || submitted.current === generation) return;
+    submitted.current = generation;
+    if (onMove(move) === false) {
+      submitted.current = null;
+      return;
+    }
+    setDraft({ ...emptyDraft(position, generation), sending: true });
+  };
   const confirm = () => {
     if (!myTurn || !action || sel.length !== need) return;
     submit({ type: action, cards: sel.map((i) => v.hand[i]) } as Move);
@@ -220,13 +258,13 @@ function HanamiPosition({
       : v.phase === 'respond'
         ? responding
           ? v.offer!.kind === 'gift'
-            ? '对方赠出 3 张：挑 1 张归你'
-            : '对方提出比试：挑一组归你'
-          : '等对方挑选…'
+            ? '对方奉上 3 份礼物：抢 1 份，替你送出'
+            : '对方摆出两盘礼物：挑走一盘'
+          : '等对方挑礼物…'
         : v.phase === 'play'
           ? myTurn
             ? action
-              ? `${ACTION_NAMES[action]}：选 ${need} 张${action === 'contest' ? '（前两张为一组，后两张为一组）' : ''}`
+              ? `${ACTION_NAMES[action]}：选 ${need} 份礼物${action === 'contest' ? '（前两份为甲盘，后两份为乙盘）' : ''}`
               : '轮到你：先选一种行动'
             : '等对方行动…'
           : '';
@@ -242,7 +280,7 @@ function HanamiPosition({
         </div>
         <div
           className="hn-hand is-hidden"
-          aria-label={`对手手牌 ${v.handCounts[opp]} 张`}
+          aria-label={`对手手里 ${v.handCounts[opp]} 份礼物`}
         >
           {Array.from({ length: v.handCounts[opp] }, (_, i) => (
             <Blossom key={i} back small />
@@ -250,34 +288,42 @@ function HanamiPosition({
         </div>
         <Tokens used={v.used[opp]} />
         <div className="hn-hidden-info">
-          {v.hasSecret[opp] && <span>藏 1 张</span>}
-          {v.used[opp].includes('discard') && <span>舍 2 张</span>}
+          {v.hasSecret[opp] && <span>藏 1 份</span>}
+          {v.used[opp].includes('discard') && <span>舍 2 份</span>}
         </div>
       </section>
 
-      <section className="hn-patrons" aria-label="七席花客">
+      <section className="hn-patrons" aria-label="七位宾客">
         {VALUES.map((val, p) => {
           const f = v.favour[p];
           return (
             <div
               key={p}
-              className={`hn-col${f === me ? ' is-mine' : f === opp ? ' is-theirs' : ''}`}
+              className={`hn-col hn-p${p}${f === me ? ' is-mine' : f === opp ? ' is-theirs' : ''}`}
             >
-              <Pips n={v.played[opp][p]} p={p} />
-              <div className={`hn-patron hn-p${p}`}>
-                <span
+              <Pips
+                key={`opp-${v.round}`}
+                n={v.played[opp][p]}
+                p={p}
+                side="opp"
+              />
+              <div className="hn-patron">
+                <Ribbon
                   className={`hn-marker${f === me ? ' to-me' : f === opp ? ' to-opp' : ''}`}
-                  aria-hidden="true"
                 />
+                <GuestPortrait p={p} className="hn-portrait" />
                 <b>{PATRONS[p]}</b>
-                <small>{PATRON_TITLES[p]}</small>
-                <i>{val}</i>
+                <small>{PATRON_TITLES[p].split(' ')[1]}</small>
+                <span className="hn-likes">
+                  <GiftIcon g={p} />
+                  <i>{val}</i>
+                </span>
               </div>
-              <Pips n={v.played[me][p]} p={p} />
+              <Pips key={`me-${v.round}`} n={v.played[me][p]} p={p} side="me" />
               <span className="hn-sr">
-                {PATRON_TITLES[p]}：你 {v.played[me][p]} 张，对手{' '}
-                {v.played[opp][p]} 张，花签
-                {f === me ? '在你这边' : f === opp ? '在对手那边' : '在中间'}
+                {PATRON_TITLES[p]}（{val} 分，偏爱{GIFTS[p]}）：你送了{' '}
+                {v.played[me][p]} 份，对手送了 {v.played[opp][p]} 份，彩绸
+                {f === me ? '在你这边' : f === opp ? '在对手那边' : '还在中间'}
               </span>
             </div>
           );
@@ -297,13 +343,16 @@ function HanamiPosition({
           className={`hn-offer${responding ? ' is-mine' : ''}`}
           aria-label="对方的出牌"
         >
+          <span className="hn-offer-title">
+            {v.offer.kind === 'gift' ? '礼盘 · 抢 1 份' : '两盘礼物 · 挑 1 盘'}
+          </span>
           {v.offer.kind === 'gift'
             ? v.offer.cards.map((c, i) => (
                 <button
                   key={i}
                   type="button"
                   className="hn-pick"
-                  aria-label={`选择${PATRON_TITLES[c]}（${VALUES[c]} 分），第 ${i + 1} 张`}
+                  aria-label={`选择${giftLabel(c)}，第 ${i + 1} 份`}
                   disabled={!responding}
                   data-index={i}
                   onClick={choose}
@@ -316,9 +365,9 @@ function HanamiPosition({
                   key={i}
                   type="button"
                   className="hn-pick is-pair"
-                  aria-label={`选择第 ${i + 1} 组：${v
+                  aria-label={`选择第 ${i + 1} 盘：${v
                     .offer!.cards.slice(i * 2, i * 2 + 2)
-                    .map((c) => PATRON_TITLES[c])
+                    .map(giftLabel)
                     .join(' / ')}`}
                   disabled={!responding}
                   data-index={i}
@@ -334,13 +383,13 @@ function HanamiPosition({
       {v.summary && (v.phase === 'round-end' || v.phase === 'over') && (
         <div className="hn-summary">
           <span>
-            第 {v.summary.round} 轮结束 · 亮出藏牌：你{' '}
+            第 {v.summary.round} 轮结束 · 亮出藏起的礼物：你{' '}
             {v.summary.secrets[me] !== null
-              ? PATRONS[v.summary.secrets[me]!]
+              ? GIFTS[v.summary.secrets[me]!]
               : '—'}
             ，对方{' '}
             {v.summary.secrets[opp] !== null
-              ? PATRONS[v.summary.secrets[opp]!]
+              ? GIFTS[v.summary.secrets[opp]!]
               : '—'}
           </span>
           <span>
@@ -378,8 +427,10 @@ function HanamiPosition({
           onPick={
             myTurn
               ? (a) => {
-                  setAction(a === action ? null : a);
-                  setSel([]);
+                  setDraft({
+                    ...emptyDraft(position, generation),
+                    action: a === action ? null : a,
+                  });
                 }
               : undefined
           }
@@ -393,7 +444,7 @@ function HanamiPosition({
                 type="button"
                 className={`hn-slot${k >= 0 ? ' is-sel' : ''}${action === 'contest' && k >= 2 ? ' is-pair-b' : ''}`}
                 disabled={!myTurn || !action}
-                aria-label={`${PATRON_TITLES[c]}（${VALUES[c]} 分），第 ${i + 1} 张${action === 'contest' && k >= 0 ? (k < 2 ? '，甲组' : '，乙组') : ''}`}
+                aria-label={`${giftLabel(c)}，第 ${i + 1} 份${action === 'contest' && k >= 0 ? (k < 2 ? '，甲盘' : '，乙盘') : ''}`}
                 aria-pressed={k >= 0}
                 onClick={() => toggle(i)}
               >

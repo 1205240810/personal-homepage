@@ -503,6 +503,11 @@ void describe('hanami over the relay', () => {
           c.snapshot.view!.used,
           c.snapshot.view!.phase,
           c.snapshot.view!.round,
+          // The hand changes on the draw without touching played/used; a
+          // stale hand would make the decider send an illegal move.
+          c.snapshot.view!.handCounts,
+          c.snapshot.view!.deckCount,
+          c.snapshot.view!.decider,
         ]);
       await until(() => b.snapshot.view && sig(a) === sig(b));
       const who = v.decider!;
@@ -524,15 +529,24 @@ void describe('hanami over the relay', () => {
         cv.phase === 'respond'
           ? { type: 'pick', index: 0 }
           : legalMoves(cv.hand, cv.used[who])[0];
-      c.act({ type: 'move', move, positionRevision: cv.positionRevision });
-      await until(
-        () =>
-          JSON.stringify([
-            a.snapshot.view!.played,
-            a.snapshot.view!.used,
-            a.snapshot.view!.phase,
-          ]) !== n,
-      );
+      const changed = () =>
+        JSON.stringify([
+          a.snapshot.view!.played,
+          a.snapshot.view!.used,
+          a.snapshot.view!.phase,
+        ]) !== n;
+      // A full three-round match can trip the hub's per-second rate limit;
+      // back off and resend instead of failing on timing.
+      for (let tries = 0; ; tries++) {
+        c.act({ type: 'move', move, positionRevision: cv.positionRevision });
+        try {
+          await until(changed, 1500);
+          break;
+        } catch (e) {
+          if (tries >= 3 || !/频繁/.test(c.snapshot.error ?? '')) throw e;
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
       if (!dropped && ++steps === 5) {
         dropped = true;
         (b as unknown as { ws: WebSocket }).ws.close();

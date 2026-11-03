@@ -74,7 +74,7 @@ function Table({
   const canAct = connected && seat !== null;
   return (
     <HanamiTable
-      key={`${v.positionRevision}:${connected}`}
+      positionKey={`${v.positionRevision}:${connected}`}
       v={v}
       disabled={!canAct}
       names={
@@ -132,9 +132,9 @@ function Table({
               }
             >
               {r.reason === 'points'
-                ? '花签分值达到 11'
+                ? '青睐分值达到 11'
                 : r.reason === 'patrons'
-                  ? '得到 4 位花客'
+                  ? '赢得 4 位宾客青睐'
                   : '三轮后按分值决胜'}
               ：你 {r.patrons[me]} 位 {r.points[me]} 分，对方 {r.patrons[opp]}{' '}
               位 {r.points[opp]} 分{v.ready[me] && ' · 已准备，等待对方…'}

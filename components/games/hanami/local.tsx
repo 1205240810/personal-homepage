@@ -310,9 +310,9 @@ export function HanamiGame({ fromExplore = false }: { fromExplore?: boolean }) {
                 actions={[{ label: '再来一局', onClick: start, primary: true }]}
               >
                 {r.reason === 'points'
-                  ? '花签分值达到 11'
+                  ? '青睐分值达到 11'
                   : r.reason === 'patrons'
-                    ? '得到 4 位花客'
+                    ? '赢得 4 位宾客青睐'
                     : '三轮后按分值决胜'}
                 ：你 {r.patrons[ME]} 位 {r.points[ME]} 分，AI {r.patrons[AI]} 位{' '}
                 {r.points[AI]} 分
@@ -323,7 +323,7 @@ export function HanamiGame({ fromExplore = false }: { fromExplore?: boolean }) {
       ) : (
         <div className="hn-intro">
           <p>
-            七位花客，四种行动，每轮每种只能用一次。藏一张、舍两张、赠三张、比两组——把花客的青睐留在自己这边。
+            花街茶楼来了七位宾客，各有偏爱的礼物。藏一份、舍两份、赠三份、比两盘——每种行动每轮只用一次，把宾客的彩绸留在自己这边。
           </p>
           <button type="button" className="kit-primary" onClick={start}>
             开局
