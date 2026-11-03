@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ACTIONS,
   ACTION_NAMES,
@@ -137,10 +137,11 @@ type TableProps = {
   thinking?: string | null;
   footer?: React.ReactNode;
   disabled?: boolean;
+  positionKey?: string | number;
 };
 
 export function HanamiTable(props: TableProps) {
-  const { v, disabled } = props;
+  const { v, disabled, positionKey } = props;
   // Selections refer to indices in one visible position. A new hand, response,
   // round, seat or connection state must never reuse those indices.
   const position = JSON.stringify([
@@ -153,9 +154,25 @@ export function HanamiTable(props: TableProps) {
     v.used,
     v.offer,
     !!disabled,
+    positionKey,
   ]);
-  return <HanamiPosition key={position} {...props} />;
+  return <HanamiPosition position={position} {...props} />;
 }
+
+type Draft = {
+  position: string;
+  generation: number;
+  action: ActionKind | null;
+  sel: number[];
+  sending: boolean;
+};
+const emptyDraft = (position: string, generation = 0): Draft => ({
+  position,
+  generation,
+  action: null,
+  sel: [],
+  sending: false,
+});
 
 function HanamiPosition({
   v,
@@ -164,13 +181,20 @@ function HanamiPosition({
   thinking,
   footer,
   disabled = false,
-}: TableProps) {
+  position,
+}: TableProps & { position: string }) {
   const me: Side = v.you ?? 0;
   const opp: Side = me === 0 ? 1 : 0;
-  const [action, setAction] = useState<ActionKind | null>(null);
-  const [sel, setSel] = useState<number[]>([]);
-  const submitted = useRef(false);
-  const [sending, setSending] = useState(false);
+  const [draft, setDraft] = useState(() => emptyDraft(position));
+  // Invalidate index-based choices immediately while keeping the illustrated
+  // table mounted: only newly delivered gifts should play their entry motion.
+  let current = draft;
+  if (draft.position !== position) {
+    current = emptyDraft(position, draft.generation + 1);
+    setDraft(current);
+  }
+  const { action, sel, sending, generation } = current;
+  const submitted = useRef<number | null>(null);
   const myTurn =
     !disabled &&
     !sending &&
@@ -185,34 +209,35 @@ function HanamiPosition({
     v.decider === me;
   const need = action ? ACTION_SIZE[action] : 0;
   const reset = () => {
-    setAction(null);
-    setSel([]);
+    setDraft(emptyDraft(position, generation));
   };
   const toggle = (i: number) => {
     if (!myTurn || !action) return;
-    setSel((s) =>
-      s.includes(i)
-        ? s.filter((x) => x !== i)
-        : s.length < need
-          ? [...s, i]
-          : s,
-    );
+    setDraft((previous) => {
+      const current =
+        previous.position === position
+          ? previous
+          : emptyDraft(position, generation);
+      const s = current.sel;
+      return {
+        ...current,
+        sel: s.includes(i)
+          ? s.filter((x) => x !== i)
+          : s.length < need
+            ? [...s, i]
+            : s,
+      };
+    });
   };
-  const submit = useCallback(
-    (move: Move) => {
-      if (disabled || submitted.current) return;
-      submitted.current = true;
-      setSending(true);
-      if (onMove(move) === false) {
-        submitted.current = false;
-        setSending(false);
-        return;
-      }
-      setAction(null);
-      setSel([]);
-    },
-    [disabled, onMove],
-  );
+  const submit = (move: Move) => {
+    if (disabled || submitted.current === generation) return;
+    submitted.current = generation;
+    if (onMove(move) === false) {
+      submitted.current = null;
+      return;
+    }
+    setDraft({ ...emptyDraft(position, generation), sending: true });
+  };
   const confirm = () => {
     if (!myTurn || !action || sel.length !== need) return;
     submit({ type: action, cards: sel.map((i) => v.hand[i]) } as Move);
@@ -276,7 +301,12 @@ function HanamiPosition({
               key={p}
               className={`hn-col hn-p${p}${f === me ? ' is-mine' : f === opp ? ' is-theirs' : ''}`}
             >
-              <Pips n={v.played[opp][p]} p={p} side="opp" />
+              <Pips
+                key={`opp-${v.round}`}
+                n={v.played[opp][p]}
+                p={p}
+                side="opp"
+              />
               <div className="hn-patron">
                 <Ribbon
                   className={`hn-marker${f === me ? ' to-me' : f === opp ? ' to-opp' : ''}`}
@@ -289,7 +319,7 @@ function HanamiPosition({
                   <i>{val}</i>
                 </span>
               </div>
-              <Pips n={v.played[me][p]} p={p} side="me" />
+              <Pips key={`me-${v.round}`} n={v.played[me][p]} p={p} side="me" />
               <span className="hn-sr">
                 {PATRON_TITLES[p]}（{val} 分，偏爱{GIFTS[p]}）：你送了{' '}
                 {v.played[me][p]} 份，对手送了 {v.played[opp][p]} 份，彩绸
@@ -397,8 +427,10 @@ function HanamiPosition({
           onPick={
             myTurn
               ? (a) => {
-                  setAction(a === action ? null : a);
-                  setSel([]);
+                  setDraft({
+                    ...emptyDraft(position, generation),
+                    action: a === action ? null : a,
+                  });
                 }
               : undefined
           }

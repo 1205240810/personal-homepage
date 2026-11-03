@@ -74,7 +74,7 @@ function Table({
   const canAct = connected && seat !== null;
   return (
     <HanamiTable
-      key={`${v.positionRevision}:${connected}`}
+      positionKey={`${v.positionRevision}:${connected}`}
       v={v}
       disabled={!canAct}
       names={

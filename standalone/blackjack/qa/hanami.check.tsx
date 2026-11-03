@@ -247,6 +247,51 @@ describe('花街七席本机', () => {
 });
 
 describe('花街七席选牌与提交', () => {
+  it('keeps guests and delivered gifts mounted while clearing only position-bound choices', () => {
+    let s = fixture();
+    s = H.apply(s, 0, {
+      type: 'gift',
+      cards: s.hands[0].slice(0, 3) as [number, number, number],
+    });
+    s = H.apply(s, 1, { type: 'pick', index: 0 });
+    const onMove = vi.fn();
+    const ui = render(
+      <HanamiTable v={H.viewFor(s, 0)} names={['你', 'AI']} onMove={onMove} />,
+    );
+    const guest = document.querySelector('.hn-patron');
+    const ribbon = document.querySelector('.hn-marker');
+    const delivered = document.querySelector('.hn-pips i');
+    expect(delivered).not.toBeNull();
+    s = H.apply(s, 1, { type: 'secret', cards: [s.hands[1][0]] });
+    const v = H.viewFor(s, 0);
+    ui.rerender(<HanamiTable v={v} names={['你', 'AI']} onMove={onMove} />);
+    expect(document.querySelector('.hn-patron')).toBe(guest);
+    expect(document.querySelector('.hn-pips i')).toBe(delivered);
+    select('secret', [0]);
+    ui.rerender(
+      <HanamiTable
+        v={v}
+        positionKey={2}
+        names={['你', 'AI']}
+        onMove={onMove}
+      />,
+    );
+    expect(document.querySelector('.hn-confirm')).toBeNull();
+    expect(document.querySelector('.hn-patron')).toBe(guest);
+    const nextRound = {
+      ...v,
+      round: v.round + 1,
+      played: [Array(7).fill(0), Array(7).fill(0)] as [number[], number[]],
+      favour: [0, ...v.favour.slice(1)] as H.HanamiView['favour'],
+    };
+    ui.rerender(
+      <HanamiTable v={nextRound} names={['你', 'AI']} onMove={onMove} />,
+    );
+    expect(document.querySelector('.hn-marker')).toBe(ribbon);
+    expect(ribbon!.classList.contains('to-me')).toBe(true);
+    expect(delivered!.isConnected).toBe(false);
+  });
+
   it('names every hand card by its visible gift, preferred guest and value', () => {
     const v = { ...H.viewFor(fixture(), 0), hand: H.GIFTS.map((_, i) => i) };
     render(<HanamiTable v={v} names={['你', 'AI']} onMove={vi.fn()} />);
@@ -364,6 +409,23 @@ describe('花街七席选牌与提交', () => {
     });
     expect(onMove).toHaveBeenCalledTimes(1);
     expect(onMove).toHaveBeenCalledWith({ type: 'pick', index: 1 });
+    view.rerender(
+      <HanamiTable
+        v={H.viewFor(offered, 0)}
+        names={['你', 'AI']}
+        onMove={onMove}
+        disabled
+      />,
+    );
+    view.rerender(
+      <HanamiTable
+        v={H.viewFor(offered, 0)}
+        names={['你', 'AI']}
+        onMove={onMove}
+      />,
+    );
+    fireEvent.click(picks()[1]);
+    expect(onMove).toHaveBeenCalledTimes(2);
     view.rerender(
       <HanamiTable
         v={H.viewFor(offered, null)}
