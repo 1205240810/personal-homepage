@@ -21,7 +21,7 @@ export default async function Page({
         ...getGame('hanami'),
         title: '花街七席联机',
         description: metadata.description,
-        controls: '选择行动与花笺；对方赠牌或比试时挑选，轮末双方确认后继续',
+        controls: '选择行动与礼物；对方赠礼或摆盘时挑选，轮末双方确认后继续',
       }}
       fromExplore={fromExplore}
     >

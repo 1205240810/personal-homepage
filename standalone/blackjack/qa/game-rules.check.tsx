@@ -123,7 +123,7 @@ describe('game rules interaction', () => {
     expect(dialog.getAttribute('aria-modal')).toBe('true');
     expect(document.activeElement).toBe(dialog);
     expect(document.body.style.overflow).toBe('hidden');
-    expect(screen.getByText(/藏牌在轮末才向双方公开/)).toBeTruthy();
+    expect(screen.getByText(/藏起的礼物在轮末才向双方公开/)).toBeTruthy();
     fireEvent(
       dialog,
       new Event('cancel', { bubbles: false, cancelable: true }),
