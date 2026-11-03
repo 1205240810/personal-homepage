@@ -27,6 +27,11 @@ const ACTION_HELP: Record<ActionKind, string> = {
   contest: '摆出两盘各 2 份礼物，对方挑走一盘，另一盘算你送的',
 };
 
+const giftLabel = (c: Card) =>
+  `${GIFTS[c]}（${PATRON_TITLES[c]}偏爱，${VALUES[c]} 分）`;
+
+// A card combines CSS, inline SVG and text; it has no single image URL for <img>.
+/* oxlint-disable jsx-a11y/prefer-tag-over-role */
 export function Blossom({
   c,
   small,
@@ -40,13 +45,15 @@ export function Blossom({
     return (
       <span
         className={`hn-card is-back${small ? ' is-small' : ''}`}
+        role="img"
         aria-label="礼盒背面"
       />
     );
   return (
     <span
       className={`hn-card hn-p${c}${small ? ' is-small' : ''}`}
-      aria-label={`${GIFTS[c]}（${PATRON_TITLES[c]}偏爱，${VALUES[c]} 分）`}
+      role="img"
+      aria-label={giftLabel(c)}
     >
       <GiftIcon g={c} className="hn-gift-art" />
       <b aria-hidden="true">{GIFTS[c]}</b>
@@ -54,6 +61,7 @@ export function Blossom({
     </span>
   );
 }
+/* oxlint-enable jsx-a11y/prefer-tag-over-role */
 
 function Tokens({
   used,
@@ -314,7 +322,7 @@ function HanamiPosition({
                   key={i}
                   type="button"
                   className="hn-pick"
-                  aria-label={`选择${PATRON_TITLES[c]}（${VALUES[c]} 分），第 ${i + 1} 张`}
+                  aria-label={`选择${giftLabel(c)}，第 ${i + 1} 份`}
                   disabled={!responding}
                   data-index={i}
                   onClick={choose}
@@ -327,9 +335,9 @@ function HanamiPosition({
                   key={i}
                   type="button"
                   className="hn-pick is-pair"
-                  aria-label={`选择第 ${i + 1} 组：${v
+                  aria-label={`选择第 ${i + 1} 盘：${v
                     .offer!.cards.slice(i * 2, i * 2 + 2)
-                    .map((c) => PATRON_TITLES[c])
+                    .map(giftLabel)
                     .join(' / ')}`}
                   disabled={!responding}
                   data-index={i}
@@ -404,7 +412,7 @@ function HanamiPosition({
                 type="button"
                 className={`hn-slot${k >= 0 ? ' is-sel' : ''}${action === 'contest' && k >= 2 ? ' is-pair-b' : ''}`}
                 disabled={!myTurn || !action}
-                aria-label={`${PATRON_TITLES[c]}（${VALUES[c]} 分），第 ${i + 1} 张${action === 'contest' && k >= 0 ? (k < 2 ? '，甲组' : '，乙组') : ''}`}
+                aria-label={`${giftLabel(c)}，第 ${i + 1} 份${action === 'contest' && k >= 0 ? (k < 2 ? '，甲盘' : '，乙盘') : ''}`}
                 aria-pressed={k >= 0}
                 onClick={() => toggle(i)}
               >

@@ -247,6 +247,47 @@ describe('花街七席本机', () => {
 });
 
 describe('花街七席选牌与提交', () => {
+  it('names every hand card by its visible gift, preferred guest and value', () => {
+    const v = { ...H.viewFor(fixture(), 0), hand: H.GIFTS.map((_, i) => i) };
+    render(<HanamiTable v={v} names={['你', 'AI']} onMove={vi.fn()} />);
+    H.GIFTS.forEach((gift, i) => {
+      const label = `${gift}（${H.PATRON_TITLES[i]}偏爱，${H.VALUES[i]} 分）`;
+      expect(
+        screen.getByRole('button', { name: `${label}，第 ${i + 1} 份` }),
+      ).toBe(card(i));
+      expect(screen.getByRole('img', { name: label })).toBeTruthy();
+    });
+    document.querySelectorAll('.hn-table svg').forEach((svg) => {
+      expect(svg.getAttribute('aria-hidden')).toBe('true');
+      expect(svg.getAttribute('focusable')).toBe('false');
+    });
+  });
+
+  it.each(['gift', 'contest'] as const)(
+    'names %s offers by the gifts that are actually selected',
+    (kind) => {
+      const s = fixture(1);
+      const cards = s.hands[1].slice(0, H.ACTION_SIZE[kind]);
+      const offered = H.apply(s, 1, { type: kind, cards } as H.Move);
+      const onMove = vi.fn();
+      render(
+        <HanamiTable
+          v={H.viewFor(offered, 0)}
+          names={['你', 'AI']}
+          onMove={onMove}
+        />,
+      );
+      const label = (c: number) =>
+        `${H.GIFTS[c]}（${H.PATRON_TITLES[c]}偏爱，${H.VALUES[c]} 分）`;
+      const name =
+        kind === 'gift'
+          ? `选择${label(cards[1])}，第 2 份`
+          : `选择第 2 盘：${cards.slice(2).map(label).join(' / ')}`;
+      fireEvent.click(screen.getByRole('button', { name }));
+      expect(onMove).toHaveBeenCalledWith({ type: 'pick', index: 1 });
+    },
+  );
+
   it('keeps selection order for contest pairs and prevents duplicate confirmation', () => {
     const s = fixture();
     const onMove = vi.fn();
@@ -254,9 +295,9 @@ describe('花街七席选牌与提交', () => {
       <HanamiTable v={H.viewFor(s, 0)} names={['你', 'AI']} onMove={onMove} />,
     );
     select('contest', [3, 0, 4, 1]);
-    expect(card(3).getAttribute('aria-label')).toContain('甲组');
-    expect(card(0).getAttribute('aria-label')).toContain('甲组');
-    expect(card(4).getAttribute('aria-label')).toContain('乙组');
+    expect(card(3).getAttribute('aria-label')).toContain('甲盘');
+    expect(card(0).getAttribute('aria-label')).toContain('甲盘');
+    expect(card(4).getAttribute('aria-label')).toContain('乙盘');
     const button = confirm();
     act(() => {
       fireEvent.click(button);
