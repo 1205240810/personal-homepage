@@ -760,6 +760,12 @@ html[data-theme='tech'] .room-ex-row .r3 {
 html[data-theme='tech'] .room-ex-row .r4 {
     color: #7cc7df
 }
+html[data-theme='tech'] .room-bazaar-preview {
+    border: 1px solid rgb(124 199 223 / 0.45);
+    color: #93a8bc;
+    background: repeating-linear-gradient(90deg, transparent 0 34px, #6e4a2f1f 34px 35px),
+    linear-gradient(180deg, #0f1f2e, #0f1f2e)
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid var(--line, rgb(124 199 223 / 0.45));

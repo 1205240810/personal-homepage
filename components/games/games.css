@@ -1838,3 +1838,51 @@
 .room-ex-row .r4 {
   color: #6b4a8a;
 }
+
+.room-bazaar-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #c9bfa6;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #5c4a3a;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 34px, #6e4a2f1f 34px 35px),
+    linear-gradient(180deg, #ecdfc4, #d8c39c);
+}
+.room-bz-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0;
+}
+.room-bz-row i {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-style: normal;
+  font-size: 15px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+  color: #fff;
+  background: currentColor;
+  box-shadow: 0 3px 6px -2px #0006;
+}
+.room-bz-row .g0 {
+  background: #b2455e;
+}
+.room-bz-row .g1 {
+  background: #c3922e;
+}
+.room-bz-row .g3 {
+  background: #7a4a8c;
+}
+.room-bz-row .g4 {
+  background: #3f7a52;
+}
+.room-bz-row .g6 {
+  background: #b48a5a;
+}

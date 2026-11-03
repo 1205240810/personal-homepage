@@ -149,6 +149,7 @@ if (
     checkGameWorkerBuild(directory, 'local', 'hanami-worker');
     checkGameWorkerBuild(directory, 'quoridor', 'quoridor-worker');
     checkGameWorkerBuild(directory, 'local', 'expedition-worker');
+    checkGameWorkerBuild(directory, 'local', 'bazaar-worker');
   } catch (error) {
     console.error(
       `Worker build check failed: ${error instanceof Error ? error.message : String(error)}`,

@@ -862,6 +862,35 @@ function ExpeditionPreview() {
   );
 }
 
+function BazaarPreview() {
+  const wares: [string, string][] = [
+    ['g0', '珠'],
+    ['g1', '金'],
+    ['g3', '绸'],
+    ['g4', '香'],
+    ['g6', '驼'],
+  ];
+  return (
+    <div className="room-bazaar-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>ZAYTON BAZAAR</span>
+        <span>BEST OF 3</span>
+      </div>
+      <div className="room-bz-row">
+        {wares.map(([g, n]) => (
+          <i key={g} className={g}>
+            {n}
+          </i>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>进货 · 换货 · 出货</span>
+        <span>五档 AI · 可联机</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -887,6 +916,7 @@ const previews = {
   hanami: HanamiPreview,
   quoridor: QuoridorPreview,
   expedition: ExpeditionPreview,
+  bazaar: BazaarPreview,
 };
 
 const ONLINE = GAMES.filter((game) => game.online);
