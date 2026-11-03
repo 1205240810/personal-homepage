@@ -156,7 +156,7 @@
   width: 15px;
   height: 15px;
   border-radius: 4px;
-  background: var(--c);
+  background: color-mix(in srgb, var(--c) 85%, #000);
   color: #fff;
   font-style: normal;
   font-size: 10px;
