@@ -1788,3 +1788,53 @@
   height: 40%;
   margin-left: calc(20% - 2px);
 }
+
+.room-expedition-preview {
+  min-height: 240px;
+  padding: 18px 21px 13px;
+  border: 1px solid #c9bfa6;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #5c4a3a;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 22px, #8b6f4722 22px 23px),
+    linear-gradient(180deg, #efe6d2, #e3d5b8);
+}
+.room-ex-row {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0;
+}
+.room-ex-row i {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 54px;
+  margin: 0 -3px;
+  border-radius: 4px;
+  font-style: normal;
+  font-size: 17px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+  background: linear-gradient(180deg, currentColor 0 8%, #fbf7ec 8%);
+  box-shadow: 0 0 0 1px #c9bfa6, 0 4px 8px -4px #0005;
+}
+.room-ex-row i::first-line {
+  color: inherit;
+}
+.room-ex-row .r0 {
+  color: #b4432f;
+}
+.room-ex-row .r1 {
+  color: #c08a1e;
+}
+.room-ex-row .r2 {
+  color: #2f6f9a;
+}
+.room-ex-row .r3 {
+  color: #3f8a6a;
+}
+.room-ex-row .r4 {
+  color: #6b4a8a;
+}

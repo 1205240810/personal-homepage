@@ -833,6 +833,35 @@ function QuoridorPreview() {
   );
 }
 
+function ExpeditionPreview() {
+  const cards: [string, string][] = [
+    ['r0', '契'],
+    ['r1', '4'],
+    ['r2', '7'],
+    ['r3', '9'],
+    ['r4', '10'],
+  ];
+  return (
+    <div className="room-expedition-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>SILK ROAD / 5 ROUTES</span>
+        <span>5 LEVELS</span>
+      </div>
+      <div className="room-ex-row">
+        {cards.map(([r, n], i) => (
+          <i key={r} className={r} style={{ rotate: `${(i - 2) * 6}deg` }}>
+            {n}
+          </i>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>长安 → 波斯</span>
+        <span>五档 AI · 可联机</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -857,6 +886,7 @@ const previews = {
   gomoku: GomokuPreview,
   hanami: HanamiPreview,
   quoridor: QuoridorPreview,
+  expedition: ExpeditionPreview,
 };
 
 const ONLINE = GAMES.filter((game) => game.online);

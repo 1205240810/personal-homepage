@@ -23,7 +23,8 @@ export type GameId =
   | 'go'
   | 'gomoku'
   | 'hanami'
-  | 'quoridor';
+  | 'quoridor'
+  | 'expedition';
 
 export type GameDefinition = {
   id: GameId;
@@ -319,6 +320,22 @@ export const GAMES: readonly GameDefinition[] = [
       title: '步步为营联机',
       format: '1 对 1',
       pitch: '服务器校验每一步与每块墙，再局交换先后手。',
+    },
+  },
+  {
+    id: 'expedition',
+    title: '丝路远行',
+    description:
+      '两人卡牌对局：五条商路从长安到波斯，驿站牌只能越走越远；开路先付 20 盘缠，投契让盈亏翻倍。五档 AI，高档会推演多种牌局。',
+    href: '/games/expedition',
+    category: '卡牌策略',
+    controls: '点手牌，出到商路或弃到驿站，再摸一张',
+    estimatedDuration: '一局约 15–30 分钟',
+    online: {
+      href: '/games/expedition/online',
+      title: '丝路远行联机',
+      format: '1 对 1',
+      pitch: '服务器发牌，对手手牌与牌堆顺序永远看不到。',
     },
   },
 ] as const;
