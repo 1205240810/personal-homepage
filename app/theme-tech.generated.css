@@ -723,6 +723,19 @@ html[data-theme='tech'] .room-hanami-row .p5 {
 html[data-theme='tech'] .room-hanami-row .p6 {
     color: #7cc7df
 }
+html[data-theme='tech'] .room-quoridor-preview {
+    border: 1px solid rgb(124 199 223 / 0.45);
+    color: #93a8bc;
+    background: linear-gradient(180deg, #0a1520, #0f1f2e)
+}
+html[data-theme='tech'] .room-qd-board {
+    background: linear-gradient(90deg, #6e4a2f 0 3px, transparent 3px) 0 0 / 24px 24px,
+    linear-gradient(180deg, #6e4a2f 0 3px, transparent 3px) 0 0 / 24px 24px,
+    #0f1f2e
+}
+html[data-theme='tech'] .room-qd-board b {
+    background: #0f1f2e
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid var(--line, rgb(124 199 223 / 0.45));

@@ -802,6 +802,37 @@ function HanamiPreview() {
   );
 }
 
+function QuoridorPreview() {
+  const walls: [number, number, 'h' | 'v'][] = [
+    [1, 1, 'h'],
+    [3, 2, 'v'],
+    [2, 3, 'h'],
+  ];
+  return (
+    <div className="room-quoridor-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>QUORIDOR / 9×9</span>
+        <span>6 LEVELS</span>
+      </div>
+      <div className="room-qd-board">
+        {walls.map(([x, y, o]) => (
+          <b
+            key={`${x}${y}${o}`}
+            className={o}
+            style={{ left: `${x * 20}%`, top: `${y * 20}%` }}
+          />
+        ))}
+        <i className="p0" style={{ left: '40%', top: '80%' }} />
+        <i className="p1" style={{ left: '40%', top: '0%' }} />
+      </div>
+      <div className="room-preview-bottom">
+        <span>走一步 · 放一墙</span>
+        <span>人机 · 同屏 · 联机</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -825,6 +856,7 @@ const previews = {
   go: GoPreview,
   gomoku: GomokuPreview,
   hanami: HanamiPreview,
+  quoridor: QuoridorPreview,
 };
 
 const ONLINE = GAMES.filter((game) => game.online);
