@@ -17,12 +17,36 @@ import {
 } from './brocade.ts';
 
 export type BrocadeLevel = 1 | 2 | 3 | 4 | 5;
-export const BROCADE_LEVELS: Record<BrocadeLevel, { name: string; note: string; depth: number; samples: number; noise: number; ms: number }> = {
+export const BROCADE_LEVELS: Record<
+  BrocadeLevel,
+  {
+    name: string;
+    note: string;
+    depth: number;
+    samples: number;
+    noise: number;
+    ms: number;
+  }
+> = {
   1: { name: '学徒', note: '凭眼缘', depth: 1, samples: 1, noise: 0.45, ms: 0 },
-  2: { name: '织工', note: '算眼前一步', depth: 1, samples: 1, noise: 0, ms: 0 },
+  2: {
+    name: '织工',
+    note: '算眼前一步',
+    depth: 1,
+    samples: 1,
+    noise: 0,
+    ms: 0,
+  },
   3: { name: '绣娘', note: '看两步', depth: 2, samples: 3, noise: 0, ms: 900 },
   4: { name: '掌柜', note: '看三步', depth: 3, samples: 3, noise: 0, ms: 1600 },
-  5: { name: '织造', note: '看三步 × 多种牌局', depth: 3, samples: 8, noise: 0, ms: 2600 },
+  5: {
+    name: '织造',
+    note: '看三步 × 多种牌局',
+    depth: 3,
+    samples: 8,
+    noise: 0,
+    ms: 2600,
+  },
 };
 export type BrocadeAiResult = { move: Move; score: number };
 
@@ -31,8 +55,13 @@ function playerValue(s: BrocadeState, p: Player): number {
   const pts = points(p);
   let v = pts * 10;
   if (pts >= WIN_POINTS) v += 40;
-  v += b.reduce((a, n) => a + Math.min(n, 5) * 3.2 + Math.max(0, n - 5) * 0.8, 0);
-  v += p.tokens.slice(0, 5).reduce((a, n) => a + n, 0) * 0.5 + p.tokens[GOLD] * 0.9;
+  v += b.reduce(
+    (a, n) => a + Math.min(n, 5) * 3.2 + Math.max(0, n - 5) * 0.8,
+    0,
+  );
+  v +=
+    p.tokens.slice(0, 5).reduce((a, n) => a + n, 0) * 0.5 +
+    p.tokens[GOLD] * 0.9;
   // Closeness to the best few cards.
   const targets: number[] = [];
   for (const id of [...s.market.flat(), ...p.reserved]) {
@@ -46,7 +75,10 @@ function playerValue(s: BrocadeState, p: Player): number {
   targets.sort((a, b2) => b2 - a);
   v += targets.slice(0, 3).reduce((a, x) => a + x, 0) * 0.8;
   for (const id of s.nobles) {
-    const need = NOBLES[id].need.reduce((a, n, g) => a + Math.max(0, n - b[g]), 0);
+    const need = NOBLES[id].need.reduce(
+      (a, n, g) => a + Math.max(0, n - b[g]),
+      0,
+    );
     v += 6 / (1 + need);
   }
   return v;
@@ -54,7 +86,8 @@ function playerValue(s: BrocadeState, p: Player): number {
 
 export function evaluate(s: BrocadeState, side: Side): number {
   const o = (1 - side) as Side;
-  if (s.phase === 'over') return s.winner === side ? 10000 : s.winner === o ? -10000 : 0;
+  if (s.phase === 'over')
+    return s.winner === side ? 10000 : s.winner === o ? -10000 : 0;
   return playerValue(s, s.players[side]) - playerValue(s, s.players[o]);
 }
 
@@ -67,14 +100,23 @@ function shuffle<T>(a: T[], rng: () => number): T[] {
   return d;
 }
 
-export function determinize(v: BrocadeView, side: Side, rng: () => number): BrocadeState {
+export function determinize(
+  v: BrocadeView,
+  side: Side,
+  rng: () => number,
+): BrocadeState {
   const seen = new Set<number>();
   for (const id of v.market.flat()) if (id !== null) seen.add(id);
   for (const p of v.players) {
     p.cards.forEach((id) => seen.add(id));
     p.reserved.forEach((id) => id >= 0 && seen.add(id));
   }
-  const pools = [0, 1, 2].map((t) => shuffle(CARDS.filter((c) => c.tier === t && !seen.has(c.id)).map((c) => c.id), rng));
+  const pools = [0, 1, 2].map((t) =>
+    shuffle(
+      CARDS.filter((c) => c.tier === t && !seen.has(c.id)).map((c) => c.id),
+      rng,
+    ),
+  );
   const blind: [number[], number[]] = [[], []];
   const players = v.players.map((p, i) => ({
     tokens: p.tokens.slice(),
@@ -90,12 +132,24 @@ export function determinize(v: BrocadeView, side: Side, rng: () => number): Broc
   const decks = pools.map((pool, t) => pool.slice(0, v.deckCounts[t]));
   const { you: _y, deckCounts: _d, players: _p, ...rest } = v;
   void side;
-  return { ...rest, market: v.market.map((r) => r.slice()), bank: v.bank.slice(), decks, players, blind };
+  return {
+    ...rest,
+    market: v.market.map((r) => r.slice()),
+    bank: v.bank.slice(),
+    decks,
+    players,
+    blind,
+  };
 }
 
 class Timeout extends Error {}
 
-export function chooseBrocadeMove(v: BrocadeView, side: Side, level: BrocadeLevel, rng: () => number = Math.random): BrocadeAiResult {
+export function chooseBrocadeMove(
+  v: BrocadeView,
+  side: Side,
+  level: BrocadeLevel,
+  rng: () => number = Math.random,
+): BrocadeAiResult {
   const cfg = BROCADE_LEVELS[level];
   const base = determinize(v, side, rng);
   const moves = legalMoves(base);
@@ -111,7 +165,12 @@ export function chooseBrocadeMove(v: BrocadeView, side: Side, level: BrocadeLeve
   const BEAM = 10;
   const deadline = Date.now() + cfg.ms;
   let nodes = 0;
-  const search = (g: BrocadeState, depth: number, alpha: number, beta: number): number => {
+  const search = (
+    g: BrocadeState,
+    depth: number,
+    alpha: number,
+    beta: number,
+  ): number => {
     if ((++nodes & 63) === 0 && Date.now() > deadline) throw new Timeout();
     const me = g.toPlay;
     if (depth === 0 || g.phase === 'over') return evaluate(g, me);
@@ -122,7 +181,10 @@ export function chooseBrocadeMove(v: BrocadeView, side: Side, level: BrocadeLeve
       .slice(0, BEAM);
     let best = -Infinity;
     for (const { n } of kids) {
-      const val = n.phase === 'over' ? evaluate(n, me) : -search(n, depth - 1, -beta, -alpha);
+      const val =
+        n.phase === 'over'
+          ? evaluate(n, me)
+          : -search(n, depth - 1, -beta, -alpha);
       if (val > best) best = val;
       if (val > alpha) alpha = val;
       if (alpha >= beta) break;
@@ -137,7 +199,9 @@ export function chooseBrocadeMove(v: BrocadeView, side: Side, level: BrocadeLeve
       const world = k === 0 ? base : determinize(v, side, rng);
       const vals = cands.map(({ m }) => {
         const n = apply(world, side, m);
-        return n.phase === 'over' ? evaluate(n, side) : -search(n, cfg.depth - 1, -Infinity, Infinity);
+        return n.phase === 'over'
+          ? evaluate(n, side)
+          : -search(n, cfg.depth - 1, -Infinity, Infinity);
       });
       vals.forEach((x, i) => (totals[i] += x));
       done++;

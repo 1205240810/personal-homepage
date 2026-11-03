@@ -19,7 +19,13 @@ export const WIN_POINTS = 15;
 export const TOKEN_LIMIT = 10;
 export const RESERVE_LIMIT = 3;
 
-export type CardDef = { id: number; tier: 0 | 1 | 2; color: Gem; points: number; cost: number[] };
+export type CardDef = {
+  id: number;
+  tier: 0 | 1 | 2;
+  color: Gem;
+  points: number;
+  cost: number[];
+};
 export type NobleDef = { id: number; need: number[]; points: number };
 
 type Tpl = [Record<number, number>, number];
@@ -54,8 +60,15 @@ TIERS.forEach((tpls, tier) => {
   for (let color = 0; color < 5; color++)
     for (const [t, points] of tpls) {
       const cost = [0, 0, 0, 0, 0];
-      for (const [off, n] of Object.entries(t)) cost[(color + Number(off)) % 5] += n;
-      CARDS.push({ id: CARDS.length, tier: tier as 0 | 1 | 2, color: color as Gem, points, cost });
+      for (const [off, n] of Object.entries(t))
+        cost[(color + Number(off)) % 5] += n;
+      CARDS.push({
+        id: CARDS.length,
+        tier: tier as 0 | 1 | 2,
+        color: color as Gem,
+        points,
+        cost,
+      });
     }
 });
 export const NOBLES: NobleDef[] = [];
@@ -107,16 +120,29 @@ function shuffle<T>(a: T[], rng: () => number): T[] {
   }
   return d;
 }
-const emptyPlayer = (): Player => ({ tokens: [0, 0, 0, 0, 0, 0], cards: [], reserved: [], nobles: [] });
+const emptyPlayer = (): Player => ({
+  tokens: [0, 0, 0, 0, 0, 0],
+  cards: [],
+  reserved: [],
+  nobles: [],
+});
 
 export function newGame(rng: () => number, first: Side = 0): BrocadeState {
-  const decks = [0, 1, 2].map((t) => shuffle(CARDS.filter((c) => c.tier === t).map((c) => c.id), rng));
+  const decks = [0, 1, 2].map((t) =>
+    shuffle(
+      CARDS.filter((c) => c.tier === t).map((c) => c.id),
+      rng,
+    ),
+  );
   const market = decks.map((d) => d.splice(0, 4));
   return {
     decks,
     market,
     bank: [4, 4, 4, 4, 4, GOLD_TOKENS],
-    nobles: shuffle(NOBLES.map((n) => n.id), rng).slice(0, 3),
+    nobles: shuffle(
+      NOBLES.map((n) => n.id),
+      rng,
+    ).slice(0, 3),
     players: [emptyPlayer(), emptyPlayer()],
     toPlay: first,
     first,
@@ -133,7 +159,8 @@ export const bonuses = (p: Player) => {
   return b;
 };
 export const points = (p: Player) =>
-  p.cards.reduce((a, id) => a + CARDS[id].points, 0) + p.nobles.reduce((a, id) => a + NOBLES[id].points, 0);
+  p.cards.reduce((a, id) => a + CARDS[id].points, 0) +
+  p.nobles.reduce((a, id) => a + NOBLES[id].points, 0);
 export const tokenCount = (p: Player) => p.tokens.reduce((a, b) => a + b, 0);
 
 /** Tokens to pay for a card (per colour + gold), or null if unaffordable. */
@@ -152,7 +179,11 @@ export function payment(p: Player, id: number): number[] | null {
   return pay;
 }
 
-function applyReturn(p: Player, bank: number[], ret: number[] | undefined): void {
+function applyReturn(
+  p: Player,
+  bank: number[],
+  ret: number[] | undefined,
+): void {
   const over = tokenCount(p) - TOKEN_LIMIT;
   const r = ret ?? [];
   if (over <= 0) {
@@ -161,7 +192,8 @@ function applyReturn(p: Player, bank: number[], ret: number[] | undefined): void
   }
   if (r.length !== over) throw new Error(`手里超过 10 枚，需要退还 ${over} 枚`);
   for (const g of r) {
-    if (!Number.isInteger(g) || g < 0 || g > 5 || p.tokens[g] <= 0) throw new Error('退还的丝线无效');
+    if (!Number.isInteger(g) || g < 0 || g > 5 || p.tokens[g] <= 0)
+      throw new Error('退还的丝线无效');
     p.tokens[g]--;
     bank[g]++;
   }
@@ -171,16 +203,26 @@ function finishTurn(s: BrocadeState, side: Side, move: Move): BrocadeState {
   const p = s.players[side];
   const b = bonuses(p);
   let noble: number | undefined;
-  const idx = s.nobles.findIndex((id) => NOBLES[id].need.every((n, g) => b[g] >= n));
+  const idx = s.nobles.findIndex((id) =>
+    NOBLES[id].need.every((n, g) => b[g] >= n),
+  );
   let nobles = s.nobles;
   if (idx >= 0) {
     noble = s.nobles[idx];
     p.nobles = [...p.nobles, noble];
     nobles = s.nobles.filter((_, i) => i !== idx);
   }
-  const next: BrocadeState = { ...s, nobles, toPlay: (1 - side) as Side, last: { side, move, noble } };
+  const next: BrocadeState = {
+    ...s,
+    nobles,
+    toPlay: (1 - side) as Side,
+    last: { side, move, noble },
+  };
   // Round ends when play returns to the first player.
-  if (next.toPlay === s.first && s.players.some((q) => points(q) >= WIN_POINTS)) {
+  if (
+    next.toPlay === s.first &&
+    s.players.some((q) => points(q) >= WIN_POINTS)
+  ) {
     const pts = s.players.map(points);
     const winner: Side | 'draw' =
       pts[0] !== pts[1]
@@ -227,13 +269,19 @@ export function apply(s0: BrocadeState, side: Side, m: Move): BrocadeState {
   const p = s.players[side];
   if (m.t === 'take') {
     const g = m.gems;
-    if (!Array.isArray(g) || !g.every((x) => Number.isInteger(x) && x >= 0 && x < 5)) throw new Error('丝线无效');
+    if (
+      !Array.isArray(g) ||
+      !g.every((x) => Number.isInteger(x) && x >= 0 && x < 5)
+    )
+      throw new Error('丝线无效');
     if (g.length === 2 && g[0] === g[1]) {
-      if (s.bank[g[0]] < 4) throw new Error('同色拿两枚，需要那一色还剩至少 4 枚');
+      if (s.bank[g[0]] < 4)
+        throw new Error('同色拿两枚，需要那一色还剩至少 4 枚');
     } else {
       if (new Set(g).size !== g.length) throw new Error('拿不同颜色时每色一枚');
       const avail = [0, 1, 2, 3, 4].filter((x) => s.bank[x] > 0).length;
-      if (g.length !== Math.min(3, avail) || g.length === 0) throw new Error('一次拿三种不同颜色各一枚');
+      if (g.length !== Math.min(3, avail) || g.length === 0)
+        throw new Error('一次拿三种不同颜色各一枚');
       if (g.some((x) => s.bank[x] <= 0)) throw new Error('这种丝线拿完了');
     }
     for (const x of g) {
@@ -248,7 +296,8 @@ export function apply(s0: BrocadeState, side: Side, m: Move): BrocadeState {
     let id: number;
     if (m.card === null) {
       const t = m.tier;
-      if (!Number.isInteger(t) || t! < 0 || t! > 2 || !s.decks[t!].length) throw new Error('这一档牌堆空了');
+      if (!Number.isInteger(t) || t! < 0 || t! > 2 || !s.decks[t!].length)
+        throw new Error('这一档牌堆空了');
       id = s.decks[t!].shift()!;
       s.blind[side].push(id);
     } else {
@@ -307,7 +356,8 @@ export function legalMoves(s: BrocadeState): Move[] {
   const side = s.toPlay;
   const p = s.players[side];
   const out: Move[] = [];
-  for (const id of [...s.market.flat(), ...p.reserved]) if (id !== null && payment(p, id)) out.push({ t: 'buy', card: id });
+  for (const id of [...s.market.flat(), ...p.reserved])
+    if (id !== null && payment(p, id)) out.push({ t: 'buy', card: id });
   const avail = [0, 1, 2, 3, 4].filter((g) => s.bank[g] > 0) as Gem[];
   const k = Math.min(3, avail.length);
   const combos: Gem[][] = [];
@@ -316,7 +366,8 @@ export function legalMoves(s: BrocadeState): Move[] {
     for (let i = start; i < avail.length; i++) rec(i + 1, [...cur, avail[i]]);
   };
   if (k) rec(0, []);
-  for (let g = 0; g < 5; g++) if (s.bank[g] >= 4) combos.push([g as Gem, g as Gem]);
+  for (let g = 0; g < 5; g++)
+    if (s.bank[g] >= 4) combos.push([g as Gem, g as Gem]);
   for (const gems of combos) {
     const gained = [0, 0, 0, 0, 0, 0];
     gems.forEach((g) => gained[g]++);
@@ -326,7 +377,9 @@ export function legalMoves(s: BrocadeState): Move[] {
   if (p.reserved.length < RESERVE_LIMIT) {
     const gained = [0, 0, 0, 0, 0, s.bank[GOLD] > 0 ? 1 : 0];
     const ret = autoReturn(p, gained);
-    for (const id of s.market.flat()) if (id !== null) out.push({ t: 'reserve', card: id, ...(ret.length ? { ret } : {}) });
+    for (const id of s.market.flat())
+      if (id !== null)
+        out.push({ t: 'reserve', card: id, ...(ret.length ? { ret } : {}) });
   }
   return out;
 }
@@ -348,7 +401,11 @@ export function viewFor(s: BrocadeState, side: Side | null): BrocadeView {
       return {
         ...p,
         // Blind reservations show only their tier to the opponent (as -1 - tier).
-        reserved: hide ? p.reserved.map((id) => (blind[i].includes(id) ? -1 - CARDS[id].tier : id)) : p.reserved,
+        reserved: hide
+          ? p.reserved.map((id) =>
+              blind[i].includes(id) ? -1 - CARDS[id].tier : id,
+            )
+          : p.reserved,
         hidden: hide ? blind[i].length : 0,
       };
     }) as BrocadeView['players'],
@@ -357,10 +414,17 @@ export function viewFor(s: BrocadeState, side: Side | null): BrocadeView {
 
 export function parseMove(raw: unknown): Move | null {
   const m = (raw ?? {}) as Record<string, unknown>;
-  const ints = (a: unknown, max: number) => Array.isArray(a) && a.length <= max && a.every((x) => Number.isInteger(x));
-  const ret = m.ret === undefined ? undefined : ints(m.ret, 3) ? (m.ret as number[]) : null;
+  const ints = (a: unknown, max: number) =>
+    Array.isArray(a) && a.length <= max && a.every((x) => Number.isInteger(x));
+  const ret =
+    m.ret === undefined
+      ? undefined
+      : ints(m.ret, 3)
+        ? (m.ret as number[])
+        : null;
   if (ret === null) return null;
-  if (m.t === 'take' && ints(m.gems, 3)) return { t: 'take', gems: m.gems as Gem[], ...(ret ? { ret } : {}) };
+  if (m.t === 'take' && ints(m.gems, 3))
+    return { t: 'take', gems: m.gems as Gem[], ...(ret ? { ret } : {}) };
   if (m.t === 'reserve' && (m.card === null || Number.isInteger(m.card)))
     return {
       t: 'reserve',
@@ -368,6 +432,7 @@ export function parseMove(raw: unknown): Move | null {
       ...(Number.isInteger(m.tier) ? { tier: m.tier as number } : {}),
       ...(ret ? { ret } : {}),
     };
-  if (m.t === 'buy' && Number.isInteger(m.card)) return { t: 'buy', card: m.card as number };
+  if (m.t === 'buy' && Number.isInteger(m.card))
+    return { t: 'buy', card: m.card as number };
   return null;
 }

@@ -24,9 +24,20 @@ import './brocade.css';
 const TIER = ['作坊', '绣庄', '名品'] as const;
 const gemName = (g: number) => (g === GOLD ? GOLD_NAME : GEMS[g].name);
 
-export function Chip({ g, n, small }: { g: number; n?: number; small?: boolean }) {
+export function Chip({
+  g,
+  n,
+  small,
+}: {
+  g: number;
+  n?: number;
+  small?: boolean;
+}) {
   return (
-    <span className={`bc-chip g${g}${small ? ' is-small' : ''}`} aria-label={`${gemName(g)}${n !== undefined ? ` ${n}` : ''}`}>
+    <span
+      className={`bc-chip g${g}${small ? ' is-small' : ''}`}
+      aria-label={`${gemName(g)}${n !== undefined ? ` ${n}` : ''}`}
+    >
       {n !== undefined ? n : g === GOLD ? '金' : GEMS[g].glyph}
     </span>
   );
@@ -35,13 +46,22 @@ export function Chip({ g, n, small }: { g: number; n?: number; small?: boolean }
 export function CardFace({ id }: { id: number }) {
   if (id < 0)
     return (
-      <span className={`bc-card is-back t${-1 - id}`} aria-label={`暗订的${TIER[-1 - id]}`}>
+      <span
+        className={`bc-card is-back t${-1 - id}`}
+        aria-label={`暗订的${TIER[-1 - id]}`}
+      >
         <b>{TIER[-1 - id]}</b>
       </span>
     );
   const c = CARDS[id];
   return (
-    <span className={`bc-card t${c.tier} g${c.color}`} aria-label={`${TIER[c.tier]}·${GEMS[c.color].name}${c.points ? ` ${c.points} 分` : ''}，需 ${c.cost.map((n, g) => (n ? `${GEMS[g].name}${n}` : '')).filter(Boolean).join(' ')}`}>
+    <span
+      className={`bc-card t${c.tier} g${c.color}`}
+      aria-label={`${TIER[c.tier]}·${GEMS[c.color].name}${c.points ? ` ${c.points} 分` : ''}，需 ${c.cost
+        .map((n, g) => (n ? `${GEMS[g].name}${n}` : ''))
+        .filter(Boolean)
+        .join(' ')}`}
+    >
       <span className="bc-card-top">
         <b>{c.points || ''}</b>
         <Chip g={c.color} small />
@@ -53,18 +73,32 @@ export function CardFace({ id }: { id: number }) {
   );
 }
 
-function Summary({ p, name, active }: { p: BrocadeView['players'][number]; name: ReactNode; active?: boolean }) {
+function Summary({
+  p,
+  name,
+  active,
+}: {
+  p: BrocadeView['players'][number];
+  name: ReactNode;
+  active?: boolean;
+}) {
   const b = bonuses(p);
   return (
     <div className={`bc-summary${active ? ' is-active' : ''}`}>
       <header>
         <strong>{name}</strong>
         <span className="bc-pts">{points(p)} 分</span>
-        <span className="kit-help">丝线 {tokenCount(p)}/10 · 预订 {p.reserved.length}/3</span>
+        <span className="kit-help">
+          丝线 {tokenCount(p)}/10 · 预订 {p.reserved.length}/3
+        </span>
       </header>
       <div className="bc-holdings">
         {[0, 1, 2, 3, 4].map((g) => (
-          <span key={g} className="bc-hold" title={`${GEMS[g].name}：加成 ${b[g]}，丝线 ${p.tokens[g]}`}>
+          <span
+            key={g}
+            className="bc-hold"
+            title={`${GEMS[g].name}：加成 ${b[g]}，丝线 ${p.tokens[g]}`}
+          >
             <span className={`bc-bonus g${g}`}>{b[g]}</span>
             <Chip g={g} n={p.tokens[g]} small />
           </span>
@@ -112,10 +146,22 @@ export function BrocadeTable({
   const gained = [0, 0, 0, 0, 0, 0];
   if (pending?.t === 'take') pending.gems.forEach((g) => gained[g]++);
   if (pending?.t === 'reserve' && v.bank[GOLD] > 0) gained[GOLD]++;
-  const after = mine.tokens.map((n, g) => n + gained[g] - ret.filter((x) => x === g).length);
-  const over = pending ? mine.tokens.reduce((a, b) => a + b, 0) + gained.reduce((a, b) => a + b, 0) - TOKEN_LIMIT : 0;
+  const after = mine.tokens.map(
+    (n, g) => n + gained[g] - ret.filter((x) => x === g).length,
+  );
+  const over = pending
+    ? mine.tokens.reduce((a, b) => a + b, 0) +
+      gained.reduce((a, b) => a + b, 0) -
+      TOKEN_LIMIT
+    : 0;
   const submit = (m: Move) => {
-    const total = mine.tokens.reduce((a, b) => a + b, 0) + (m.t === 'take' ? m.gems.length : m.t === 'reserve' && v.bank[GOLD] > 0 ? 1 : 0);
+    const total =
+      mine.tokens.reduce((a, b) => a + b, 0) +
+      (m.t === 'take'
+        ? m.gems.length
+        : m.t === 'reserve' && v.bank[GOLD] > 0
+          ? 1
+          : 0);
     if (m.t !== 'buy' && total > TOKEN_LIMIT) {
       setPending(m);
       setRet([]);
@@ -127,7 +173,9 @@ export function BrocadeTable({
   const avail = [0, 1, 2, 3, 4].filter((g) => v.bank[g] > 0).length;
   const takeOk =
     (gems.length === 2 && gems[0] === gems[1] && v.bank[gems[0]] >= 4) ||
-    (new Set(gems).size === gems.length && gems.length === Math.min(3, avail) && gems.length > 0);
+    (new Set(gems).size === gems.length &&
+      gems.length === Math.min(3, avail) &&
+      gems.length > 0);
   const clickBank = (g: Gem) => {
     if (!live || pending) return;
     setSel(null);
@@ -146,7 +194,11 @@ export function BrocadeTable({
   const canReserve = mine.reserved.length < RESERVE_LIMIT;
   return (
     <div className="bc-table">
-      <Summary p={v.players[opp]} name={names[opp]} active={v.toPlay === opp && v.phase === 'play'} />
+      <Summary
+        p={v.players[opp]}
+        name={names[opp]}
+        active={v.toPlay === opp && v.phase === 'play'}
+      />
       {v.players[opp].reserved.length > 0 && (
         <div className="bc-reserved is-opp" aria-label="对方预订">
           {v.players[opp].reserved.map((id, k) => (
@@ -156,11 +208,24 @@ export function BrocadeTable({
       )}
       <div className="bc-nobles" aria-label="宫廷贵客">
         {v.nobles.map((id) => (
-          <span key={id} className="bc-noble" aria-label={`贵客 3 分，需加成 ${NOBLES[id].need.map((n, g) => (n ? `${GEMS[g].name}${n}` : '')).filter(Boolean).join(' ')}`}>
+          <span
+            key={id}
+            className="bc-noble"
+            aria-label={`贵客 3 分，需加成 ${NOBLES[id].need
+              .map((n, g) => (n ? `${GEMS[g].name}${n}` : ''))
+              .filter(Boolean)
+              .join(' ')}`}
+          >
             <b>3</b>
             <i>贵客</i>
             <span>
-              {NOBLES[id].need.map((n, g) => (n ? <span key={g} className={`bc-bonus g${g}`}>{n}</span> : null))}
+              {NOBLES[id].need.map((n, g) =>
+                n ? (
+                  <span key={g} className={`bc-bonus g${g}`}>
+                    {n}
+                  </span>
+                ) : null,
+              )}
             </span>
           </span>
         ))}
@@ -174,7 +239,11 @@ export function BrocadeTable({
               disabled={!live || !v.deckCounts[t] || !canReserve || !!pending}
               onClick={() => {
                 setGems([]);
-                setSel(sel?.kind === 'deck' && sel.tier === t ? null : { kind: 'deck', tier: t });
+                setSel(
+                  sel?.kind === 'deck' && sel.tier === t
+                    ? null
+                    : { kind: 'deck', tier: t },
+                );
               }}
               aria-label={`${TIER[t]}牌堆 ${v.deckCounts[t]} 张${live ? '：点选可暗订' : ''}`}
             >
@@ -233,24 +302,46 @@ export function BrocadeTable({
       {live && !pending && (
         <div className="kit-row bc-actions">
           {gems.length > 0 && (
-            <button type="button" className={takeOk ? 'kit-primary' : undefined} disabled={!takeOk} data-shortcut="t" onClick={() => submit({ t: 'take', gems })}>
+            <button
+              type="button"
+              className={takeOk ? 'kit-primary' : undefined}
+              disabled={!takeOk}
+              data-shortcut="t"
+              onClick={() => submit({ t: 'take', gems })}
+            >
               拿取 {gems.map((g) => GEMS[g].glyph).join('')}
             </button>
           )}
           {selCard !== null && (
             <>
-              <button type="button" className={canBuy ? 'kit-primary' : undefined} disabled={!canBuy} data-shortcut="b" onClick={() => submit({ t: 'buy', card: selCard })}>
+              <button
+                type="button"
+                className={canBuy ? 'kit-primary' : undefined}
+                disabled={!canBuy}
+                data-shortcut="b"
+                onClick={() => submit({ t: 'buy', card: selCard })}
+              >
                 购入
               </button>
               {!mine.reserved.includes(selCard) && (
-                <button type="button" disabled={!canReserve} onClick={() => submit({ t: 'reserve', card: selCard })}>
+                <button
+                  type="button"
+                  disabled={!canReserve}
+                  onClick={() => submit({ t: 'reserve', card: selCard })}
+                >
                   预订{v.bank[GOLD] > 0 ? '（得金线）' : ''}
                 </button>
               )}
             </>
           )}
           {sel?.kind === 'deck' && (
-            <button type="button" className="kit-primary" onClick={() => submit({ t: 'reserve', card: null, tier: sel.tier })}>
+            <button
+              type="button"
+              className="kit-primary"
+              onClick={() =>
+                submit({ t: 'reserve', card: null, tier: sel.tier })
+              }
+            >
               暗订一张{TIER[sel.tier]}
             </button>
           )}
@@ -268,7 +359,13 @@ export function BrocadeTable({
           </span>
           {[0, 1, 2, 3, 4, 5].map((g) =>
             after[g] > 0 ? (
-              <button key={g} type="button" className="bc-pick" disabled={ret.length >= over} onClick={() => setRet([...ret, g])}>
+              <button
+                key={g}
+                type="button"
+                className="bc-pick"
+                disabled={ret.length >= over}
+                onClick={() => setRet([...ret, g])}
+              >
                 <Chip g={g} n={after[g]} />
               </button>
             ) : null,
