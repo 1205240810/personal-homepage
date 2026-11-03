@@ -108,6 +108,7 @@ npm run dev
 | `/games/quoridor`          | 步步为营               | `lib/games/quoridor*.ts`、`components/games/quoridor*.tsx`            |
 | `/games/expedition`        | 丝路远行               | `lib/games/expedition*.ts`、`components/games/expedition/`            |
 | `/games/bazaar`            | 刺桐市集               | `lib/games/bazaar*.ts`、`components/games/bazaar/`                    |
+| `/games/glaze`             | 琉璃坊                 | `lib/games/glaze*.ts`、`components/games/glaze/`                      |
 | `/vault`                   | 主人私藏入口           | `lib/private-vault/`、`app/api/vault/`                               |
 
 文章 ID、公开 slug 与地图坐标相互独立。移动或重画书架不会改变文章地址；新增文章自动进入对应栏目。
@@ -139,7 +140,7 @@ flowchart LR
 
 主站使用 React、TypeScript、Vinext / Vite、Phaser 与 Tiled JSON，可构建为 Cloudflare Worker 或独立 Node 服务端。Phaser 只在探索页按需加载；引导页和直接阅读入口不必启动世界。游戏室使用轻量目录，各游戏通过独立路由接入；规则计算、AI 策略与 React 界面分开维护，不搭通用插件系统。详见 [游戏室与扩展](docs/GAMES.md)。
 
-联机入口分别为 `/games/gomoku/online`、`/games/go/online`、`/games/blackjack/online`、`/games/holdem-lab/online`、`/games/hanami/online`、`/games/quoridor/online`、`/games/expedition/online` 与 `/games/bazaar/online`，也可从对应单机页进入。开发时另开终端运行 `npm run play:server`；正式 Node 构建包含独立的 `play-server.mjs`，需要按[联机部署说明](docs/SELF-HOSTING.md#联机对战服务)启用服务与 WebSocket 反代。房间保存在内存中，服务重启会结束对局；围棋、五子棋、花街七席、步步为营、丝路远行和刺桐市集暂不计时、不支持观战，21 点与德州每步限时 30 秒，掉线期间计时继续。
+联机入口分别为 `/games/gomoku/online`、`/games/go/online`、`/games/blackjack/online`、`/games/holdem-lab/online`、`/games/hanami/online`、`/games/quoridor/online`、`/games/expedition/online`、`/games/bazaar/online` 与 `/games/glaze/online`，也可从对应单机页进入。开发时另开终端运行 `npm run play:server`；正式 Node 构建包含独立的 `play-server.mjs`，需要按[联机部署说明](docs/SELF-HOSTING.md#联机对战服务)启用服务与 WebSocket 反代。房间保存在内存中，服务重启会结束对局；围棋、五子棋、花街七席、步步为营、丝路远行、刺桐市集和琉璃坊暂不计时、不支持观战，21 点与德州每步限时 30 秒，掉线期间计时继续。
 
 ## 仓库结构
 

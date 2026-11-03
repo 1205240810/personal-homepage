@@ -1,0 +1,359 @@
+/* 琉璃坊：素胎白墙、木料架，釉砖是天青、霁红、鹅黄、墨玉、月白五色；科技主题为夜色釉光。 */
+.glaze {
+  --gz-bg: #efeadf;
+  --gz-bg-2: #e2dac8;
+  --gz-wood: #8a6a48;
+  --gz-line: color-mix(in srgb, #6e4a2f 25%, transparent);
+  --gz-c0: #6fa3b3;
+  --gz-c1: #a8323a;
+  --gz-c2: #d9ad3c;
+  --gz-c3: #2e3238;
+  --gz-c4: #e9ece6;
+  --gz-cell: #f7f3ea;
+}
+html[data-theme='tech'] .glaze {
+  --gz-bg: #0b1826;
+  --gz-bg-2: #06101a;
+  --gz-wood: #2a4a63;
+  --gz-line: rgb(124 199 223 / 0.2);
+  --gz-c0: #6fd0e8;
+  --gz-c1: #ff6f7d;
+  --gz-c2: #f2c45c;
+  --gz-c3: #4a5260;
+  --gz-c4: #dfe8f0;
+  --gz-cell: #10233a;
+}
+.gz-table {
+  display: grid;
+  gap: 12px;
+  padding: 14px clamp(8px, 2vw, 22px) 18px;
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      70% 50% at 50% 40%,
+      rgb(255 255 255 / 0.35),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--gz-bg), var(--gz-bg-2));
+  box-shadow: inset 0 0 0 1px var(--gz-line);
+}
+html[data-theme='tech'] .gz-table {
+  background:
+    radial-gradient(
+      70% 50% at 50% 40%,
+      rgb(124 199 223 / 0.08),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--gz-bg), var(--gz-bg-2));
+}
+.gz-tile {
+  --c: var(--gz-c0);
+  display: inline-block;
+  width: var(--t, 26px);
+  height: var(--t, 26px);
+  border-radius: 4px;
+  background:
+    radial-gradient(
+      70% 55% at 30% 25%,
+      rgb(255 255 255 / 0.55),
+      transparent 60%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--c) 85%, #fff),
+      var(--c) 55%,
+      color-mix(in srgb, var(--c) 75%, #000)
+    );
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.12),
+    0 2px 3px -1px rgb(0 0 0 / 0.35);
+  flex: none;
+}
+.gz-tile.c1 {
+  --c: var(--gz-c1);
+}
+.gz-tile.c2 {
+  --c: var(--gz-c2);
+}
+.gz-tile.c3 {
+  --c: var(--gz-c3);
+}
+.gz-tile.c4 {
+  --c: var(--gz-c4);
+}
+/* Crackle glaze texture on 天青 and 月白. */
+.gz-tile.c0,
+.gz-tile.c4 {
+  background:
+    radial-gradient(
+      70% 55% at 30% 25%,
+      rgb(255 255 255 / 0.55),
+      transparent 60%
+    ),
+    repeating-linear-gradient(
+      32deg,
+      transparent 0 6px,
+      rgb(0 0 0 / 0.07) 6px 7px
+    ),
+    repeating-linear-gradient(
+      -58deg,
+      transparent 0 9px,
+      rgb(0 0 0 / 0.06) 9px 10px
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--c) 85%, #fff),
+      var(--c) 55%,
+      color-mix(in srgb, var(--c) 80%, #000)
+    );
+}
+.gz-tile.is-ghost {
+  opacity: 0.18;
+  box-shadow: none;
+}
+.gz-tile.is-fresh {
+  animation: gz-set 700ms var(--ease, ease) both;
+}
+@keyframes gz-set {
+  from {
+    scale: 1.4;
+    opacity: 0;
+  }
+}
+.gz-tile.is-first {
+  display: inline-grid;
+  place-items: center;
+  font-size: 13px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+  color: #fff8ee;
+  background: #b4432f;
+  border-radius: 50%;
+}
+.gz-market {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.gz-kilns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 18px);
+}
+.gz-kiln {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 4px;
+  place-content: center;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 50% 40%,
+      color-mix(in srgb, #fff 40%, transparent),
+      transparent 60%
+    ),
+    color-mix(in srgb, var(--gz-wood) 30%, var(--gz-bg));
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--gz-wood) 45%, transparent),
+    inset 0 -6px 12px rgb(0 0 0 / 0.12);
+}
+.gz-kiln.was-taken {
+  box-shadow:
+    inset 0 0 0 2px var(--games-accent, #a34e2b),
+    inset 0 -6px 12px rgb(0 0 0 / 0.12);
+}
+.gz-center {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  max-width: 520px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px dashed var(--gz-line);
+}
+.kit .gz-pick {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  transition: translate 140ms var(--ease, ease);
+}
+.kit .gz-pick:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.kit .gz-pick.is-selected {
+  translate: 0 -4px;
+}
+.kit .gz-pick.is-selected .gz-tile {
+  outline: 2px solid var(--games-accent, #a34e2b);
+  outline-offset: 1px;
+}
+.gz-meta,
+.gz-status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--games-muted, #626b61);
+  text-align: center;
+}
+.gz-status {
+  font-size: 14px;
+  color: var(--games-ink, #282d29);
+}
+.gz-board {
+  display: grid;
+  gap: 6px;
+  justify-self: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gz-cell) 70%, transparent);
+  box-shadow: inset 0 0 0 1px var(--gz-line);
+}
+.gz-board header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+.gz-score {
+  font-variant-numeric: tabular-nums;
+  color: var(--games-accent, #a34e2b);
+  font-weight: 600;
+}
+.gz-work {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.gz-lines {
+  display: grid;
+  gap: 3px;
+}
+.kit .gz-line {
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.kit .gz-line:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.gz-slot {
+  width: var(--t, 26px);
+  height: var(--t, 26px);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--gz-wood) 18%, transparent);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.18);
+}
+.kit .gz-line.can-drop .gz-slot,
+.kit .gz-floor.can-drop .gz-floor-slot {
+  box-shadow: inset 0 0 0 2px var(--games-accent, #a34e2b);
+}
+.gz-wall {
+  display: grid;
+  grid-template-columns: repeat(5, var(--t, 26px));
+  gap: 3px;
+  padding-left: 10px;
+  border-left: 2px solid var(--gz-line);
+}
+.gz-cell {
+  display: block;
+  line-height: 0;
+}
+.kit .gz-floor {
+  display: flex;
+  gap: 3px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.kit .gz-floor:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.gz-floor-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--t, 26px);
+  height: var(--t, 26px);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--kit-bad) 10%, transparent);
+}
+.gz-floor-slot i {
+  position: absolute;
+  bottom: -14px;
+  font-size: 10px;
+  font-style: normal;
+  color: var(--kit-bad);
+}
+.gz-floor {
+  margin-bottom: 12px;
+}
+.gz-board.is-me {
+  --t: 30px;
+}
+.gz-board.is-small {
+  --t: 18px;
+  opacity: 0.92;
+}
+.gz-board.is-small .gz-floor-slot i {
+  display: none;
+}
+.gz-board.is-small .gz-floor {
+  margin-bottom: 0;
+}
+.gz-actions {
+  justify-content: center;
+}
+.gz-intro {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 28px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--gz-bg), var(--gz-bg-2));
+}
+.gz-intro p {
+  max-width: 34em;
+  margin: 0;
+  line-height: 1.8;
+}
+.gz-intro span {
+  display: flex;
+  gap: 6px;
+  --t: 34px;
+}
+.gz-online-link {
+  font-size: 13px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+@media (max-width: 520px) {
+  .gz-board.is-me {
+    --t: 25px;
+  }
+  .gz-kiln {
+    width: 64px;
+    height: 64px;
+    --t: 22px;
+  }
+  .gz-center {
+    --t: 22px;
+  }
+}

@@ -150,6 +150,7 @@ if (
     checkGameWorkerBuild(directory, 'quoridor', 'quoridor-worker');
     checkGameWorkerBuild(directory, 'local', 'expedition-worker');
     checkGameWorkerBuild(directory, 'local', 'bazaar-worker');
+    checkGameWorkerBuild(directory, 'local', 'glaze-worker');
   } catch (error) {
     console.error(
       `Worker build check failed: ${error instanceof Error ? error.message : String(error)}`,

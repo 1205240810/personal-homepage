@@ -891,6 +891,30 @@ function BazaarPreview() {
   );
 }
 
+function GlazePreview() {
+  const on = new Set([0, 6, 7, 12, 13, 18, 24, 2, 8]);
+  return (
+    <div className="room-glaze-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>GLAZE WORKSHOP</span>
+        <span>5 LEVELS</span>
+      </div>
+      <div className="room-gz-wall">
+        {Array.from({ length: 25 }, (_, i) => (
+          <i
+            key={i}
+            className={`c${((i % 5) - Math.floor(i / 5) + 5) % 5}${on.has(i) ? ' on' : ''}`}
+          />
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>挑砖 · 摆架 · 贴壁</span>
+        <span>五档 AI · 可联机</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -917,6 +941,7 @@ const previews = {
   quoridor: QuoridorPreview,
   expedition: ExpeditionPreview,
   bazaar: BazaarPreview,
+  glaze: GlazePreview,
 };
 
 const ONLINE = GAMES.filter((game) => game.online);

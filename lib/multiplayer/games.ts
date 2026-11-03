@@ -9,6 +9,7 @@ import { hanamiOnline } from './hanami-online.ts';
 import { quoridorOnline } from './quoridor-online.ts';
 import { expeditionOnline } from './expedition-online.ts';
 import { bazaarOnline } from './bazaar-online.ts';
+import { glazeOnline } from './glaze-online.ts';
 
 // oxlint-disable-next-line typescript/no-explicit-any
 export const GAME_MODULES: GameModule<any, any>[] = [
@@ -21,4 +22,5 @@ export const GAME_MODULES: GameModule<any, any>[] = [
   quoridorOnline,
   expeditionOnline,
   bazaarOnline,
+  glazeOnline,
 ];
