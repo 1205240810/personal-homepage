@@ -14,6 +14,38 @@ import {
 } from '@/lib/games/glaze';
 import './glaze.css';
 
+// 五色釉砖各有一种原创纹样：天青卷云、霁红梅花、鹅黄方胜、墨玉回纹、月白水波。
+const MOTIFS = [
+  <path
+    key={0}
+    d="M4 12a3 3 0 0 1 3-3 4 4 0 0 1 7.5 1A2.5 2.5 0 0 1 16 15H6a2 2 0 0 1-2-3zm4 0a1.5 1.5 0 0 1 2.5-1"
+  />,
+  <g key={1}>
+    <circle cx="10" cy="5.6" r="2.6" />
+    <circle cx="14.2" cy="8.7" r="2.6" />
+    <circle cx="12.6" cy="13.6" r="2.6" />
+    <circle cx="7.4" cy="13.6" r="2.6" />
+    <circle cx="5.8" cy="8.7" r="2.6" />
+    <circle cx="10" cy="10" r="1.6" className="gz-m-core" />
+  </g>,
+  <path
+    key={2}
+    d="M10 2l4 4-4 4-4-4zM10 10l4 4-4 4-4-4zM6 6l4 4-4 4-4-4zM14 6l4 4-4 4-4-4z"
+  />,
+  <path
+    key={3}
+    d="M3 3h14v14H5V5h10v10H7V7h6v6H9V9h2"
+    fill="none"
+    strokeWidth="1.2"
+  />,
+  <path
+    key={4}
+    d="M2 8c2-2 4-2 6 0s4 2 6 0 4-2 4 0M2 12c2-2 4-2 6 0s4 2 6 0 4-2 4 0M2 16c2-2 4-2 6 0s4 2 6 0 4-2 4 0"
+    fill="none"
+    strokeWidth="1"
+  />,
+];
+
 export function Tile({
   c,
   ghost,
@@ -33,7 +65,11 @@ export function Tile({
     <span
       className={`gz-tile c${c}${ghost ? ' is-ghost' : ''} ${className}`}
       aria-label={COLORS[c].name}
-    />
+    >
+      <svg viewBox="0 0 20 20" aria-hidden="true">
+        {MOTIFS[c]}
+      </svg>
+    </span>
   );
 }
 
@@ -62,7 +98,9 @@ function BoardView({
     >
       <header>
         <strong>{name}</strong>
-        <span className="gz-score">{b.score} 分</span>
+        <span key={b.score} className="gz-score">
+          {b.score} 分
+        </span>
       </header>
       <div className="gz-work">
         <div className="gz-lines">
@@ -165,6 +203,7 @@ export function GlazeTable({
   );
   return (
     <div className="gz-table">
+      <div className="gz-eaves" aria-hidden="true" />
       <BoardView
         b={v.boards[opp]}
         name={names[opp]}
