@@ -12,6 +12,7 @@ import {
   type Move,
   type Side,
 } from '@/lib/games/bazaar';
+import { WareArt } from './art';
 import './bazaar.css';
 
 export function Ware({ c, small }: { c: Card; small?: boolean }) {
@@ -21,6 +22,7 @@ export function Ware({ c, small }: { c: Card; small?: boolean }) {
       className={`bz-card g${c}${small ? ' is-small' : ''}`}
       aria-label={cardLabel(c)}
     >
+      <WareArt c={c} />
       <b aria-hidden="true">{camel ? '驼' : GOODS[c].glyph}</b>
       <i aria-hidden="true">{cardLabel(c)}</i>
     </span>
@@ -94,6 +96,32 @@ export function BazaarTable({
     v.last?.move.t === 'swap' && v.last.side === opp ? v.last.move : null;
   return (
     <div className="bz-table">
+      <svg
+        className="bz-harbour"
+        viewBox="0 0 800 220"
+        preserveAspectRatio="xMidYMin slice"
+        aria-hidden="true"
+      >
+        <circle cx="660" cy="56" r="26" className="bz-sun" />
+        <path d="M0 150h800v70H0z" className="bz-sea" />
+        <path
+          d="M0 158c40-6 80 6 120 0s80-6 120 0 80 6 120 0 80-6 120 0 80 6 120 0 80-6 120 0 60 4 80 0"
+          className="bz-wave"
+        />
+        <g className="bz-far">
+          <path d="M40 150v-20l30-10 40 6 50-14 60 12 40-6v32z" />
+          <path d="M92 150V92h4l-6-6h22l-6 6h4v58zM96 86V70h12v16zM94 70l8-10 8 10z" />
+          <path d="M150 150V100h4l-6-6h20l-6 6h4v50zM154 94V80h10v14zM152 80l7-9 7 9z" />
+        </g>
+        <g className="bz-junk">
+          <path d="M470 148h120l-14 14H486z" />
+          <path d="M520 146V70M556 146V86" strokeWidth="2" />
+          <path
+            d="M486 140c4-22 4-44 0-66h36c4 22 4 44 0 66zM528 140c3-16 3-34 0-50h30c3 16 3 34 0 50z"
+            className="bz-sail"
+          />
+        </g>
+      </svg>
       <div className="bz-who">
         <strong>{names[opp]}</strong>
         <span
@@ -124,7 +152,7 @@ export function BazaarTable({
             className={`bz-pile g${i}`}
             title={`${g.name}：${v.tokens[i].join('、') || '已售罄'}`}
           >
-            <b>{v.tokens[i][0] ?? '—'}</b>
+            <b key={v.tokens[i].length}>{v.tokens[i][0] ?? '—'}</b>
             <i>
               {g.name} · 余 {v.tokens[i].length}
             </i>
@@ -138,6 +166,7 @@ export function BazaarTable({
         </span>
       </div>
       <div className="bz-market-wrap">
+        <span className="bz-awning" aria-hidden="true" />
         <span className="bz-deck" aria-label={`货栈剩 ${v.deckCount} 张`}>
           <i aria-hidden="true" />
           {v.deckCount}
