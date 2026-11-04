@@ -14,6 +14,7 @@ import {
   type Move,
   type Side,
 } from '@/lib/games/expedition';
+import { RouteArt } from './art';
 import './expedition.css';
 
 export function Card({
@@ -31,6 +32,7 @@ export function Card({
       className={`ex-card r${r}${small ? ' is-small' : ''}${isWager(c) ? ' is-wager' : ''} ${className}`}
       aria-label={cardName(c)}
     >
+      <RouteArt r={r} wager={isWager(c)} />
       <b>{isWager(c) ? '契' : valueOf(c)}</b>
       <i aria-hidden="true">{ROUTE_INFO[r].glyph}</i>
     </span>
@@ -61,7 +63,10 @@ function Lane({
               <Card key={c} c={c} small />
             ))}
           </span>
-          <span className={`ex-lane-score${score < 0 ? ' is-neg' : ''}`}>
+          <span
+            key={score}
+            className={`ex-lane-score${score < 0 ? ' is-neg' : ''}`}
+          >
             {score > 0 ? `+${score}` : score}
           </span>
         </>
@@ -158,7 +163,7 @@ export function ExpeditionTable({
             >
               <span className="ex-post-name">{ROUTE_INFO[r].name}</span>
               {top !== undefined ? (
-                <Card c={top} />
+                <Card key={top} c={top} className="is-landed" />
               ) : (
                 <span className="ex-post-empty">{ROUTE_INFO[r].glyph}</span>
               )}
