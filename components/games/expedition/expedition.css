@@ -374,8 +374,7 @@ fieldset.ex-hand {
 /* Opponent stacks grow toward the centre: read values from the bottom edge. */
 .ex-lane.is-opp .ex-card.is-small {
   background:
-    linear-gradient(0deg, var(--c) 0 9%, transparent 9%),
-    var(--ex-card);
+    linear-gradient(0deg, var(--c) 0 9%, transparent 9%), var(--ex-card);
 }
 .ex-lane.is-opp .ex-card.is-small b {
   top: auto;
@@ -384,4 +383,260 @@ fieldset.ex-hand {
 .ex-lane.is-opp .ex-card.is-small i {
   top: 4px;
   bottom: auto;
+}
+
+/* ---- 美术二版：大漠驼道、地标插画牌面、飞牌与计分动效 ---- */
+.expedition {
+  --ex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .4 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  --ex-dune-1: #e2c79a;
+  --ex-dune-2: #d4b07a;
+  --ex-sky: #f3e7cf;
+}
+html[data-theme='tech'] .expedition {
+  --ex-dune-1: #10243a;
+  --ex-dune-2: #0c1c2e;
+  --ex-sky: #08131f;
+}
+.ex-table {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ex-table::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(
+      circle at 84% 12%,
+      color-mix(in srgb, #f5c46a 55%, transparent) 0 26px,
+      transparent 60px
+    ),
+    radial-gradient(
+      140% 55% at 20% 102%,
+      var(--ex-dune-2) 0 48%,
+      transparent 49%
+    ),
+    radial-gradient(
+      120% 50% at 85% 100%,
+      var(--ex-dune-1) 0 52%,
+      transparent 53%
+    ),
+    radial-gradient(
+      160% 60% at 50% 115%,
+      color-mix(in srgb, var(--ex-dune-1) 70%, var(--ex-sky)) 0 60%,
+      transparent 61%
+    ),
+    linear-gradient(
+      180deg,
+      var(--ex-sky),
+      color-mix(in srgb, var(--ex-sky) 70%, var(--ex-dune-1))
+    );
+  opacity: 0.9;
+}
+html[data-theme='tech'] .ex-table::before {
+  background:
+    radial-gradient(
+      circle at 84% 12%,
+      rgb(220 236 245 / 0.35) 0 18px,
+      transparent 40px
+    ),
+    radial-gradient(1px 1px at 30% 20%, #cfe8f2 50%, transparent 51%) 0 0 / 70px
+      50px,
+    radial-gradient(
+      140% 55% at 20% 102%,
+      var(--ex-dune-2) 0 48%,
+      transparent 49%
+    ),
+    radial-gradient(
+      120% 50% at 85% 100%,
+      var(--ex-dune-1) 0 52%,
+      transparent 53%
+    ),
+    linear-gradient(180deg, var(--ex-sky), #0b1a2a);
+}
+.ex-table::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ex-grain);
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+  pointer-events: none;
+}
+html[data-theme='tech'] .ex-table::after {
+  mix-blend-mode: screen;
+  opacity: 0.12;
+}
+/* 驿站行：一条虚线驼道把五站串起来 */
+.ex-grid {
+  position: relative;
+}
+.kit .ex-post {
+  border: 0;
+  background:
+    linear-gradient(90deg, transparent, transparent),
+    repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--c, #8b6f47) 50%, transparent) 0 6px,
+        transparent 6px 12px
+      )
+      0 calc(50% + 8px) / 100% 2px no-repeat;
+}
+.kit .ex-post.r0 {
+  --c: var(--ex-r0);
+}
+.kit .ex-post.r1 {
+  --c: var(--ex-r1);
+}
+.kit .ex-post.r2 {
+  --c: var(--ex-r2);
+}
+.kit .ex-post.r3 {
+  --c: var(--ex-r3);
+}
+.kit .ex-post.r4 {
+  --c: var(--ex-r4);
+}
+.ex-post-name {
+  padding: 1px 8px;
+  border-radius: 10px;
+  color: var(--games-ink, #282d29);
+  background: color-mix(in srgb, var(--c) 16%, var(--ex-card));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent);
+}
+.ex-post-empty {
+  background: color-mix(in srgb, var(--ex-card) 55%, transparent);
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--c) 35%, transparent);
+  color: color-mix(in srgb, var(--c) 45%, transparent);
+}
+/* 牌面：宣纸纹理 + 顶部色带 + 地标剪影 */
+.ex-card {
+  overflow: hidden;
+  align-content: start;
+  place-items: start;
+  padding: 10% 0 0 12%;
+  background:
+    linear-gradient(
+      180deg,
+      var(--c) 0 7%,
+      color-mix(in srgb, var(--c) 40%, transparent) 7% 8%,
+      transparent 8%
+    ),
+    var(--ex-grain),
+    radial-gradient(
+      120% 80% at 50% 110%,
+      color-mix(in srgb, var(--c) 16%, transparent),
+      transparent 70%
+    ),
+    var(--ex-card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent),
+    inset 0 0 0 3px var(--ex-card),
+    inset 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent),
+    0 4px 10px -5px rgb(40 24 10 / 0.55);
+}
+html[data-theme='tech'] .ex-card {
+  background:
+    linear-gradient(180deg, var(--c) 0 7%, transparent 7%),
+    radial-gradient(
+      120% 80% at 50% 110%,
+      color-mix(in srgb, var(--c) 22%, transparent),
+      transparent 70%
+    ),
+    var(--ex-card);
+}
+.ex-card b {
+  position: relative;
+  z-index: 1;
+  margin-top: 4%;
+  text-shadow: 0 1px 0 var(--ex-card);
+}
+.ex-art {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 6%;
+  width: 88%;
+  height: 58%;
+  fill: var(--c);
+  opacity: 0.85;
+}
+.ex-card.is-wager b {
+  position: absolute;
+  top: 16%;
+  left: 50%;
+  margin: 0;
+  width: 46%;
+  translate: -50% 0;
+}
+.ex-card.is-small .ex-art {
+  height: 52%;
+}
+.ex-card.is-small.is-wager b {
+  top: 7px;
+  left: 6px;
+  translate: none;
+}
+/* 动效：新牌飞入路线、弃牌落站、分数弹跳 */
+.ex-lane.is-me .ex-stack .ex-card {
+  animation: ex-fly-up 480ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.ex-lane.is-opp .ex-stack .ex-card {
+  animation: ex-fly-down 480ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.ex-card.is-landed {
+  animation: ex-land 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.ex-lane-score {
+  padding: 0 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--ex-card) 80%, transparent);
+  animation: ex-pop 520ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes ex-fly-up {
+  from {
+    opacity: 0;
+    transform: translateY(120px) rotate(-10deg) scale(1.25);
+  }
+}
+@keyframes ex-fly-down {
+  from {
+    opacity: 0;
+    transform: translateY(-90px) rotate(10deg) scale(1.2);
+  }
+}
+@keyframes ex-land {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotate(6deg);
+  }
+}
+@keyframes ex-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.35);
+  }
+}
+.kit .ex-hand-card .ex-card {
+  transition:
+    transform 180ms var(--ease, ease),
+    box-shadow 180ms;
+}
+.kit .ex-hand-card:not(:disabled):hover .ex-card {
+  transform: translateY(-6px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ex-stack .ex-card,
+  .ex-card.is-landed,
+  .ex-lane-score {
+    animation: none !important;
+  }
 }

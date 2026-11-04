@@ -339,3 +339,205 @@ html[data-theme='tech'] .kit .bz-slot.is-selected .bz-card {
     width: 44px;
   }
 }
+
+/* ---- 美术二版：刺桐港远景、货物插画、遮阳棚摊位与成交动效 ---- */
+.bazaar {
+  --bz-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .4 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  --bz-sky: #f1e3c6;
+  --bz-sea: #8fb3b0;
+  --bz-far: #b9a785;
+  --bz-hull: #6e4a2f;
+  --bz-sail: #c9714a;
+  --bz-awn-1: #b9573a;
+  --bz-awn-2: #f3e3c4;
+}
+html[data-theme='tech'] .bazaar {
+  --bz-sky: #081522;
+  --bz-sea: #0f2b3e;
+  --bz-far: #12283c;
+  --bz-hull: #1d3a52;
+  --bz-sail: #2a5a74;
+  --bz-awn-1: #1f4c64;
+  --bz-awn-2: #0d1f30;
+}
+.bz-table {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    var(--bz-grain),
+    linear-gradient(
+      180deg,
+      var(--bz-sky) 0 130px,
+      var(--bz-table) 200px,
+      var(--bz-table-2)
+    );
+}
+html[data-theme='tech'] .bz-table {
+  background: linear-gradient(
+    180deg,
+    var(--bz-sky) 0 130px,
+    var(--bz-table) 200px,
+    var(--bz-table-2)
+  );
+}
+.bz-harbour {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  height: 200px;
+  z-index: -1;
+  pointer-events: none;
+}
+.bz-sun {
+  fill: #f2c46a;
+  opacity: 0.3;
+}
+html[data-theme='tech'] .bz-sun {
+  fill: #cfe8f2;
+  opacity: 0.25;
+}
+.bz-sea {
+  fill: var(--bz-sea);
+  opacity: 0.55;
+}
+.bz-wave {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.5);
+  stroke-width: 2;
+}
+.bz-far {
+  fill: var(--bz-far);
+  opacity: 0.8;
+}
+.bz-junk path {
+  fill: var(--bz-hull);
+  stroke: var(--bz-hull);
+}
+.bz-junk .bz-sail {
+  fill: var(--bz-sail);
+  stroke: none;
+  opacity: 0.9;
+}
+.bz-junk {
+  animation: bz-bob 6s ease-in-out infinite;
+  transform-box: fill-box;
+}
+@keyframes bz-bob {
+  50% {
+    transform: translateY(3px) rotate(0.6deg);
+  }
+}
+/* 摊位：木柜台 + 条纹遮阳棚 */
+.bz-market-wrap {
+  position: relative;
+  margin-top: 18px;
+  padding: 26px 10px 16px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.06) 0 1px,
+      transparent 1px 34px
+    ),
+    var(--bz-grain), linear-gradient(180deg, #8a6040, #6e4a2f);
+  box-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 0.15),
+    inset 0 -6px 12px rgb(0 0 0 / 0.3),
+    0 12px 24px -16px rgb(40 24 10 / 0.8);
+}
+html[data-theme='tech'] .bz-market-wrap {
+  background: linear-gradient(180deg, #102538, #0a1826);
+}
+.bz-awning {
+  position: absolute;
+  inset: -16px -4px auto;
+  height: 26px;
+  border-radius: 6px 6px 0 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--bz-awn-1) 0 28px,
+    var(--bz-awn-2) 28px 56px
+  );
+  -webkit-mask: radial-gradient(14px 10px at 14px 100%, transparent 98%, #000) 0
+    0 / 28px 100% repeat-x;
+  mask: radial-gradient(14px 10px at 14px 100%, transparent 98%, #000) 0 0 /
+    28px 100% repeat-x;
+  filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.25));
+}
+/* 货牌：插画为主，字作印记 */
+.bz-card {
+  position: relative;
+  overflow: hidden;
+  gap: 0;
+  align-content: start;
+  padding-top: 10%;
+  background:
+    var(--bz-grain),
+    radial-gradient(
+      90% 60% at 50% 40%,
+      color-mix(in srgb, var(--c) 18%, transparent),
+      transparent 70%
+    ),
+    var(--bz-card);
+}
+html[data-theme='tech'] .bz-card {
+  background:
+    radial-gradient(
+      90% 60% at 50% 40%,
+      color-mix(in srgb, var(--c) 22%, transparent),
+      transparent 70%
+    ),
+    var(--bz-card);
+}
+.bz-art {
+  width: 86%;
+  height: auto;
+  filter: drop-shadow(0 2px 1px rgb(0 0 0 / 0.18));
+}
+.bz-card b {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  font-size: 10px;
+  border-radius: 3px;
+  background: var(--c);
+}
+.bz-card i {
+  margin-top: 2px;
+}
+.bz-card.is-small {
+  padding-top: 18%;
+}
+.bz-card.is-small b {
+  display: none;
+}
+/* 动效：上新、选中抬起、银牌翻面 */
+.bz-slot .bz-card {
+  animation: bz-deal 380ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  transition: transform 160ms var(--ease, ease);
+}
+.bz-slot.is-selected .bz-card {
+  transform: translateY(-8px) rotate(-2deg);
+}
+.bz-pile b {
+  animation: bz-flip 520ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+@keyframes bz-deal {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.85) rotate(-6deg);
+  }
+}
+@keyframes bz-flip {
+  0% {
+    transform: rotateY(90deg) scale(1.3);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-junk,
+  .bz-slot .bz-card,
+  .bz-pile b {
+    animation: none;
+  }
+}
