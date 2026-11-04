@@ -19,6 +19,7 @@ import {
   type Player,
   type Side,
 } from '@/lib/games/brocade';
+import { Guest, ProductArt, Spool } from './art';
 import './brocade.css';
 
 const TIER = ['作坊', '绣庄', '名品'] as const;
@@ -35,10 +36,11 @@ export function Chip({
 }) {
   return (
     <span
-      className={`bc-chip g${g}${small ? ' is-small' : ''}`}
+      className={`bc-chip g${g}${small ? ' is-small' : ''}${!small && n === undefined ? ' is-spool' : ''}`}
       aria-label={`${gemName(g)}${n !== undefined ? ` ${n}` : ''}`}
     >
-      {n !== undefined ? n : g === GOLD ? '金' : GEMS[g].glyph}
+      {!small && n === undefined && <Spool />}
+      <b>{n !== undefined ? n : g === GOLD ? '金' : GEMS[g].glyph}</b>
     </span>
   );
 }
@@ -62,6 +64,7 @@ export function CardFace({ id }: { id: number }) {
         .filter(Boolean)
         .join(' ')}`}
     >
+      <ProductArt tier={c.tier} />
       <span className="bc-card-top">
         <b>{c.points || ''}</b>
         <Chip g={c.color} small />
@@ -87,7 +90,9 @@ function Summary({
     <div className={`bc-summary${active ? ' is-active' : ''}`}>
       <header>
         <strong>{name}</strong>
-        <span className="bc-pts">{points(p)} 分</span>
+        <span key={points(p)} className="bc-pts">
+          {points(p)} 分
+        </span>
         <span className="kit-help">
           丝线 {tokenCount(p)}/10 · 预订 {p.reserved.length}/3
         </span>
@@ -99,8 +104,10 @@ function Summary({
             className="bc-hold"
             title={`${GEMS[g].name}：加成 ${b[g]}，丝线 ${p.tokens[g]}`}
           >
-            <span className={`bc-bonus g${g}`}>{b[g]}</span>
-            <Chip g={g} n={p.tokens[g]} small />
+            <span key={`b${b[g]}`} className={`bc-bonus g${g}`}>
+              {b[g]}
+            </span>
+            <Chip key={`t${p.tokens[g]}`} g={g} n={p.tokens[g]} small />
           </span>
         ))}
         <span className="bc-hold">
@@ -194,6 +201,9 @@ export function BrocadeTable({
   const canReserve = mine.reserved.length < RESERVE_LIMIT;
   return (
     <div className="bc-table">
+      <div className="bc-loom" aria-hidden="true">
+        <i className="bc-shuttle" />
+      </div>
       <Summary
         p={v.players[opp]}
         name={names[opp]}
@@ -216,6 +226,7 @@ export function BrocadeTable({
               .filter(Boolean)
               .join(' ')}`}
           >
+            <Guest id={id} />
             <b>3</b>
             <i>贵客</i>
             <span>
