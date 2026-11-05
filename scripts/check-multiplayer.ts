@@ -274,6 +274,32 @@ void describe('play server (two real clients)', () => {
     }
   });
 
+  void it('distinguishes repeated action rejections and clears an old error on a valid retry', async () => {
+    const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
+    try {
+      a.create('echo');
+      await until(() => a.snapshot.view);
+      const errors: Array<string | null> = [];
+      const stop = a.subscribe(() => errors.push(a.snapshot.error));
+      const version = a.snapshot.version;
+      a.act({ add: 5 });
+      const first = await until(() => a.snapshot.error);
+      a.act({ add: 5 });
+      assert.equal(a.snapshot.error, null);
+      await until(() => a.snapshot.error);
+      assert.equal(a.snapshot.error, first);
+      assert.equal(a.snapshot.version, version);
+      assert.deepEqual(errors, [first, null, first]);
+      a.act({ add: 1 });
+      assert.equal(a.snapshot.error, null);
+      await until(() => a.snapshot.view?.total === 1);
+      assert.equal(a.snapshot.error, null);
+      stop();
+    } finally {
+      a.close();
+    }
+  });
+
   void it('does not replay an offline action against the state received after reconnecting', async () => {
     const a = new PlayClient<{ total: number }>({ url, game: 'echo' });
     try {
