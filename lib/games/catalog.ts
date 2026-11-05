@@ -377,7 +377,7 @@ export const GAMES: readonly GameDefinition[] = [
     id: 'brocade',
     title: '锦绣织造',
     description:
-      '两人织坊经营：收五色丝线、购入织品换来永久折扣，越买越便宜；攒够织品迎来贵客，先到 15 点声望。五档 AI，也能联机。',
+      '两人织坊经营：收五色丝线、购入织品换来永久折扣，越买越便宜，攒够织品还能迎来贵客。有人达到 15 点后打完本轮，声望高者胜。五档 AI，也能联机。',
     href: '/games/brocade',
     category: '桌面策略',
     controls: '点丝线拿取，点织品购入或预订',
