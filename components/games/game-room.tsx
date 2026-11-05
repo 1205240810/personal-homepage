@@ -915,6 +915,29 @@ function GlazePreview() {
   );
 }
 
+function BrocadePreview() {
+  const cards = [0, 1, 2, 3, 4, 2];
+  return (
+    <div className="room-brocade-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>BROCADE GUILD</span>
+        <span>5 LEVELS</span>
+      </div>
+      <div className="room-bc-row">
+        {cards.map((c, i) => (
+          <i key={i} className={`c${c}`}>
+            {i % 3 === 2 ? i - 1 : ''}
+          </i>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>收丝 · 织品 · 贵客</span>
+        <span>五档 AI · 可联机</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -942,6 +965,7 @@ const previews = {
   expedition: ExpeditionPreview,
   bazaar: BazaarPreview,
   glaze: GlazePreview,
+  brocade: BrocadePreview,
 };
 
 const ONLINE = GAMES.filter((game) => game.online);

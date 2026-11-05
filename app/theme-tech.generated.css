@@ -777,6 +777,19 @@ html[data-theme='tech'] .room-gz-wall .c2 {
 html[data-theme='tech'] .room-gz-wall .c4 {
     background: #0a1520
 }
+html[data-theme='tech'] .room-brocade-preview {
+    border: 1px solid rgb(124 199 223 / 0.45);
+    color: #93a8bc;
+    background: repeating-linear-gradient(45deg, #0a152099 0 1px, transparent 1px 7px),
+    linear-gradient(180deg, #0a1520, #0f1f2e)
+}
+html[data-theme='tech'] .room-bc-row .c2 {
+    background: #0f1f2e
+}
+html[data-theme='tech'] .room-bc-row .c4 {
+    background: #0f1f2e;
+    color: #93a8bc
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid var(--line, rgb(124 199 223 / 0.45));

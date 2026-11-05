@@ -1,0 +1,766 @@
+/* 锦绣织造：缎面底与回纹边，五色丝线（朱砂、石青、藤黄、黛墨、素丝）加金线；科技主题为夜色光纤。 */
+.brocade {
+  --bc-bg: #efe7d6;
+  --bc-bg-2: #e0d2b6;
+  --bc-line: color-mix(in srgb, #6e4a2f 26%, transparent);
+  --bc-card: #fbf7ee;
+  --bc-g0: #b4432f;
+  --bc-g1: #2f6f9a;
+  --bc-g2: #c99a26;
+  --bc-g3: #2c2f3a;
+  --bc-g4: #ece6d6;
+  --bc-g5: #c8a24a;
+  --bc-ink-on: #fff8ee;
+}
+html[data-theme='tech'] .brocade {
+  --bc-bg: #0b1826;
+  --bc-bg-2: #06101a;
+  --bc-line: rgb(124 199 223 / 0.2);
+  --bc-card: #13263a;
+  --bc-g0: #ff8a70;
+  --bc-g1: #6fb8f0;
+  --bc-g2: #f2c45c;
+  --bc-g3: #56607a;
+  --bc-g4: #dfe8f0;
+  --bc-g5: #ffd27a;
+}
+.bc-table {
+  display: grid;
+  gap: 10px;
+  padding: 14px clamp(8px, 2vw, 22px) 18px;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgb(255 255 255 / 0.12) 0 1px,
+      transparent 1px 7px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgb(110 74 47 / 0.05) 0 1px,
+      transparent 1px 7px
+    ),
+    linear-gradient(180deg, var(--bc-bg), var(--bc-bg-2));
+  box-shadow:
+    inset 0 0 0 1px var(--bc-line),
+    inset 0 0 0 6px color-mix(in srgb, var(--bc-bg) 70%, transparent),
+    inset 0 0 0 7px var(--bc-line);
+}
+html[data-theme='tech'] .bc-table {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgb(124 199 223 / 0.05) 0 1px,
+      transparent 1px 7px
+    ),
+    linear-gradient(180deg, var(--bc-bg), var(--bc-bg-2));
+}
+.bc-chip {
+  --c: var(--bc-g0);
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--bc-ink-on);
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgb(255 255 255 / 0.16) 0 6deg,
+      transparent 6deg 18deg
+    ),
+    radial-gradient(
+      circle at 35% 30%,
+      color-mix(in srgb, var(--c) 60%, #fff),
+      var(--c) 60%,
+      color-mix(in srgb, var(--c) 70%, #000)
+    );
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, #fff 35%, transparent),
+    0 2px 4px -1px rgb(0 0 0 / 0.4);
+  flex: none;
+}
+.bc-chip.is-small {
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+}
+.bc-chip.g1,
+.bc-bonus.g1,
+.bc-card.g1 {
+  --c: var(--bc-g1);
+}
+.bc-chip.g2,
+.bc-bonus.g2,
+.bc-card.g2 {
+  --c: var(--bc-g2);
+}
+.bc-chip.g3,
+.bc-bonus.g3,
+.bc-card.g3 {
+  --c: var(--bc-g3);
+}
+.bc-chip.g4,
+.bc-bonus.g4,
+.bc-card.g4 {
+  --c: var(--bc-g4);
+}
+.bc-chip.g4,
+.bc-bonus.g4 {
+  color: #3a3226;
+}
+.bc-chip.g5 {
+  --c: var(--bc-g5);
+}
+.bc-bonus {
+  --c: var(--bc-g0);
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 22px;
+  padding: 0 3px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--bc-ink-on);
+  background: var(--c);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.2);
+}
+.bc-summary {
+  display: grid;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.bc-summary.is-active {
+  border-color: color-mix(
+    in srgb,
+    var(--games-accent, #a34e2b) 45%,
+    transparent
+  );
+}
+.bc-summary header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+.bc-pts {
+  font-weight: 600;
+  color: var(--games-accent, #a34e2b);
+}
+.bc-holdings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bc-hold {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.bc-nobles {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.bc-noble {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.35), transparent),
+    color-mix(in srgb, #b4432f 14%, var(--bc-card));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #b4432f 35%, transparent),
+    0 3px 8px -5px rgb(0 0 0 / 0.5);
+}
+.bc-noble b {
+  grid-row: span 2;
+  font-size: 22px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+}
+.bc-noble i {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--games-muted, #626b61);
+}
+.bc-noble span {
+  display: flex;
+  gap: 3px;
+}
+.bc-market {
+  display: grid;
+  gap: 8px;
+  justify-content: center;
+}
+.bc-tier {
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  gap: clamp(4px, 1.2vw, 10px);
+}
+.bc-card {
+  --c: var(--bc-g0);
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: clamp(58px, 15vw, 92px);
+  aspect-ratio: 5 / 7;
+  border-radius: 7px;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      90% 70% at 70% 80%,
+      color-mix(in srgb, var(--c) 16%, transparent),
+      transparent 70%
+    ),
+    var(--bc-card);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent),
+    0 3px 8px -4px rgb(40 24 10 / 0.5);
+}
+.bc-card.t1 {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 8px,
+      color-mix(in srgb, var(--c) 7%, transparent) 8px 9px
+    ),
+    radial-gradient(
+      90% 70% at 70% 80%,
+      color-mix(in srgb, var(--c) 18%, transparent),
+      transparent 70%
+    ),
+    var(--bc-card);
+}
+.bc-card.t2 {
+  background:
+    repeating-conic-gradient(
+      from 45deg at 50% 60%,
+      color-mix(in srgb, var(--c) 10%, transparent) 0 10deg,
+      transparent 10deg 30deg
+    ),
+    radial-gradient(
+      90% 70% at 70% 80%,
+      color-mix(in srgb, var(--c) 22%, transparent),
+      transparent 70%
+    ),
+    var(--bc-card);
+}
+.bc-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 5px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c) 30%, transparent),
+    transparent
+  );
+}
+.bc-card-top b {
+  font-size: clamp(16px, 4.4vw, 22px);
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+  line-height: 1;
+  color: var(--games-ink, #282d29);
+}
+.bc-cost {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 4px;
+  align-self: end;
+}
+.bc-card.is-back,
+.kit .bc-deck {
+  place-items: center;
+  align-content: center;
+  color: #fff8ee;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgb(255 255 255 / 0.12) 0 2px,
+      transparent 2px 6px
+    ),
+    #6e4a2f;
+  box-shadow: inset 0 0 0 3px rgb(255 255 255 / 0.15);
+}
+.bc-card.is-back.t1,
+.kit .bc-deck.t1 {
+  background-color: #2f5a6e;
+}
+.bc-card.is-back.t2,
+.kit .bc-deck.t2 {
+  background-color: #6b2f3a;
+}
+.bc-card.is-back b {
+  font-size: 13px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+}
+.bc-card.is-empty {
+  background: none;
+  box-shadow: inset 0 0 0 1px dashed var(--bc-line);
+  border: 1px dashed var(--bc-line);
+}
+.kit .bc-deck {
+  display: grid;
+  gap: 4px;
+  width: clamp(44px, 11vw, 64px);
+  min-height: 0;
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+}
+.kit .bc-deck i {
+  font-style: normal;
+  font-size: 11px;
+  opacity: 0.8;
+}
+.kit .bc-deck:disabled {
+  opacity: 0.85;
+  cursor: default;
+}
+.kit .bc-deck.is-selected,
+.kit .bc-pick.is-selected .bc-card {
+  outline: 2px solid var(--games-accent, #a34e2b);
+  outline-offset: 2px;
+}
+.kit .bc-pick,
+.kit .bc-bank-pile {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.kit .bc-pick:disabled,
+.kit .bc-bank-pile:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.kit .bc-pick.can-buy .bc-card::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kit-ok);
+}
+.bc-bank {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.bc-bank-pile {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+.bc-bank-pile .bc-chip {
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+}
+.bc-bank-pile i {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--games-muted, #626b61);
+}
+.bc-bank-pile em {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  font-style: normal;
+  font-size: 11px;
+  padding: 0 4px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--games-accent, #a34e2b);
+}
+.kit .bc-bank-pile.is-selected .bc-chip {
+  outline: 2px solid var(--games-accent, #a34e2b);
+  outline-offset: 2px;
+}
+.bc-status {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+}
+.bc-actions {
+  justify-content: center;
+}
+fieldset.bc-return {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 8px;
+  border: 1px dashed var(--kit-bad);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.bc-reserved {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.bc-reserved.is-opp .bc-card {
+  width: 48px;
+}
+.bc-reserved.is-opp .bc-cost {
+  display: none;
+}
+.bc-intro {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 28px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--bc-bg), var(--bc-bg-2));
+}
+.bc-intro p {
+  max-width: 34em;
+  margin: 0;
+  line-height: 1.8;
+}
+.bc-intro span {
+  display: flex;
+  gap: 8px;
+}
+.bc-online-link {
+  font-size: 13px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+@media (max-width: 520px) {
+  .bc-chip.is-small {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+  .bc-bank {
+    gap: 8px;
+  }
+  .bc-bank-pile .bc-chip {
+    width: 32px;
+    height: 32px;
+  }
+  .bc-noble {
+    padding: 4px 6px;
+    gap: 2px 4px;
+  }
+  .bc-noble b {
+    font-size: 16px;
+  }
+}
+
+/* ---- 美术二版：织机经线、线轴、织品插画、贵客像与动效 ---- */
+.brocade {
+  --bc-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  --bc-wood: #7a5236;
+}
+html[data-theme='tech'] .brocade {
+  --bc-wood: #1d3a52;
+}
+.bc-table {
+  position: relative;
+  overflow: hidden;
+  padding-top: 40px;
+}
+/* 织机：上方木梁 + 五色经线 + 往返的梭子 */
+.bc-loom {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 30px;
+  background:
+    linear-gradient(180deg, transparent 0 12px, rgb(0 0 0 / 0.08) 12px),
+    repeating-linear-gradient(
+        90deg,
+        var(--bc-g0) 0 2px,
+        transparent 2px 7px,
+        var(--bc-g1) 7px 9px,
+        transparent 9px 14px,
+        var(--bc-g2) 14px 16px,
+        transparent 16px 21px,
+        var(--bc-g3) 21px 23px,
+        transparent 23px 28px,
+        var(--bc-g4) 28px 30px,
+        transparent 30px 35px
+      )
+      0 12px / 100% 18px no-repeat,
+    var(--bc-grain),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bc-wood) 80%, #fff) 0 2px,
+      var(--bc-wood) 2px 12px,
+      transparent 12px
+    );
+  -webkit-mask: linear-gradient(180deg, #000 60%, transparent);
+  mask: linear-gradient(180deg, #000 60%, transparent);
+  opacity: 0.9;
+}
+.bc-shuttle {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  width: 38px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #d9a96a, #8a5a30);
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.35);
+  animation: bc-weave 9s ease-in-out infinite alternate;
+}
+@keyframes bc-weave {
+  to {
+    left: calc(100% - 38px);
+  }
+}
+/* 线轴 */
+.bc-chip.is-spool {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.bc-bank-pile .bc-chip.is-spool {
+  width: 46px;
+  height: 46px;
+}
+.bc-spool {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.bc-spool-wood {
+  fill: #b98a5a;
+  stroke: #6e4a2f;
+  stroke-width: 0.6;
+}
+html[data-theme='tech'] .bc-spool-wood {
+  fill: #2a4a63;
+  stroke: #7cc7df;
+}
+.bc-chip.is-spool b {
+  position: relative;
+  font-weight: 600;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+}
+.bc-chip.g4.is-spool b {
+  color: #3a3226;
+  text-shadow: none;
+}
+.bc-chip b {
+  font-weight: inherit;
+}
+/* 小线团：加一圈缠线纹理 */
+.bc-chip.is-small {
+  background:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      transparent 0 2px,
+      rgb(255 255 255 / 0.18) 2px 2.6px
+    ),
+    radial-gradient(
+      circle at 35% 30%,
+      color-mix(in srgb, var(--c) 60%, #fff),
+      var(--c) 60%,
+      color-mix(in srgb, var(--c) 70%, #000)
+    );
+}
+/* 织品牌：锦缎底纹 + 插画 */
+.bc-card {
+  background:
+    var(--bc-grain),
+    radial-gradient(
+      90% 70% at 70% 80%,
+      color-mix(in srgb, var(--c) 18%, transparent),
+      transparent 70%
+    ),
+    var(--bc-card);
+}
+.bc-card.t1 {
+  background:
+    radial-gradient(
+        circle at 50% 50%,
+        color-mix(in srgb, var(--c) 10%, transparent) 0 2px,
+        transparent 2.5px
+      )
+      0 0 / 10px 10px,
+    var(--bc-grain),
+    var(--bc-card);
+}
+.bc-card.t2 {
+  background:
+    conic-gradient(
+        from 45deg,
+        color-mix(in srgb, var(--c) 10%, transparent) 25%,
+        transparent 0 50%,
+        color-mix(in srgb, var(--c) 10%, transparent) 0 75%,
+        transparent 0
+      )
+      0 0 / 12px 12px,
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #f5d58a 30%, transparent),
+      transparent 30%
+    ),
+    var(--bc-card);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #c8a24a 70%, transparent),
+    inset 0 0 0 3px var(--bc-card),
+    inset 0 0 0 4px color-mix(in srgb, var(--c) 35%, transparent),
+    0 4px 10px -4px rgb(40 24 10 / 0.55);
+}
+html[data-theme='tech'] .bc-card,
+html[data-theme='tech'] .bc-card.t1 {
+  background:
+    radial-gradient(
+      90% 70% at 70% 80%,
+      color-mix(in srgb, var(--c) 22%, transparent),
+      transparent 70%
+    ),
+    var(--bc-card);
+}
+.bc-art {
+  position: absolute;
+  right: 4%;
+  bottom: 6%;
+  width: 52%;
+  height: 56%;
+  opacity: 0.92;
+  filter: drop-shadow(0 2px 1px rgb(0 0 0 / 0.2));
+}
+.bc-card-top,
+.bc-cost {
+  position: relative;
+  z-index: 1;
+}
+.kit .bc-deck {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgb(255 255 255 / 0.12) 0 2px,
+      transparent 2px 6px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgb(245 213 138 / 0.15) 0 1px,
+      transparent 1px 6px
+    ),
+    #6e4a2f;
+  box-shadow:
+    inset 0 0 0 2px rgb(245 213 138 / 0.5),
+    inset 0 0 0 4px rgb(0 0 0 / 0.15),
+    2px 2px 0 -1px #4a3020,
+    4px 4px 0 -2px #4a3020;
+}
+/* 贵客 */
+.bc-noble {
+  grid-template-columns: 34px auto 1fr;
+  padding-left: 6px;
+}
+.bc-guest {
+  grid-row: span 2;
+  width: 34px;
+  height: 34px;
+}
+.bc-guest-robe {
+  fill: #6b2f3a;
+}
+.bc-guest-hat {
+  fill: #2b2622;
+  stroke: none;
+}
+html[data-theme='tech'] .bc-guest-robe {
+  fill: #2a4a63;
+}
+html[data-theme='tech'] .bc-guest-hat {
+  fill: #7cc7df;
+}
+/* 动效：上新、数字跳动、选中抬起 */
+.bc-pick .bc-card {
+  animation: bc-deal 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  transition: transform 160ms var(--ease, ease);
+}
+.kit .bc-pick:not(:disabled):hover .bc-card,
+.kit .bc-pick.is-selected .bc-card {
+  transform: translateY(-5px);
+}
+.bc-pts,
+.bc-bonus,
+.bc-holdings .bc-chip {
+  animation: bc-pop 480ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.bc-noble {
+  animation: bc-deal 500ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.bc-pts {
+  display: inline-block;
+}
+@keyframes bc-deal {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) rotate(-5deg) scale(0.9);
+  }
+}
+@keyframes bc-pop {
+  0% {
+    transform: scale(0.5);
+  }
+  60% {
+    transform: scale(1.3);
+  }
+}
+@media (max-width: 520px) {
+  .bc-bank-pile .bc-chip.is-spool {
+    width: 38px;
+    height: 38px;
+  }
+  .bc-noble {
+    grid-template-columns: 24px auto 1fr;
+  }
+  .bc-guest {
+    width: 24px;
+    height: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bc-shuttle,
+  .bc-pick .bc-card,
+  .bc-pts,
+  .bc-bonus,
+  .bc-holdings .bc-chip,
+  .bc-noble {
+    animation: none;
+  }
+}
+.bc-card-top .bc-chip b,
+.bc-cost .bc-chip b {
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+  line-height: 1;
+}

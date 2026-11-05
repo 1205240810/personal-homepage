@@ -26,7 +26,8 @@ export type GameId =
   | 'quoridor'
   | 'expedition'
   | 'bazaar'
-  | 'glaze';
+  | 'glaze'
+  | 'brocade';
 
 export type GameDefinition = {
   id: GameId;
@@ -370,6 +371,22 @@ export const GAMES: readonly GameDefinition[] = [
       title: '琉璃坊联机',
       format: '1 对 1',
       pitch: '服务器校验每一步并从袋中补砖，再局交换先手。',
+    },
+  },
+  {
+    id: 'brocade',
+    title: '锦绣织造',
+    description:
+      '两人织坊经营：收五色丝线、购入织品换来永久折扣，越买越便宜，攒够织品还能迎来贵客。有人达到 15 点后打完本轮，声望高者胜。五档 AI，也能联机。',
+    href: '/games/brocade',
+    category: '桌面策略',
+    controls: '点丝线拿取，点织品购入或预订',
+    estimatedDuration: '一局约 20–30 分钟',
+    online: {
+      href: '/games/brocade/online',
+      title: '锦绣织造联机',
+      format: '1 对 1',
+      pitch: '服务器洗牌补牌，暗订的织品对手看不到，再局交换先手。',
     },
   },
 ] as const;
