@@ -41,8 +41,24 @@ export function QuoridorBoard({
 }) {
   const ref = useRef<HTMLFieldSetElement>(null);
   useBoardViewport(ref);
-  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const live = !disabled && state.winner === null;
+  const [draft, setDraft] = useState<{
+    state: QuoridorState;
+    mode: BoardMode;
+    live: boolean;
+    ghost: { x: number; y: number } | null;
+  }>(() => ({ state, mode, live, ghost: null }));
+  const pointerType = useRef('');
+  // Invalidate a preview on every position/mode/connection transition, including
+  // disconnect → reconnect to the same board. Keep the board DOM for motion.
+  if (draft.state !== state || draft.mode !== mode || draft.live !== live)
+    setDraft({ state, mode, live, ghost: null });
+  const ghost =
+    draft.state === state && draft.mode === mode && draft.live === live
+      ? draft.ghost
+      : null;
+  const setGhost = (ghost: { x: number; y: number } | null) =>
+    setDraft({ state, mode, live, ghost });
   const targets =
     live && mode === 'move' ? new Set(pawnMoves(state)) : new Set<number>();
   const last = state.history[state.history.length - 1];
@@ -111,7 +127,7 @@ export function QuoridorBoard({
               }}
               tabIndex={target ? 0 : -1}
               aria-disabled={!target || undefined}
-              aria-label={`${cellName(i)}${target ? ' 可走' : ''}`}
+              aria-label={`${cellName(i)}${state.pawns[0] === i ? ' 朱方棋子' : state.pawns[1] === i ? ' 黛方棋子' : ''}${target ? ' 可走' : ''}`}
               onClick={() => target && onMove({ t: 'm', to: i })}
             />
           );
@@ -202,7 +218,20 @@ export function QuoridorBoard({
                   onPointerLeave={(e) => {
                     if (e.pointerType === 'mouse') setGhost(null);
                   }}
-                  onFocus={() => setGhost({ x, y })}
+                  onPointerDown={(e) => {
+                    pointerType.current = e.pointerType;
+                  }}
+                  onKeyDown={() => {
+                    pointerType.current = '';
+                  }}
+                  onFocus={() => {
+                    // A touch focus precedes click: it must not count as tap one.
+                    if (
+                      pointerType.current !== 'touch' &&
+                      pointerType.current !== 'pen'
+                    )
+                      setGhost({ x, y });
+                  }}
                   onClick={() => {
                     if (!ok) return setGhost({ x, y });
                     // Touch: first tap previews, second tap places.
