@@ -102,11 +102,15 @@ function Table({
     `${names[i] || `玩家 ${i + 1}`}${i === seat ? '（你）' : ''}`;
   return (
     <ExpeditionTable
-      key={`${ev.round}:${ev.positionRevision}`}
+      positionKey={`${ev.positionRevision}:${connected}:${seat}`}
       v={ev}
       disabled={!myTurn}
       names={[label(0), label(1)]}
-      onMove={(m: Move) => act({ type: 'move', move: m })}
+      onMove={(m: Move) => {
+        if (myTurn) act({ type: 'move', move: m });
+        // Server rejections do not change the revision; keep the choice retryable.
+        return false;
+      }}
       status={
         !connected
           ? '连接恢复后可继续操作…'

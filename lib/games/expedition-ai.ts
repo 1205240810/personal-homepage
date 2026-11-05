@@ -25,11 +25,23 @@ export const EXPEDITION_LEVELS: Record<
 > = {
   1: { name: '学徒', note: '随性出牌', samples: 0, noise: 0.5, ms: 0 },
   2: { name: '行脚', note: '会算账', samples: 0, noise: 0, ms: 0 },
-  3: { name: '驼队', note: '推演 20 种牌局', samples: 20, noise: 0, ms: 900 },
-  4: { name: '商首', note: '推演 60 种牌局', samples: 60, noise: 0, ms: 1600 },
+  3: {
+    name: '驼队',
+    note: '最多推演 20 种牌局',
+    samples: 20,
+    noise: 0,
+    ms: 900,
+  },
+  4: {
+    name: '商首',
+    note: '最多推演 60 种牌局',
+    samples: 60,
+    noise: 0,
+    ms: 1600,
+  },
   5: {
     name: '大贾',
-    note: '推演 150 种牌局',
+    note: '最多推演 150 种牌局',
     samples: 150,
     noise: 0,
     ms: 2600,
