@@ -116,6 +116,7 @@ export function ExpeditionGame({
     level: ExpeditionLevel;
     state: ExpeditionState;
   } | null>(null);
+  const [matchId, setMatchId] = useState(0);
   const [aiError, setAiError] = useState(false);
   const [retry, setRetry] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -168,6 +169,7 @@ export function ExpeditionGame({
   }, [aiTurn, state, level, retry]);
 
   const start = () => {
+    setMatchId((n) => n + 1);
     setAiError(false);
     setError(null);
     setGame({
@@ -176,11 +178,13 @@ export function ExpeditionGame({
     });
   };
   const onMove = (m: Move) => {
-    if (!state) return;
+    if (!state) return false;
     try {
       commit(apply(state, ME, m));
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : '操作无效');
+      return false;
     }
   };
   const v = state ? viewFor(state, ME) : null;
@@ -272,7 +276,7 @@ export function ExpeditionGame({
       </div>
       {v && state ? (
         <ExpeditionTable
-          key={`${state.round}`}
+          key={`${matchId}:${state.round}`}
           v={v}
           disabled={aiTurn}
           names={['你', `AI · ${EXPEDITION_LEVELS[level].name}`]}

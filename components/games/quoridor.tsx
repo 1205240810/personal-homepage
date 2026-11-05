@@ -1,9 +1,16 @@
 'use client';
 
 import { Flag, Lightbulb, Undo2 } from 'lucide-react';
-import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   WALLS,
+  isLegal,
   moveName,
   newGame,
   play,
@@ -49,7 +56,9 @@ function validateRecords(v: unknown): Records | null {
     if (
       isLevel(lv) &&
       Number.isSafeInteger(rec?.won) &&
-      Number.isSafeInteger(rec?.played)
+      Number.isSafeInteger(rec?.played) &&
+      (rec.won as number) >= 0 &&
+      (rec.played as number) >= (rec.won as number)
     )
       out[lv] = { won: rec.won as number, played: rec.played as number };
   }
@@ -79,7 +88,7 @@ function requestAi(
     worker = new Worker(quoridorWorkerUrl, { type: 'module' });
     worker.onmessage = (e) => {
       if (!live || e.data?.id !== 1) return;
-      if (e.data.error || !e.data.result?.move) return fail();
+      if (e.data.error || !isLegal(state, e.data.result?.move)) return fail();
       cancel();
       resolve(e.data.result);
     };
@@ -180,27 +189,38 @@ export function QuoridorGame({
   } as Settings);
   const [records, saveRecords] = useLocalRecords(RECORDS, validateRecords, {});
   const [human, setHuman] = useState<Side>(0);
-  const [game, setGame] = useState<{ match: Settings; state: QuoridorState }>(
-    () => ({
-      match: settings,
-      state: newGame(0),
-    }),
-  );
+  const [opening] = useState(() => newGame(0));
+  const [game, setGame] = useState<{
+    match: Settings;
+    state: QuoridorState;
+  } | null>(null);
+  const recorded = useRef(false);
   const [mode, setMode] = useState<BoardMode>('move');
   const [hint, setHint] = useState<Move | null>(null);
-  const [hinting, setHinting] = useState(false);
+  const [hintRequest, setHintRequest] = useState<QuoridorState | null>(null);
+  const [hintError, setHintError] = useState(false);
   const [aiError, setAiError] = useState(false);
   const [retry, setRetry] = useState(0);
-  const { match, state } = game;
+  const match = game?.match ?? settings;
+  const state = game?.state ?? opening;
   const aiTurn =
     match.mode === 'ai' && state.winner === null && state.toPlay !== human;
 
+  const hinting = hintRequest === state && !aiTurn && state.winner === null;
   const commit = (next: QuoridorState) => {
+    setHintRequest(null);
+    setHintError(false);
     setHint(null);
     setAiError(false);
     setMode('move');
     setGame({ match, state: next });
-    if (next.winner !== null && state.winner === null && match.mode === 'ai') {
+    if (
+      next.winner !== null &&
+      state.winner === null &&
+      match.mode === 'ai' &&
+      !recorded.current
+    ) {
+      recorded.current = true;
       const cur = records[match.level] ?? { won: 0, played: 0 };
       saveRecords({
         ...records,
@@ -239,6 +259,9 @@ export function QuoridorGame({
   }, [aiTurn, state, match.level, retry]);
 
   const start = (side: Side) => {
+    recorded.current = false;
+    setHintRequest(null);
+    setHintError(false);
     setHuman(side);
     setHint(null);
     setAiError(false);
@@ -253,17 +276,25 @@ export function QuoridorGame({
       /* illegal clicks are ignored; the board only offers legal ones */
     }
   };
-  const askHint = () => {
-    setHinting(true);
-    requestAi(
+  useEffect(() => {
+    if (!hinting) return;
+    return requestAi(
       state,
       5,
       (r) => {
-        setHinting(false);
+        setHintRequest(null);
         setHint(r.move);
       },
-      () => setHinting(false),
+      () => {
+        setHintRequest(null);
+        setHintError(true);
+      },
     );
+  }, [hinting, state]);
+  const askHint = () => {
+    if (aiTurn || state.winner !== null || hinting) return;
+    setHintError(false);
+    setHintRequest(state);
   };
   const takeBack = () =>
     commit(
@@ -424,8 +455,14 @@ export function QuoridorGame({
             },
           ]}
         >
-          {state.reason === 'resign' ? '对方认输' : '率先抵达对岸'} · 共{' '}
-          {state.history.length} 手
+          {state.reason === 'resign'
+            ? match.mode === 'ai'
+              ? state.winner === human
+                ? '对方认输'
+                : '你已认输'
+              : `${QD_NAME[(1 - state.winner) as Side]}方认输`
+            : '率先抵达对岸'}{' '}
+          · 共 {state.history.length} 手
           {match.mode === 'ai' ? ' · 再来一局交换先后手' : ''}
         </GameResult>
       )}
@@ -437,6 +474,11 @@ export function QuoridorGame({
         hint={hint}
         you={match.mode === 'ai' ? human : null}
       />
+      {hintError && (
+        <p className="kit-brief">
+          <output>提示计算失败，请重试</output>
+        </p>
+      )}
       {hint && (
         <p className="kit-brief">提示：可以考虑 {moveName(hint)}（蓝色标记）</p>
       )}
