@@ -1,0 +1,642 @@
+/* 丝路远行：宣纸与矿物颜料（朱砂、藤黄、石青、玉绿、黛紫）；科技主题换成夜色星图。 */
+.expedition {
+  --ex-table: #efe6d2;
+  --ex-table-2: #e3d5b8;
+  --ex-line: color-mix(in srgb, #8b6f47 35%, transparent);
+  --ex-card: #fbf7ec;
+  --ex-card-ink: #2b2620;
+  --ex-r0: #b4432f;
+  --ex-r1: #c08a1e;
+  --ex-r2: #2f6f9a;
+  --ex-r3: #3f8a6a;
+  --ex-r4: #6b4a8a;
+  --ex-seal: #b4432f;
+}
+html[data-theme='tech'] .expedition {
+  --ex-table: #0b1826;
+  --ex-table-2: #071019;
+  --ex-line: rgb(124 199 223 / 0.18);
+  --ex-card: #13263a;
+  --ex-card-ink: #dce8f4;
+  --ex-r0: #ff8a70;
+  --ex-r1: #f2c45c;
+  --ex-r2: #6fb8f0;
+  --ex-r3: #5fd3a0;
+  --ex-r4: #b896f0;
+  --ex-seal: #ff8a70;
+}
+.ex-table {
+  display: grid;
+  gap: 10px;
+  padding: 14px clamp(8px, 2vw, 22px) 18px;
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      60% 40% at 50% 50%,
+      rgb(255 255 255 / 0.18),
+      transparent 70%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 22px,
+      var(--ex-line) 22px 23px
+    ),
+    linear-gradient(180deg, var(--ex-table), var(--ex-table-2));
+  background-blend-mode: normal, soft-light, normal;
+  box-shadow:
+    inset 0 0 0 1px var(--ex-line),
+    inset 0 2px 18px rgb(80 50 20 / 0.12);
+}
+html[data-theme='tech'] .ex-table {
+  background:
+    radial-gradient(1px 1px at 20% 30%, #7cc7df88 50%, transparent 51%) 0 0 /
+      60px 60px,
+    radial-gradient(
+      60% 50% at 50% 50%,
+      rgb(124 199 223 / 0.08),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--ex-table), var(--ex-table-2));
+}
+.ex-who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 13px;
+  color: var(--games-muted, #626b61);
+}
+.ex-who strong {
+  color: var(--games-ink, #282d29);
+  font-size: 14px;
+}
+.ex-back-fan {
+  display: inline-flex;
+}
+.ex-back-fan i {
+  width: 12px;
+  height: 18px;
+  margin-right: -5px;
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(45deg, #fff3 0 2px, transparent 2px 5px), #7a5a3a;
+  box-shadow: 0 0 0 1px #fff8;
+}
+html[data-theme='tech'] .ex-back-fan i {
+  background:
+    repeating-linear-gradient(45deg, #7cc7df44 0 2px, transparent 2px 5px),
+    #13263a;
+}
+.ex-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px clamp(4px, 1.4vw, 14px);
+}
+.ex-lane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 92px;
+}
+.ex-lane.is-opp {
+  justify-content: flex-end;
+}
+.ex-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ex-lane.is-opp .ex-stack {
+  flex-direction: column-reverse;
+}
+.ex-stack .ex-card + .ex-card {
+  margin-top: -40px;
+}
+.ex-lane.is-opp .ex-stack .ex-card + .ex-card {
+  margin-top: 0;
+  margin-bottom: -40px;
+}
+.ex-lane-empty {
+  flex: 1;
+  width: min(100%, 56px);
+  border-radius: 6px;
+  border: 1px dashed var(--ex-line);
+}
+.ex-lane-score {
+  margin: 4px 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--kit-ok);
+}
+.ex-lane-score.is-neg {
+  color: var(--kit-bad);
+}
+.ex-lane.is-glow .ex-stack .ex-card:first-child {
+  box-shadow: 0 0 0 2px var(--games-accent, #a34e2b);
+}
+.ex-card {
+  --c: var(--ex-r0);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(44px, 12vw, 62px);
+  aspect-ratio: 5 / 7;
+  border-radius: 6px;
+  color: var(--c);
+  background:
+    linear-gradient(180deg, var(--c) 0 9%, transparent 9%),
+    radial-gradient(
+      120% 80% at 50% 110%,
+      color-mix(in srgb, var(--c) 12%, transparent),
+      transparent 70%
+    ),
+    var(--ex-card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent),
+    0 3px 8px -4px rgb(40 24 10 / 0.5);
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+}
+.ex-card.r1 {
+  --c: var(--ex-r1);
+}
+.ex-card.r2 {
+  --c: var(--ex-r2);
+}
+.ex-card.r3 {
+  --c: var(--ex-r3);
+}
+.ex-card.r4 {
+  --c: var(--ex-r4);
+}
+.ex-card b {
+  font-size: clamp(18px, 5vw, 26px);
+  font-weight: 600;
+  line-height: 1;
+}
+.ex-card i {
+  position: absolute;
+  right: 5px;
+  bottom: 4px;
+  font-style: normal;
+  font-size: 10px;
+  opacity: 0.75;
+}
+.ex-card.is-wager b {
+  display: grid;
+  place-items: center;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  font-size: clamp(14px, 4vw, 20px);
+  color: #fff8ee;
+  background: var(--ex-seal);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, #fff 30%, transparent);
+  transform: rotate(-4deg);
+}
+.ex-card.is-small {
+  width: clamp(40px, 11vw, 54px);
+}
+.ex-card.is-small b {
+  position: absolute;
+  top: 7px;
+  left: 6px;
+  font-size: clamp(13px, 3.6vw, 17px);
+}
+.ex-card.is-small.is-wager b {
+  width: 22px;
+  font-size: 12px;
+}
+.kit .ex-post {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-height: 0;
+  padding: 6px 0 8px;
+  border: 0;
+  border-top: 1px solid var(--ex-line);
+  border-bottom: 1px solid var(--ex-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  position: relative;
+}
+.kit .ex-post:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.ex-post-name {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--games-muted, #626b61);
+}
+.ex-post-empty {
+  display: grid;
+  place-items: center;
+  width: clamp(44px, 12vw, 62px);
+  aspect-ratio: 5 / 7;
+  border-radius: 6px;
+  border: 1px dashed var(--ex-line);
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+  color: var(--ex-line);
+  font-size: 20px;
+}
+.ex-post-count {
+  position: absolute;
+  top: 22px;
+  right: calc(50% - clamp(22px, 6vw, 31px) - 6px);
+  min-width: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 16px;
+  background: var(--games-ink, #282d29);
+  color: var(--games-paper, #f6f5f1);
+}
+.kit .ex-post.can-draw .ex-card,
+.kit .ex-post.can-drop :is(.ex-card, .ex-post-empty) {
+  outline: 2px solid var(--games-accent, #a34e2b);
+  outline-offset: 2px;
+  animation: ex-pulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes ex-pulse {
+  to {
+    outline-offset: 5px;
+  }
+}
+.kit .ex-deck {
+  margin-left: auto;
+  min-height: 0;
+  padding: 4px 10px 4px 4px;
+  gap: 8px;
+}
+.ex-deck-stack {
+  width: 26px;
+  height: 36px;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(45deg, #fff3 0 2px, transparent 2px 5px), #7a5a3a;
+  box-shadow:
+    2px 2px 0 -1px #7a5a3a,
+    4px 4px 0 -2px #7a5a3a;
+}
+html[data-theme='tech'] .ex-deck-stack {
+  background:
+    repeating-linear-gradient(45deg, #7cc7df44 0 2px, transparent 2px 5px),
+    #13263a;
+  box-shadow:
+    2px 2px 0 -1px #2a4a63,
+    4px 4px 0 -2px #2a4a63;
+}
+.kit .ex-deck.can-draw {
+  border-color: var(--games-accent, #a34e2b);
+}
+.ex-status {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+}
+.ex-hand {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.kit .ex-hand-card {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  transition: translate 160ms var(--ease, ease);
+}
+.kit .ex-hand-card:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.kit .ex-hand-card.is-selected {
+  translate: 0 -10px;
+}
+.kit .ex-hand-card.is-selected .ex-card {
+  box-shadow:
+    0 0 0 2px var(--games-accent, #a34e2b),
+    0 10px 16px -8px rgb(40 24 10 / 0.6);
+}
+.ex-hand-card.is-dead .ex-card {
+  filter: saturate(0.35);
+  opacity: 0.7;
+}
+.ex-actions {
+  justify-content: center;
+}
+.ex-intro {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 28px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--ex-table), var(--ex-table-2));
+}
+.ex-intro p {
+  max-width: 34em;
+  margin: 0;
+  line-height: 1.8;
+}
+.ex-routes {
+  display: flex;
+  gap: 10px;
+}
+.ex-online-link {
+  font-size: 13px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+fieldset.ex-hand {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 10px 0 0;
+}
+@media (max-width: 520px) {
+  .ex-hand {
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+  .kit .ex-hand-card + .ex-hand-card {
+    margin-left: -9px;
+  }
+  .ex-hand .ex-card {
+    width: 46px;
+  }
+}
+/* Opponent stacks grow toward the centre: read values from the bottom edge. */
+.ex-lane.is-opp .ex-card.is-small {
+  background:
+    linear-gradient(0deg, var(--c) 0 9%, transparent 9%), var(--ex-card);
+}
+.ex-lane.is-opp .ex-card.is-small b {
+  top: auto;
+  bottom: 8px;
+}
+.ex-lane.is-opp .ex-card.is-small i {
+  top: 4px;
+  bottom: auto;
+}
+
+/* ---- 美术二版：大漠驼道、地标插画牌面、飞牌与计分动效 ---- */
+.expedition {
+  --ex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .4 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  --ex-dune-1: #e2c79a;
+  --ex-dune-2: #d4b07a;
+  --ex-sky: #f3e7cf;
+}
+html[data-theme='tech'] .expedition {
+  --ex-dune-1: #10243a;
+  --ex-dune-2: #0c1c2e;
+  --ex-sky: #08131f;
+}
+.ex-table {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ex-table::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(
+      circle at 84% 12%,
+      color-mix(in srgb, #f5c46a 55%, transparent) 0 26px,
+      transparent 60px
+    ),
+    radial-gradient(
+      140% 55% at 20% 102%,
+      var(--ex-dune-2) 0 48%,
+      transparent 49%
+    ),
+    radial-gradient(
+      120% 50% at 85% 100%,
+      var(--ex-dune-1) 0 52%,
+      transparent 53%
+    ),
+    radial-gradient(
+      160% 60% at 50% 115%,
+      color-mix(in srgb, var(--ex-dune-1) 70%, var(--ex-sky)) 0 60%,
+      transparent 61%
+    ),
+    linear-gradient(
+      180deg,
+      var(--ex-sky),
+      color-mix(in srgb, var(--ex-sky) 70%, var(--ex-dune-1))
+    );
+  opacity: 0.9;
+}
+html[data-theme='tech'] .ex-table::before {
+  background:
+    radial-gradient(
+      circle at 84% 12%,
+      rgb(220 236 245 / 0.35) 0 18px,
+      transparent 40px
+    ),
+    radial-gradient(1px 1px at 30% 20%, #cfe8f2 50%, transparent 51%) 0 0 / 70px
+      50px,
+    radial-gradient(
+      140% 55% at 20% 102%,
+      var(--ex-dune-2) 0 48%,
+      transparent 49%
+    ),
+    radial-gradient(
+      120% 50% at 85% 100%,
+      var(--ex-dune-1) 0 52%,
+      transparent 53%
+    ),
+    linear-gradient(180deg, var(--ex-sky), #0b1a2a);
+}
+.ex-table::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ex-grain);
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+  pointer-events: none;
+}
+html[data-theme='tech'] .ex-table::after {
+  mix-blend-mode: screen;
+  opacity: 0.12;
+}
+/* 驿站行：一条虚线驼道把五站串起来 */
+.ex-grid {
+  position: relative;
+}
+.kit .ex-post {
+  border: 0;
+  background:
+    linear-gradient(90deg, transparent, transparent),
+    repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--c, #8b6f47) 50%, transparent) 0 6px,
+        transparent 6px 12px
+      )
+      0 calc(50% + 8px) / 100% 2px no-repeat;
+}
+.kit .ex-post.r0 {
+  --c: var(--ex-r0);
+}
+.kit .ex-post.r1 {
+  --c: var(--ex-r1);
+}
+.kit .ex-post.r2 {
+  --c: var(--ex-r2);
+}
+.kit .ex-post.r3 {
+  --c: var(--ex-r3);
+}
+.kit .ex-post.r4 {
+  --c: var(--ex-r4);
+}
+.ex-post-name {
+  padding: 1px 8px;
+  border-radius: 10px;
+  color: var(--games-ink, #282d29);
+  background: color-mix(in srgb, var(--c) 16%, var(--ex-card));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent);
+}
+.ex-post-empty {
+  background: color-mix(in srgb, var(--ex-card) 55%, transparent);
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--c) 35%, transparent);
+  color: color-mix(in srgb, var(--c) 45%, transparent);
+}
+/* 牌面：宣纸纹理 + 顶部色带 + 地标剪影 */
+.ex-card {
+  overflow: hidden;
+  align-content: start;
+  place-items: start;
+  padding: 10% 0 0 12%;
+  background:
+    linear-gradient(
+      180deg,
+      var(--c) 0 7%,
+      color-mix(in srgb, var(--c) 40%, transparent) 7% 8%,
+      transparent 8%
+    ),
+    var(--ex-grain),
+    radial-gradient(
+      120% 80% at 50% 110%,
+      color-mix(in srgb, var(--c) 16%, transparent),
+      transparent 70%
+    ),
+    var(--ex-card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent),
+    inset 0 0 0 3px var(--ex-card),
+    inset 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent),
+    0 4px 10px -5px rgb(40 24 10 / 0.55);
+}
+html[data-theme='tech'] .ex-card {
+  background:
+    linear-gradient(180deg, var(--c) 0 7%, transparent 7%),
+    radial-gradient(
+      120% 80% at 50% 110%,
+      color-mix(in srgb, var(--c) 22%, transparent),
+      transparent 70%
+    ),
+    var(--ex-card);
+}
+.ex-card b {
+  position: relative;
+  z-index: 1;
+  margin-top: 4%;
+  text-shadow: 0 1px 0 var(--ex-card);
+}
+.ex-art {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 6%;
+  width: 88%;
+  height: 58%;
+  fill: var(--c);
+  opacity: 0.85;
+}
+.ex-card.is-wager b {
+  position: absolute;
+  top: 16%;
+  left: 50%;
+  margin: 0;
+  width: 46%;
+  translate: -50% 0;
+}
+.ex-card.is-small .ex-art {
+  height: 52%;
+}
+.ex-card.is-small.is-wager b {
+  top: 7px;
+  left: 6px;
+  translate: none;
+}
+/* 动效：新牌飞入路线、弃牌落站、分数弹跳 */
+.ex-lane.is-me .ex-stack .ex-card {
+  animation: ex-fly-up 480ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.ex-lane.is-opp .ex-stack .ex-card {
+  animation: ex-fly-down 480ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+.ex-card.is-landed {
+  animation: ex-land 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.ex-lane-score {
+  padding: 0 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--ex-card) 80%, transparent);
+  animation: ex-pop 520ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes ex-fly-up {
+  from {
+    opacity: 0;
+    transform: translateY(120px) rotate(-10deg) scale(1.25);
+  }
+}
+@keyframes ex-fly-down {
+  from {
+    opacity: 0;
+    transform: translateY(-90px) rotate(10deg) scale(1.2);
+  }
+}
+@keyframes ex-land {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotate(6deg);
+  }
+}
+@keyframes ex-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.35);
+  }
+}
+.kit .ex-hand-card .ex-card {
+  transition:
+    transform 180ms var(--ease, ease),
+    box-shadow 180ms;
+}
+.kit .ex-hand-card:not(:disabled):hover .ex-card {
+  transform: translateY(-6px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ex-stack .ex-card,
+  .ex-card.is-landed,
+  .ex-lane-score {
+    animation: none !important;
+  }
+}

@@ -736,6 +736,30 @@ html[data-theme='tech'] .room-qd-board {
 html[data-theme='tech'] .room-qd-board b {
     background: #0f1f2e
 }
+html[data-theme='tech'] .room-expedition-preview {
+    border: 1px solid rgb(124 199 223 / 0.45);
+    color: #93a8bc;
+    background: repeating-linear-gradient(0deg, transparent 0 22px, #8b6f4722 22px 23px),
+    linear-gradient(180deg, #0f1f2e, #0f1f2e)
+}
+html[data-theme='tech'] .room-ex-row i {
+    background: linear-gradient(180deg, currentColor 0 8%, #0a1520 8%)
+}
+html[data-theme='tech'] .room-ex-row .r0 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-ex-row .r1 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-ex-row .r2 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-ex-row .r3 {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-ex-row .r4 {
+    color: #7cc7df
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid var(--line, rgb(124 199 223 / 0.45));
