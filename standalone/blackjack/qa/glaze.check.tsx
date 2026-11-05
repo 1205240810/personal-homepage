@@ -179,6 +179,15 @@ describe('琉璃坊交互状态', () => {
     pick();
     fireEvent.click(place());
     expect(mocks.act).toHaveBeenCalledTimes(2);
+    snap.error = null;
+    ui.rerender(<GlazeOnline />);
+    pick();
+    expect(screen.queryByRole('button', { name: /：放这里/ })).toBeNull();
+    snap.error = '操作太快了';
+    ui.rerender(<GlazeOnline />);
+    pick();
+    fireEvent.click(place());
+    expect(mocks.act).toHaveBeenCalledTimes(3);
   });
   it('cancels AI on a new game and ignores late replies', async () => {
     vi.useFakeTimers();
