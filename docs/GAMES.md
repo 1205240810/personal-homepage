@@ -35,6 +35,8 @@
 | `/games/quoridor/online` | 步步为营联机：服务器校验走子与放墙、认输与再局交换先后 |
 | `/games/expedition`     | 丝路远行：五条商路、投契翻倍、满 8 张奖励，五档 PIMC Worker AI |
 | `/games/expedition/online` | 丝路远行联机：私密手牌、双方确认下一轮与再局 |
+| `/games/bazaar`         | 刺桐市集：拿 / 牵骆驼 / 换 / 卖，银牌递减与赏银，三局两胜，五档 Worker AI |
+| `/games/bazaar/online`  | 刺桐市集联机：私密手牌与赏银、双方确认下一局与再场 |
 | `/games?from=explore`   | 从机甲街机角进入，主要返回入口为机甲                                        |
 
 欢迎页的游戏室链接作为次要入口，保留工作台和进入机甲的选择。工作台通过主导航和侧栏通向游戏室。机甲内部的试作间设有可交互街机角；直接访问游戏页面时不需要先启动 Phaser 世界。

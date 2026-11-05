@@ -24,7 +24,8 @@ export type GameId =
   | 'gomoku'
   | 'hanami'
   | 'quoridor'
-  | 'expedition';
+  | 'expedition'
+  | 'bazaar';
 
 export type GameDefinition = {
   id: GameId;
@@ -336,6 +337,22 @@ export const GAMES: readonly GameDefinition[] = [
       title: '丝路远行联机',
       format: '1 对 1',
       pitch: '服务器发牌，对手手牌与牌堆顺序永远看不到。',
+    },
+  },
+  {
+    id: 'bazaar',
+    title: '刺桐市集',
+    description:
+      '两人交易卡牌：在泉州港的市集上进货、换货、出货，货卖得越早越值钱，成批出货另有赏银，驼队最大者再得 5 两。三局两胜，五档 AI。',
+    href: '/games/bazaar',
+    category: '卡牌策略',
+    controls: '选市集或手里的货，再点拿、牵骆驼、换货或卖货',
+    estimatedDuration: '一场约 15–25 分钟',
+    online: {
+      href: '/games/bazaar/online',
+      title: '刺桐市集联机',
+      format: '1 对 1',
+      pitch: '服务器发牌，对手的货与赏银面值永远看不到。',
     },
   },
 ] as const;
