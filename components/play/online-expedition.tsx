@@ -2,7 +2,7 @@
 
 /* oxlint-disable next/no-html-link-for-pages */
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import '@/components/games/kit.css';
 import { GameResult } from '@/components/games/result';
 import { ExpeditionTable } from '@/components/games/expedition/table';
@@ -60,6 +60,7 @@ export function ExpeditionOnline({
             v={v}
             seat={snap.seat}
             connected={snap.status === 'open'}
+            error={snap.error}
             names={snap.seats.map((s) => s.name)}
             act={(a) =>
               client.act({ ...a, positionRevision: v.positionRevision })
@@ -78,15 +79,25 @@ function Table({
   v,
   seat,
   connected,
+  error,
   names,
   act,
 }: {
   v: ExpeditionOnlineView;
   seat: number | null;
   connected: boolean;
+  error: string | null;
   names: string[];
   act: (a: Record<string, unknown>) => void;
 }) {
+  const [response, setResponse] = useState({ error, retry: 0 });
+  let retry = response.retry;
+  if (response.error !== error) {
+    // Only a new rejection releases a submitted move. act() clearing the
+    // previous error belongs to the new request, which must remain locked.
+    if (error !== null) retry++;
+    setResponse({ error, retry });
+  }
   if (!v.started || v.phase === 'waiting')
     return (
       <p className="kit-help">等待对手入座…牌局会在双方到齐后自动开始。</p>
@@ -102,14 +113,14 @@ function Table({
     `${names[i] || `玩家 ${i + 1}`}${i === seat ? '（你）' : ''}`;
   return (
     <ExpeditionTable
-      positionKey={`${ev.positionRevision}:${connected}:${seat}`}
+      positionKey={`${ev.positionRevision}:${connected}:${seat}:${retry}`}
       v={ev}
       disabled={!myTurn}
       names={[label(0), label(1)]}
       onMove={(m: Move) => {
-        if (myTurn) act({ type: 'move', move: m });
-        // Server rejections do not change the revision; keep the choice retryable.
-        return false;
+        if (!myTurn) return false;
+        act({ type: 'move', move: m });
+        return true;
       }}
       status={
         !connected

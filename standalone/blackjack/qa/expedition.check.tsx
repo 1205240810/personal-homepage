@@ -151,6 +151,51 @@ describe('丝路远行交互', () => {
     fireEvent.click(screen.getByRole('button', { name: /^弃到/ }));
     expect(rejected).toHaveBeenCalledTimes(2);
   });
+  it('locks online draws until a position response or new rejection, including after clearing an old error', () => {
+    const game = fixture();
+    snap.view = {
+      ...snap.view!,
+      ...E.viewFor(E.apply(game, 0, { t: 'discard', card: game.hands[0][0] }), 0),
+    };
+    const ui = render(<ExpeditionOnline />);
+    const draw = () => screen.getByRole('button', { name: /^牌堆剩/ });
+    act(() => {
+      draw().click();
+      draw().click();
+    });
+    expect(mocks.act).toHaveBeenCalledTimes(1);
+    expect(draw()).toHaveProperty('disabled', true);
+    // Presence-only snapshots do not acknowledge a move.
+    snap = { ...snap, version: snap.version + 1 };
+    ui.rerender(<ExpeditionOnline />);
+    expect(draw()).toHaveProperty('disabled', true);
+    snap = { ...snap, error: '操作被拒绝，请重试' };
+    ui.rerender(<ExpeditionOnline />);
+    expect(draw()).toHaveProperty('disabled', false);
+    fireEvent.click(draw());
+    expect(mocks.act).toHaveBeenCalledTimes(2);
+    // PlayClient.act clears old errors before sending; this is not a reply.
+    snap = { ...snap, error: null };
+    ui.rerender(<ExpeditionOnline />);
+    fireEvent.click(draw());
+    expect(mocks.act).toHaveBeenCalledTimes(2);
+    expect(draw()).toHaveProperty('disabled', true);
+    snap = { ...snap, error: '操作被拒绝，请重试' };
+    ui.rerender(<ExpeditionOnline />);
+    fireEvent.click(draw());
+    expect(mocks.act).toHaveBeenCalledTimes(3);
+    snap = { ...snap, view: { ...snap.view!, positionRevision: 8 } };
+    ui.rerender(<ExpeditionOnline />);
+    expect(draw()).toHaveProperty('disabled', false);
+    fireEvent.click(draw());
+    expect(mocks.act).toHaveBeenCalledTimes(4);
+    snap = { ...snap, status: 'reconnecting' };
+    ui.rerender(<ExpeditionOnline />);
+    expect(draw()).toHaveProperty('disabled', true);
+    snap = { ...snap, status: 'open', error: null };
+    ui.rerender(<ExpeditionOnline />);
+    expect(draw()).toHaveProperty('disabled', false);
+  });
   it('clears an old choice when restarting into an identical opening hand', () => {
     render(<ExpeditionGame />);
     start();
