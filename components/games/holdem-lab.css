@@ -41,7 +41,7 @@
 }
 .poker-immersive {
   display: grid;
-  grid-template-rows: 60px minmax(0, 1fr) 44px;
+  grid-template-rows: 60px auto minmax(0, 1fr) 44px;
   height: 100dvh;
   min-height: 680px;
   color: var(--poker-ink);
@@ -52,6 +52,13 @@
     #11231d 100%
   );
   overflow: hidden;
+}
+@media (min-width: 701px) {
+  /* Reading inline rules must not squeeze the table out of the viewport grid. */
+  .poker-immersive:has(.game-rules-panel) {
+    height: auto;
+    grid-template-rows: 60px auto minmax(520px, 1fr) 44px;
+  }
 }
 .poker-topbar {
   display: grid;
@@ -1523,7 +1530,7 @@
   .poker-immersive {
     height: auto;
     min-height: 100dvh;
-    grid-template-rows: auto auto 44px;
+    grid-template-rows: auto auto auto 44px;
     overflow: clip;
   }
   .poker-topbar {
