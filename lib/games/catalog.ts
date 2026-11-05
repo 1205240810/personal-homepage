@@ -22,7 +22,8 @@ export type GameId =
   | 'chess'
   | 'go'
   | 'gomoku'
-  | 'hanami';
+  | 'hanami'
+  | 'quoridor';
 
 export type GameDefinition = {
   id: GameId;
@@ -302,6 +303,22 @@ export const GAMES: readonly GameDefinition[] = [
       title: '花街七席联机',
       format: '1 对 1',
       pitch: '服务器发牌，对手的手牌、藏牌和弃牌永远看不到。',
+    },
+  },
+  {
+    id: 'quoridor',
+    title: '步步为营',
+    description:
+      '9×9 棋盘、每人 10 块墙：每回合走一步或放一块墙，先抵达对岸者胜。墙不能把路完全堵死，面对面还能跳。六档 AI 或双人同屏，也能联机。',
+    href: '/games/quoridor',
+    category: '棋类对弈',
+    controls: '点亮点走棋；切到横墙 / 竖墙后点交叉点放墙',
+    estimatedDuration: '一局约 5–15 分钟',
+    online: {
+      href: '/games/quoridor/online',
+      title: '步步为营联机',
+      format: '1 对 1',
+      pitch: '服务器校验每一步与每块墙，再局交换先后手。',
     },
   },
 ] as const;

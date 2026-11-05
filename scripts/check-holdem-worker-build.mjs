@@ -147,6 +147,7 @@ if (
     checkGameWorkerBuild(directory, 'go', 'go-worker');
     checkGameWorkerBuild(directory, 'gomoku', 'gomoku-worker');
     checkGameWorkerBuild(directory, 'local', 'hanami-worker');
+    checkGameWorkerBuild(directory, 'quoridor', 'quoridor-worker');
   } catch (error) {
     console.error(
       `Worker build check failed: ${error instanceof Error ? error.message : String(error)}`,
