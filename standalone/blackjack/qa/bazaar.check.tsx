@@ -146,6 +146,46 @@ describe('刺桐市集交互', () => {
     fireEvent.click(camels());
     expect(rejected).toHaveBeenCalledTimes(2);
   });
+  it('locks online camel actions until a position response or new rejection, including after clearing an old error', () => {
+    const ui = render(<BazaarOnline />);
+    act(() => {
+      camels().click();
+      camels().click();
+    });
+    expect(mocks.act).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: /^牵走骆驼/ })).toBeNull();
+    expect(hand()[0]).toHaveProperty('disabled', true);
+    // A seat-presence broadcast must not acknowledge the pending move.
+    snap = { ...snap, version: snap.version + 1 };
+    ui.rerender(<BazaarOnline />);
+    expect(screen.queryByRole('button', { name: /^牵走骆驼/ })).toBeNull();
+    snap = { ...snap, error: '操作被拒绝，请重试' };
+    ui.rerender(<BazaarOnline />);
+    expect(camels()).toHaveProperty('disabled', false);
+    fireEvent.click(camels());
+    expect(mocks.act).toHaveBeenCalledTimes(2);
+    // PlayClient.act clears this old error before sending the new request.
+    snap = { ...snap, error: null };
+    ui.rerender(<BazaarOnline />);
+    screen.queryByRole<HTMLButtonElement>('button', { name: /^牵走骆驼/ })?.click();
+    expect(mocks.act).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('button', { name: /^牵走骆驼/ })).toBeNull();
+    snap = { ...snap, error: '操作被拒绝，请重试' };
+    ui.rerender(<BazaarOnline />);
+    fireEvent.click(camels());
+    expect(mocks.act).toHaveBeenCalledTimes(3);
+    snap = { ...snap, view: { ...snap.view!, positionRevision: 8 } };
+    ui.rerender(<BazaarOnline />);
+    expect(camels()).toHaveProperty('disabled', false);
+    fireEvent.click(camels());
+    expect(mocks.act).toHaveBeenCalledTimes(4);
+    snap = { ...snap, status: 'reconnecting' };
+    ui.rerender(<BazaarOnline />);
+    expect(screen.queryByRole('button', { name: /^牵走骆驼/ })).toBeNull();
+    snap = { ...snap, status: 'open', error: null };
+    ui.rerender(<BazaarOnline />);
+    expect(camels()).toHaveProperty('disabled', false);
+  });
   it('does not reuse selected hand indices after an identical restart', () => {
     render(<BazaarGame />);
     start();
