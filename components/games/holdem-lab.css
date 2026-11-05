@@ -41,7 +41,7 @@
 }
 .poker-immersive {
   display: grid;
-  grid-template-rows: 60px minmax(0, 1fr) 44px;
+  grid-template-rows: 60px auto minmax(0, 1fr) 44px;
   height: 100dvh;
   min-height: 680px;
   color: var(--poker-ink);
@@ -1523,7 +1523,7 @@
   .poker-immersive {
     height: auto;
     min-height: 100dvh;
-    grid-template-rows: auto auto 44px;
+    grid-template-rows: auto auto auto 44px;
     overflow: clip;
   }
   .poker-topbar {
