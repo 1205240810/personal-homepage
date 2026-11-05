@@ -82,11 +82,15 @@ function Table({
   const lastOpp = bv.last?.side === opp ? describeMove(bv.last.move) : null;
   return (
     <BazaarTable
-      key={`${bv.round}:${bv.positionRevision}`}
+      positionKey={`${bv.positionRevision}:${connected}:${seat}`}
       v={bv}
       disabled={!myTurn}
       names={[label(0), label(1)]}
-      onMove={(m: Move) => act({ type: 'move', move: m })}
+      onMove={(m: Move) => {
+        if (myTurn) act({ type: 'move', move: m });
+        // Server rejections do not change the revision; keep the choice retryable.
+        return false;
+      }}
       status={
         !connected
           ? '连接恢复后可继续操作…'

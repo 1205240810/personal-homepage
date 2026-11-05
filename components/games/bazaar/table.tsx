@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import {
   CAMEL,
   GOODS,
@@ -15,11 +15,14 @@ import {
 import { WareArt } from './art';
 import './bazaar.css';
 
+// CSS, inline SVG and text form a single illustrated card.
+/* oxlint-disable jsx-a11y/prefer-tag-over-role */
 export function Ware({ c, small }: { c: Card; small?: boolean }) {
   const camel = c === CAMEL;
   return (
     <span
       className={`bz-card g${c}${small ? ' is-small' : ''}`}
+      role="img"
       aria-label={cardLabel(c)}
     >
       <WareArt c={c} />
@@ -28,6 +31,8 @@ export function Ware({ c, small }: { c: Card; small?: boolean }) {
     </span>
   );
 }
+
+/* oxlint-enable jsx-a11y/prefer-tag-over-role */
 
 const sum = (a: readonly number[]) => a.reduce((x, y) => x + y, 0);
 const pts = (v: BazaarView, p: Side) => {
@@ -46,31 +51,72 @@ export function BazaarTable({
   onMove,
   status,
   footer,
+  positionKey,
 }: {
   v: BazaarView;
   disabled?: boolean;
   names: [string, string];
-  onMove: (m: Move) => void;
+  onMove: (m: Move) => void | boolean;
+  positionKey?: string | number;
   status?: ReactNode;
   footer?: ReactNode;
 }) {
   const me = (v.you ?? 0) as Side;
   const opp = (1 - me) as Side;
-  const live = !disabled && v.phase === 'play' && v.toPlay === me;
-  const [take, setTake] = useState<number[]>([]);
-  const [give, setGive] = useState<number[]>([]); // indices into hand
-  const [camelsOut, setCamelsOut] = useState(0);
-  const reset = () => {
-    setTake([]);
-    setGive([]);
-    setCamelsOut(0);
-  };
+  const position = JSON.stringify([
+    positionKey,
+    v.you,
+    v.round,
+    v.phase,
+    v.toPlay,
+    v.hand,
+    v.market,
+    v.camels,
+    v.sold,
+    !!disabled,
+  ]);
+  const empty = (generation: number) => ({
+    position,
+    generation,
+    take: [] as number[],
+    give: [] as number[],
+    camelsOut: 0,
+    sending: false,
+  });
+  const [draft, setDraft] = useState(() => empty(0));
+  let current = draft;
+  if (draft.position !== position) {
+    current = empty(draft.generation + 1);
+    setDraft(current);
+  }
+  const { take, give, camelsOut, sending, generation } = current;
+  const submitted = useRef<number | null>(null);
+  const live =
+    !disabled &&
+    !sending &&
+    v.you !== null &&
+    v.phase === 'play' &&
+    v.toPlay === me;
+  const reset = () => setDraft(empty(generation));
   const act = (m: Move) => {
-    reset();
-    onMove(m);
+    if (!live || submitted.current === generation) return;
+    submitted.current = generation;
+    if (onMove(m) === false) {
+      submitted.current = null;
+      return;
+    }
+    setDraft({ ...empty(generation), sending: true });
   };
-  const toggle = (arr: number[], set: (a: number[]) => void, i: number) =>
-    set(arr.includes(i) ? arr.filter((x) => x !== i) : [...arr, i]);
+  const toggle = (field: 'take' | 'give', i: number) => {
+    if (!live) return;
+    setDraft((previous) => {
+      const arr = previous[field];
+      return {
+        ...previous,
+        [field]: arr.includes(i) ? arr.filter((x) => x !== i) : [...arr, i],
+      };
+    });
+  };
   const marketCamels = v.market.filter((c) => c === CAMEL).length;
   const takenGoods = take.map((i) => v.market[i]);
   const giveCards: Card[] = [
@@ -184,7 +230,8 @@ export function BazaarTable({
                 className={`bz-slot${take.includes(i) ? ' is-selected' : ''}${fresh ? ' is-fresh' : ''}`}
                 disabled={!live || c === CAMEL}
                 aria-pressed={take.includes(i)}
-                onClick={() => toggle(take, setTake, i)}
+                aria-label={`市集第 ${i + 1} 件：${cardLabel(c)}`}
+                onClick={() => toggle('take', i)}
               >
                 <Ware c={c} />
               </button>
@@ -254,9 +301,11 @@ export function BazaarTable({
           className={`bz-herd${camelsOut ? ' is-selected' : ''}`}
           disabled={!live || !v.camels[me]}
           onClick={() =>
-            setCamelsOut(
-              camelsOut >= Math.min(v.camels[me], 5) ? 0 : camelsOut + 1,
-            )
+            setDraft({
+              ...current,
+              camelsOut:
+                camelsOut >= Math.min(v.camels[me], 5) ? 0 : camelsOut + 1,
+            })
           }
           aria-label={`驼队 ${v.camels[me]} 头${camelsOut ? `，换出 ${camelsOut} 头` : ''}（点击增加换出的骆驼）`}
         >
@@ -274,7 +323,8 @@ export function BazaarTable({
               className={`bz-slot${give.includes(i) ? ' is-selected' : ''}`}
               disabled={!live}
               aria-pressed={give.includes(i)}
-              onClick={() => toggle(give, setGive, i)}
+              aria-label={`手牌第 ${i + 1} 件：${cardLabel(c)}`}
+              onClick={() => toggle('give', i)}
             >
               <Ware c={c} />
             </button>
