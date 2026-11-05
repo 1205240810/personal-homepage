@@ -18,12 +18,12 @@ export const QUORIDOR_LEVELS: Record<
   QuoridorLevel,
   { name: string; note: string; depth: number; ms: number; noise: number }
 > = {
-  1: { name: '新手', note: '只顾往前走', depth: 0, ms: 0, noise: 0.45 },
-  2: { name: '入门', note: '看一步', depth: 1, ms: 300, noise: 0.15 },
-  3: { name: '进阶', note: '看两步', depth: 2, ms: 600, noise: 0 },
-  4: { name: '熟练', note: '看三步', depth: 3, ms: 1200, noise: 0 },
-  5: { name: '高手', note: '看四步', depth: 4, ms: 1800, noise: 0 },
-  6: { name: '大师', note: '深算 + 守墙', depth: 6, ms: 2800, noise: 0 },
+  1: { name: '新手', note: '偏重前进，偶尔放墙', depth: 0, ms: 0, noise: 0.45 },
+  2: { name: '入门', note: '最多看一步', depth: 1, ms: 300, noise: 0.15 },
+  3: { name: '进阶', note: '最多看两步', depth: 2, ms: 600, noise: 0 },
+  4: { name: '熟练', note: '最多看三步', depth: 3, ms: 1200, noise: 0 },
+  5: { name: '高手', note: '最多看四步', depth: 4, ms: 1800, noise: 0 },
+  6: { name: '大师', note: '限时深算 + 守墙', depth: 6, ms: 2800, noise: 0 },
 };
 export type QuoridorAiResult = { move: Move; score: number; depth: number };
 
@@ -136,14 +136,13 @@ export function chooseQuoridorMove(
   }
   const wide = level >= 6;
   const deadline = Date.now() + cfg.ms;
-  let nodes = 0;
   const search = (
     g: QuoridorState,
     depth: number,
     alpha: number,
     beta: number,
   ): number => {
-    if ((++nodes & 255) === 0 && Date.now() > deadline) throw new Timeout();
+    if (Date.now() >= deadline) throw new Timeout();
     if (g.winner !== null || depth === 0) return evaluate(g, g.toPlay);
     let best = -Infinity;
     for (const m of orderedMoves(g, wide)) {
@@ -159,7 +158,11 @@ export function chooseQuoridorMove(
   for (const m of root)
     if (m.t === 'm' && Math.floor(m.to / N) === (side === 0 ? 0 : N - 1))
       return { move: m, score: WIN, depth: 1 };
-  let best: QuoridorAiResult = { move: root[0], score: -Infinity, depth: 0 };
+  let best: QuoridorAiResult = {
+    move: root[0],
+    score: evaluate(applyUnchecked(s, root[0]), side),
+    depth: 0,
+  };
   for (let depth = 1; depth <= cfg.depth; depth++) {
     try {
       let alpha = -Infinity;

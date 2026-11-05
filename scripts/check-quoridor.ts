@@ -13,7 +13,13 @@ import {
   type QuoridorState,
 } from '../lib/games/quoridor.ts';
 import { chooseQuoridorMove } from '../lib/games/quoridor-ai.ts';
-import { quoridorOnline as m } from '../lib/multiplayer/quoridor-online.ts';
+import {
+  quoridorOnline as m,
+  type QuoridorOnlineView,
+} from '../lib/multiplayer/quoridor-online.ts';
+import { PlayClient } from '../lib/multiplayer/client.ts';
+import { RoomHub } from '../lib/multiplayer/hub.ts';
+import { startPlayServer } from '../server/play/main.ts';
 
 const at = (x: number, y: number) => y * N + x;
 const sorted = (a: number[]) => [...a].sort((p, q) => p - q);
@@ -65,6 +71,46 @@ const two = play(play(newGame(), { t: 'm', to: at(4, 7) }), {
 });
 assert.deepEqual(undo(two, 1).pawns, [at(4, 7), at(4, 0)]);
 
+// At the board edge a blocked straight jump becomes a diagonal jump, but a
+// wall on one diagonal still blocks that side. Also exercise the rotated case.
+const edge: QuoridorState = { ...newGame(), pawns: [at(4, 1), at(4, 0)] };
+assert.ok(
+  pawnMoves(edge).includes(at(3, 0)) && pawnMoves(edge).includes(at(5, 0)),
+);
+edge.v[3] = true;
+assert.ok(
+  !pawnMoves(edge).includes(at(3, 0)) && pawnMoves(edge).includes(at(5, 0)),
+);
+const horizontal: QuoridorState = { ...newGame(), pawns: [at(1, 4), at(0, 4)] };
+assert.ok(
+  pawnMoves(horizontal).includes(at(0, 3)) &&
+    pawnMoves(horizontal).includes(at(0, 5)),
+);
+
+// Every search level takes an immediate goal and reports completed depth only.
+for (const level of [2, 3, 4, 5, 6] as const) {
+  const nearGoal = {
+    ...newGame(),
+    pawns: [at(4, 1), at(0, 0)] as [number, number],
+  };
+  const result = chooseQuoridorMove(nearGoal, level, () => 0.3);
+  assert.equal(play(nearGoal, result.move).winner, 0);
+}
+// Exhaust the time budget at the first search node. The fallback is legal,
+// finite, and must not claim a depth that was never searched completely.
+const clock = Date.now;
+let clockReads = 0;
+try {
+  Date.now = () => ++clockReads * 10_000;
+  const position = newGame();
+  const result = chooseQuoridorMove(position, 6, () => 0.3);
+  assert.ok(isLegal(position, result.move) && Number.isFinite(result.score));
+  assert.equal(result.depth, 0);
+  assert.ok(clockReads <= 2, 'deadline must be checked on the first node');
+} finally {
+  Date.now = clock;
+}
+
 // AI makes legal moves and finishes games.
 for (const [a, b] of [
   [1, 3],
@@ -115,4 +161,123 @@ o = act(0, { type: 'rematch' }).state!;
 o = act(1, { type: 'rematch' }).state!;
 assert.deepEqual(o.sides, [1, 0]);
 assert.equal(o.game.history.length, 0);
-console.log('quoridor: ok');
+// Old commands cannot act when a player gets the turn again or after a rematch.
+const oldRevision = o.positionRevision;
+const beforeMove = o;
+o = act(1, { type: 'move', move: { t: 'm', to: at(4, 7) } }).state!;
+o = act(0, { type: 'move', move: { t: 'm', to: at(4, 1) } }).state!;
+const unchanged = JSON.stringify(o);
+assert.ok(
+  m.act(
+    o,
+    1,
+    {
+      type: 'move',
+      positionRevision: oldRevision,
+      move: { t: 'm', to: at(4, 6) },
+    },
+    rng,
+    0,
+  ).error,
+);
+assert.equal(JSON.stringify(o), unchanged);
+assert.equal(
+  beforeMove.game.history.length,
+  0,
+  'moves must not mutate a previous view',
+);
+// Real relay acceptance: both projections agree, a dropped client resumes its
+// own seat and board, and a previous game's revision cannot affect a rematch.
+const server = await startPlayServer({ port: 0, hub: new RoomHub([m]) });
+const tokens = new Map<string, string>();
+const clients: PlayClient<QuoridorOnlineView>[] = [];
+const client = () => {
+  const c = new PlayClient<QuoridorOnlineView>({
+    url: `ws://127.0.0.1:${server.port}/play/ws`,
+    game: 'quoridor',
+    tokens: {
+      get: (code) => tokens.get(code) ?? null,
+      set: (code, token) => {
+        tokens.set(code, token);
+      },
+    },
+  });
+  clients.push(c);
+  return c;
+};
+const until = async (predicate: () => unknown) => {
+  const end = Date.now() + 5000;
+  while (!predicate()) {
+    assert.ok(Date.now() < end, 'relay state timed out');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+};
+try {
+  let host = client();
+  host.create('quoridor', { creator: 'first' });
+  await until(() => host.snapshot.code);
+  const code = host.snapshot.code!;
+  // Guest credentials must be distinct from the host's resume store.
+  const guest = new PlayClient<QuoridorOnlineView>({
+    url: `ws://127.0.0.1:${server.port}/play/ws`,
+    game: 'quoridor',
+    tokens: { get: () => null, set: () => {} },
+  });
+  clients.push(guest);
+  guest.join(code);
+  await until(
+    () => host.snapshot.view?.started && guest.snapshot.view?.started,
+  );
+  assert.equal(host.snapshot.seat, 0);
+  assert.equal(guest.snapshot.seat, 1);
+  const command = async (
+    actor: PlayClient<QuoridorOnlineView>,
+    action: Record<string, unknown>,
+  ) => {
+    const revision = Math.max(host.snapshot.version, guest.snapshot.version);
+    actor.act({
+      ...action,
+      positionRevision: actor.snapshot.view!.positionRevision,
+    });
+    await until(
+      () =>
+        host.snapshot.version > revision && guest.snapshot.version > revision,
+    );
+    assert.equal(host.snapshot.error, null);
+    assert.equal(guest.snapshot.error, null);
+    assert.deepEqual(host.snapshot.view!.game, guest.snapshot.view!.game);
+  };
+  await command(host, { type: 'move', move: { t: 'm', to: at(4, 7) } });
+  await command(guest, { type: 'move', move: { t: 'w', o: 'h', x: 3, y: 6 } });
+  const board = JSON.stringify(host.snapshot.view!.game);
+  const revision = host.snapshot.view!.positionRevision;
+  host.close();
+  await until(() => !guest.snapshot.seats[0]?.online);
+  host = client();
+  host.join(code);
+  await until(
+    () => host.snapshot.view?.started && guest.snapshot.seats[0]?.online,
+  );
+  assert.equal(host.snapshot.seat, 0);
+  assert.equal(JSON.stringify(host.snapshot.view!.game), board);
+  assert.equal(host.snapshot.view!.positionRevision, revision);
+  await command(host, { type: 'resign' });
+  assert.deepEqual(host.snapshot.view!.score, [0, 1]);
+  await command(host, { type: 'rematch' });
+  await command(guest, { type: 'rematch' });
+  assert.deepEqual(host.snapshot.view!.sides, [1, 0]);
+  guest.act({
+    type: 'move',
+    positionRevision: revision,
+    move: { t: 'm', to: at(4, 7) },
+  });
+  await until(() => guest.snapshot.error?.includes('棋局已更新'));
+  assert.equal(host.snapshot.view!.game.history.length, 0);
+  assert.equal(guest.snapshot.view!.game.history.length, 0);
+} finally {
+  for (const c of clients) c.close();
+  await server.close();
+}
+console.log(
+  'quoridor: rules, deadline, AI games and real relay/reconnect checks passed',
+);

@@ -2,6 +2,7 @@
 
 /* oxlint-disable next/no-html-link-for-pages */
 
+import { useState } from 'react';
 import '@/components/games/kit.css';
 import { GameResult } from '@/components/games/result';
 import { BazaarTable } from '@/components/games/bazaar/table';
@@ -43,6 +44,7 @@ export function BazaarOnline({
             v={v}
             seat={snap.seat}
             connected={snap.status === 'open'}
+            error={snap.error}
             names={snap.seats.map((s) => s.name)}
             act={(a) =>
               client.act({ ...a, positionRevision: v.positionRevision })
@@ -61,15 +63,25 @@ function Table({
   v,
   seat,
   connected,
+  error,
   names,
   act,
 }: {
   v: BazaarOnlineView;
   seat: number | null;
   connected: boolean;
+  error: string | null;
   names: string[];
   act: (a: Record<string, unknown>) => void;
 }) {
+  const [response, setResponse] = useState({ error, retry: 0 });
+  let retry = response.retry;
+  if (response.error !== error) {
+    // Only a new rejection releases a submitted move. act() clearing the
+    // previous error belongs to the new request, which must remain locked.
+    if (error !== null) retry++;
+    setResponse({ error, retry });
+  }
   if (!v.started || v.phase === 'waiting')
     return <p className="kit-help">等待对手入座…双方到齐后自动开局。</p>;
   const bv = v as BazaarView & BazaarOnlineView;
@@ -82,11 +94,15 @@ function Table({
   const lastOpp = bv.last?.side === opp ? describeMove(bv.last.move) : null;
   return (
     <BazaarTable
-      key={`${bv.round}:${bv.positionRevision}`}
+      positionKey={`${bv.positionRevision}:${connected}:${seat}:${retry}`}
       v={bv}
       disabled={!myTurn}
       names={[label(0), label(1)]}
-      onMove={(m: Move) => act({ type: 'move', move: m })}
+      onMove={(m: Move) => {
+        if (!myTurn) return false;
+        act({ type: 'move', move: m });
+        return true;
+      }}
       status={
         !connected
           ? '连接恢复后可继续操作…'

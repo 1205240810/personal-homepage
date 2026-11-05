@@ -106,6 +106,9 @@ export class PlayClient<V = unknown> {
     });
   }
   act(action: unknown) {
+    // A retry owns a new response: even the same server rejection must be
+    // observable again, and a successful action must not retain the old error.
+    if (this.snapshot.error !== null) this.set({ error: null });
     this.send({ t: 'act', action });
   }
   close() {

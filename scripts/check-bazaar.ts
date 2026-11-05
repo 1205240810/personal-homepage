@@ -1,6 +1,7 @@
 // 刺桐市集：发牌与牌数守恒、四种行动的合法性、银牌与赏银、结束条件、隐藏信息、AI、联机模块。
 import assert from 'node:assert/strict';
 import {
+  BONUS,
   CAMEL,
   apply,
   legalMoves,
@@ -50,7 +51,10 @@ assert.throws(() =>
   apply(t, 0, { t: 'swap', take: [2, 3], give: [CAMEL, CAMEL, CAMEL] }),
 );
 let u = apply(t, 0, { t: 'swap', take: [2, 3], give: [CAMEL, 5] });
-assert.deepEqual([...u.hands[0]].sort((a, b) => a - b), [0, 0, 1, 4, 4]);
+assert.deepEqual(
+  [...u.hands[0]].sort((a, b) => a - b),
+  [0, 0, 1, 4, 4],
+);
 assert.equal(u.camels[0], 1);
 u = apply(t, 0, { t: 'camels' });
 assert.equal(u.camels[0], 4);
@@ -133,3 +137,43 @@ o = act(0, { type: 'rematch' }).state!;
 o = act(1, { type: 'rematch' }).state!;
 assert.equal(o.game!.phase, 'play');
 console.log('bazaar: ok');
+
+// Hidden bonuses must be sampled from their actual tiers, preserving the full
+// token inventory. Five-card sale bonuses must never become fake 3-point tokens.
+const bonusFixture = newGame(rng, 0);
+bonusFixture.bonusWon = [
+  [1, 4],
+  [10, 9, 3],
+];
+bonusFixture.bonus = { 3: [1, 2, 2, 2, 3], 4: [4, 5, 5, 6, 6], 5: [8, 8, 10] };
+const bonusView = viewFor(bonusFixture, 0);
+for (let sample = 0; sample < 12; sample++) {
+  const sampled = determinize(bonusView, 0, rng);
+  assert.deepEqual(sampled.bonusWon[0], [1, 4]);
+  assert.equal(sampled.bonusWon[1].filter((v) => v >= 8).length, 2);
+  assert.equal(sampled.bonusWon[1].filter((v) => v <= 3).length, 1);
+  assert.deepEqual(
+    [
+      ...sampled.bonus[3],
+      ...sampled.bonus[4],
+      ...sampled.bonus[5],
+      ...sampled.bonusWon.flat(),
+    ].sort((a, b) => a - b),
+    [...BONUS[3], ...BONUS[4], ...BONUS[5]].sort((a, b) => a - b),
+  );
+}
+// Permuting unknown server values leaves the public input and seeded choice unchanged.
+const permutedBonus = structuredClone(bonusFixture);
+[permutedBonus.bonusWon[1][0], permutedBonus.bonus[5][0]] = [
+  permutedBonus.bonus[5][0],
+  permutedBonus.bonusWon[1][0],
+];
+assert.deepEqual(viewFor(permutedBonus, 0), bonusView);
+const seeded = () => {
+  let x = 23;
+  return () => (x = (x * 16807) % 2147483647) / 2147483647;
+};
+assert.deepEqual(
+  chooseBazaarMove(bonusView, 0, 4, seeded()),
+  chooseBazaarMove(viewFor(permutedBonus, 0), 0, 4, seeded()),
+);

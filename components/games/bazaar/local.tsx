@@ -106,6 +106,7 @@ export function BazaarGame({ fromExplore = false }: { fromExplore?: boolean }) {
     level: BazaarLevel;
     state: BazaarState;
   } | null>(null);
+  const [matchId, setMatchId] = useState(0);
   const [aiError, setAiError] = useState(false);
   const [retry, setRetry] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -155,16 +156,19 @@ export function BazaarGame({ fromExplore = false }: { fromExplore?: boolean }) {
   }, [aiTurn, state, level, retry]);
 
   const start = () => {
+    setMatchId((n) => n + 1);
     setAiError(false);
     setError(null);
     setGame({ level: settings.level, state: newGame(Math.random, ME) });
   };
   const onMove = (m: Move) => {
-    if (!state) return;
+    if (!state) return false;
     try {
       commit(apply(state, ME, m));
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : '操作无效');
+      return false;
     }
   };
   const v = state ? viewFor(state, ME) : null;
@@ -239,7 +243,7 @@ export function BazaarGame({ fromExplore = false }: { fromExplore?: boolean }) {
       </div>
       {v && state ? (
         <BazaarTable
-          key={`${state.round}`}
+          key={`${matchId}:${state.round}`}
           v={v}
           disabled={aiTurn}
           names={['你', `AI · ${BAZAAR_LEVELS[level].name}`]}
