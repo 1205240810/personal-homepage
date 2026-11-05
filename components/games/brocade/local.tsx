@@ -162,11 +162,12 @@ export function BrocadeGame({
     setGame({ level: settings.level, state: newGame(Math.random, ME) });
   };
   const onMove = (m: Move) => {
-    if (!state) return;
+    if (!state) return false;
     try {
       commit(apply(state, ME, m));
     } catch (e) {
       setError(e instanceof Error ? e.message : '操作无效');
+      return false;
     }
   };
   const v = state ? viewFor(state, ME) : null;
@@ -243,6 +244,7 @@ export function BrocadeGame({
       {v && state ? (
         <BrocadeTable
           v={v}
+          positionKey={state}
           disabled={aiTurn}
           names={['你', `AI · ${BROCADE_LEVELS[level].name}`]}
           onMove={onMove}
@@ -286,7 +288,7 @@ export function BrocadeGame({
         枚）；预订一件织品（明牌或牌堆顶暗订，最多 3
         件，同时得一枚金线）；或支付丝线购入一件织品（已有的同色织品抵扣）。手中丝线上限
         10 枚，超出须退还。满足贵客要求的织品数时贵客自动登门（+3）。有人到 15
-        点后打完这一圈，声望高者胜，同分比织品少者胜。
+        点后打完这一圈，声望高者胜，同分比织品少者胜。仅当没有任何可执行行动时可过牌，双方连续被迫过牌则和局。
       </p>
     </div>
   );

@@ -2,6 +2,7 @@
 
 /* oxlint-disable next/no-html-link-for-pages */
 
+import { useState } from 'react';
 import '@/components/games/kit.css';
 import { GameResult } from '@/components/games/result';
 import { BrocadeTable } from '@/components/games/brocade/table';
@@ -43,6 +44,7 @@ export function BrocadeOnline({
             v={v}
             seat={snap.seat}
             connected={snap.status === 'open'}
+            error={snap.error}
             names={snap.seats.map((s) => s.name)}
             act={(a) =>
               client.act({ ...a, positionRevision: v.positionRevision })
@@ -61,15 +63,23 @@ function Table({
   v,
   seat,
   connected,
+  error,
   names,
   act,
 }: {
   v: BrocadeOnlineView;
   seat: number | null;
   connected: boolean;
+  error: string | null;
   names: string[];
   act: (a: Record<string, unknown>) => void;
 }) {
+  const [retry, setRetry] = useState({ error, epoch: 0 });
+  let errorEpoch = retry.epoch;
+  if (retry.error !== error) {
+    if (error) errorEpoch++;
+    setRetry({ error, epoch: errorEpoch });
+  }
   if (!v.started || v.phase === 'waiting')
     return <p className="kit-help">等待对手入座…双方到齐后自动开局。</p>;
   const gv = v as BrocadeView & BrocadeOnlineView;
@@ -84,6 +94,7 @@ function Table({
   return (
     <BrocadeTable
       v={gv}
+      positionKey={`${v.positionRevision}:${connected}:${errorEpoch}`}
       disabled={!myTurn}
       names={[label(0), label(1)]}
       onMove={(m: Move) => act({ type: 'move', move: m })}

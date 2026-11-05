@@ -95,7 +95,8 @@ export type Player = {
 export type Move =
   | { t: 'take'; gems: Gem[]; ret?: number[] }
   | { t: 'reserve'; card: number | null; tier?: number; ret?: number[] }
-  | { t: 'buy'; card: number };
+  | { t: 'buy'; card: number }
+  | { t: 'pass' };
 
 export type BrocadeState = {
   decks: number[][];
@@ -106,6 +107,8 @@ export type BrocadeState = {
   toPlay: Side;
   first: Side;
   phase: 'play' | 'over';
+  /** Consecutive forced passes; two end a blocked game in a draw. */
+  passes: number;
   winner: Side | 'draw' | null;
   last: { side: Side; move: Move; noble?: number } | null;
   /** Reserved-from-deck cards are hidden from the opponent. */
@@ -147,6 +150,7 @@ export function newGame(rng: () => number, first: Side = 0): BrocadeState {
     toPlay: first,
     first,
     phase: 'play',
+    passes: 0,
     winner: null,
     last: null,
     blind: [[], []],
@@ -217,6 +221,7 @@ function finishTurn(s: BrocadeState, side: Side, move: Move): BrocadeState {
     nobles,
     toPlay: (1 - side) as Side,
     last: { side, move, noble },
+    passes: move.t === 'pass' && noble === undefined ? s.passes + 1 : 0,
   };
   // Round ends when play returns to the first player.
   if (
@@ -236,7 +241,7 @@ function finishTurn(s: BrocadeState, side: Side, move: Move): BrocadeState {
           : 'draw';
     return { ...next, phase: 'over', winner };
   }
-  return next;
+  return next.passes >= 2 ? { ...next, phase: 'over', winner: 'draw' } : next;
 }
 
 const clone = (s: BrocadeState): BrocadeState => ({
@@ -267,6 +272,10 @@ export function apply(s0: BrocadeState, side: Side, m: Move): BrocadeState {
   if (!m || typeof m !== 'object') throw new Error('操作无效');
   const s = clone(s0);
   const p = s.players[side];
+  if (m.t === 'pass') {
+    if (hasAction(s, side)) throw new Error('还有可执行的行动，不能过牌');
+    return finishTurn(s, side, m);
+  }
   if (m.t === 'take') {
     const g = m.gems;
     if (
@@ -351,6 +360,24 @@ export function autoReturn(p: Player, gained: number[]): number[] {
   return out;
 }
 
+/** Whether a player can act, using only their own hand and public supplies. */
+export function hasAction(s: BrocadeState | BrocadeView, side: Side): boolean {
+  if (s.phase !== 'play') return false;
+  const p = s.players[side];
+  if (s.bank.slice(0, 5).some((n) => n > 0)) return true;
+  if (
+    p.reserved.length < RESERVE_LIMIT &&
+    (s.market.some((row) => row.some((id) => id !== null)) ||
+      ('decks' in s
+        ? s.decks.some((d) => d.length > 0)
+        : s.deckCounts.some((n) => n > 0)))
+  )
+    return true;
+  return [...s.market.flat(), ...p.reserved].some(
+    (id) => id !== null && id >= 0 && payment(p, id) !== null,
+  );
+}
+
 export function legalMoves(s: BrocadeState): Move[] {
   if (s.phase !== 'play') return [];
   const side = s.toPlay;
@@ -380,8 +407,17 @@ export function legalMoves(s: BrocadeState): Move[] {
     for (const id of s.market.flat())
       if (id !== null)
         out.push({ t: 'reserve', card: id, ...(ret.length ? { ret } : {}) });
+    s.decks.forEach((deck, tier) => {
+      if (deck.length)
+        out.push({
+          t: 'reserve',
+          card: null,
+          tier,
+          ...(ret.length ? { ret } : {}),
+        });
+    });
   }
-  return out;
+  return out.length ? out : [{ t: 'pass' }];
 }
 
 export type BrocadeView = Omit<BrocadeState, 'decks' | 'players' | 'blind'> & {
@@ -423,6 +459,7 @@ export function parseMove(raw: unknown): Move | null {
         ? (m.ret as number[])
         : null;
   if (ret === null) return null;
+  if (m.t === 'pass') return { t: 'pass' };
   if (m.t === 'take' && ints(m.gems, 3))
     return { t: 'take', gems: m.gems as Gem[], ...(ret ? { ret } : {}) };
   if (m.t === 'reserve' && (m.card === null || Number.isInteger(m.card)))

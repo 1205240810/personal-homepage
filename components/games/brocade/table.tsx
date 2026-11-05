@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import {
   CARDS,
   GEMS,
@@ -10,6 +10,7 @@ import {
   RESERVE_LIMIT,
   TOKEN_LIMIT,
   bonuses,
+  hasAction,
   payment,
   points,
   tokenCount,
@@ -44,6 +45,15 @@ export function Chip({
     </span>
   );
 }
+
+const cardLabel = (id: number) => {
+  if (id < 0) return `暗订的${TIER[-1 - id]}`;
+  const c = CARDS[id];
+  return `${TIER[c.tier]}·${GEMS[c.color].name} ${c.points} 分，需 ${c.cost
+    .map((n, g) => (n ? `${GEMS[g].name}${n}` : ''))
+    .filter(Boolean)
+    .join(' ')}`;
+};
 
 export function CardFace({ id }: { id: number }) {
   if (id < 0)
@@ -123,6 +133,7 @@ type Sel = { kind: 'card'; id: number } | { kind: 'deck'; tier: number } | null;
 /** 锦绣织造牌桌：点丝线凑一手再「拿取」；点作品选择购入或预订；点牌堆背面暗订。 */
 export function BrocadeTable({
   v,
+  positionKey,
   disabled,
   names,
   onMove,
@@ -130,9 +141,10 @@ export function BrocadeTable({
   footer,
 }: {
   v: BrocadeView;
+  positionKey?: unknown;
   disabled?: boolean;
   names: [string, string];
-  onMove: (m: Move) => void;
+  onMove: (m: Move) => boolean | void;
   status?: ReactNode;
   footer?: ReactNode;
 }) {
@@ -140,15 +152,35 @@ export function BrocadeTable({
   const opp = (1 - me) as Side;
   const live = !disabled && v.phase === 'play' && v.toPlay === me;
   const mine = v.players[me] as Player;
-  const [gems, setGems] = useState<Gem[]>([]);
-  const [sel, setSel] = useState<Sel>(null);
-  const [ret, setRet] = useState<number[]>([]);
-  const [pending, setPending] = useState<Move | null>(null);
-  const reset = () => {
-    setGems([]);
-    setSel(null);
-    setRet([]);
-    setPending(null);
+  const position = positionKey ?? v;
+  const empty = (generation: number) => ({
+    position,
+    live,
+    generation,
+    gems: [] as Gem[],
+    sel: null as Sel,
+    ret: [] as number[],
+    pending: null as Move | null,
+  });
+  const [draft, setDraft] = useState(() => empty(0));
+  let current = draft;
+  if (draft.position !== position || draft.live !== live) {
+    current = empty(draft.generation + 1);
+    setDraft(current);
+  }
+  const submitted = useRef<number | null>(null);
+  const { gems, sel, ret, pending } = current;
+  const setGems = (gems: Gem[]) => setDraft((d) => ({ ...d, gems }));
+  const setSel = (sel: Sel) => setDraft((d) => ({ ...d, sel }));
+  const setRet = (ret: number[]) => setDraft((d) => ({ ...d, ret }));
+  const setPending = (pending: Move | null) =>
+    setDraft((d) => ({ ...d, pending }));
+  const reset = () => setDraft(empty(current.generation));
+  const send = (m: Move) => {
+    if (!live || submitted.current === current.generation) return;
+    submitted.current = current.generation;
+    reset();
+    if (onMove(m) === false) submitted.current = null;
   };
   const gained = [0, 0, 0, 0, 0, 0];
   if (pending?.t === 'take') pending.gems.forEach((g) => gained[g]++);
@@ -162,6 +194,7 @@ export function BrocadeTable({
       TOKEN_LIMIT
     : 0;
   const submit = (m: Move) => {
+    if (!live || submitted.current === current.generation) return;
     const total =
       mine.tokens.reduce((a, b) => a + b, 0) +
       (m.t === 'take'
@@ -174,8 +207,7 @@ export function BrocadeTable({
       setRet([]);
       return;
     }
-    reset();
-    onMove(m);
+    send(m);
   };
   const avail = [0, 1, 2, 3, 4].filter((g) => v.bank[g] > 0).length;
   const takeOk =
@@ -184,7 +216,7 @@ export function BrocadeTable({
       gems.length === Math.min(3, avail) &&
       gems.length > 0);
   const clickBank = (g: Gem) => {
-    if (!live || pending) return;
+    if (!live || pending || submitted.current === current.generation) return;
     setSel(null);
     const count = gems.filter((x) => x === g).length;
     if (count) {
@@ -269,6 +301,7 @@ export function BrocadeTable({
                   key={id}
                   type="button"
                   className={`bc-pick${selCard === id ? ' is-selected' : ''}${payment(mine, id) ? ' can-buy' : ''}`}
+                  aria-label={cardLabel(id)}
                   disabled={!live || !!pending}
                   onClick={() => {
                     setGems([]);
@@ -312,6 +345,15 @@ export function BrocadeTable({
       )}
       {live && !pending && (
         <div className="kit-row bc-actions">
+          {!hasAction(v, me) && (
+            <button
+              type="button"
+              className="kit-primary"
+              onClick={() => submit({ t: 'pass' })}
+            >
+              无可执行行动：过牌
+            </button>
+          )}
           {gems.length > 0 && (
             <button
               type="button"
@@ -363,7 +405,7 @@ export function BrocadeTable({
           )}
         </div>
       )}
-      {pending && (
+      {live && pending && (
         <fieldset className="bc-return" aria-label="退还丝线">
           <span>
             超过 10 枚，请点选退还 {over} 枚（已选 {ret.length}）：
@@ -374,6 +416,7 @@ export function BrocadeTable({
                 key={g}
                 type="button"
                 className="bc-pick"
+                aria-label={`退还${gemName(g)}（剩 ${after[g]} 枚）`}
                 disabled={ret.length >= over}
                 onClick={() => setRet([...ret, g])}
               >
@@ -387,8 +430,7 @@ export function BrocadeTable({
             disabled={ret.length !== over}
             onClick={() => {
               const m = { ...pending, ret } as Move;
-              reset();
-              onMove(m);
+              send(m);
             }}
           >
             确认
@@ -406,6 +448,7 @@ export function BrocadeTable({
               key={id}
               type="button"
               className={`bc-pick${selCard === id ? ' is-selected' : ''}${payment(mine, id) ? ' can-buy' : ''}`}
+              aria-label={`你的预订：${cardLabel(id)}`}
               disabled={!live || !!pending}
               onClick={() => {
                 setGems([]);
