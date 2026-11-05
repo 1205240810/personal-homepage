@@ -470,3 +470,13 @@ html[data-theme='tech'] .qd-sun {
     max(300px, var(--board-available-height, 600px))
   );
 }
+
+@media (max-width: 720px) {
+  .qd-board,
+  .qd-scene .qd-board {
+    width: min(
+      calc(100% - 20px),
+      max(220px, var(--board-available-height, 100%))
+    );
+  }
+}
