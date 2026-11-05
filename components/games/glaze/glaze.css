@@ -1,0 +1,639 @@
+/* 琉璃坊：素胎白墙、木料架，釉砖是天青、霁红、鹅黄、墨玉、月白五色；科技主题为夜色釉光。 */
+.glaze {
+  --gz-bg: #efeadf;
+  --gz-bg-2: #e2dac8;
+  --gz-wood: #8a6a48;
+  --gz-line: color-mix(in srgb, #6e4a2f 25%, transparent);
+  --gz-c0: #6fa3b3;
+  --gz-c1: #a8323a;
+  --gz-c2: #d9ad3c;
+  --gz-c3: #2e3238;
+  --gz-c4: #e9ece6;
+  --gz-cell: #f7f3ea;
+}
+html[data-theme='tech'] .glaze {
+  --gz-bg: #0b1826;
+  --gz-bg-2: #06101a;
+  --gz-wood: #2a4a63;
+  --gz-line: rgb(124 199 223 / 0.2);
+  --gz-c0: #6fd0e8;
+  --gz-c1: #ff6f7d;
+  --gz-c2: #f2c45c;
+  --gz-c3: #4a5260;
+  --gz-c4: #dfe8f0;
+  --gz-cell: #10233a;
+}
+.gz-table {
+  display: grid;
+  gap: 12px;
+  padding: 14px clamp(8px, 2vw, 22px) 18px;
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      70% 50% at 50% 40%,
+      rgb(255 255 255 / 0.35),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--gz-bg), var(--gz-bg-2));
+  box-shadow: inset 0 0 0 1px var(--gz-line);
+}
+html[data-theme='tech'] .gz-table {
+  background:
+    radial-gradient(
+      70% 50% at 50% 40%,
+      rgb(124 199 223 / 0.08),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--gz-bg), var(--gz-bg-2));
+}
+.gz-tile {
+  --c: var(--gz-c0);
+  display: inline-block;
+  width: var(--t, 26px);
+  height: var(--t, 26px);
+  border-radius: 4px;
+  background:
+    radial-gradient(
+      70% 55% at 30% 25%,
+      rgb(255 255 255 / 0.55),
+      transparent 60%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--c) 85%, #fff),
+      var(--c) 55%,
+      color-mix(in srgb, var(--c) 75%, #000)
+    );
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.12),
+    0 2px 3px -1px rgb(0 0 0 / 0.35);
+  flex: none;
+}
+.gz-tile.c1 {
+  --c: var(--gz-c1);
+}
+.gz-tile.c2 {
+  --c: var(--gz-c2);
+}
+.gz-tile.c3 {
+  --c: var(--gz-c3);
+}
+.gz-tile.c4 {
+  --c: var(--gz-c4);
+}
+/* Crackle glaze texture on 天青 and 月白. */
+.gz-tile.c0,
+.gz-tile.c4 {
+  background:
+    radial-gradient(
+      70% 55% at 30% 25%,
+      rgb(255 255 255 / 0.55),
+      transparent 60%
+    ),
+    repeating-linear-gradient(
+      32deg,
+      transparent 0 6px,
+      rgb(0 0 0 / 0.07) 6px 7px
+    ),
+    repeating-linear-gradient(
+      -58deg,
+      transparent 0 9px,
+      rgb(0 0 0 / 0.06) 9px 10px
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--c) 85%, #fff),
+      var(--c) 55%,
+      color-mix(in srgb, var(--c) 80%, #000)
+    );
+}
+.gz-tile.is-ghost {
+  opacity: 0.18;
+  box-shadow: none;
+}
+.gz-tile.is-fresh {
+  animation: gz-set 700ms var(--ease, ease) both;
+}
+@keyframes gz-set {
+  from {
+    scale: 1.4;
+    opacity: 0;
+  }
+}
+.gz-tile.is-first {
+  display: inline-grid;
+  place-items: center;
+  font-size: 13px;
+  font-family: 'Songti SC', 'Noto Serif SC', serif;
+  color: #fff8ee;
+  background: #b4432f;
+  border-radius: 50%;
+}
+.gz-market {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.gz-kilns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 18px);
+}
+.gz-kiln {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 4px;
+  place-content: center;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 50% 40%,
+      color-mix(in srgb, #fff 40%, transparent),
+      transparent 60%
+    ),
+    color-mix(in srgb, var(--gz-wood) 30%, var(--gz-bg));
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--gz-wood) 45%, transparent),
+    inset 0 -6px 12px rgb(0 0 0 / 0.12);
+}
+.gz-kiln.was-taken {
+  box-shadow:
+    inset 0 0 0 2px var(--games-accent, #a34e2b),
+    inset 0 -6px 12px rgb(0 0 0 / 0.12);
+}
+.gz-center {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  max-width: 520px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px dashed var(--gz-line);
+}
+.kit .gz-pick {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  transition: translate 140ms var(--ease, ease);
+}
+.kit .gz-pick:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.kit .gz-pick.is-selected {
+  translate: 0 -4px;
+}
+.kit .gz-pick.is-selected .gz-tile {
+  outline: 2px solid var(--games-accent, #a34e2b);
+  outline-offset: 1px;
+}
+.gz-meta,
+.gz-status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--games-muted, #626b61);
+  text-align: center;
+}
+.gz-status {
+  font-size: 14px;
+  color: var(--games-ink, #282d29);
+}
+.gz-board {
+  display: grid;
+  gap: 6px;
+  justify-self: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gz-cell) 70%, transparent);
+  box-shadow: inset 0 0 0 1px var(--gz-line);
+}
+.gz-board header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+.gz-score {
+  font-variant-numeric: tabular-nums;
+  color: var(--games-accent, #a34e2b);
+  font-weight: 600;
+}
+.gz-work {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.gz-lines {
+  display: grid;
+  gap: 3px;
+}
+.kit .gz-line {
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.kit .gz-line:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.gz-slot {
+  width: var(--t, 26px);
+  height: var(--t, 26px);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--gz-wood) 18%, transparent);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.18);
+}
+.kit .gz-line.can-drop .gz-slot,
+.kit .gz-floor.can-drop .gz-floor-slot {
+  box-shadow: inset 0 0 0 2px var(--games-accent, #a34e2b);
+}
+.gz-wall {
+  display: grid;
+  grid-template-columns: repeat(5, var(--t, 26px));
+  gap: 3px;
+  padding-left: 10px;
+  border-left: 2px solid var(--gz-line);
+}
+.gz-cell {
+  display: block;
+  line-height: 0;
+}
+.kit .gz-floor {
+  display: flex;
+  gap: 3px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.kit .gz-floor:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.gz-floor-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--t, 26px);
+  height: var(--t, 26px);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--kit-bad) 10%, transparent);
+}
+.gz-floor-slot i {
+  position: absolute;
+  bottom: -14px;
+  font-size: 10px;
+  font-style: normal;
+  color: var(--kit-bad);
+}
+.gz-floor {
+  margin-bottom: 12px;
+}
+.gz-board.is-me {
+  --t: 30px;
+}
+.gz-board.is-small {
+  --t: 18px;
+  opacity: 0.92;
+}
+.gz-board.is-small .gz-floor-slot i {
+  display: none;
+}
+.gz-board.is-small .gz-floor {
+  margin-bottom: 0;
+}
+.gz-actions {
+  justify-content: center;
+}
+.gz-intro {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 28px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--gz-bg), var(--gz-bg-2));
+}
+.gz-intro p {
+  max-width: 34em;
+  margin: 0;
+  line-height: 1.8;
+}
+.gz-intro span {
+  display: flex;
+  gap: 6px;
+  --t: 34px;
+}
+.gz-online-link {
+  font-size: 13px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+@media (max-width: 520px) {
+  .gz-board.is-me {
+    --t: 25px;
+  }
+  .gz-kiln {
+    width: 64px;
+    height: 64px;
+    --t: 22px;
+  }
+  .gz-center {
+    --t: 22px;
+  }
+}
+
+/* ---- 美术二版：宫墙琉璃瓦檐、纹样釉砖、窑口火光、照壁与贴砖动效 ---- */
+.glaze {
+  --gz-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .2 0 0 0 0 .15 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  --gz-palace: #a9443a;
+  --gz-palace-2: #8c3530;
+  --gz-roof: #d9a83a;
+  --gz-roof-2: #a87820;
+  --gz-screen: #f3ece0;
+}
+html[data-theme='tech'] .glaze {
+  --gz-palace: #0f2234;
+  --gz-palace-2: #091726;
+  --gz-roof: #2f7590;
+  --gz-roof-2: #1a4a60;
+  --gz-screen: #0f2236;
+}
+.gz-table {
+  position: relative;
+  overflow: hidden;
+  padding-top: 46px;
+  background:
+    var(--gz-grain),
+    linear-gradient(180deg, var(--gz-palace) 0 60%, var(--gz-palace-2));
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.15),
+    inset 0 -30px 40px -20px rgb(0 0 0 / 0.3);
+}
+html[data-theme='tech'] .gz-table {
+  background:
+    radial-gradient(
+      60% 40% at 50% 45%,
+      rgb(124 199 223 / 0.1),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--gz-palace), var(--gz-palace-2));
+}
+/* 琉璃瓦檐：筒瓦 + 滴水 */
+.gz-eaves {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 34px;
+  background:
+    radial-gradient(9px 7px at 50% 100%, var(--gz-roof-2) 96%, transparent) 0
+      27px / 22px 8px repeat-x,
+    repeating-linear-gradient(
+        90deg,
+        var(--gz-roof) 0 14px,
+        color-mix(in srgb, var(--gz-roof) 70%, #fff) 14px 16px,
+        var(--gz-roof-2) 16px 22px
+      )
+      0 6px / 100% 22px no-repeat,
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--gz-roof-2) 70%, #000) 0 6px,
+      transparent 6px
+    );
+  box-shadow: 0 6px 10px -4px rgb(0 0 0 / 0.4);
+}
+html[data-theme='tech'] .gz-eaves {
+  box-shadow: 0 0 14px rgb(124 199 223 / 0.35);
+}
+.gz-table > :is(.gz-status, .gz-meta),
+.gz-meta,
+.gz-status {
+  color: #fdf3e4;
+}
+html[data-theme='tech'] .gz-status {
+  color: var(--games-ink, #dce8f4);
+}
+/* 釉砖纹样 */
+.gz-tile {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.15),
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    0 2px 3px -1px rgb(0 0 0 / 0.4);
+}
+.gz-tile svg {
+  width: 78%;
+  height: 78%;
+  fill: color-mix(in srgb, var(--c) 55%, #fff);
+  stroke: color-mix(in srgb, var(--c) 55%, #fff);
+  opacity: 0.75;
+}
+.gz-tile.c1 svg,
+.gz-tile.c3 svg {
+  fill: color-mix(in srgb, var(--c) 30%, #f5d58a);
+  stroke: color-mix(in srgb, var(--c) 30%, #f5d58a);
+}
+.gz-tile.c2 svg {
+  fill: color-mix(in srgb, var(--c) 70%, #7a4a10);
+  stroke: none;
+  opacity: 0.45;
+}
+.gz-tile.c4 svg {
+  fill: none;
+  stroke: #7fa7b8;
+}
+.gz-tile .gz-m-core {
+  fill: #f5d58a;
+}
+.gz-tile.is-ghost svg {
+  opacity: 0.35;
+}
+.gz-tile.is-first {
+  box-shadow:
+    0 0 0 2px #f5d58a,
+    0 2px 4px rgb(0 0 0 / 0.4);
+}
+/* 窑口：拱形炉膛与火光 */
+.gz-kiln {
+  border-radius: 46% 46% 12px 12px;
+  background:
+    radial-gradient(
+      70% 60% at 50% 100%,
+      rgb(255 150 60 / 0.55),
+      transparent 70%
+    ),
+    radial-gradient(circle at 50% 35%, rgb(255 255 255 / 0.2), transparent 60%),
+    var(--gz-grain), linear-gradient(180deg, #5a3a2a, #3a241a);
+  box-shadow:
+    inset 0 0 0 3px #7a5038,
+    inset 0 -10px 18px rgb(255 120 40 / 0.35),
+    0 6px 12px -6px rgb(0 0 0 / 0.6);
+  animation: gz-fire 3.2s ease-in-out infinite;
+}
+html[data-theme='tech'] .gz-kiln {
+  background:
+    radial-gradient(
+      70% 60% at 50% 100%,
+      rgb(124 199 223 / 0.35),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #13283c, #0a1828);
+  box-shadow:
+    inset 0 0 0 2px rgb(124 199 223 / 0.4),
+    0 0 14px rgb(124 199 223 / 0.15);
+}
+.gz-kiln:empty {
+  animation: none;
+  filter: saturate(0.4) brightness(0.85);
+}
+.gz-kiln.was-taken {
+  box-shadow:
+    inset 0 0 0 3px #f5d58a,
+    0 0 14px rgb(245 213 138 / 0.5);
+}
+@keyframes gz-fire {
+  50% {
+    box-shadow:
+      inset 0 0 0 3px #7a5038,
+      inset 0 -14px 22px rgb(255 140 50 / 0.5),
+      0 6px 12px -6px rgb(0 0 0 / 0.6);
+  }
+}
+.gz-center {
+  gap: 4px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--gz-grain), linear-gradient(180deg, #7a5038, #5a3a2a);
+  box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.4);
+  color: #f3e3c4;
+}
+html[data-theme='tech'] .gz-center {
+  background: rgb(124 199 223 / 0.06);
+  box-shadow: inset 0 0 0 1px rgb(124 199 223 / 0.25);
+}
+.gz-center .kit-help {
+  color: inherit;
+}
+/* 工坊面板：左木料架、右照壁（须弥座 + 边框） */
+.gz-board {
+  background:
+    var(--gz-grain),
+    linear-gradient(
+      180deg,
+      var(--gz-screen),
+      color-mix(in srgb, var(--gz-screen) 85%, #b9a37c)
+    );
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.08),
+    0 14px 28px -16px rgb(0 0 0 / 0.65);
+}
+html[data-theme='tech'] .gz-board {
+  background: linear-gradient(180deg, var(--gz-screen), #0a1828);
+  box-shadow:
+    inset 0 0 0 1px rgb(124 199 223 / 0.25),
+    0 14px 28px -16px rgb(0 0 0 / 0.8);
+}
+.gz-wall {
+  padding: 6px;
+  border: 0;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--gz-screen) 88%, var(--gz-palace));
+  box-shadow:
+    0 0 0 3px var(--gz-palace),
+    0 0 0 5px var(--gz-roof),
+    0 -6px 0 3px var(--gz-roof-2),
+    0 6px 0 3px color-mix(in srgb, #8a7a60 70%, var(--gz-screen));
+  margin: 8px 4px 8px 10px;
+}
+.gz-wall .gz-tile.is-ghost {
+  opacity: 0.22;
+}
+.gz-slot {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gz-wood) 30%, transparent),
+    color-mix(in srgb, var(--gz-wood) 18%, transparent)
+  );
+}
+.gz-lines .gz-tile {
+  animation: gz-drop-in 380ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+.gz-tile.is-fresh {
+  animation: gz-set2 800ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes gz-drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) rotate(-12deg) scale(1.2);
+  }
+}
+@keyframes gz-set2 {
+  0% {
+    opacity: 0;
+    transform: translateX(-60px) scale(1.3);
+  }
+  70% {
+    box-shadow:
+      0 0 0 3px #f5d58a,
+      0 0 16px #f5d58a;
+  }
+}
+.gz-score {
+  display: inline-block;
+  animation: gz-pop 560ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes gz-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.4);
+  }
+}
+.gz-pick .gz-tile {
+  transition: transform 160ms var(--ease, ease);
+}
+.gz-pick.is-selected .gz-tile {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 2px #f5d58a,
+    0 6px 8px -2px rgb(0 0 0 / 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .gz-kiln,
+  .gz-lines .gz-tile,
+  .gz-tile.is-fresh,
+  .gz-score {
+    animation: none;
+  }
+}
+
+.gz-held-first {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.gz-held-first .gz-tile {
+  width: 1.4rem;
+  height: 1.4rem;
+}

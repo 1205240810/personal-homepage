@@ -25,7 +25,8 @@ export type GameId =
   | 'hanami'
   | 'quoridor'
   | 'expedition'
-  | 'bazaar';
+  | 'bazaar'
+  | 'glaze';
 
 export type GameDefinition = {
   id: GameId;
@@ -353,6 +354,22 @@ export const GAMES: readonly GameDefinition[] = [
       title: '刺桐市集联机',
       format: '1 对 1',
       pitch: '服务器发牌，对手的货与赏银面值永远看不到。',
+    },
+  },
+  {
+    id: 'glaze',
+    title: '琉璃坊',
+    description:
+      '两人釉砖拼贴：从窑口挑走同色釉砖、摆上料架，一层摆满就贴上照壁；连成片越多分越高，拿多了摔成碎瓷扣分。五档 AI，也能联机。',
+    href: '/games/glaze',
+    category: '桌面策略',
+    controls: '点窑口里的釉砖，再点自己的料架',
+    estimatedDuration: '一局约 15–25 分钟',
+    online: {
+      href: '/games/glaze/online',
+      title: '琉璃坊联机',
+      format: '1 对 1',
+      pitch: '服务器校验每一步并从袋中补砖，再局交换先手。',
     },
   },
 ] as const;
