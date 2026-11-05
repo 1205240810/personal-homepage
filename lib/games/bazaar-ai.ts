@@ -1,6 +1,7 @@
 // 刺桐市集 AI：估值 = 已得分 + 手牌变现潜力 + 骆驼优势 − 留给对手的好货；
 // 高档把看不见的牌（对手手牌、牌堆）随机重发若干次，考虑对手的最佳回应（PIMC）。
 import {
+  BONUS,
   CAMEL,
   CAMELS,
   GOODS,
@@ -106,7 +107,7 @@ export function determinize(
   v.hand.forEach(remove);
   v.market.forEach(remove);
   for (let k = 0; k < v.camels[0] + v.camels[1]; k++) remove(CAMEL);
-  // Goods already sold: one card per goods token taken.
+  // Remove every sold card, including goods sold after their token pile emptied.
   v.sold.forEach((n, i) => {
     for (let k = 0; k < n; k++) remove(i as Good);
   });
@@ -123,31 +124,59 @@ export function determinize(
     if (c !== CAMEL && oppHand.length < v.handCounts[o]) oppHand.push(c);
     else rest.push(c);
   }
-  const deck = rest.slice(0, v.deckCount);
-  while (deck.length < v.deckCount) deck.push(CAMEL);
+  if (oppHand.length !== v.handCounts[o] || rest.length !== v.deckCount)
+    throw new Error('可见牌数不一致');
+  const deck = rest;
   const hands: [Good[], Good[]] =
     side === 0 ? [v.hand.slice(), oppHand] : [oppHand, v.hand.slice()];
-  const bw = (x: number[] | number) =>
-    Array.isArray(x) ? x : Array.from({ length: x }, () => 3);
+  // Remaining counts reveal how many bonuses of each tier were awarded. Our
+  // own values identify their tiers; sample the opponent's unseen values from
+  // the real remainder, then keep the rest as the future draw pile.
+  const bonus = { 3: [] as number[], 4: [] as number[], 5: [] as number[] };
+  const sampledWon: [number[], number[]] = [[], []];
+  const knownOwn = v.bonusWon[side];
+  if (!Array.isArray(knownOwn)) throw new Error('AI 缺少自己的赏银');
+  sampledWon[side] = knownOwn.slice();
+  for (const tier of [3, 4, 5] as const) {
+    const values: number[] = [...BONUS[tier]];
+    const inTier = (value: number) => BONUS[tier].some((n) => n === value);
+    const removeKnown = (value: number) => {
+      const index = values.indexOf(value);
+      if (index < 0) throw new Error('赏银记录不一致');
+      values.splice(index, 1);
+    };
+    knownOwn.filter(inTier).forEach(removeKnown);
+    const knownOpponent = v.bonusWon[o];
+    if (Array.isArray(knownOpponent))
+      knownOpponent.filter(inTier).forEach(removeKnown);
+    for (let i = values.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [values[i], values[j]] = [values[j], values[i]];
+    }
+    const hiddenCount = values.length - v.bonusLeft[tier];
+    if (hiddenCount < 0) throw new Error('赏银余量不一致');
+    if (!Array.isArray(knownOpponent))
+      sampledWon[o].push(...values.splice(0, hiddenCount));
+    bonus[tier] = values;
+  }
+  if (Array.isArray(v.bonusWon[o])) sampledWon[o] = v.bonusWon[o].slice();
+  else if (sampledWon[o].length !== v.bonusWon[o])
+    throw new Error('赏银数量不一致');
   const {
     you: _y,
     hand: _h,
     handCounts: _hc,
     deckCount: _d,
-    bonusLeft,
-    bonusWon,
+    bonusLeft: _b,
+    bonusWon: _bw,
     ...rest2
   } = v;
   return {
     ...rest2,
     deck,
     hands,
-    bonus: {
-      3: Array.from({ length: bonusLeft[3] }, () => AVG_BONUS[3]),
-      4: Array.from({ length: bonusLeft[4] }, () => AVG_BONUS[4]),
-      5: Array.from({ length: bonusLeft[5] }, () => AVG_BONUS[5]),
-    },
-    bonusWon: [bw(bonusWon[0]), bw(bonusWon[1])],
+    bonus,
+    bonusWon: sampledWon,
   };
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import {
   ROUTES,
   ROUTE_INFO,
@@ -17,6 +17,8 @@ import {
 import { RouteArt } from './art';
 import './expedition.css';
 
+// CSS, inline SVG and text form a single illustrated card.
+/* oxlint-disable jsx-a11y/prefer-tag-over-role */
 export function Card({
   c,
   small,
@@ -30,6 +32,7 @@ export function Card({
   return (
     <span
       className={`ex-card r${r}${small ? ' is-small' : ''}${isWager(c) ? ' is-wager' : ''} ${className}`}
+      role="img"
       aria-label={cardName(c)}
     >
       <RouteArt r={r} wager={isWager(c)} />
@@ -38,6 +41,8 @@ export function Card({
     </span>
   );
 }
+
+/* oxlint-enable jsx-a11y/prefer-tag-over-role */
 
 function Lane({
   cards,
@@ -88,19 +93,50 @@ export function ExpeditionTable({
   onMove,
   status,
   footer,
+  positionKey,
 }: {
   v: ExpeditionView;
   disabled?: boolean;
   names: [string, string];
-  onMove: (m: Move) => void;
+  onMove: (m: Move) => void | boolean;
+  positionKey?: string | number;
   status?: ReactNode;
   footer?: ReactNode;
 }) {
   const me = (v.you ?? 0) as Side;
   const opp = (1 - me) as Side;
-  const [sel, setSel] = useState<number | null>(null);
+  const position = JSON.stringify([
+    positionKey,
+    v.you,
+    v.round,
+    v.phase,
+    v.toPlay,
+    v.hand,
+    v.routes,
+    v.discard,
+    v.deckCount,
+    !!disabled,
+  ]);
+  const empty = (generation: number) => ({
+    position,
+    generation,
+    sel: null as number | null,
+    sending: false,
+  });
+  const [draft, setDraft] = useState(() => empty(0));
+  let current = draft;
+  if (draft.position !== position) {
+    current = empty(draft.generation + 1);
+    setDraft(current);
+  }
+  const { sel, sending, generation } = current;
+  const submitted = useRef<number | null>(null);
   const myTurn =
-    !disabled && v.toPlay === me && (v.phase === 'play' || v.phase === 'draw');
+    !disabled &&
+    !sending &&
+    v.you !== null &&
+    v.toPlay === me &&
+    (v.phase === 'play' || v.phase === 'draw');
   const playing = myTurn && v.phase === 'play';
   const drawing = myTurn && v.phase === 'draw';
   const selected = playing && sel !== null && v.hand.includes(sel) ? sel : null;
@@ -108,8 +144,13 @@ export function ExpeditionTable({
     selected !== null && canPlay(v.routes[me][routeOf(selected)], selected);
   const lastCard = v.last && v.last.move.t !== 'draw' ? v.last.move.card : null;
   const act = (m: Move) => {
-    setSel(null);
-    onMove(m);
+    if (!myTurn || submitted.current === generation) return;
+    submitted.current = generation;
+    if (onMove(m) === false) {
+      submitted.current = null;
+      return;
+    }
+    setDraft({ ...empty(generation), sending: true });
   };
   return (
     <div className="ex-table">
@@ -152,7 +193,7 @@ export function ExpeditionTable({
               type="button"
               className={`ex-post r${r}${canDraw ? ' can-draw' : ''}${canDrop ? ' can-drop' : ''}`}
               disabled={!canDraw && !canDrop}
-              aria-label={`${ROUTE_INFO[r].name}驿站（${pile.length} 张）${canDraw ? '：摸这张' : canDrop ? '：弃到这里' : ''}`}
+              aria-label={`${ROUTE_INFO[r].name}驿站（${pile.length} 张）${top !== undefined ? `，顶牌${cardName(top)}` : ''}${canDraw ? '：摸这张' : canDrop ? '：弃到这里' : ''}`}
               onClick={() =>
                 canDraw
                   ? act({ t: 'draw', from: r })
@@ -213,7 +254,10 @@ export function ExpeditionTable({
               className={`ex-hand-card${selected === c ? ' is-selected' : ''}${playing && !can ? ' is-dead' : ''}`}
               disabled={!playing}
               aria-pressed={selected === c}
-              onClick={() => setSel(selected === c ? null : c)}
+              aria-label={cardName(c)}
+              onClick={() =>
+                setDraft({ ...current, sel: selected === c ? null : c })
+              }
             >
               <Card c={c} />
             </button>
