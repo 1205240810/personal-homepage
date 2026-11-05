@@ -158,11 +158,12 @@ export function GlazeGame({ fromExplore = false }: { fromExplore?: boolean }) {
     setGame({ level: settings.level, state: newGame(Math.random, ME) });
   };
   const onMove = (m: Move) => {
-    if (!state) return;
+    if (!state) return false;
     try {
       commit(apply(state, ME, m));
     } catch (e) {
       setError(e instanceof Error ? e.message : '操作无效');
+      return false;
     }
   };
   const v = state ? viewFor(state, ME) : null;
@@ -247,6 +248,7 @@ export function GlazeGame({ fromExplore = false }: { fromExplore?: boolean }) {
       {v && state ? (
         <GlazeTable
           v={v}
+          positionKey={state}
           disabled={aiTurn}
           names={['你', `AI · ${GLAZE_LEVELS[level].name}`]}
           onMove={onMove}

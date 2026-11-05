@@ -104,6 +104,23 @@ for (let i = 0; i < 2000 && s.phase !== 'over'; i++) {
 }
 assert.equal(s.phase, 'over');
 
+// A deadline during the first root branch must retain a finite fallback score.
+const realNow = Date.now;
+let clockCalls = 0;
+try {
+  Date.now = () => (clockCalls++ === 0 ? 0 : 1_000_000);
+  const start = newGame(rng, 0);
+  const timed = chooseGlazeMove(viewFor(start, 0), 0, 5, rng);
+  assert.ok(clockCalls > 1, 'the search reached its deadline check');
+  assert.ok(
+    Number.isFinite(timed.score),
+    'deadline fallback score must be finite',
+  );
+  assert.doesNotThrow(() => apply(start, 0, timed.move, rng));
+} finally {
+  Date.now = realNow;
+}
+
 // Online.
 let o = m.presence!(m.create(m.options({}), rng, 0), [true, true], 0);
 const act = (seat: number, a: Record<string, unknown>) =>

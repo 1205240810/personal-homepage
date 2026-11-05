@@ -36,9 +36,30 @@ export const GLAZE_LEVELS: Record<
     noise: 0,
     ms: 400,
   },
-  3: { name: '把桩', note: '看两步', depth: 2, beam: 14, noise: 0, ms: 900 },
-  4: { name: '窑主', note: '看三步', depth: 3, beam: 16, noise: 0, ms: 1600 },
-  5: { name: '御窑', note: '看五步', depth: 5, beam: 10, noise: 0, ms: 2600 },
+  3: {
+    name: '把桩',
+    note: '限时最多看两步',
+    depth: 2,
+    beam: 14,
+    noise: 0,
+    ms: 900,
+  },
+  4: {
+    name: '窑主',
+    note: '限时最多看三步',
+    depth: 3,
+    beam: 16,
+    noise: 0,
+    ms: 1600,
+  },
+  5: {
+    name: '御窑',
+    note: '限时最多看五步',
+    depth: 5,
+    beam: 10,
+    noise: 0,
+    ms: 2600,
+  },
 };
 export type GlazeAiResult = { move: Move; score: number };
 
@@ -168,7 +189,7 @@ export function chooseGlazeMove(
   } catch (e) {
     if (!(e instanceof Timeout)) throw e;
   }
-  return { move: best.m, score: bestV };
+  return { move: best.m, score: Number.isFinite(bestV) ? bestV : best.v };
 }
 
 export { COLORS };

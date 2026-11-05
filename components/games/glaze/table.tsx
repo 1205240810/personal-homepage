@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import {
   COLORS,
   FLOOR,
@@ -154,6 +154,12 @@ function BoardView({
           </span>
         ))}
       </button>
+      {b.floor.slice(FLOOR.length).includes('first') && (
+        <p className="kit-help gz-held-first">
+          持有 <Tile c="first" />
+          ：下轮先手（碎瓷扣分已封顶）
+        </p>
+      )}
     </section>
   );
 }
@@ -161,6 +167,7 @@ function BoardView({
 /** 琉璃坊牌桌：先点窑口或案台上的一块釉砖（选中同色全部），再点自己料架的一层或碎瓷区。 */
 export function GlazeTable({
   v,
+  positionKey,
   disabled,
   names,
   onMove,
@@ -168,25 +175,45 @@ export function GlazeTable({
   footer,
 }: {
   v: GlazeView;
+  positionKey?: unknown;
   disabled?: boolean;
   names: [string, string];
-  onMove: (m: Move) => void;
+  onMove: (m: Move) => boolean | void;
   status?: ReactNode;
   footer?: ReactNode;
 }) {
   const me = (v.you ?? 0) as Side;
   const opp = (1 - me) as Side;
   const live = !disabled && v.phase === 'play' && v.toPlay === me;
-  const [pick, setPick] = useState<{ src: number; color: Color } | null>(null);
-  const sel = live ? pick : null;
-  const choose = (src: number, color: Color) =>
-    setPick(
-      sel && sel.src === src && sel.color === color ? null : { src, color },
-    );
+  const position = positionKey ?? v;
+  type Pick = { src: number; color: Color } | null;
+  const [draft, setDraft] = useState({
+    position,
+    live,
+    generation: 0,
+    pick: null as Pick,
+  });
+  let current = draft;
+  if (draft.position !== position || draft.live !== live) {
+    current = { position, live, generation: draft.generation + 1, pick: null };
+    setDraft(current);
+  }
+  const submitted = useRef<number | null>(null);
+  const sel = live ? current.pick : null;
+  const choose = (src: number, color: Color) => {
+    if (!live || submitted.current === current.generation) return;
+    setDraft({
+      ...current,
+      pick:
+        sel && sel.src === src && sel.color === color ? null : { src, color },
+    });
+  };
   const place = (line: number) => {
-    if (!sel) return;
-    setPick(null);
-    onMove({ src: sel.src, color: sel.color, line });
+    if (!live || !sel || submitted.current === current.generation) return;
+    submitted.current = current.generation;
+    setDraft({ ...current, pick: null });
+    if (onMove({ src: sel.src, color: sel.color, line }) === false)
+      submitted.current = null;
   };
   const lastOpp = v.last?.side === opp ? v.last.move : null;
   const tileBtn = (src: number, c: Color, k: number) => (

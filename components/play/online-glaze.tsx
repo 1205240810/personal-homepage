@@ -43,6 +43,7 @@ export function GlazeOnline({
             v={v}
             seat={snap.seat}
             connected={snap.status === 'open'}
+            error={snap.error}
             names={snap.seats.map((s) => s.name)}
             act={(a) =>
               client.act({ ...a, positionRevision: v.positionRevision })
@@ -61,12 +62,14 @@ function Table({
   v,
   seat,
   connected,
+  error,
   names,
   act,
 }: {
   v: GlazeOnlineView;
   seat: number | null;
   connected: boolean;
+  error: string | null;
   names: string[];
   act: (a: Record<string, unknown>) => void;
 }) {
@@ -83,6 +86,7 @@ function Table({
   return (
     <GlazeTable
       v={gv}
+      positionKey={`${v.positionRevision}:${connected}:${error ?? ''}`}
       disabled={!myTurn}
       names={[label(0), label(1)]}
       onMove={(m: Move) => act({ type: 'move', move: m })}

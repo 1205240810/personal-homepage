@@ -627,3 +627,13 @@ html[data-theme='tech'] .gz-board {
     animation: none;
   }
 }
+
+.gz-held-first {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.gz-held-first .gz-tile {
+  width: 1.4rem;
+  height: 1.4rem;
+}
