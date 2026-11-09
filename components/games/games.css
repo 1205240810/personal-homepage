@@ -1980,6 +1980,19 @@
   color: #5c3f2a;
 }
 
+/* Mobile board chrome: keep long blurbs from stealing the square. */
+@media (max-width: 720px) {
+  .game-page-head p {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .game-page .game-page-note {
+    display: none;
+  }
+}
+
 .room-junqi-preview {
   min-height: 240px;
   padding: 18px 21px 13px;

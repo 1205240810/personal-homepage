@@ -185,3 +185,12 @@ html[data-theme='tech'] .kit .chess-sq.is-check {
 .chess .chess-explain p {
   margin: 0.2rem 0;
 }
+
+@media (max-width: 720px) {
+  /* After width:100% so phone chrome (header + rules + controls) can shrink
+     the square instead of clipping the near rank. */
+  .kit .chess-board {
+    width: min(100%, max(220px, var(--board-available-height, 100%)));
+    margin-inline: auto;
+  }
+}
