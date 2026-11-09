@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type CSSProperties } from 'react';
+import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   CELLS,
   FLAG,
@@ -233,6 +233,7 @@ export function JunqiBoard({
   onMove,
   hint,
   deploy,
+  positionKey,
   label = '军棋棋盘',
 }: {
   view: JunqiView;
@@ -241,32 +242,43 @@ export function JunqiBoard({
   onMove?: (m: Move) => void;
   hint?: Move | null;
   deploy?: DeployProps;
+  /** A server position changes on an action, not on presence-only broadcasts. */
+  positionKey?: string | number;
   label?: string;
 }) {
   const ref = useRef<HTMLFieldSetElement>(null);
   useBoardViewport(ref);
   const flip = viewer === 1;
+  const position = positionKey ?? view;
+  const layout = deploy?.layout;
+  const interaction = useMemo(
+    () => ({ position, live, viewer, layout }),
+    [position, live, viewer, layout],
+  );
   const [sel, setSel] = useState<{ key: unknown; cell: number } | null>(null);
-  const [drag, setDrag] = useState<{
+  const [dragState, setDrag] = useState<{
+    key: object;
     slot: number;
     x: number;
     y: number;
     over: number | null;
   } | null>(null);
   const press = useRef<{
+    key: object;
     slot: number;
     x: number;
     y: number;
     moved: boolean;
   } | null>(null);
   const suppressClick = useRef(false);
+  const drag = dragState?.key === interaction ? dragState : null;
   const mySlots = slotsFor(viewer);
   const slotOf = (cell: number) => mySlots.indexOf(cell);
 
   // 布阵时用当前阵型画己方，对方半场显示背面。
   const board = deploy ? deployBoard(view, viewer, deploy.layout) : view.board;
   // 选中状态跟着局面走：换了局面就自动作废。
-  const selKey = deploy ? deploy.layout : view;
+  const selKey = interaction;
   const selected = sel && sel.key === selKey ? sel.cell : null;
   const choose = (cell: number | null) =>
     setSel(cell === null ? null : { key: selKey, cell });
@@ -382,6 +394,7 @@ export function JunqiBoard({
               onPointerDown={(e) => {
                 if (!deploy || !live || !mine || e.button > 0) return;
                 press.current = {
+                  key: interaction,
                   slot: slotOf(i),
                   x: e.clientX,
                   y: e.clientY,
@@ -395,7 +408,7 @@ export function JunqiBoard({
               }}
               onPointerMove={(e) => {
                 const pr = press.current;
-                if (!pr) return;
+                if (!pr || pr.key !== interaction || !deploy || !live) return;
                 if (
                   !pr.moved &&
                   Math.hypot(e.clientX - pr.x, e.clientY - pr.y) < 8
@@ -403,6 +416,7 @@ export function JunqiBoard({
                   return;
                 pr.moved = true;
                 setDrag({
+                  key: interaction,
                   slot: pr.slot,
                   x: e.clientX,
                   y: e.clientY,
@@ -412,7 +426,8 @@ export function JunqiBoard({
               onPointerUp={(e) => {
                 const pr = press.current;
                 press.current = null;
-                if (!pr?.moved) return;
+                if (!pr?.moved || pr.key !== interaction || !deploy || !live)
+                  return;
                 setDrag(null);
                 suppressClick.current = true;
                 // 触屏的 click 可能不触发：稍后自动复位。

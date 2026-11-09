@@ -240,10 +240,12 @@ export function DeployTools({
   layout,
   setLayout,
   children,
+  disabled = false,
 }: {
   layout: Layout;
   setLayout: (l: Layout) => void;
   children?: ReactNode;
+  disabled?: boolean;
 }) {
   const { errors } = checkLayout(layout);
   return (
@@ -251,6 +253,7 @@ export function DeployTools({
       <div className="kit-row">
         <select
           aria-label="预设阵型"
+          disabled={disabled}
           value=""
           onChange={(e) => {
             const p = PRESETS.find((x) => x.id === e.target.value);
@@ -269,6 +272,7 @@ export function DeployTools({
         <button
           type="button"
           data-shortcut="s"
+          disabled={disabled}
           onClick={() => setLayout(randomLayout())}
         >
           <Shuffle size={15} aria-hidden="true" /> 随机布阵
@@ -399,12 +403,15 @@ export function JunqiGame({ fromExplore = false }: { fromExplore?: boolean }) {
     s = deploySide(s, human, layout);
     setHint(null);
     setHintFor(null);
+    setHintError(false);
     setAiError(false);
     setGame({ match: settings, state: s });
   };
   const backToDeploy = () => {
     setGame(null);
     setHint(null);
+    setHintFor(null);
+    setHintError(false);
     setAiError(false);
   };
   const onMove = (m: Move) => {

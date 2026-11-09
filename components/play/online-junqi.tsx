@@ -86,6 +86,7 @@ export function JunqiOnline({
             v={v}
             seat={snap.seat}
             connected={snap.status === 'open'}
+            error={snap.error}
             names={snap.seats.map((s) => s.name)}
             act={(a) =>
               client.act({ ...a, positionRevision: v.positionRevision })
@@ -104,22 +105,52 @@ function Table({
   v,
   seat,
   connected,
+  error,
   names,
   act,
 }: {
   v: JunqiOnlineView;
   seat: number | null;
   connected: boolean;
+  error: string | null;
   names: string[];
   act: (a: Record<string, unknown>) => void;
 }) {
   const g = v.game;
   const viewer: Side = v.you ?? 0;
   const [layout, setLayout] = useState<Layout>(() => PRESETS[0].layout.slice());
-  const canAct = connected && seat !== null && v.you !== null;
   const over = g.phase === 'over';
   const deploying = g.phase === 'deploy' && v.started;
   const myReady = v.you !== null && g.ready[v.you];
+  const [response, setResponse] = useState({ error, epoch: 0 });
+  let rejection = response.epoch;
+  if (response.error !== error) {
+    // Clearing the previous error starts a new request, not its response.
+    if (error !== null) rejection++;
+    setResponse({ error, epoch: rejection });
+  }
+  // An opponent finishing deployment is not an acknowledgement of our own
+  // submission. Keep that request locked until our ready flag or round changes.
+  const acknowledgement = deploying
+    ? `deploy:${v.positionRevision - Number(g.ready[0]) - Number(g.ready[1])}:${myReady}`
+    : `game:${v.positionRevision}:${seat === null ? false : v.rematch[seat]}`;
+  const requestKey = `${acknowledgement}:${connected}:${seat}:${v.you}:${rejection}`;
+  const [request, setRequest] = useState({ key: requestKey, pending: false });
+  const submitted = useRef<typeof request | null>(null);
+  let currentRequest = request;
+  if (request.key !== requestKey) {
+    currentRequest = { key: requestKey, pending: false };
+    setRequest(currentRequest);
+  }
+  const pending = currentRequest.pending;
+  const seated = connected && seat !== null && v.you !== null;
+  const canAct = seated && !pending;
+  const send = (action: Record<string, unknown>) => {
+    if (!canAct || submitted.current === currentRequest) return;
+    submitted.current = currentRequest;
+    setRequest({ key: requestKey, pending: true });
+    act(action);
+  };
   const myTurn = canAct && g.phase === 'play' && g.toPlay === v.you;
   const opp = seat === null ? null : 1 - seat;
   const label = (side: Side) => {
@@ -131,28 +162,30 @@ function Table({
   const last = g.log.at(-1);
   const status = !connected
     ? '连接恢复后可继续操作…'
-    : !v.started
-      ? '等待对手入座…'
-      : deploying
-        ? myReady
-          ? '你已布好阵，等对方布阵…'
-          : g.ready[(1 - viewer) as Side]
-            ? '对方已布好阵，排好后点「布阵完成」'
-            : '布阵：点两枚棋子互换，或拖动交换'
-        : over
-          ? '对局结束'
-          : `${myTurn ? '轮到你' : '等对方行动'}${last ? ` · ${describeEvent(last, viewer)}` : ''}`;
+    : pending
+      ? '已提交，等待确认…'
+      : !v.started
+        ? '等待对手入座…'
+        : deploying
+          ? myReady
+            ? '你已布好阵，等对方布阵…'
+            : g.ready[(1 - viewer) as Side]
+              ? '对方已布好阵，排好后点「布阵完成」'
+              : '布阵：点两枚棋子互换，或拖动交换'
+          : over
+            ? '对局结束'
+            : `${myTurn ? '轮到你' : '等对方行动'}${last ? ` · ${describeEvent(last, viewer)}` : ''}`;
   return (
     <div className="jq-layout">
       <div className="jq-top">
-        {deploying && !myReady && canAct && (
-          <DeployTools layout={layout} setLayout={setLayout}>
+        {deploying && !myReady && seated && (
+          <DeployTools layout={layout} setLayout={setLayout} disabled={pending}>
             <button
               type="button"
               className="kit-primary"
               data-shortcut="k"
-              disabled={bad.errors.length > 0}
-              onClick={() => act({ type: 'deploy', layout })}
+              disabled={pending || bad.errors.length > 0}
+              onClick={() => send({ type: 'deploy', layout })}
             >
               <Swords size={15} aria-hidden="true" /> 布阵完成
             </button>
@@ -164,7 +197,7 @@ function Table({
               type="button"
               disabled={!canAct || g.phase !== 'play'}
               onClick={() => {
-                if (confirm('确定认输吗？')) act({ type: 'resign' });
+                if (confirm('确定认输吗？')) send({ type: 'resign' });
               }}
             >
               <Flag size={15} aria-hidden="true" /> 认输
@@ -201,7 +234,7 @@ function Table({
                     {
                       label: '再来一局（交换红蓝）',
                       primary: true,
-                      onClick: () => act({ type: 'rematch' }),
+                      onClick: () => send({ type: 'rematch' }),
                     },
                   ]
                 : []
@@ -218,9 +251,10 @@ function Table({
           view={g}
           viewer={viewer}
           live={deploying ? canAct && !myReady : myTurn}
-          onMove={(m) => act({ type: 'move', move: m })}
+          positionKey={`${v.positionRevision}:${connected}:${seat}:${rejection}`}
+          onMove={(m) => send({ type: 'move', move: m })}
           deploy={
-            deploying && !myReady
+            deploying && !myReady && v.you !== null
               ? {
                   layout,
                   bad: bad.cells,

@@ -162,4 +162,86 @@ describe('军棋客户端', () => {
     expect(document.querySelectorAll('.jq-piece.is-back')).toHaveLength(25);
     expect(document.querySelectorAll(`.jq-piece.k${FLAG}`)).toHaveLength(1);
   });
+
+  it('cancels hints when the position changes and clears failed hints on a new deployment', async () => {
+    render(<JunqiGame />);
+    fireEvent.click(button(/开战/));
+    fireEvent.click(button('提示'));
+    const hintWorker = latest();
+    fireEvent.click(button(/我方D1 铁路 我方军长/));
+    fireEvent.click(button(/我方D2 行营 空 可走/));
+    const ai = latest();
+    expect(ai).not.toBe(hintWorker);
+    expect(hintWorker.terminated).toBe(true);
+    await reply(hintWorker, firstMove(hintWorker.message!.view));
+    expect(document.querySelectorAll('.is-hint')).toHaveLength(0);
+    expect(screen.getByText('第 1 步')).toBeTruthy();
+    await reply(ai, firstMove(ai.message!.view));
+    fireEvent.click(button('提示'));
+    await reply(latest(), { from: -1, to: 99 });
+    expect(screen.getByText('提示计算失败，请重试')).toBeTruthy();
+    fireEvent.click(button('重新布阵'));
+    expect(screen.queryByText('提示计算失败，请重试')).toBeNull();
+    fireEvent.click(button(/开战/));
+    expect(screen.queryByText('提示计算失败，请重试')).toBeNull();
+  });
+
+  it('only completes a deployment drag in the same connected layout generation', () => {
+    const onSwap = vi.fn();
+    const v = maskFor(newGame(), 0);
+    const layout = PRESETS[0].layout.slice();
+    const props = {
+      view: v,
+      viewer: 0 as const,
+      live: true,
+      positionKey: '0:open',
+      deploy: { layout, bad: [], onSwap },
+    };
+    const rendered = render(<JunqiBoard {...props} />);
+    const source = button(/我方B6 大本营 我方军旗/);
+    const target = button(/我方A6 兵站 我方地雷/);
+    const originalHit = Object.getOwnPropertyDescriptor(
+      document,
+      'elementFromPoint',
+    );
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => target,
+    });
+    const begin = () => {
+      fireEvent.pointerDown(source, {
+        pointerId: 1,
+        button: 0,
+        clientX: 10,
+        clientY: 10,
+      });
+      fireEvent.pointerMove(source, { pointerId: 1, clientX: 60, clientY: 60 });
+    };
+    const end = () =>
+      fireEvent.pointerUp(source, { pointerId: 1, clientX: 60, clientY: 60 });
+    begin();
+    end();
+    expect(onSwap).toHaveBeenCalledTimes(1);
+    onSwap.mockClear();
+    begin();
+    rendered.rerender(
+      <JunqiBoard {...props} live={false} positionKey="0:offline" />,
+    );
+    expect(document.querySelector('.is-floating')).toBeNull();
+    rendered.rerender(<JunqiBoard {...props} />);
+    end();
+    expect(onSwap).not.toHaveBeenCalled();
+    begin();
+    rendered.rerender(
+      <JunqiBoard
+        {...props}
+        deploy={{ ...props.deploy, layout: PRESETS[1].layout.slice() }}
+      />,
+    );
+    end();
+    expect(onSwap).not.toHaveBeenCalled();
+    if (originalHit)
+      Object.defineProperty(document, 'elementFromPoint', originalHit);
+    else Reflect.deleteProperty(document, 'elementFromPoint');
+  });
 });

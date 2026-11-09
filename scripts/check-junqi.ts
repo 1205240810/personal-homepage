@@ -591,7 +591,8 @@ o = (
   m.act(
     o,
     1,
-    { type: 'deploy', layout: PRESETS[1].layout, positionRevision: -5 },
+    // 对方先提交造成一次更新；本局开始时的版本仍可并发提交。
+    { type: 'deploy', layout: PRESETS[1].layout, positionRevision: 0 },
     rng,
     0,
   ) as Loose

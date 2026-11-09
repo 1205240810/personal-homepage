@@ -105,10 +105,18 @@ export const junqiOnline: GameModule<JunqiOnlineState, JunqiOnlineOptions> = {
     };
     switch (a.type) {
       case 'deploy': {
-        // 布阵不看版本号：对方先布好阵不该让你的提交失效。
         if (!s.started) return { error: '等对手入座后再布阵' };
         if (s.game.phase !== 'deploy') return { error: '已经开战' };
         if (s.game.ready[me]) return { error: '你已经布好阵了' };
+        // 双方可以同时提交；仅容许对方本局布阵造成的一次版本更新，
+        // 不能把上一局延迟送达的阵型应用到已经交换红蓝的新局。
+        const beforeOpponent =
+          s.positionRevision - Number(s.game.ready[(1 - me) as Side]);
+        if (
+          a.positionRevision !== s.positionRevision &&
+          a.positionRevision !== beforeOpponent
+        )
+          return { error: '棋局已更新，请核对后重新操作' };
         const layout = parseLayout(a.layout);
         if (!layout) return { error: '布阵数据无效' };
         try {
@@ -136,6 +144,8 @@ export const junqiOnline: GameModule<JunqiOnlineState, JunqiOnlineOptions> = {
         if (s.game.phase !== 'play') return { error: '现在不能认输' };
         return { state: bump(resign(s.game, me)) };
       case 'rematch': {
+        if (a.positionRevision !== s.positionRevision)
+          return { error: '棋局已更新，请核对后重新操作' };
         if (!over) return { error: '对局还没结束' };
         const rematch: [boolean, boolean] = [...s.rematch];
         rematch[seat as Seat] = true;
