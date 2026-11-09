@@ -48,7 +48,7 @@ export function StudGame({onExit,onComplete,persist=true,className='',globalKeyb
  const opening=g.phase==='ready'&&g.hand===0;
  const raisePaid=Math.max(0,amount-g.paid[0]),matchedPot=g.pot+raisePaid+Math.max(0,amount-g.paid[1]);
  const playerReviews=g.reviews.filter(r=>r.seat===0),aiReviews=g.reviews.filter(r=>r.seat===1);
- return <div className={`stud-game ${['ready','complete'].includes(g.phase)?'st-lobby ':''}${className}`} ref={root} tabIndex={-1}>
+ return <div className={`stud-game ${!paused&&['ready','complete'].includes(g.phase)?'st-lobby ':''}${className}`} ref={root} tabIndex={-1}>
  <div className="st-grain" aria-hidden="true"/><header className="st-header"><div className="st-brand"><span className="st-brand-mark">Ⅴ</span><div><h1>绯夜<span>五张梭哈</span></h1><p>THE VELVET ROOM · FIVE-CARD STUD</p></div></div><nav aria-label="游戏菜单">{onExit&&<button onClick={onExit} title="返回游戏室" aria-label="返回游戏室">←</button>}<button onClick={()=>showModal('rules')}>规则</button><button onClick={()=>showModal('settings')}>设置</button><button onClick={()=>setPaused(!paused)} aria-pressed={paused}>{paused?'继续':'暂停'}</button></nav></header>
  <div className="st-session"><span><i/> 双人对局</span><span>第 <b>{Math.min(g.hand||1,10)}</b> / 10 手</span><span>{difficulty==='easy'?'轻松':'标准'} AI · {PERSONALITIES[personality].label}</span><button onClick={()=>showModal('confirm')}>新对局 ↗</button></div>
  {saveFailed&&<p className="st-save-warning" role="status">浏览器未能保存进度；请保持本页打开，刷新可能丢失本局。</p>}
