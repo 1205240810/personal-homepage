@@ -19,6 +19,16 @@
   --arcade-muted: #b9a9a8;
   --arcade-rule: #f2dfc02b;
 }
+/* Keep the shared rules bar below Stud's isolated settings/confirmation layer. */
+.standalone-room-stud:has(.st-modal-shade) > .game-rules-bar {
+  z-index: 0;
+}
+@media (max-width: 760px) {
+  /* Reserve the pinned lobby action's space after the host footer as well. */
+  .standalone-room-stud:has(.st-lobby) > .standalone-room-footer {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+}
 .standalone-room-footer {
   display: flex;
   align-items: center;

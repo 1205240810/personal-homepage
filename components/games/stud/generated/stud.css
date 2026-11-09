@@ -20,3 +20,20 @@
 .stud-game .st-streets li.st-now{border-color:var(--gold);background:#d9b77926;color:#f3dcae;box-shadow:0 0 0 1px #d9b77955}
 .stud-game .st-streets li.st-now small{color:#efe6d5}
 @media (max-width:520px){.stud-game .st-streets li{min-width:40px;padding:4px 5px}.stud-game .st-streets>strong{font-size:12px}}
+
+/* Mobile lobby: keep 入席 / 下一手 above the fold after the shared rules bar. */
+@media (max-width: 760px) {
+  .stud-game.st-lobby {
+    padding-bottom: 84px;
+  }
+  .stud-game.st-lobby .st-end-panel .st-primary {
+    position: fixed;
+    left: max(14px, env(safe-area-inset-left, 0px));
+    right: max(14px, env(safe-area-inset-right, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    width: auto;
+    min-height: 52px;
+    box-shadow: 0 12px 36px #000a, 0 0 0 1px #d9b77955;
+  }
+}
