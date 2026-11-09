@@ -364,12 +364,14 @@ export function applyMove(s: JunqiState, m: Move): JunqiState {
   board[m.from] = null;
   const flags: Side[] = [];
   const flagShown: [boolean, boolean] = [...s.flagShown];
-  if (outcome === 'move' || outcome === 'win' || outcome === 'flag')
+  const bombTookFlag = outcome === 'flag' && a.k === BOMB;
+  if (bombTookFlag) board[m.to] = null;
+  else if (outcome === 'move' || outcome === 'win' || outcome === 'flag')
     board[m.to] = a;
   else if (outcome === 'both') board[m.to] = null;
   // lose：防守方留在原地。
   const died: Piece[] = [];
-  if (outcome === 'lose' || outcome === 'both') died.push(a);
+  if (outcome === 'lose' || outcome === 'both' || bombTookFlag) died.push(a);
   if (d && outcome !== 'lose') died.push(d);
   for (const p of died)
     if (p.k === SI && !flagShown[p.s]) {

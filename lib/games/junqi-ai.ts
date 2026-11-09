@@ -193,7 +193,8 @@ export function inferBelief(view: JunqiView, me: Side): Belief {
 
 /** 按数量约束随机抽一份完整的对方阵容（id → 种类）。 */
 export function sampleKinds(b: Belief, rng: () => number): Map<number, Kind> {
-  for (let attempt = 0; attempt < 60; attempt++) {
+  // 常见局面保留按剩余数量加权的快速抽样，避免改变各档原有的分布。
+  for (let attempt = 0; attempt < 50; attempt++) {
     const left = KINDS.map((k) => COUNTS[k]);
     const order = b.ids
       .map((id) => ({ id, n: popcount(b.masks.get(id)!), r: rng() }))
@@ -201,9 +202,9 @@ export function sampleKinds(b: Belief, rng: () => number): Map<number, Kind> {
     const out = new Map<number, Kind>();
     let ok = true;
     for (const { id } of order) {
-      const m = attempt < 50 ? b.masks.get(id)! : ALL;
+      const mask = b.masks.get(id)!;
       let total = 0;
-      for (const k of KINDS) if (m & bit(k)) total += left[k];
+      for (const k of KINDS) if (mask & bit(k)) total += left[k];
       if (!total) {
         ok = false;
         break;
@@ -211,7 +212,7 @@ export function sampleKinds(b: Belief, rng: () => number): Map<number, Kind> {
       let pick = rng() * total;
       let chosen: Kind = 0;
       for (const k of KINDS)
-        if (m & bit(k) && left[k]) {
+        if (mask & bit(k) && left[k]) {
           pick -= left[k];
           chosen = k;
           if (pick < 0) break;
@@ -221,7 +222,42 @@ export function sampleKinds(b: Belief, rng: () => number): Map<number, Kind> {
     }
     if (ok) return out;
   }
-  throw new Error('无法抽样');
+  // 每枚军棋对应一个数量名额。增广路会重排之前的选择，避免贪心卡住后
+  // 丢弃约束，把已亮出的军旗或已移动的棋子抽成不可能的身份。
+  const kinds = KINDS.flatMap((k) => Array<Kind>(COUNTS[k]).fill(k));
+  const order = b.ids
+    .map((id) => ({ id, n: popcount(b.masks.get(id) ?? 0), r: rng() }))
+    .sort((p, q) => p.n - q.n || p.r - q.r);
+  const candidates = new Map<number, number[]>();
+  for (const { id } of order) {
+    const mask = b.masks.get(id) ?? 0;
+    const slots = kinds.flatMap((k, i) => (mask & bit(k) ? [i] : []));
+    for (let i = slots.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [slots[i], slots[j]] = [slots[j], slots[i]];
+    }
+    candidates.set(id, slots);
+  }
+  const owners: (number | undefined)[] = Array(kinds.length).fill(undefined);
+  const assign = (id: number, seen: Set<number>): boolean => {
+    for (const slot of candidates.get(id)!) {
+      if (seen.has(slot)) continue;
+      seen.add(slot);
+      const owner = owners[slot];
+      if (owner === undefined || assign(owner, seen)) {
+        owners[slot] = id;
+        return true;
+      }
+    }
+    return false;
+  };
+  for (const { id } of order)
+    if (!assign(id, new Set())) throw new Error('无法按已知信息抽样');
+  const out = new Map<number, Kind>();
+  owners.forEach((id, slot) => {
+    if (id !== undefined) out.set(id, kinds[slot]);
+  });
+  return out;
 }
 function popcount(m: number) {
   let n = 0;
@@ -317,7 +353,7 @@ function sim(
   }
   const o = resolve(a.k, d.k);
   if (o === 'flag') {
-    next[m.to] = a;
+    next[m.to] = a.k === BOMB ? null : a;
     return { board: next, flag: true, gain: FLAG_GAIN };
   }
   if (o === 'win') next[m.to] = a;
@@ -480,7 +516,7 @@ export function chooseJunqiMove(
   const last = [...view.log].reverse().find((e) => e.side === me);
   const sums = new Float64Array(moves.length);
   let n = 0;
-  while (n < spec.samples && (n < 2 || now() - t0 < spec.ms)) {
+  sampling: while (n < spec.samples && now() - t0 < spec.ms) {
     const kinds = sampleKinds(belief, rng);
     const board: Board = view.board.map((p) =>
       !p
@@ -490,14 +526,16 @@ export function chooseJunqiMove(
           : { s: opp, k: kinds.get(p.id) ?? ENG, id: p.id },
     );
     const oppView = spec.model ? opponentBelief(view, me, kinds) : null;
+    const scores = new Float64Array(moves.length);
     for (let mi = 0; mi < moves.length; mi++) {
+      if (now() - t0 >= spec.ms) break sampling;
       const r = sim(board, moves[mi]);
       if (r.flag) {
-        sums[mi] += WIN;
+        scores[mi] = WIN;
         continue;
       }
       if (spec.depth === 1) {
-        sums[mi] += leaf(r.board, me, opp, spec, flagW);
+        scores[mi] = leaf(r.board, me, opp, spec, flagW);
         continue;
       }
       // 两步：对方在这份抽样局面里的应着。
@@ -508,6 +546,7 @@ export function chooseJunqiMove(
       let modelVal = Infinity;
       let quietWorst = Infinity;
       for (const rep of replies) {
+        if (now() - t0 >= spec.ms) break sampling;
         const r2 = sim(r.board, rep);
         const v = r2.flag ? -WIN : leaf(r2.board, me, me, spec, flagW);
         if (v < worst) worst = v;
@@ -533,10 +572,13 @@ export function chooseJunqiMove(
               : quietWorst;
         worst = 0.35 * worst + 0.65 * Math.min(believed, quietWorst);
       }
-      sums[mi] += worst;
+      scores[mi] = worst;
     }
+    // 只计入完整一轮，不能让排在前面的候选多拿一份未完成样本的分数。
+    for (let mi = 0; mi < moves.length; mi++) sums[mi] += scores[mi];
     n++;
   }
+  if (!n) return { move: moves[0], score: 0, samples: 0 };
   let best = 0;
   let bestScore = -Infinity;
   for (let mi = 0; mi < moves.length; mi++) {

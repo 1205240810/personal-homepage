@@ -5,10 +5,12 @@ import {
   BOMB,
   CAMP,
   CELLS,
+  COUNTS,
   ENG,
   FLAG,
   HQ,
   JUN,
+  KINDS,
   LIAN,
   MINE,
   PAI,
@@ -46,6 +48,7 @@ import {
   chooseJunqiMove,
   inferBelief,
   marginals,
+  sampleKinds,
   type JunqiLevel,
 } from '../lib/games/junqi-ai.ts';
 import {
@@ -238,6 +241,22 @@ assert.equal(resolve(SI, MINE), 'lose');
 assert.equal(resolve(BOMB, MINE), 'both');
 assert.equal(resolve(PAI, FLAG), 'flag');
 {
+  // 炸弹炸掉军旗仍然获胜，但遵守炸弹与任何棋子交战都一同移除的规则。
+  const s = position([
+    [at(0, 0), 0, BOMB],
+    [at(1, 0), 1, FLAG],
+    [at(1, 11), 0, FLAG],
+    [at(4, 5), 1, PAI],
+  ]);
+  const over = play(s, { from: at(0, 0), to: at(1, 0) });
+  assert.equal(over.phase, 'over');
+  assert.equal(over.winner, 0);
+  assert.equal(over.reason, 'flag');
+  assert.equal(over.log.at(-1)?.outcome, 'flag');
+  assert.equal(over.board[at(0, 0)], null);
+  assert.equal(over.board[at(1, 0)], null);
+}
+{
   // 撞雷：地雷留在原地，进攻方阵亡。
   let s = position([
     [at(2, 6), 0, SHI],
@@ -399,6 +418,51 @@ assert.equal(resolve(PAI, FLAG), 'flag');
 }
 
 // ---- AI：会护旗、会拿炸弹换大子、会用工兵排雷 ----
+{
+  // 已知身份和数量都必须保留，即使一次贪心选择会占掉后续棋子的唯一名额。
+  const ids = slotsFor(1);
+  const known = KINDS.flatMap((k) => Array<Kind>(COUNTS[k]).fill(k));
+  for (const k of [ENG, PAI, LIAN] as Kind[]) known.splice(known.indexOf(k), 1);
+  const masks = new Map(ids.slice(0, 22).map((id, i) => [id, 1 << known[i]]));
+  masks.set(ids[22], (1 << ENG) | (1 << PAI));
+  masks.set(ids[23], (1 << PAI) | (1 << LIAN));
+  masks.set(ids[24], (1 << PAI) | (1 << LIAN));
+  const belief = { ids, masks, alive: new Map<number, number>() };
+  for (const rng of [() => 0, () => 0.99, seeded(73)]) {
+    const sample = sampleKinds(belief, rng);
+    assert.equal(sample.size, 25);
+    for (const [id, kind] of sample)
+      assert.ok(masks.get(id)! & (1 << kind), '抽样不能丢掉已知身份约束');
+    for (const kind of KINDS)
+      assert.equal([...sample.values()].filter((k) => k === kind).length, COUNTS[kind]);
+    assert.equal(sample.get(ids[22]), ENG, '剩余两枚只能是排长和连长，必须保留工兵名额');
+  }
+  const impossible = new Map(masks);
+  impossible.set(ids[22], 1 << SI);
+  assert.throws(
+    () => sampleKinds({ ...belief, masks: impossible }, seeded(73)),
+    /无法按已知信息抽样/,
+    '不一致信息不能静默退回全未知阵型',
+  );
+}
+{
+  const s = deploy(deploy(newGame(), 0, PRESETS[0].layout), 1, PRESETS[1].layout);
+  for (const level of [1, 2, 3, 4, 5] as JunqiLevel[]) {
+    for (const freeChecks of [1, 3]) {
+      let calls = 0;
+      const result = chooseJunqiMove(
+        maskFor(s, 0),
+        level,
+        seeded(99),
+        () => (calls++ < freeChecks ? 0 : JUNQI_LEVELS[level].ms),
+      );
+      assert.ok(isLegal(s, result.move), '预算用尽仍返回合法着法');
+      assert.ok(Number.isFinite(result.score), '未完成第一轮时不能出现 NaN 或无穷分数');
+      assert.equal(result.samples, 0, '不完整样本不参与候选平均分');
+      assert.ok(calls <= freeChecks + 1, '候选或应着边界及时停止，不能强制跑两轮');
+    }
+  }
+}
 {
   // 对方一子贴到我方军旗旁：AI（红）必须吃掉它。
   const s = position(
