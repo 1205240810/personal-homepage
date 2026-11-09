@@ -9,6 +9,7 @@ import ExpeditionPage from '../../../app/games/expedition/online/page';
 import BazaarPage from '../../../app/games/bazaar/online/page';
 import GlazePage from '../../../app/games/glaze/online/page';
 import BrocadePage from '../../../app/games/brocade/online/page';
+import JunqiPage from '../../../app/games/junqi/online/page';
 
 vi.mock('../../../components/play/use-room', () => ({
   useRoom: () => [
@@ -43,6 +44,7 @@ describe('online game return navigation', () => {
     ['bazaar', BazaarPage],
     ['glaze', GlazePage],
     ['brocade', BrocadePage],
+    ['junqi', JunqiPage],
   ] as const) {
     for (const fromExplore of [false, true]) {
       it(`${game} ${fromExplore ? 'preserves the explore return path' : 'keeps direct visits untagged'}`, async () => {

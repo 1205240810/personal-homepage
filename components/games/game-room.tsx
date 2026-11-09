@@ -938,6 +938,50 @@ function BrocadePreview() {
   );
 }
 
+function JunqiPreview() {
+  const pieces: [number, number, string, string][] = [
+    [0, 0, 'b', ''],
+    [2, 0, 'b', ''],
+    [4, 0, 'b', ''],
+    [1, 1, 'b', ''],
+    [3, 1, 'r', '工兵'],
+    [0, 2, 'r', '师长'],
+    [2, 2, 'r', '司令'],
+    [4, 2, 'r', '炸弹'],
+  ];
+  return (
+    <div className="room-junqi-preview" aria-hidden="true">
+      <div className="room-preview-top">
+        <span>JUNQI / 5×12</span>
+        <span>5 LEVELS</span>
+      </div>
+      <div className="room-jq-board">
+        <b className="rail h" style={{ top: '18%' }} />
+        <b className="rail h" style={{ top: '82%' }} />
+        <b className="rail v" style={{ left: '10%' }} />
+        <b className="rail v" style={{ left: '90%' }} />
+        <em className="front">山 界</em>
+        {pieces.map(([x, y, s, k]) => (
+          <i
+            key={`${x}${y}`}
+            className={s}
+            style={{
+              left: `${x * 20 + 2}%`,
+              top: `${y * 30 + (y > 1 ? 14 : 4)}%`,
+            }}
+          >
+            {k}
+          </i>
+        ))}
+      </div>
+      <div className="room-preview-bottom">
+        <span>布阵 · 铁路 · 裁判判子</span>
+        <span>人机 · 联机</span>
+      </div>
+    </div>
+  );
+}
+
 const previews = {
   'holdem-lab': HoldemPreview,
   blackjack: BlackjackPreview,
@@ -966,6 +1010,7 @@ const previews = {
   bazaar: BazaarPreview,
   glaze: GlazePreview,
   brocade: BrocadePreview,
+  junqi: JunqiPreview,
 };
 
 const ONLINE = GAMES.filter((game) => game.online);

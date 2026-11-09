@@ -24,6 +24,7 @@ export type GameId =
   | 'gomoku'
   | 'hanami'
   | 'quoridor'
+  | 'junqi'
   | 'expedition'
   | 'bazaar'
   | 'glaze'
@@ -323,6 +324,23 @@ export const GAMES: readonly GameDefinition[] = [
       title: '步步为营联机',
       format: '1 对 1',
       pitch: '服务器校验每一步与每块墙，再局交换先后手。',
+    },
+  },
+  {
+    id: 'junqi',
+    title: '军棋',
+    description:
+      '两人陆战棋：先布阵，再沿公路与铁路调兵，工兵能在铁路上拐弯，行营里不能被攻击。暗棋由裁判只报胜负，夺下军旗或让对方无子可动即胜。五档 AI，也能联机。',
+    href: '/games/junqi',
+    category: '棋类对弈',
+    controls:
+      '布阵时点两子互换或拖动；对局中点己方棋子，再点绿点走棋、红框进攻',
+    estimatedDuration: '一局约 15–30 分钟',
+    online: {
+      href: '/games/junqi/online',
+      title: '军棋联机',
+      format: '1 对 1',
+      pitch: '各自布阵，服务器保管真实阵型当裁判，只公布交战胜负。',
     },
   },
   {
