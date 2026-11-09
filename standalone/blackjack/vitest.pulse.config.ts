@@ -31,6 +31,8 @@ export default defineConfig({
       'qa/hanami.check.tsx',
       'qa/quoridor.check.tsx',
       'qa/online-quoridor.check.tsx',
+      'qa/junqi.check.tsx',
+      'qa/online-junqi.check.tsx',
       'qa/expedition.check.tsx',
       'qa/bazaar.check.tsx',
       'qa/glaze.check.tsx',

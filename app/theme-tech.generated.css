@@ -790,6 +790,34 @@ html[data-theme='tech'] .room-bc-row .c4 {
     background: #0f1f2e;
     color: #93a8bc
 }
+html[data-theme='tech'] .room-junqi-preview {
+    border: 1px solid rgb(124 199 223 / 0.45);
+    color: #93a8bc;
+    background: linear-gradient(180deg, #0a1520, #0f1f2e)
+}
+html[data-theme='tech'] .room-jq-board {
+    background: linear-gradient(160deg, #0f1f2e, #0f1f2e)
+}
+html[data-theme='tech'] .room-jq-board b {
+    background: repeating-linear-gradient(90deg, #3b2614 0 2px, transparent 2px 7px),
+    #0f1f2e
+}
+html[data-theme='tech'] .room-jq-board b.v {
+    background: repeating-linear-gradient(180deg, #3b2614 0 2px, transparent 2px 7px),
+    #0f1f2e
+}
+html[data-theme='tech'] .room-jq-board .front {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-jq-board i {
+    background: linear-gradient(180deg, #0a1520, #0f1f2e)
+}
+html[data-theme='tech'] .room-jq-board i.r {
+    color: #7cc7df
+}
+html[data-theme='tech'] .room-jq-board i.b {
+    background: linear-gradient(180deg, #0f1f2e, #0f1f2e)
+}
 /*  components/games/mech-sweeper.css  */
 html[data-theme='tech'] .sweeper-stage {
     border: 1px solid var(--line, rgb(124 199 223 / 0.45));

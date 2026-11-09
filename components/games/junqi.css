@@ -1,0 +1,696 @@
+/* 军棋：纸面主题是刻线的枫木棋盘 + 凸起的木牌棋子（红字 / 黛蓝字）；
+   科技主题是深色作战沙盘 + 发光铁路与玻璃棋牌。 */
+.junqi {
+  --jq-slab-hi: #e2c18c;
+  --jq-slab: #cfa66b;
+  --jq-slab-lo: #b88a52;
+  --jq-ink: #4a2f17;
+  --jq-rail: #3b2614;
+  --jq-rail-gap: #e8cc98;
+  --jq-camp: rgb(255 246 222 / 0.32);
+  --jq-hq: rgb(120 70 30 / 0.16);
+  --jq-front: rgb(92 58 24 / 0.13);
+  --jq-wood-hi: #fbefd4;
+  --jq-wood: #ecd3a6;
+  --jq-wood-lo: #cfab73;
+  --jq-wood-edge: #8f6a3c;
+  --jq-s0: #a6281f;
+  --jq-s1: #1d355c;
+  --jq-target: #2f7a3d;
+  --jq-attack: #b3261e;
+  --jq-hint: #2563eb;
+  --jq-scene: #efe6d2;
+  --jq-contour: rgb(120 96 60 / 0.09);
+}
+html[data-theme='tech'] .junqi {
+  --jq-slab-hi: #10283b;
+  --jq-slab: #0b1d2c;
+  --jq-slab-lo: #07131e;
+  --jq-ink: #4f8fa8;
+  --jq-rail: #7cc7df;
+  --jq-rail-gap: #0b1d2c;
+  --jq-camp: rgb(124 199 223 / 0.08);
+  --jq-hq: rgb(240 168 104 / 0.08);
+  --jq-front: rgb(124 199 223 / 0.06);
+  --jq-wood-hi: #1a3248;
+  --jq-wood: #12263a;
+  --jq-wood-lo: #0c1b2b;
+  --jq-wood-edge: #04101a;
+  --jq-s0: #ff9a62;
+  --jq-s1: #7cc7df;
+  --jq-target: #5ef2a0;
+  --jq-attack: #ff7a7a;
+  --jq-hint: #b9a4ff;
+  --jq-scene: #08121c;
+  --jq-contour: rgb(124 199 223 / 0.07);
+}
+
+/* ---- 场景与棋盘 ---- */
+.jq-scene {
+  position: relative;
+  padding: 12px 8px;
+  border-radius: var(--radius-md, 10px);
+  background:
+    repeating-radial-gradient(
+      circle at 18% 22%,
+      transparent 0 22px,
+      var(--jq-contour) 22px 23px
+    ),
+    repeating-radial-gradient(
+      circle at 84% 78%,
+      transparent 0 30px,
+      var(--jq-contour) 30px 31px
+    ),
+    var(--jq-scene);
+}
+.jq-board {
+  position: relative;
+  container-type: inline-size;
+  box-sizing: border-box;
+  /* 整块棋盘要能放进一屏：按可视高度（svh）缩放。 */
+  width: min(100%, 560px, max(240px, calc((100svh - 40px) * 500 / 756)));
+  aspect-ratio: 500 / 756;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.4) inset,
+    0 22px 44px -24px rgb(50 28 8 / 0.75),
+    0 3px 0 var(--jq-wood-edge);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+html[data-theme='tech'] .jq-board {
+  box-shadow:
+    0 0 0 1px rgb(124 199 223 / 0.35),
+    0 0 36px -12px rgb(124 199 223 / 0.45);
+}
+.jq-board > * {
+  position: absolute;
+}
+.jq-art {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+}
+.junqi .jq-art {
+  background: radial-gradient(
+    130% 80% at 30% 12%,
+    var(--jq-slab-hi),
+    var(--jq-slab) 55%,
+    var(--jq-slab-lo)
+  );
+}
+.jq-slab {
+  fill: transparent;
+}
+html[data-theme='tech'] .jq-grain {
+  display: none;
+}
+.jq-groove {
+  fill: none;
+  stroke: var(--jq-ink);
+  stroke-opacity: 0.55;
+  stroke-width: 2;
+}
+.jq-front rect {
+  fill: var(--jq-front);
+}
+.jq-ridge {
+  fill: var(--jq-ink);
+  opacity: 0.16;
+}
+.jq-front-word {
+  fill: var(--jq-ink);
+  opacity: 0.62;
+  font:
+    600 25px / 1 'Songti SC',
+    'STSong',
+    'Noto Serif SC',
+    'Source Han Serif SC',
+    serif;
+  letter-spacing: 0.3em;
+  text-anchor: middle;
+}
+.jq-road {
+  stroke: var(--jq-ink);
+  stroke-opacity: 0.7;
+  stroke-width: 2;
+}
+.jq-rail-bed {
+  stroke: var(--jq-rail);
+  stroke-width: 9;
+  stroke-linecap: square;
+}
+.jq-rail-gap {
+  stroke: var(--jq-rail-gap);
+  stroke-width: 4.2;
+  stroke-linecap: square;
+}
+.jq-rail-tie {
+  stroke: var(--jq-rail);
+  stroke-width: 9;
+  stroke-dasharray: 2.4 9;
+  opacity: 0.9;
+}
+html[data-theme='tech'] .jq-rail-bed {
+  filter: drop-shadow(0 0 3px rgb(124 199 223 / 0.6));
+}
+.jq-station {
+  fill: rgb(255 255 255 / 0.08);
+  stroke: var(--jq-ink);
+  stroke-opacity: 0.55;
+  stroke-width: 1.6;
+}
+html[data-theme='tech'] .jq-station {
+  fill: rgb(124 199 223 / 0.04);
+}
+.jq-camp circle {
+  fill: var(--jq-camp);
+  stroke: var(--jq-ink);
+  stroke-width: 2.4;
+}
+.jq-camp circle.inner {
+  fill: none;
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  stroke-opacity: 0.7;
+}
+.jq-hq path {
+  fill: var(--jq-hq);
+  stroke: var(--jq-ink);
+  stroke-width: 2.6;
+}
+html[data-theme='tech'] .jq-hq path {
+  stroke: #f0a868;
+  stroke-opacity: 0.7;
+}
+.jq-hq-word {
+  fill: var(--jq-ink);
+  font:
+    700 9.5px / 1 system-ui,
+    sans-serif;
+  letter-spacing: 0.25em;
+  text-anchor: middle;
+  opacity: 0.8;
+}
+
+/* ---- 格子（点击区） ---- */
+.kit .jq-cell {
+  z-index: 4;
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  box-shadow: none;
+  cursor: default;
+}
+.kit .jq-cell:hover:not(:disabled) {
+  border-color: transparent;
+}
+.kit .jq-cell:not([aria-disabled]) {
+  cursor: pointer;
+}
+.jq-board.is-deploy .jq-cell:not([aria-disabled]) {
+  touch-action: none;
+  cursor: grab;
+}
+.kit .jq-cell:focus-visible {
+  outline: 2px solid var(--games-accent, #a34e2b);
+  outline-offset: -4px;
+}
+.kit .jq-cell.is-target::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 3.2cqw;
+  height: 3.2cqw;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--jq-target);
+  box-shadow: 0 0 0 0.9cqw color-mix(in srgb, var(--jq-target) 22%, transparent);
+  animation: jq-pulse 1.4s ease-in-out infinite;
+}
+.kit .jq-cell.is-attack::after {
+  content: '';
+  position: absolute;
+  inset: 12% 8%;
+  border-radius: 8px;
+  border: 2px solid var(--jq-attack);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--jq-attack) 20%, transparent);
+  animation: jq-pulse 1.4s ease-in-out infinite;
+}
+.kit .jq-cell.is-hint::before {
+  content: '';
+  position: absolute;
+  inset: 6% 4%;
+  border-radius: 9px;
+  border: 2px dashed var(--jq-hint);
+}
+.kit .jq-cell.is-bad::before {
+  content: '';
+  position: absolute;
+  inset: 10% 6%;
+  border-radius: 8px;
+  border: 2px solid var(--kit-bad);
+  animation: jq-pulse 1s ease-in-out infinite;
+}
+.kit .jq-cell.is-over::before {
+  content: '';
+  position: absolute;
+  inset: 8% 5%;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--jq-target) 18%, transparent);
+  border: 2px solid var(--jq-target);
+}
+@keyframes jq-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---- 棋子：凸起的木牌 ---- */
+.jq-piece {
+  z-index: 3;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  border-radius: 7px / 8px;
+  pointer-events: none;
+  color: var(--c);
+  background: linear-gradient(
+    180deg,
+    var(--jq-wood-hi),
+    var(--jq-wood) 46%,
+    var(--jq-wood-lo)
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.75),
+    inset 0 -2px 0 rgb(0 0 0 / 0.14),
+    0 2px 0 var(--jq-wood-edge),
+    0 5px 8px -2px rgb(40 20 5 / 0.45);
+  transition:
+    left 300ms var(--ease, ease),
+    top 300ms var(--ease, ease),
+    translate 160ms var(--ease, ease),
+    box-shadow 160ms var(--ease, ease);
+}
+.jq-piece.s0 {
+  --c: var(--jq-s0);
+}
+.jq-piece.s1 {
+  --c: var(--jq-s1);
+}
+.jq-piece::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+.jq-piece b {
+  position: relative;
+  font:
+    800 4.5cqw / 1 'Songti SC',
+    'STSong',
+    'Noto Serif SC',
+    'Source Han Serif SC',
+    serif;
+  letter-spacing: 0.06em;
+  color: var(--c);
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 0.7),
+    0 -1px 0 rgb(0 0 0 / 0.18);
+}
+.jq-piece.k0 b,
+.jq-piece.k1 b,
+.jq-piece.k2 b {
+  letter-spacing: 0.12em;
+}
+html[data-theme='tech'] .jq-piece {
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 0 10px -2px color-mix(in srgb, var(--c) 55%, transparent),
+    0 4px 8px -3px rgb(0 0 0 / 0.6);
+}
+html[data-theme='tech'] .jq-piece::before {
+  border-color: color-mix(in srgb, var(--c) 22%, transparent);
+  box-shadow: none;
+}
+html[data-theme='tech'] .jq-piece b {
+  text-shadow: 0 0 6px color-mix(in srgb, var(--c) 70%, transparent);
+}
+/* 暗子：素面木牌，只刻一枚小星徽。 */
+.jq-piece.is-back {
+  background:
+    repeating-linear-gradient(
+      100deg,
+      rgb(255 255 255 / 0.06) 0 2px,
+      transparent 2px 7px
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--c) 10%, var(--jq-wood-hi)),
+      color-mix(in srgb, var(--c) 16%, var(--jq-wood)) 50%,
+      color-mix(in srgb, var(--c) 22%, var(--jq-wood-lo))
+    );
+}
+.jq-seal {
+  width: 3.8cqw;
+  height: 3.8cqw;
+  background: color-mix(in srgb, var(--c) 62%, transparent);
+  clip-path: polygon(
+    50% 0,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.5));
+}
+.jq-piece.is-selected {
+  translate: 0 -4px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.75),
+    0 0 0 2px var(--games-accent, #a34e2b),
+    0 6px 0 var(--jq-wood-edge),
+    0 12px 16px -4px rgb(40 20 5 / 0.45);
+}
+.jq-piece.is-exposed {
+  box-shadow:
+    0 0 0 2px #d4a017,
+    0 0 16px 2px rgb(212 160 23 / 0.6);
+}
+.jq-piece.is-fixed b {
+  opacity: 0.88;
+}
+.jq-piece.is-lifted {
+  opacity: 0.35;
+}
+.jq-piece.is-floating {
+  position: fixed;
+  z-index: 60;
+  width: 62px;
+  height: 34px;
+  translate: -50% -60%;
+  transition: none;
+  scale: 1.08;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.75),
+    0 14px 22px -6px rgb(40 20 5 / 0.55);
+}
+.jq-piece.is-floating b {
+  font-size: 16px;
+}
+
+/* ---- 上一步与交战反馈 ---- */
+.jq-trace {
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 50%;
+}
+.jq-trace.is-from {
+  border: 2px dashed
+    color-mix(in srgb, var(--games-accent, #a34e2b) 55%, transparent);
+}
+.jq-trace.is-to {
+  border-radius: 10px;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--games-accent, #a34e2b) 60%, transparent);
+}
+.jq-ghost,
+.jq-piece.is-ghost {
+  z-index: 5;
+  animation: jq-shatter 900ms var(--ease, ease) forwards;
+}
+.jq-piece.is-ghost.is-attacker {
+  animation-name: jq-bounce;
+}
+@keyframes jq-shatter {
+  0%,
+  35% {
+    opacity: 1;
+    scale: 1;
+    filter: none;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.25;
+    rotate: -8deg;
+    filter: blur(2px) brightness(1.6);
+  }
+}
+@keyframes jq-bounce {
+  0% {
+    opacity: 1;
+  }
+  20% {
+    translate: 0 -10%;
+  }
+  35% {
+    translate: -4% 0;
+  }
+  45% {
+    translate: 4% 0;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.8;
+    translate: 0 14%;
+    filter: grayscale(1);
+  }
+}
+.jq-clash {
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.jq-clash i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--clash) 55%, transparent) 0 18%,
+    transparent 60%
+  );
+  animation: jq-burst 700ms ease-out forwards;
+}
+.jq-clash em {
+  position: relative;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font:
+    700 12px / 1.4 system-ui,
+    sans-serif;
+  font-style: normal;
+  white-space: nowrap;
+  color: #fff;
+  background: var(--clash);
+  box-shadow: 0 4px 10px -3px rgb(0 0 0 / 0.4);
+  animation: jq-tag 1600ms var(--ease, ease) forwards;
+}
+.jq-clash.is-win {
+  --clash: #c2410c;
+}
+.jq-clash.is-lose {
+  --clash: #475569;
+}
+.jq-clash.is-both {
+  --clash: #b91c1c;
+}
+.jq-clash.is-flag {
+  --clash: #b7791f;
+}
+@keyframes jq-burst {
+  from {
+    scale: 0.3;
+    opacity: 1;
+  }
+  to {
+    scale: 1.5;
+    opacity: 0;
+  }
+}
+@keyframes jq-tag {
+  0% {
+    opacity: 0;
+    translate: 0 30%;
+  }
+  15%,
+  70% {
+    opacity: 1;
+    translate: 0 -70%;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -110%;
+  }
+}
+
+/* .kit 的隐式列按内容撑开，窄屏上会被长选项拖宽。 */
+.kit.junqi {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* ---- 布局：宽屏棋盘在左、面板在右；窄屏上下排列 ---- */
+.jq-layout {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'top' 'stage' 'bottom';
+}
+.jq-layout > * {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+.jq-top select {
+  min-width: 0;
+}
+.jq-top {
+  grid-area: top;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.jq-stage {
+  grid-area: stage;
+  display: grid;
+  gap: 8px;
+}
+.jq-bottom {
+  grid-area: bottom;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+@media (min-width: 960px) {
+  .jq-layout {
+    grid-template-columns: max-content minmax(300px, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: 'stage top' 'stage bottom';
+    column-gap: 20px;
+    align-items: start;
+  }
+  .jq-stage .jq-board {
+    width: min(560px, max(300px, calc((100svh - 40px) * 500 / 756)));
+  }
+}
+.kit .jq-cell[aria-pressed='true'] {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ---- 面板 ---- */
+.junqi .jq-side {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 14px;
+  font-size: 0.92rem;
+}
+.jq-player {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.jq-player strong {
+  white-space: nowrap;
+}
+.jq-player i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--c);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 25%, transparent);
+}
+.jq-player.s0 {
+  --c: var(--jq-s0);
+}
+.jq-player.s1 {
+  --c: var(--jq-s1);
+}
+.jq-player.is-turn strong {
+  text-decoration: underline 2px color-mix(in srgb, var(--c) 70%, transparent);
+  text-underline-offset: 4px;
+}
+.jq-lost {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  color: var(--games-muted, #6b6f68);
+  font-size: 0.82rem;
+}
+.jq-lost s {
+  text-decoration-color: color-mix(in srgb, var(--kit-bad) 70%, transparent);
+}
+.jq-report {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+  font-size: 0.86rem;
+  color: var(--games-muted, #6b6f68);
+}
+.jq-report li:first-child {
+  color: var(--games-ink, #282d29);
+  font-weight: 600;
+}
+.jq-errors {
+  margin: 0;
+  color: var(--kit-bad);
+  font-size: 0.88rem;
+}
+.jq-online-link {
+  color: var(--games-accent, #a34e2b);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (max-width: 720px) {
+  .jq-scene {
+    padding: 8px 2px;
+  }
+  .jq-board {
+    width: min(100%, max(240px, calc((100svh - 24px) * 500 / 756)));
+  }
+  .jq-piece b {
+    font-size: 4.9cqw;
+  }
+  .jq-clash em {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jq-piece,
+  .jq-piece.is-ghost,
+  .jq-clash i,
+  .jq-clash em,
+  .kit .jq-cell.is-target::after,
+  .kit .jq-cell.is-attack::after,
+  .kit .jq-cell.is-bad::before {
+    animation: none;
+    transition: none;
+  }
+  .jq-piece.is-ghost {
+    opacity: 0;
+  }
+  .jq-clash em {
+    translate: 0 -70%;
+  }
+}
